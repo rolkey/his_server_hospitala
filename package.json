@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "if exist ncc-dist rmdir /S /Q ncc-dist && nest build && ncc build ./dist/main.js -o ncc-dist && if not exist ncc-dist\\protos mkdir ncc-dist\\protos && xcopy /E /I /Y src\\protos\\* ncc-dist\\protos\\",
+    "build": "nest build && ncc build ./dist/main.js -o ncc-dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "set NODE_ENV=development&&nest start",
     "start:dev": "set NODE_ENV=development&&nest start --watch",
