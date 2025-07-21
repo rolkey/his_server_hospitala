@@ -17,7 +17,7 @@ import { UsrcatModule } from './modules/usrcat/usrcat.module';
 import { ModuleModule } from './modules/module/module.module';
 import { SystemModule } from './modules/system/system.module';
 import { reportModule } from './modules/report/report.module';
-import { HttpModule } from '@nestjs/axios';
+
 import { csxzModule } from './modules/csxz/csxz.module';
 import { fyxxModule } from './modules/fyxx/fyxx.module';
 import { h00_brlxModule } from './modules/h00_brlx/h00_brlx.module';
@@ -66,4 +66,4 @@ import { zcmcModule } from './modules/zcmc/zcmc.module';
     zcmcModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
