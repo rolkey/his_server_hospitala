@@ -15,7 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
-  app.setGlobalPrefix('/api');
+  app.setGlobalPrefix('/api-doctor');
   app.use(
     session({
       secret: 'isme',
@@ -26,6 +26,13 @@ async function bootstrap() {
       saveUninitialized: true,
     }),
   );
+  // 启用 CORS
+  app.enableCors({
+    origin: true, // 允许所有来源，生产环境建议指定具体域名
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // 允许携带凭据（如 cookies）
+  });
   await app.listen(process.env.APP_PORT || 8085);
   console.log(`🚀 HTTP服务启动成功: http://localhost:${process.env.APP_PORT}`);
 }
