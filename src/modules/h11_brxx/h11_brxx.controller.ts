@@ -1,0 +1,29 @@
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { h11_brxxService } from './h11_brxx.service';
+import { Queryh11_brxxDto, CreateDto, UpdateDto } from './dto';
+
+@Controller('h11_brxx')
+export class h11_brxxController {
+  constructor(private readonly h11_brxxService: h11_brxxService) {}
+
+  @Get('findAll')
+  async findAll(@Query() queryDto: Queryh11_brxxDto) {
+    return await this.h11_brxxService.findAll(queryDto);
+  }
+
+  @Get('findOne')
+  async findOne(@Query() data: { zyid: string }) {
+    const brxx = await this.h11_brxxService.findOne(data.zyid);
+    return { record: brxx };
+  }
+
+  @Post()
+  async create(@Body() dto: CreateDto) {
+    return await this.h11_brxxService.create(dto);
+  }
+
+  @Put()
+  async update(@Body() dto: UpdateDto) {
+    return await this.h11_brxxService.update(dto);
+  }
+}

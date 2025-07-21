@@ -1,0 +1,10 @@
+{
+  "name": "server",
+  "script": "index.js",
+  "args": [],
+  "exec_interpreter": "",
+  "exec_mode": "fork",
+  "error_file": "./log/index-error.log",
+  "out_file": "./log/index-out.log",
+  "log_date_format": "YYYY-MM-DD HH:mm Z"
+}
