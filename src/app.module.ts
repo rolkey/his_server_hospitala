@@ -10,8 +10,6 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from './shared/shared.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PermissionModule } from './modules/permission/permission.module';
-import { RoleModule } from './modules/role/role.module';
-import { AuthModule } from './modules/auth/auth.module';
 import { SunsoftModule } from './modules/sunsoft/sunsoft.module';
 import { UsrcatModule } from './modules/usrcat/usrcat.module';
 import { ModuleModule } from './modules/module/module.module';
@@ -42,8 +40,6 @@ import { zcmcModule } from './modules/zcmc/zcmc.module';
     }),
     UsrcatModule,
     PermissionModule,
-    RoleModule,
-    AuthModule,
     SharedModule,
     ModuleModule,
     SunsoftModule,
@@ -66,4 +62,4 @@ import { zcmcModule } from './modules/zcmc/zcmc.module';
     zcmcModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
