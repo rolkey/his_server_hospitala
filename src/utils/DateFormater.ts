@@ -1,7 +1,6 @@
 class DateFormater {
   // 生成雪花ID
-  static formatDate({ value }) {
-    if (!value) return value;
+  static formatDate(value: string) {
     const date = new Date(value);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
