@@ -6,86 +6,63 @@
  * Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
  **********************************/
 
-import { Module, DynamicModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SharedModule } from './shared/shared.module';
 import { ConfigModule } from '@nestjs/config';
-import * as fs from 'fs';
-import * as path from 'path';
-
-/**
- * 自动加载 modules 目录下的所有模块
- */
-async function loadModules(): Promise<any[]> {
-  const modulesPath = path.join(__dirname, 'modules');
-  const modules: any[] = [];
-
-  try {
-    // 读取 modules 目录下的所有文件夹
-    const moduleDirectories = fs
-      .readdirSync(modulesPath, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    // 遍历每个模块目录
-    for (const moduleDir of moduleDirectories) {
-      const modulePath = path.join(modulesPath, moduleDir);
-      const moduleFiles = fs.readdirSync(modulePath);
-
-      // 查找 .module.ts 文件
-      const moduleFile = moduleFiles.find(
-        (file) => file.endsWith('.module.ts') || file.endsWith('.module.js'),
-      );
-
-      if (moduleFile) {
-        try {
-          // 动态导入模块
-          const moduleFilePath = `./${path.join('modules', moduleDir, moduleFile).replace(/\\/g, '/')}`;
-          const moduleExports = await import(moduleFilePath);
-
-          // 查找导出的模块类
-          const moduleClass = Object.values(moduleExports).find(
-            (exportedItem: any) =>
-              exportedItem &&
-              typeof exportedItem === 'function' &&
-              Reflect.getMetadata('__module__', exportedItem),
-          );
-
-          if (moduleClass) {
-            modules.push(moduleClass);
-            console.log(`✅ 已加载模块: ${moduleDir}`);
-          }
-        } catch (error) {
-          console.warn(`⚠️  加载模块 ${moduleDir} 失败:`, error.message);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('❌ 读取 modules 目录失败:', error.message);
-  }
-
-  return modules;
-}
-
-/**
- * 动态创建 AppModule
- */
-@Module({})
-export class AppModule {
-  static async forRoot(): Promise<DynamicModule> {
-    // 自动加载所有模块
-    const dynamicModules = await loadModules();
-
-    return {
-      module: AppModule,
-      imports: [
-        /* 配置文件模块 */
-        ConfigModule.forRoot({
-          isGlobal: true,
-          envFilePath: ['.env.local', '.env'],
-        }),
-        SharedModule,
-        ...dynamicModules, // 自动加载的模块
-      ],
-    };
-  }
-}
+import { PermissionModule } from './modules/permission/permission.module';
+import { RoleModule } from './modules/role/role.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { SunsoftModule } from './modules/sunsoft/sunsoft.module';
+import { UsrcatModule } from './modules/usrcat/usrcat.module';
+import { ModuleModule } from './modules/module/module.module';
+import { SystemModule } from './modules/system/system.module';
+import { reportModule } from './modules/report/report.module';
+import { csxzModule } from './modules/csxz/csxz.module';
+import { fyxxModule } from './modules/fyxx/fyxx.module';
+import { h00_brlxModule } from './modules/h00_brlx/h00_brlx.module';
+import { h00_mzzdModule } from './modules/h00_mzzd/h00_mzzd.module';
+import { h00_syffModule } from './modules/h00_syff/h00_syff.module';
+import { h00_rybqModule } from './modules/h00_rybq/h00_rybq.module';
+import { h00_syplModule } from './modules/h00_sypl/h00_sypl.module';
+import { h00_ybflModule } from './modules/h00_ybfl/h00_ybfl.module';
+import { h00_ypflModule } from './modules/h00_ypfl/h00_ypfl.module';
+import { h11_brxxModule } from './modules/h11_brxx/h11_brxx.module';
+import { h12_yzzbModule } from './modules/h12_yzzb/h12_yzzb.module';
+import { h13_cwsyxxModule } from './modules/h13_cwsyxx/h13_cwsyxx.module';
+import { jbbmicd10Module } from './modules/jbbmicd/jbbmicd10.module';
+import { ksmcModule } from './modules/ksmc/ksmc.module';
+import { zcmcModule } from './modules/zcmc/zcmc.module';
+@Module({
+  imports: [
+    /* 配置文件模块 */
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+    }),
+    UsrcatModule,
+    PermissionModule,
+    RoleModule,
+    AuthModule,
+    SharedModule,
+    ModuleModule,
+    SunsoftModule,
+    SystemModule,
+    reportModule,
+    csxzModule,
+    fyxxModule,
+    h00_brlxModule,
+    h00_mzzdModule,
+    h00_rybqModule,
+    h00_syffModule,
+    h00_syplModule,
+    h00_ybflModule,
+    h00_ypflModule,
+    h11_brxxModule,
+    h12_yzzbModule,
+    h13_cwsyxxModule,
+    jbbmicd10Module,
+    ksmcModule,
+    zcmcModule,
+  ],
+})
+export class AppModule {}
