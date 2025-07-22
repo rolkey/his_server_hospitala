@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { GyIdentityService } from './gy-identity.service';
 import { CreateGyIdentityDto } from './gy-identity.dto';
 import { GyIdentity } from './gy-identity.entity';
 
-@Controller('gy-identity')
+@Controller('gy_identity')
 export class GyIdentityController {
   constructor(private readonly gyIdentityService: GyIdentityService) {}
 
@@ -39,5 +39,17 @@ export class GyIdentityController {
   async getTableMax(@Body() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
     const { tname, inc_value } = createGyIdentityDto;
     return this.gyIdentityService.incTable(tname, inc_value);
+  }
+
+  //   @Get('getMax')
+  //   async getMax(@Query() data: { tname: string; inc_value: number }): Promise<number> {
+  //     const { tname, inc_value } = data;
+  //     return this.gyIdentityService.getMax(tname, inc_value);
+  //   }
+
+  @Get('getMax')
+  async getMax(@Query() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
+    const { tname, inc_value } = createGyIdentityDto;
+    return this.gyIdentityService.getMax(tname, inc_value);
   }
 }

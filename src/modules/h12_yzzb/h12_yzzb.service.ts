@@ -165,7 +165,7 @@ export class h12_yzzbService {
 
     Object.assign(newRecord, {
       zyid,
-      mxxh: await this.gyIdentityService.incTable('h12_yzxbn'),
+      mxxh: await this.gyIdentityService.getMax('h12_yzxbn'),
       zybh: patientInfo.zybh,
       zycs: patientInfo.zycs,
       yzlx,

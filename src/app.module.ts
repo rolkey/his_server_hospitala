@@ -32,6 +32,8 @@ import { h13_cwsyxxModule } from './modules/h13_cwsyxx/h13_cwsyxx.module';
 import { jbbmicd10Module } from './modules/jbbmicd/jbbmicd10.module';
 import { ksmcModule } from './modules/ksmc/ksmc.module';
 import { zcmcModule } from './modules/zcmc/zcmc.module';
+import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 导入GyIdentityModule
+
 @Module({
   imports: [
     /* 配置文件模块 */
@@ -63,6 +65,7 @@ import { zcmcModule } from './modules/zcmc/zcmc.module';
     jbbmicd10Module,
     ksmcModule,
     zcmcModule,
+    GyIdentityModule,
   ],
 })
 export class AppModule {}
