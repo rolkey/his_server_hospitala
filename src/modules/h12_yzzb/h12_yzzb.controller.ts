@@ -11,8 +11,8 @@ export class h12_yzzbController {
     return { record };
   }
 
-  @Post('createAdvice')
-  async createAdvice(@Body() data: { zyid: string; yzlx: number }) {
+  @Get('createAdvice')
+  async createAdvice(@Query() data: { zyid: string; yzlx: number }) {
     const record = await this.h12_yzzbService.createAdvice(data);
     return { record };
   }

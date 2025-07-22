@@ -168,6 +168,7 @@ export class h12_yzxb {
   zxcs: number | null;
 
   @Column('char', { name: 'zxrq', nullable: true, length: 10 })
+  @DateTransformer()
   zxrq: string | null;
 
   @Column('smallint', { name: 'tpbz', nullable: true })

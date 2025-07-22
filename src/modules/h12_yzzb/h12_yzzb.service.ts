@@ -7,7 +7,8 @@ import { ksmc } from '../ksmc/ksmc.entity';
 import { usrcat } from '../usrcat/usrcat.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
-import dayjs from 'dayjs';
+import DateFormater from '@/utils/DateFormater';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 @Injectable()
 export class h12_yzzbService {
@@ -24,6 +25,7 @@ export class h12_yzzbService {
     private usrcatRepo: Repository<usrcat>,
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
+    private readonly gyIdentityService: GyIdentityService,
   ) {}
 
   async findAllByPatient(data: { zyid: string; yzlx: string }) {
@@ -148,13 +150,9 @@ export class h12_yzzbService {
     }
 
     // 3. 获取新的医嘱序号
-    const maxYzxh = await this.h12_yzzbRepo
-      .createQueryBuilder('h12_yzzb')
-      .select('MAX(h12_yzzb.yzxh)', 'max')
-      .where('h12_yzzb.zyid = :zyid AND h12_yzzb.yzlx = :yzlx', { zyid, yzlx })
-      .getRawOne();
+    const h12_yzzb_record = await this.getYzzb(patientInfo, zyid, yzlx);
 
-    const yzxhNew = (maxYzxh.max || 0) + 1;
+    const yzxhNew = h12_yzzb_record.yzxh || 1;
 
     // 4. 计算病人年龄
     let brnl = patientInfo.brnl || '';
@@ -167,6 +165,7 @@ export class h12_yzzbService {
 
     Object.assign(newRecord, {
       zyid,
+      mxxh: await this.gyIdentityService.incTable('h12_yzxbn'),
       zybh: patientInfo.zybh,
       zycs: patientInfo.zycs,
       yzlx,
@@ -180,11 +179,91 @@ export class h12_yzzbService {
       cwid: patientInfo.rycw,
       jsbz: 0,
       tzbz: 0,
-      yzrq: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
-      zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
+      yzrq: DateFormater.formatDate(new Date().toString()),
+      //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
+      //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
+      srcs: 1,
+      kyts: 1,
+      kyfs: 1,
+      yzzh: 0,
+      tpbz: 0, //附加标志
+      hdbz: 0,
     });
 
     return newRecord;
+  }
+
+  /**
+   * 获取医嘱主表
+   * @param zyid 住院ID
+   * @param yzlx 医嘱类型
+   * @returns 入院信息结果
+   */
+  async getYzzb(patientInfo: h11_brxx, zyid: string, yzlx: number): Promise<h12_yzzb> {
+    // 1. 查询患者基本信息
+
+    // 处理年龄信息
+    const brnl = patientInfo.brnl || '';
+    const nldw = patientInfo.nldw || '';
+    const nldw1 = patientInfo.nldw1 || '';
+    let ageStr = `${brnl}${nldw}`;
+
+    if (patientInfo.etys > 0) {
+      ageStr += `${patientInfo.etys}${nldw1}`;
+    }
+
+    // 2. 获取最大医嘱序号
+    const h12_yzzb_record = await this.h12_yzzbRepo
+      .createQueryBuilder('h12_yzzb')
+      .select([
+        'zyid',
+        'zybh',
+        'zycs',
+        'yzlx',
+        'bsid',
+        'kbid',
+        'yzxh',
+        'brxm',
+        'brnl',
+        'etys',
+        'ksid',
+        'cwid',
+        'jsbz',
+        'tzbz',
+        'yzrq',
+      ])
+      .where('h12_yzzb.zyid = :zyid', { zyid })
+      .andWhere('h12_yzzb.yzlx = :yzlx', { yzlx })
+      .andWhere('h12_yzzb.ksid = :ksid', { ksid: patientInfo.cyksid.toUpperCase() })
+      .getRawOne();
+
+    if (h12_yzzb_record) {
+      return h12_yzzb_record;
+    }
+
+    // 3. 准备主表数据
+    const zbData = {
+      zyid,
+      zybh: patientInfo.zybh,
+      zycs: patientInfo.zycs,
+      yzlx,
+      bsid: patientInfo.xbid,
+      kbid: patientInfo.zkksid,
+      yzxh: 1,
+      brxm: patientInfo.brxm,
+      brnl: ageStr,
+      etys: patientInfo.etys,
+      ksid: patientInfo.cyksid.toUpperCase(), // 转为大写
+      cwid: patientInfo.rycw,
+      jsbz: 0,
+      tzbz: 0,
+      yzrq: DateFormater.formatDate(new Date().toString()), // 使用dayjs格式化日期
+    };
+
+    // 4. 保存主表数据 - 使用h12_yzzb表
+    const zbRecord = this.h12_yzzbRepo.create(zbData);
+    await this.h12_yzzbRepo.save(zbRecord);
+
+    return zbRecord;
   }
 }

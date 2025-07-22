@@ -12,6 +12,8 @@ import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
+import { GyIdentity } from '../gy_identity/gy-identity.entity';
 
 @Global()
 @Module({
@@ -27,10 +29,11 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
       h00_syff,
       h00_sypl,
       h11_brxx,
+      GyIdentity,
     ]),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService],
+  providers: [h12_yzzbService, GyIdentityService],
   exports: [h12_yzzbService],
 })
 export class h12_yzzbModule {}
