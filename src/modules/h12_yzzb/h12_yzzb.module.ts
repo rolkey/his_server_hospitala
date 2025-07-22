@@ -11,6 +11,7 @@ import { usrcat } from '../usrcat/usrcat.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 
 @Global()
 @Module({
@@ -25,6 +26,7 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
       h00_fylb,
       h00_syff,
       h00_sypl,
+      h11_brxx,
     ]),
   ],
   controllers: [h12_yzzbController],
