@@ -14,7 +14,7 @@ export class SfxmService {
     private readonly paramService: ParamService,
     @InjectRepository(Ypzd)
     private readonly ypzdRepository: Repository<Ypzd>,
-    @InjectRepository(Xmzd)
+    @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
     @InjectRepository(Xmzd)
     private readonly xmzdRepository: Repository<Xmzd>,
