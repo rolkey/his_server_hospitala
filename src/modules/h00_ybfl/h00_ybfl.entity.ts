@@ -1,12 +1,12 @@
-import { AfterLoad, Column, Entity, Index } from "typeorm";
+import { AfterLoad, Column, Entity, Index } from 'typeorm';
 
-@Index("h00_ybfl_x", ["flid"], { unique: true })
-@Entity("h00_ybfl", { schema: "dbo" })
+@Index('h00_ybfl_x', ['flid'], { unique: true })
+@Entity('h00_ybfl', { schema: 'dbo' })
 export class h00_ybfl {
-  @Column("smallint", { primary: true, name: "flid" })
+  @Column('smallint', { primary: true, name: 'flid' })
   flid: number;
 
-  @Column("char", { name: "flmc", nullable: true, length: 12 })
+  @Column('char', { name: 'flmc', nullable: true, length: 12 })
   flmc: string | null;
 
   // @Column("decimal", { name: "zfbl", nullable: true, precision: 16, scale: 2 })
@@ -20,7 +20,6 @@ export class h00_ybfl {
 
   @AfterLoad()
   trim() {
-
     if (this.flmc) {
       this.flmc = this.flmc.trim();
     }
