@@ -49,7 +49,6 @@ export class GyIdentityController {
 
   @Get('getMax')
   async getMax(@Query() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
-    console.log(`Received params: ${JSON.stringify(createGyIdentityDto)}`);
     const { tname, inc_value } = createGyIdentityDto;
     return this.gyIdentityService.getMax(tname, inc_value);
   }

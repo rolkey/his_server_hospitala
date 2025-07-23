@@ -16,7 +16,7 @@ export class ModuleService {
     @InjectRepository(Permission)
     private permissionRepo: Repository<Permission>,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async update(id: string, updateDto: UpdateDto) {
     return await this.dataSource.transaction(async (manager) => {

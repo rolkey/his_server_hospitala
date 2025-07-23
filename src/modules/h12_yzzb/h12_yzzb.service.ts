@@ -179,6 +179,7 @@ export class h12_yzzbService {
       cwid: patientInfo.rycw,
       jsbz: 0,
       tzbz: 0,
+      tjbz: 0, // 提交标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
       //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),

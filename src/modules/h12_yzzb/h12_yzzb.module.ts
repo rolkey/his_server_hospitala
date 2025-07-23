@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, forwardRef } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
@@ -12,8 +12,7 @@ import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
-import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { GyIdentity } from '../gy_identity/gy-identity.entity';
+import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 
 @Global()
 @Module({
@@ -29,11 +28,11 @@ import { GyIdentity } from '../gy_identity/gy-identity.entity';
       h00_syff,
       h00_sypl,
       h11_brxx,
-      GyIdentity,
     ]),
+    forwardRef(() => GyIdentityModule),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService, GyIdentityService],
+  providers: [h12_yzzbService],
   exports: [h12_yzzbService],
 })
 export class h12_yzzbModule {}

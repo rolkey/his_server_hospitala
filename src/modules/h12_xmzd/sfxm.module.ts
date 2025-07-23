@@ -1,0 +1,18 @@
+// src/modules/sfxm.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SfxmController } from './sfxm.controller';
+import { SfxmService } from './service/sfxm.service';
+import { ParamService } from './service/param.service';
+import { TempSfxm } from './entity/temp-sfxm.entity';
+import { Syspar } from './entity/syspar.entity';
+import { Ypzd } from './entity/ypzd.entity';
+import { Kcxx } from './entity/kcxx.entity';
+import { Xmzd } from './entity/xmzd.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([TempSfxm, Syspar, Ypzd, Kcxx, Xmzd])],
+  controllers: [SfxmController],
+  providers: [SfxmService, ParamService],
+})
+export class SfxmModule {}

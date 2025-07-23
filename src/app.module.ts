@@ -33,6 +33,7 @@ import { jbbmicd10Module } from './modules/jbbmicd/jbbmicd10.module';
 import { ksmcModule } from './modules/ksmc/ksmc.module';
 import { zcmcModule } from './modules/zcmc/zcmc.module';
 import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 导入GyIdentityModule
+import { SfxmModule } from './modules/h12_xmzd/sfxm.module'; // 导入SfxmModule
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 
     ksmcModule,
     zcmcModule,
     GyIdentityModule,
+    SfxmModule, // 添加SfxmModule到imports数组
   ],
 })
 export class AppModule {}
