@@ -47,6 +47,6 @@ export class ParamService {
     }
 
     // 参数存在，返回当前值
-    return existingParam.pval;
+    return existingParam.pval?.trim();
   }
 }
