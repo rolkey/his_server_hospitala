@@ -1,12 +1,12 @@
 // src/entities/temp-sfxm.entity.ts
-import { Column, Entity } from 'typeorm';
+import { PrimaryColumn, Column, Entity } from 'typeorm';
 
 @Entity({ name: '#temp_sfxm' })
 export class TempSfxm {
-  @Column({ name: 'xmzl', type: 'int' })
+  @PrimaryColumn({ name: 'xmzl', type: 'int' })
   xmzl: number;
 
-  @Column({ name: 'xmid', type: 'varchar', length: 50, nullable: true })
+  @PrimaryColumn({ name: 'xmid', type: 'varchar', length: 50, nullable: false })
   xmid: string;
 
   @Column({ name: 'ggxh', type: 'varchar', length: 60, nullable: true })

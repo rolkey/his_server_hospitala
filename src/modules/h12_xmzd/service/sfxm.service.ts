@@ -6,6 +6,7 @@ import { Kcxx } from '../entity/kcxx.entity';
 import { Xmzd } from '../entity/xmzd.entity';
 import { SfxmQueryDto } from '../sfxm-query.dto';
 import { ParamService } from './param.service';
+import { SysparNew } from '../entity/__syspar_new.entity';
 
 @Injectable()
 export class SfxmService {
@@ -13,6 +14,8 @@ export class SfxmService {
     private readonly paramService: ParamService,
     @InjectRepository(Ypzd)
     private readonly ypzdRepository: Repository<Ypzd>,
+    @InjectRepository(Xmzd)
+    private readonly sysparNewRepository: Repository<SysparNew>,
     @InjectRepository(Xmzd)
     private readonly xmzdRepository: Repository<Xmzd>,
   ) {}
@@ -46,11 +49,10 @@ export class SfxmService {
   }
 
   private async getSystemParam(paramName: string): Promise<string> {
-    const result = await this.ypzdRepository.query(
-      `SELECT ISNULL(pval, '0') as pval FROM __syspar_new WHERE syid = '30' AND UPPER(prid) = ?`,
-      [paramName.toUpperCase()],
-    );
-    return result[0] ? result[0].pval : '0';
+    const ypzd = await this.sysparNewRepository.findOne({
+      where: { syid: '30', prid: paramName.toUpperCase() },
+    });
+    return ypzd ? ypzd.pval : '0';
   }
 
   async h13_sfxm(query: SfxmQueryDto) {

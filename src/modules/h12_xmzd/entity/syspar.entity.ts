@@ -1,15 +1,12 @@
 // src/entities/syspar.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity('__syspar')
 export class Syspar {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ name: 'syid', length: 10 })
+  @PrimaryColumn({ name: 'syid', length: 10 })
   syid: string;
 
-  @Column({ name: 'prid', length: 50 })
+  @PrimaryColumn({ name: 'prid', length: 50 })
   prid: string;
 
   @Column({ name: 'pnam', length: 100 })
