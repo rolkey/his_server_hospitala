@@ -7,33 +7,33 @@ import { GyIdentity } from './gy-identity.entity';
 export class GyIdentityController {
   constructor(private readonly gyIdentityService: GyIdentityService) {}
 
-  @Post()
-  create(@Body() createGyIdentityDto: CreateGyIdentityDto): Promise<GyIdentity> {
-    return this.gyIdentityService.create(createGyIdentityDto);
-  }
+  //   @Post()
+  //   create(@Body() createGyIdentityDto: CreateGyIdentityDto): Promise<GyIdentity> {
+  //     return this.gyIdentityService.create(createGyIdentityDto);
+  //   }
 
-  @Get()
-  findAll(): Promise<GyIdentity[]> {
-    return this.gyIdentityService.findAll();
-  }
+  //   @Get()
+  //   findAll(): Promise<GyIdentity[]> {
+  //     return this.gyIdentityService.findAll();
+  //   }
 
-  @Get(':tname')
-  findOne(@Param('tname') tname: string): Promise<GyIdentity> {
-    return this.gyIdentityService.findOne(tname);
-  }
+  //   @Get(':tname')
+  //   findOne(@Param('tname') tname: string): Promise<GyIdentity> {
+  //     return this.gyIdentityService.findOne(tname);
+  //   }
 
-  @Put(':tname')
-  update(
-    @Param('tname') tname: string,
-    @Body() updateData: Partial<CreateGyIdentityDto>,
-  ): Promise<GyIdentity> {
-    return this.gyIdentityService.update(tname, updateData);
-  }
+  //   @Put(':tname')
+  //   update(
+  //     @Param('tname') tname: string,
+  //     @Body() updateData: Partial<CreateGyIdentityDto>,
+  //   ): Promise<GyIdentity> {
+  //     return this.gyIdentityService.update(tname, updateData);
+  //   }
 
-  @Delete(':tname')
-  remove(@Param('tname') tname: string): Promise<void> {
-    return this.gyIdentityService.remove(tname);
-  }
+  //   @Delete(':tname')
+  //   remove(@Param('tname') tname: string): Promise<void> {
+  //     return this.gyIdentityService.remove(tname);
+  //   }
 
   @Post('getTableMax')
   async getTableMax(@Body() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
@@ -49,6 +49,7 @@ export class GyIdentityController {
 
   @Get('getMax')
   async getMax(@Query() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
+    console.log(`Received params: ${JSON.stringify(createGyIdentityDto)}`);
     const { tname, inc_value } = createGyIdentityDto;
     return this.gyIdentityService.getMax(tname, inc_value);
   }
