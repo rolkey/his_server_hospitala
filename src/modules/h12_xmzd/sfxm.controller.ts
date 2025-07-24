@@ -1,7 +1,7 @@
 // src/controllers/sfxm.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
 import { SfxmService } from './service/sfxm.service';
-import { SfxmQueryDto } from './sfxm-query.dto';
+import { SfxmQueryDto } from './dto/sfxm-query.dto';
 
 @Controller('sfxm')
 export class SfxmController {

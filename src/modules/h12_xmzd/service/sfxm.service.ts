@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Ypzd } from '../entity/ypzd.entity';
 import { Kcxx } from '../entity/kcxx.entity';
 import { Xmzd } from '../entity/xmzd.entity';
-import { SfxmQueryDto } from '../sfxm-query.dto';
+import { SfxmQueryDto } from '../dto/sfxm-query.dto';
 import { ParamService } from './param.service';
 import { SysparNew } from '../entity/__syspar_new.entity';
 
@@ -78,7 +78,7 @@ export class SfxmService {
           `(yp.qt6 = 0 OR yp.qt6 = 2 OR yp.qt6 IS NULL)`,
         {
           xyksid: [params.xyksid],
-          qtksid: [params.qtksid || ''],
+          qtksid: [params.qtksid],
           clksid: [params.clksid],
           zyksid: [params.zyksid],
           ssclksid: [params.ssclksid],
@@ -168,6 +168,7 @@ export class SfxmService {
     // 创建项目查询（当bz=1时）
     let unionQuery = ypQuery.getQuery();
     const ypParameters = ypQuery.getParameters();
+    console.log('ypParameters 参数信息', ypParameters);
 
     if (query.bz === 1) {
       const xmQuery = this.xmzdRepository
@@ -236,7 +237,7 @@ export class SfxmService {
 
     // 获取总数
     const countQuery = `SELECT COUNT(*) as total FROM (${unionQuery}) as union_table`;
-    const totalResult = await this.ypzdRepository.query(countQuery, Object.values(ypParameters));
+    const totalResult = await this.ypzdRepository.query(countQuery, []); //ypParameters
     const total = parseInt(totalResult[0].total, 10);
 
     // 分页查询
@@ -250,7 +251,7 @@ export class SfxmService {
       OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
     `;
 
-    const pageData = await this.ypzdRepository.query(resultQuery, Object.values(ypParameters));
+    const pageData = await this.ypzdRepository.query(resultQuery, []); //ypParameters
 
     return { pageData, total };
   }
