@@ -56,25 +56,25 @@ export class ConfigReaderService {
   }
 
   async readGstrAinf() {
-    const jcdzbz = await this.paramService.gfGetPara(
+    const jcdzbz = await this.paramService.gfGetParaNew(
       12,
       'BLJCURLbz',
       '0',
       '检查接口调用方URL是否统一启用(1启用,0不启用)',
     );
     return {
-      gjjgbm: await this.paramService.gfGetPara(1, 'xyb_yydm', '', '国家医保平台机构编码'),
+      gjjgbm: await this.paramService.gfGetParaNew(1, 'xyb_yydm', '', '国家医保平台机构编码'),
       jcdzbz: jcdzbz,
       jcdz:
         jcdzbz === '1'
-          ? await this.paramService.gfGetPara(
+          ? await this.paramService.gfGetParaNew(
               12,
               'BLJCURL',
               'http://134.202.128.4:801/yapacs.aspx?hisid=',
               '检查接口调用方URL由平台提供参数',
             )
           : '',
-      jcdzxd: await this.paramService.gfGetPara(
+      jcdzxd: await this.paramService.gfGetParaNew(
         12,
         'BLJCXDURL',
         '',
