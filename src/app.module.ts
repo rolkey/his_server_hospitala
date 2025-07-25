@@ -34,7 +34,7 @@ import { ksmcModule } from './modules/ksmc/ksmc.module';
 import { zcmcModule } from './modules/zcmc/zcmc.module';
 import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 导入GyIdentityModule
 import { SfxmModule } from './modules/h12_xmzd/sfxm.module'; // 导入SfxmModule
-
+import { h13_yzzxcsModule } from './modules/​​h13_yzzxcs​​/h13_yzzxcs.module';
 @Module({
   imports: [
     /* 配置文件模块 */
@@ -68,6 +68,7 @@ import { SfxmModule } from './modules/h12_xmzd/sfxm.module'; // 导入SfxmModule
     zcmcModule,
     GyIdentityModule,
     SfxmModule, // 添加SfxmModule到imports数组
+    h13_yzzxcsModule,
   ],
 })
 export class AppModule {}

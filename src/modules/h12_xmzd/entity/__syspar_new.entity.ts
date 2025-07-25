@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
-@Entity('__syspar_new', { schema: 'sunsoft.dbo' })
+@Entity('__syspar_new', { schema: 'dbo' })
 export class SysparNew {
   @PrimaryColumn({
     name: 'syid',
