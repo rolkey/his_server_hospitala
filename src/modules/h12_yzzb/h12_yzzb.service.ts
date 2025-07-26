@@ -10,6 +10,7 @@ import { h12_yzxb } from './h12_yzxb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
+import { h12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -37,7 +38,7 @@ export class h12_yzzbService {
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
       .where('h12_yzzb.zyid = :zyid and h12_yzzb.yzlx=:yzlx', {
         zyid: data.zyid,
-        yzlx: data.yzlx || '',
+        yzlx: data.yzlx ?? '',
       });
 
     const h13_yzzxcsqb = this.h13_yzzxcsRepo
@@ -181,9 +182,11 @@ export class h12_yzzbService {
       ksid: patientInfo.cyksid,
       cwid: patientInfo.rycw,
       jsbz: 0,
-      tzbz: 0,
+      tzbz: 0, // 停嘱
+      zxbz: 0, // 执行
       tjbz: 0, // 提交标志
       ybbz: 1, // 医嘱标志
+      sjbz: 0, // 上级标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
       //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
@@ -247,7 +250,7 @@ export class h12_yzzbService {
     }
 
     // 3. 准备主表数据
-    const zbData = {
+    const h12_yzzbObj = {
       zyid,
       zybh: patientInfo.zybh,
       zycs: patientInfo.zycs,
@@ -266,7 +269,7 @@ export class h12_yzzbService {
     };
 
     // 4. 保存主表数据 - 使用h12_yzzb表
-    const zbRecord = this.h12_yzzbRepo.create(zbData);
+    const zbRecord = this.h12_yzzbRepo.create(h12_yzzbObj);
     await this.h12_yzzbRepo.save(zbRecord);
 
     return zbRecord;
@@ -274,63 +277,68 @@ export class h12_yzzbService {
 
   /**
    * 验证并保存医嘱数据
-   * @param zbData 主表数据
-   * @param xbData 细表数据数组
+   * @param h12_yzzbObj 主表数据
+   * @param h12_yzxbList 细表数据数组
    * @param xxData 附加信息数据数组
+   * @param h12_yzzbOpe 业务参数
    */
   async validateAndSaveOrders(
-    zbData: Partial<h12_yzzb>,
-    xbData: Partial<h12_yzxb>[],
+    h12_yzzbObj: Partial<h12_yzzb>,
+    h12_yzxbList: Partial<h12_yzxb>[],
     xxData: any[] = [],
+    h12_yzzbOpe: h12_yzzbOpeDto,
   ): Promise<{ success: boolean; message: string }> {
     // 1. 数据验证
-    if (!xbData || xbData.length === 0) {
+    if (!h12_yzxbList || h12_yzxbList.length === 0) {
       throw new BadRequestException('请录入医嘱内容!');
     }
 
     // 处理最后一条为空的情况
-    const lastOrder = xbData[xbData.length - 1];
-    if (xbData.length === 1 && (!lastOrder.xmmc || lastOrder.xmmc.trim() === '')) {
+    const lastOrder = h12_yzxbList[h12_yzxbList.length - 1];
+    if (h12_yzxbList.length === 1 && (!lastOrder.xmmc || lastOrder.xmmc.trim() === '')) {
       return { success: true, message: '忽略空医嘱' };
     }
 
-    if (!lastOrder.xmmc || lastOrder.xmmc.trim() === '') {
-      // 判断是否已执行
-      if (lastOrder.zxbz === 1) {
-        // 这里可以添加询问逻辑，前端处理确认
-        // 假设用户选择删除
-        await this.deleteExecutedOrder(
-          lastOrder.yzxh,
-          lastOrder.zyid,
-          lastOrder.yzlx,
-          lastOrder.mxxh,
-        );
-      }
+    // if (!lastOrder.xmmc || lastOrder.xmmc.trim() === '') {
+    //   // 判断是否已执行
+    //   if (lastOrder.zxbz === 1) {
+    //     // 这里可以添加询问逻辑，前端处理确认
+    //     // 假设用户选择删除
+    //     await this.deleteExecutedOrder(
+    //       lastOrder.yzxh,
+    //       lastOrder.zyid,
+    //       lastOrder.yzlx,
+    //       lastOrder.mxxh,
+    //     );
+    //   }
 
-      // 检查同组情况
-      if (xbData.length > 1 && lastOrder.yzzh === xbData[xbData.length - 2].yzzh) {
-        lastOrder.yzzh = 0;
-      }
+    //   // 检查同组情况
+    //   if (
+    //     h12_yzxbList.length > 1 &&
+    //     lastOrder.yzzh === h12_yzxbList[h12_yzxbList.length - 2].yzzh
+    //   ) {
+    //     lastOrder.yzzh = 0;
+    //   }
 
-      // 删除附加信息
-      if (xxData && xxData.length > 0) {
-        xxData = xxData.filter((item) => item.yzzh !== lastOrder.yzzh);
-      }
+    //   // 删除附加信息
+    //   if (xxData && xxData.length > 0) {
+    //     xxData = xxData.filter((item) => item.yzzh !== lastOrder.yzzh);
+    //   }
 
-      // 删除最后一条
-      xbData.pop();
-    }
+    //   // 删除最后一条
+    //   h12_yzxbList.pop();
+    // }
 
     // 初始化变量
     const today = new Date().getFullYear().toString();
-    const firstOrder = xbData[0];
+    const firstOrder = h12_yzxbList[0];
     const groupFlag = firstOrder.typbz || '';
     const groupId = firstOrder.yzzh || 0;
     const orderDate = firstOrder.yzrq || new Date();
 
     // 验证每条医嘱
-    for (let i = 0; i < xbData.length; i++) {
-      const order = xbData[i];
+    for (let i = 0; i < h12_yzxbList.length; i++) {
+      const order = h12_yzxbList[i];
 
       // 特殊医嘱处理
       const specialOrders = ['     术 后 医 嘱', '     重 整 医 嘱', '     产 后 医 嘱'];
@@ -367,7 +375,7 @@ export class h12_yzzbService {
       }
 
       // 验证停止医嘱
-      if (zbData.yzlx === 1 && order.tzrq && !order.jsys && !order.jssxys) {
+      if (h12_yzzbObj.yzlx === 1 && order.tzrq && !order.jsys && !order.jssxys) {
         throw new BadRequestException('请录入停医生签名!');
       }
 
@@ -378,19 +386,19 @@ export class h12_yzzbService {
         }
 
         // 长期医嘱日期验证
-        if ((zbData.yzlx === 1 || zbData.yzlx === 5) && order.yzrq > order.tzrq) {
+        if ((h12_yzzbObj.yzlx === 1 || h12_yzzbObj.yzlx === 5) && order.yzrq > order.tzrq) {
           throw new BadRequestException(
             `第${i + 1}行长期医嘱开始时间${order.yzrq}大于结束时间${order.tzrq}!`,
           );
         }
 
         // 标记停止
-        if (zbData.yzlx === 1 && order.tzrq && (order.jsys || order.jssxys)) {
+        if (h12_yzzbObj.yzlx === 1 && order.tzrq && (order.jsys || order.jssxys)) {
           order.tzbz = 1;
           await this.stopOrderDetails(order.yzzh, i);
         }
 
-        if (zbData.yzlx === 5 && order.tzrq && order.jsys) {
+        if (h12_yzzbObj.yzlx === 5 && order.tzrq && order.jsys) {
           order.tzbz = 1;
           await this.stopOrderDetails(order.yzzh, i);
         }
@@ -398,7 +406,7 @@ export class h12_yzzbService {
 
       // 病重告知处理
       if (order.xmid === 'A000000') {
-        await this.updatePatientStatus(zbData.zyid, order.tzbz === 1 ? '3' : '1');
+        await this.updatePatientStatus(h12_yzzbObj.zyid, order.tzbz === 1 ? '3' : '1');
       }
 
       // 验证库存
@@ -422,22 +430,22 @@ export class h12_yzzbService {
     }
 
     // 重新排序执行次数
-    // if (!zbData.attachFlag) {
-    //   for (let i = 0; i < xbData.length; i++) {
-    //     xbData[i].zxcs = i + 1;
-    //     if (xxData && xxData.length > 0) {
-    //       xxData.forEach((item) => {
-    //         item.zxcs = i + 1;
-    //         item.ksys = xbData[i].ksys;
-    //       });
-    //     }
-    //   }
-    // }
+    if (!h12_yzzbOpe.attachFlag) {
+      for (let i = 0; i < h12_yzxbList.length; i++) {
+        h12_yzxbList[i].zxcs = i + 1;
+        if (xxData && xxData.length > 0) {
+          xxData.forEach((item) => {
+            item.zxcs = i + 1;
+            item.ksys = h12_yzxbList[i].ksys;
+          });
+        }
+      }
+    }
 
     // 2. 保存数据
     try {
-      await this.h12_yzzbRepo.save(zbData);
-      await this.h12_yzxbRepo.save(xbData);
+      await this.h12_yzzbRepo.save(h12_yzzbObj);
+      await this.h12_yzxbRepo.save(h12_yzxbList);
       if (xxData && xxData.length > 0) {
         // 保存附加信息逻辑
       }
