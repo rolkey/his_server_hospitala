@@ -10,7 +10,8 @@ import { h12_yzxb } from './h12_yzxb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { h12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
+import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
+// import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -179,13 +180,14 @@ export class h12_yzzbService {
       brxm: patientInfo.brxm,
       brnl: brnl,
       etys: patientInfo.etys,
-      ksid: patientInfo.cyksid,
+      ksid: patientInfo.cyksid?.trim(),
       cwid: patientInfo.rycw,
       jsbz: 0,
       tzbz: 0, // 停嘱
       zxbz: 0, // 执行
       tjbz: 0, // 提交标志
       ybbz: 1, // 医嘱标志
+      yzzt: 0, // 医嘱状态
       sjbz: 0, // 上级标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
@@ -282,12 +284,12 @@ export class h12_yzzbService {
    * @param xxData 附加信息数据数组
    * @param h12_yzzbOpe 业务参数
    */
-  async validateAndSaveOrders(
-    h12_yzzbObj: Partial<h12_yzzb>,
-    h12_yzxbList: Partial<h12_yzxb>[],
-    xxData: any[] = [],
-    h12_yzzbOpe: h12_yzzbOpeDto,
-  ): Promise<{ success: boolean; message: string }> {
+  async saveAdvices(h12_yzzbOpe: H12_yzzbOpeDto): Promise<{ success: boolean; message: string }> {
+    const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
+
+    // const h12_yzzb_record = this.h12_yzzbRepo.find({
+    //   where: { zyid: h12_yzzbOpe.zyid, yzlx: h12_yzzbOpe.yzlx ?? 0 },
+    // });
     // 1. 数据验证
     if (!h12_yzxbList || h12_yzxbList.length === 0) {
       throw new BadRequestException('请录入医嘱内容!');
@@ -338,87 +340,95 @@ export class h12_yzzbService {
 
     // 验证每条医嘱
     for (let i = 0; i < h12_yzxbList.length; i++) {
-      const order = h12_yzxbList[i];
+      const adviceRow = h12_yzxbList[i];
 
       // 特殊医嘱处理
       const specialOrders = ['     术 后 医 嘱', '     重 整 医 嘱', '     产 后 医 嘱'];
-      if (specialOrders.includes(order.xmmc)) {
-        if (!order.zxcs) {
-          order.zxcs = i + 1;
+      if (specialOrders.includes(adviceRow.xmmc)) {
+        if (!adviceRow.zxcs) {
+          adviceRow.zxcs = i + 1;
           continue;
         }
       } else {
         // 验证项目内容
-        if (!order.xmid || order.xmid.trim() === '') {
+        if (!adviceRow.xmid || adviceRow.xmid.trim() === '') {
           throw new BadRequestException('请选择医嘱项目内容，不能手工录入!');
         }
 
         // 验证用量
-        if ((!order.jfyl || order.jfyl === 0) && order.sfbz === 1) {
+        if ((!adviceRow.jfyl || adviceRow.jfyl === 0) && adviceRow.sfbz === 1) {
           throw new BadRequestException('请录入用量!');
         }
 
         // 验证频次
-        if (!order.syplid || order.syplid.trim() === '') {
+        if (!adviceRow.syplid || adviceRow.syplid.trim() === '') {
           throw new BadRequestException('请录入次数!');
         }
 
         // 特殊频次验证
-        if (order.syplid === '一次' && (order.fylbid === '01' || order.fylbid === '03')) {
-          throw new BadRequestException(`${order.xmmc}药品频次不能录入【一次】，请重新录入!`);
+        if (
+          adviceRow.syplid === '一次' &&
+          (adviceRow.fylbid === '01' || adviceRow.fylbid === '03')
+        ) {
+          throw new BadRequestException(`${adviceRow.xmmc}药品频次不能录入【一次】，请重新录入!`);
         }
 
         // 费用类别验证
-        if (order.xmdj > 0 && (!order.fylbid || order.fylbid.trim() === '')) {
-          throw new BadRequestException(`第${i + 1}行，${order.xmmc}药品费用类别为空，请重新录入!`);
+        if (adviceRow.xmdj > 0 && (!adviceRow.fylbid || adviceRow.fylbid.trim() === '')) {
+          throw new BadRequestException(
+            `第${i + 1}行，${adviceRow.xmmc}药品费用类别为空，请重新录入!`,
+          );
         }
       }
 
       // 验证停止医嘱
-      if (h12_yzzbObj.yzlx === 1 && order.tzrq && !order.jsys && !order.jssxys) {
+      if (adviceRow.yzlx === 1 && adviceRow.tzrq && !adviceRow.jsys && !adviceRow.jssxys) {
         throw new BadRequestException('请录入停医生签名!');
       }
 
       // 验证日期
-      if (order.tzrq && (order.jsys || order.jssxys)) {
-        if (order.tzrq < order.yzrq) {
+      if (adviceRow.tzrq && (adviceRow.jsys || adviceRow.jssxys)) {
+        if (adviceRow.tzrq < adviceRow.yzrq) {
           throw new BadRequestException('请录入结束日期! 大于开始日期！');
         }
 
         // 长期医嘱日期验证
-        if ((h12_yzzbObj.yzlx === 1 || h12_yzzbObj.yzlx === 5) && order.yzrq > order.tzrq) {
+        if ((adviceRow.yzlx === 1 || adviceRow.yzlx === 5) && adviceRow.yzrq > adviceRow.tzrq) {
           throw new BadRequestException(
-            `第${i + 1}行长期医嘱开始时间${order.yzrq}大于结束时间${order.tzrq}!`,
+            `第${i + 1}行长期医嘱开始时间${adviceRow.yzrq}大于结束时间${adviceRow.tzrq}!`,
           );
         }
 
         // 标记停止
-        if (h12_yzzbObj.yzlx === 1 && order.tzrq && (order.jsys || order.jssxys)) {
-          order.tzbz = 1;
-          await this.stopOrderDetails(order.yzzh, i);
+        if (adviceRow.yzlx === 1 && adviceRow.tzrq && (adviceRow.jsys || adviceRow.jssxys)) {
+          adviceRow.tzbz = 1;
+          await this.stopOrderDetails(adviceRow.yzzh, i);
         }
 
-        if (h12_yzzbObj.yzlx === 5 && order.tzrq && order.jsys) {
-          order.tzbz = 1;
-          await this.stopOrderDetails(order.yzzh, i);
+        if (adviceRow.yzlx === 5 && adviceRow.tzrq && adviceRow.jsys) {
+          adviceRow.tzbz = 1;
+          await this.stopOrderDetails(adviceRow.yzzh, i);
         }
       }
 
       // 病重告知处理
-      if (order.xmid === 'A000000') {
-        await this.updatePatientStatus(h12_yzzbObj.zyid, order.tzbz === 1 ? '3' : '1');
+      if (adviceRow.xmid === 'A000000') {
+        await this.updatePatientStatus(adviceRow.zyid, adviceRow.tzbz === 1 ? '3' : '1');
       }
 
       // 验证库存
-      if ((order.tjbz === 0 || order.tzbz === 0) && (order.xmzl === 2 || order.xmzl === 3)) {
-        const usageFrequency = await this.getUsageFrequency(order.syplid);
-        const requiredQuantity = order.jfyl * usageFrequency * order.kyts;
+      if (
+        (adviceRow.tjbz === 0 || adviceRow.tzbz === 0) &&
+        (adviceRow.xmzl === 2 || adviceRow.xmzl === 3)
+      ) {
+        const usageFrequency = await this.getUsageFrequency(adviceRow.syplid);
+        const requiredQuantity = adviceRow.jfyl * usageFrequency * adviceRow.kyts;
 
         const stockAvailable = await this.checkStock(
-          order.xmid,
-          order.xmmc,
-          order.xmgg,
-          order.ksid,
+          adviceRow.xmid,
+          adviceRow.xmmc,
+          adviceRow.xmgg,
+          adviceRow.ksid,
           requiredQuantity,
           i,
         );
@@ -427,27 +437,30 @@ export class h12_yzzbService {
           throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
         }
       }
-    }
+      // 重新排序执行次数
+      for (let i = 0; i < adviceRow.children?.length; i++) {
+        adviceRow.zxcs = i + 1;
 
-    // 重新排序执行次数
-    if (!h12_yzzbOpe.attachFlag) {
-      for (let i = 0; i < h12_yzxbList.length; i++) {
-        h12_yzxbList[i].zxcs = i + 1;
-        if (xxData && xxData.length > 0) {
-          xxData.forEach((item) => {
-            item.zxcs = i + 1;
-            item.ksys = h12_yzxbList[i].ksys;
-          });
-        }
+        adviceRow.children.forEach((item) => {
+          item.zxcs = i + 1;
+          item.ksys = h12_yzxbList[i].ksys;
+        });
       }
     }
 
     // 2. 保存数据
     try {
-      await this.h12_yzzbRepo.save(h12_yzzbObj);
-      await this.h12_yzxbRepo.save(h12_yzxbList);
-      if (xxData && xxData.length > 0) {
-        // 保存附加信息逻辑
+      //   await this.h12_yzzbRepo.save(h12_yzzbObj);
+      for (let i = 0; i < h12_yzxbList.length; i++) {
+        const adviceRow = h12_yzxbList[i];
+        let h12_yzxbRow = null;
+        if (adviceRow.isNew) {
+          h12_yzxbRow = this.h12_yzxbRepo.create(adviceRow);
+        } else {
+          h12_yzxbRow = await this.h12_yzxbRepo.findOneBy({ yzzh: adviceRow.yzzh });
+          Object.assign(h12_yzxbRow, adviceRow);
+        }
+        await this.h12_yzxbRepo.save(h12_yzxbRow);
       }
 
       return { success: true, message: '数据保存成功!' };
