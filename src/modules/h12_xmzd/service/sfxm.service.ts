@@ -55,6 +55,10 @@ export class SfxmService {
     return ypzd ? ypzd.pval : '0';
   }
 
+  buildArrayString(array: string[]): string {
+    return array.length > 0 ? `'${array.join("','")}'` : '';
+  }
+
   async h13_sfxm(query: SfxmQueryDto) {
     const params = await this.initParams(query.uKsid);
     const ls_cxsz = await this.getSystemParam('CKFYFS');
@@ -65,26 +69,38 @@ export class SfxmService {
       .innerJoin(
         Kcxx,
         'kc',
+        // 'yp.ypid = kc.ypid AND kc.yxbz = 1 AND ' +
+        //   `((yp.syplid IN ('3','1') AND kc.ksid IN (:...xyksid)) OR ` +
+        //   `(yp.syplid = '2' AND kc.ksid IN (:...qtksid)) OR ` +
+        //   `(yp.syplid IN ('4') AND kc.ksid IN (:...clksid)) OR ` +
+        //   `(yp.syplid IN ('5') AND kc.ksid IN (:...zyksid)) OR ` +
+        //   `(yp.syplid IN ('4') AND kc.ksid IN (:...ssclksid)) OR ` +
+        //   `(yp.syplid IN ('7') AND kc.ksid IN (:...zjksid)) OR ` +
+        //   `(yp.syplid IN ('9') AND kc.ksid IN (:...cyksid))) AND ` +
+        //   `ISNULL(yp.bz1,'0') = '0' AND ` +
+        //   `yp.jsl2 = 0 AND ` +
+        //   `(yp.qt6 = 0 OR yp.qt6 = 2 OR yp.qt6 IS NULL)`,
+        // {
+        //   xyksid: [params.xyksid],
+        //   qtksid: [params.qtksid],
+        //   clksid: [params.clksid],
+        //   zyksid: [params.zyksid],
+        //   ssclksid: [params.ssclksid],
+        //   zjksid: [params.zjksid],
+        //   cyksid: [params.cyksid],
+        // },
         'yp.ypid = kc.ypid AND kc.yxbz = 1 AND ' +
-          `((yp.syplid IN ('3','1') AND kc.ksid IN (:...xyksid)) OR ` +
-          `(yp.syplid = '2' AND kc.ksid IN (:...qtksid)) OR ` +
-          `(yp.syplid IN ('4') AND kc.ksid IN (:...clksid)) OR ` +
-          `(yp.syplid IN ('5') AND kc.ksid IN (:...zyksid)) OR ` +
-          `(yp.syplid IN ('4') AND kc.ksid IN (:...ssclksid)) OR ` +
-          `(yp.syplid IN ('7') AND kc.ksid IN (:...zjksid)) OR ` +
-          `(yp.syplid IN ('9') AND kc.ksid IN (:...cyksid))) AND ` +
+          `((yp.syplid IN ('3','1') AND kc.ksid IN (${this.buildArrayString([params.xyksid])})) OR ` +
+          `(yp.syplid = '2' AND kc.ksid IN (${this.buildArrayString([params.qtksid])})) OR ` +
+          `(yp.syplid IN ('4') AND kc.ksid IN (${this.buildArrayString([params.clksid])})) OR ` +
+          `(yp.syplid IN ('5') AND kc.ksid IN (${this.buildArrayString([params.zyksid])})) OR ` +
+          `(yp.syplid IN ('4') AND kc.ksid IN (${this.buildArrayString([params.ssclksid])})) OR ` +
+          `(yp.syplid IN ('7') AND kc.ksid IN (${this.buildArrayString([params.zjksid])})) OR ` +
+          `(yp.syplid IN ('9') AND kc.ksid IN (${this.buildArrayString([params.cyksid])}))) AND ` +
           `ISNULL(yp.bz1,'0') = '0' AND ` +
           `yp.jsl2 = 0 AND ` +
           `(yp.qt6 = 0 OR yp.qt6 = 2 OR yp.qt6 IS NULL)`,
-        {
-          xyksid: [params.xyksid],
-          qtksid: [params.qtksid],
-          clksid: [params.clksid],
-          zyksid: [params.zyksid],
-          ssclksid: [params.ssclksid],
-          zjksid: [params.zjksid],
-          cyksid: [params.cyksid],
-        },
+        {},
       )
       .select([
         `(CASE WHEN yp.ypflid IN ('01','02','03','90','72') THEN 2 ELSE 3 END) as xmzl`,
@@ -237,7 +253,7 @@ export class SfxmService {
 
     // 获取总数
     const countQuery = `SELECT COUNT(*) as total FROM (${unionQuery}) as union_table`;
-    const totalResult = await this.ypzdRepository.query(countQuery, []); //ypParameters
+    const totalResult = await this.ypzdRepository.query(countQuery, Object.values(ypParameters));
     const total = parseInt(totalResult[0].total, 10);
 
     // 分页查询
@@ -251,7 +267,7 @@ export class SfxmService {
       OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
     `;
 
-    const pageData = await this.ypzdRepository.query(resultQuery, []); //ypParameters
+    const pageData = await this.ypzdRepository.query(resultQuery, Object.values(ypParameters));
 
     return { pageData, total };
   }
