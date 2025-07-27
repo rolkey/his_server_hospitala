@@ -20,7 +20,7 @@ export class h12_yzzbController {
 
   @Post('saveAdvice')
   async saveAdvice(@Body() h12_yzzbOpeDto: H12_yzzbOpeDto) {
-    const record = await this.h12_yzzbService.saveAdvices(h12_yzzbOpeDto);
+    const record = await this.h12_yzzbService.saveAdvice(h12_yzzbOpeDto);
     return { record };
   }
 }

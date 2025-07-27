@@ -284,7 +284,7 @@ export class h12_yzzbService {
    * @param xxData 附加信息数据数组
    * @param h12_yzzbOpe 业务参数
    */
-  async saveAdvices(h12_yzzbOpe: H12_yzzbOpeDto): Promise<{ success: boolean; message: string }> {
+  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto): Promise<{ success: boolean; message: string }> {
     const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
 
     // const h12_yzzb_record = this.h12_yzzbRepo.find({
@@ -295,12 +295,7 @@ export class h12_yzzbService {
       throw new BadRequestException('请录入医嘱内容!');
     }
 
-    // 处理最后一条为空的情况
-    const lastOrder = h12_yzxbList[h12_yzxbList.length - 1];
-    if (h12_yzxbList.length === 1 && (!lastOrder.xmmc || lastOrder.xmmc.trim() === '')) {
-      return { success: true, message: '忽略空医嘱' };
-    }
-
+    // TODO: 转到前端处理
     // if (!lastOrder.xmmc || lastOrder.xmmc.trim() === '') {
     //   // 判断是否已执行
     //   if (lastOrder.zxbz === 1) {
@@ -449,11 +444,11 @@ export class h12_yzzbService {
     }
 
     // 2. 保存数据
+    let h12_yzxbRow = null;
     try {
       //   await this.h12_yzzbRepo.save(h12_yzzbObj);
       for (let i = 0; i < h12_yzxbList.length; i++) {
         const adviceRow = h12_yzxbList[i];
-        let h12_yzxbRow = null;
         if (adviceRow.isNew) {
           h12_yzxbRow = this.h12_yzxbRepo.create(adviceRow);
         } else {
@@ -465,7 +460,8 @@ export class h12_yzzbService {
 
       return { success: true, message: '数据保存成功!' };
     } catch (error) {
-      throw new BadRequestException('医嘱信息保存失败,请检查数据网络是否畅通!');
+      console.error(h12_yzxbRow, error);
+      throw new BadRequestException('医嘱信息保存失败！！');
     }
   }
 
