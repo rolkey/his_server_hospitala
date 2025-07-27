@@ -72,4 +72,12 @@ export class H31_kcxxService {
       .where('h31_kcxx.scrq < :beforeDate', { beforeDate })
       .getMany();
   }
+
+  // 校验库存
+  async validateInventory(ksid: string, ypid: string, quantity: number): Promise<boolean> {
+    const record = await this.findOne(ksid, ypid);
+    if (!record) return false;
+    const { xsl, mzdfsl, dfsl, ssdfsl } = record;
+    return xsl - (mzdfsl || 0) - (dfsl || 0) - (ssdfsl || 0) >= quantity;
+  }
 }

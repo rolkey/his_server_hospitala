@@ -18,7 +18,7 @@ import { UpdateH31_kcxxDto } from './dto/update-h31_kcxx.dto';
 
 @ApiTags('库存信息管理')
 @Controller('h31-kcxx')
-export class H31KcxxController {
+export class H31_kcxxController {
   constructor(private readonly h31KcxxService: H31_kcxxService) {}
 
   @Post()

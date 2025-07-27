@@ -1,3 +1,4 @@
+import { H31_kcxx } from './modules/h31_kcxx/h31_kcxx.entity';
 /**********************************
  * @Author: Ronnie Zhang
  * @LastEditor: Ronnie Zhang
@@ -35,6 +36,8 @@ import { zcmcModule } from './modules/zcmc/zcmc.module';
 import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 导入GyIdentityModule
 import { SfxmModule } from './modules/h12_xmzd/sfxm.module'; // 导入SfxmModule
 import { h13_yzzxcsModule } from './modules/​​h13_yzzxcs​​/h13_yzzxcs.module';
+import { H31_kcxxModule } from './modules/h31_kcxx/h31_kcxx.module';
+
 @Module({
   imports: [
     /* 配置文件模块 */
@@ -69,6 +72,7 @@ import { h13_yzzxcsModule } from './modules/​​h13_yzzxcs​​/h13_yzzxcs.mo
     GyIdentityModule,
     SfxmModule, // 添加SfxmModule到imports数组
     h13_yzzxcsModule,
+    H31_kcxxModule,
   ],
 })
 export class AppModule {}

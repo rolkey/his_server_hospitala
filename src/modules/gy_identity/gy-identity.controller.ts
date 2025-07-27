@@ -35,7 +35,7 @@ export class GyIdentityController {
   //     return this.gyIdentityService.remove(tname);
   //   }
 
-  @Post('getTableMax')
+  @Post('gy_identity')
   async getTableMax(@Body() createGyIdentityDto: CreateGyIdentityDto): Promise<number> {
     const { tname, inc_value } = createGyIdentityDto;
     return this.gyIdentityService.incTable(tname, inc_value);
