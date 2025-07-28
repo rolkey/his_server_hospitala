@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { ksmc } from '../ksmc/ksmc.entity';
 import { usrcat } from '../usrcat/usrcat.entity';
@@ -15,16 +15,16 @@ import { h13_yzzxcs } from './h13_yzzxcs.entity';
 @Index('H12_YZXB_ZYID', ['zyid'], {})
 @Entity('h12_yzxb', { schema: 'dbo' })
 export class h12_yzxb {
-  @Column('smallint', { primary: true, name: 'yzlx' })
+  @PrimaryColumn('smallint', { primary: true, name: 'yzlx' })
   yzlx: number;
 
-  @Column('int', { primary: true, name: 'yzxh' })
+  @PrimaryColumn('int', { primary: true, name: 'yzxh' })
   yzxh: number;
 
-  @Column('char', { primary: true, name: 'zyid', length: 12 })
+  @PrimaryColumn('char', { primary: true, name: 'zyid', length: 12 })
   zyid: string;
 
-  @Column('int', { primary: true, name: 'mxxh' })
+  @PrimaryColumn('int', { primary: true, name: 'mxxh' })
   mxxh: number;
 
   @Column('char', { name: 'zybh', length: 12 })

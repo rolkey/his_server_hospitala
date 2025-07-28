@@ -37,6 +37,9 @@ import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 
 import { SfxmModule } from './modules/h12_xmzd/sfxm.module'; // 导入SfxmModule
 import { h13_yzzxcsModule } from './modules/​​h13_yzzxcs​​/h13_yzzxcs.module';
 import { H31_kcxxModule } from './modules/h31_kcxx/h31_kcxx.module';
+import { H12_mbzbModule } from './modules/h12_mbzb/h12_mbzb.module';
+import { H12_mbxbModule } from './modules/h12_mbxb/h12_mbxb.module';
+import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
 
 @Module({
   imports: [
@@ -73,6 +76,9 @@ import { H31_kcxxModule } from './modules/h31_kcxx/h31_kcxx.module';
     SfxmModule, // 添加SfxmModule到imports数组
     h13_yzzxcsModule,
     H31_kcxxModule,
+    H12_mbzbModule,
+    H12_mbxbModule,
+    Lis_sflbModule,
   ],
 })
 export class AppModule {}

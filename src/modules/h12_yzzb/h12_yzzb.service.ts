@@ -11,7 +11,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
-// import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
+import { H12_yzxbDto } from './dto/h12_yzxb.dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -176,7 +176,7 @@ export class h12_yzzbService {
       yzlx,
       bsid: patientInfo.xbid,
       kbid: patientInfo.zkksid,
-      yzxh: yzxhNew,
+      yzxh: yzxhNew ?? 1,
       brxm: patientInfo.brxm,
       brnl: brnl,
       etys: patientInfo.etys,
@@ -506,5 +506,29 @@ export class h12_yzzbService {
   ): Promise<boolean> {
     // 实现库存检查逻辑
     return true; // 假设库存足够
+  }
+
+  /**
+   * 删除记录
+   * @param h12_yzxbs 删除的数据，包含主键
+   * @returns
+   */
+  async remove(zyid: string, yzlx: number, yzxh: number, mxxh: number): Promise<boolean> {
+    await this.h12_yzxbRepo.delete({
+      zyid,
+      yzlx,
+      yzxh,
+      mxxh,
+    });
+    return true;
+  }
+
+  async removeByYzzh(zyid: string, yzlx: number, yzzh: number): Promise<boolean> {
+    await this.h12_yzxbRepo.delete({
+      zyid,
+      yzlx,
+      yzzh,
+    });
+    return true;
   }
 }
