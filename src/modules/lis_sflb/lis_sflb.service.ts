@@ -3,7 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Lis_sflb } from './lis_sflb.entity';
-import { CreateLisSflbDto, UpdateLisSflbDto, LisSflbResponseDto } from './lis_sflb.dto';
+import {
+  CreateLisSflbDto,
+  UpdateLisSflbDto,
+  QueryLisSflbDto,
+  LisSflbResponseDto,
+} from './lis_sflb.dto';
 
 @Injectable()
 export class Lis_sflbService {

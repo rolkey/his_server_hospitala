@@ -1,7 +1,12 @@
 // src/lis_sflb/lis_sflb.controller.ts
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Delete } from '@nestjs/common';
 import { Lis_sflbService } from './lis_sflb.service';
-import { CreateLisSflbDto, UpdateLisSflbDto, LisSflbResponseDto } from './lis_sflb.dto';
+import {
+  CreateLisSflbDto,
+  UpdateLisSflbDto,
+  QueryLisSflbDto,
+  LisSflbResponseDto,
+} from './lis_sflb.dto';
 
 @Controller('lis-sflb')
 export class Lis_sflbController {
