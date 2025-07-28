@@ -1,15 +1,20 @@
 // src/h12_mbxb/h12_mbxb.controller.ts
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Put, Delete } from '@nestjs/common';
 import { H12_mbxbService } from './h12_mbxb.service';
-import { CreateH12_mbxbDto, UpdateH12_mbxbDto, H12_mbxbResponseDto } from './h12_mbxb.dto';
+import {
+  CreateH12_mbxbDto,
+  UpdateH12_mbxbDto,
+  QueryH12_mbxbDto,
+  H12_mbxbResponseDto,
+} from './h12_mbxb.dto';
 
 @Controller('h12-mbxb')
 export class H12_mbxbController {
   constructor(private readonly h12MbxbService: H12_mbxbService) {}
 
   @Get()
-  async findAll(): Promise<H12_mbxbResponseDto[]> {
-    return this.h12MbxbService.findAll();
+  async findAll(@Query() queryDto: QueryH12_mbxbDto) {
+    return this.h12MbxbService.findAll(queryDto);
   }
 
   @Get(':mbid/:mblx/:mxxh')

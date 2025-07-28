@@ -36,12 +36,12 @@ export class CreateH12_mbzbDto extends H12_mbzbBaseDto {
   // 可以添加创建特有的验证规则
 }
 
-export class UpdateH12_mbzbDto extends PartialType(H12_mbzbBaseDto) {
+export class UpdateH12_mbzbDto extends H12_mbzbBaseDto {
   // 所有字段自动变为可选
   // 可以添加更新特有的验证规则
 }
 
-export class QueryH12_mbzbDto extends PartialType(H12_mbzbBaseDto) {
+export class QueryH12_mbzbDto extends H12_mbzbBaseDto {
   @Allow()
   value?: string;
   // 查询参数通常所有字段都是可选的

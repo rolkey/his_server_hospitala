@@ -28,10 +28,10 @@ export class H12_mbzbService {
 
     // 模板类型
     queryBuilder.andWhere('h12_mbzb.mblx = :mblx', { mblx: queryDto.mblx });
-    if (queryDto.mblx === 2) {
+    if (Number(queryDto.mblx) === 2) {
       queryBuilder.andWhere('h12_mbzb.ysid = :ysid', { ysid: queryDto.ysid });
     }
-    if (queryDto.mblx === 1) {
+    if (Number(queryDto.mblx) === 1) {
       queryBuilder.andWhere('h12_mbzb.ksid = :ksid', { ksid: queryDto.ksid });
     }
     /**
@@ -62,6 +62,9 @@ export class H12_mbzbService {
     }
 
     // 返回数据
+    const pageSize = queryDto.pageSize || 10;
+    const pageNo = queryDto.pageNo || 1;
+    queryBuilder.skip((pageNo - 1) * pageSize).take(pageSize);
     const [pageData, total] = await queryBuilder.getManyAndCount();
     return { pageData, total };
   }

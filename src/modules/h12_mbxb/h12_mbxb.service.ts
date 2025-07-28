@@ -3,7 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { H12_mbxb } from './h12_mbxb.entity';
-import { CreateH12_mbxbDto, UpdateH12_mbxbDto, H12_mbxbResponseDto } from './h12_mbxb.dto';
+import {
+  CreateH12_mbxbDto,
+  UpdateH12_mbxbDto,
+  QueryH12_mbxbDto,
+  H12_mbxbResponseDto,
+} from './h12_mbxb.dto';
 
 @Injectable()
 export class H12_mbxbService {
@@ -12,9 +17,15 @@ export class H12_mbxbService {
     private readonly h12MbxbRepository: Repository<H12_mbxb>,
   ) {}
 
-  async findAll(): Promise<H12_mbxbResponseDto[]> {
-    const items = await this.h12MbxbRepository.find();
-    return items.map((item) => this.toResponseDto(item));
+  async findAll(queryDto: QueryH12_mbxbDto) {
+    const pageSize = queryDto.pageSize || 10;
+    const pageNo = queryDto.pageNo || 1;
+    const [pageData, total] = await this.h12MbxbRepository.findAndCount({
+      where: { mbid: queryDto.mbid },
+      take: pageSize,
+      skip: (pageNo - 1) * pageSize,
+    });
+    return { pageData, total };
   }
 
   async findOne(mbid: string, mblx: number, mxxh: number): Promise<H12_mbxbResponseDto | null> {
