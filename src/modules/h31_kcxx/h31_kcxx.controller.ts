@@ -15,6 +15,7 @@ import { H31_kcxxService } from './h31_kcxx.service';
 import { H31_kcxx } from './h31_kcxx.entity';
 import { CreateH31_kcxxDto } from './dto/create-h31_kcxx.dto';
 import { UpdateH31_kcxxDto } from './dto/update-h31_kcxx.dto';
+import { QueryKcjgDto } from './dto/h31-kcxx.dto';
 
 @ApiTags('库存信息管理')
 @Controller('h31-kcxx')
@@ -155,5 +156,11 @@ export class H31_kcxxController {
   })
   async findExpired(@Query('beforeDate') beforeDate?: Date): Promise<H31_kcxx[]> {
     return this.h31KcxxService.findExpired(beforeDate || new Date());
+  }
+
+  @Get('search/queryKcjg')
+  @ApiOperation({ summary: '查询过期药品' })
+  async queryKcjg(@Query() query: QueryKcjgDto) {
+    return this.h31KcxxService.queryKcjg(query);
   }
 }
