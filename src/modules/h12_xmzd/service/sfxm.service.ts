@@ -16,7 +16,7 @@ export class SfxmService {
     private readonly sysparNewRepository: Repository<SysparNew>,
   ) {}
 
-  private async initParams(uKsid: string): Promise<{
+  public async initParams(uKsid: string): Promise<{
     xyksid: string;
     cyksid: string;
     zyksid: string;

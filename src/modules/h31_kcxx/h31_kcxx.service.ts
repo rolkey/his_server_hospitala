@@ -109,8 +109,9 @@ export class H31_kcxxService {
 
   async queryKcjg(query: QueryKcjgDto) {
     const { lx, ypid, ypmc, xmzl, ksid1, ksid2, ksid3, ksid4, ksid5 } = query;
+    console.error('query', query);
 
-    if (xmzl === 1) {
+    if (Number(xmzl) === 1) {
       // 项目查询逻辑
       const xmzd = await this.h00_xmzdRepository.findOne({ where: { xmid: ypid } });
       if (!xmzd) {
@@ -118,7 +119,7 @@ export class H31_kcxxService {
       }
 
       return {
-        lsjg: xmzd.sfdj,
+        lsjg: xmzd.sfdj, // TODO: 四舍五入
         pfjg: xmzd.pfjg,
         kcdw: xmzd.kcdw,
         sfdw: xmzd.jldw,
@@ -127,7 +128,6 @@ export class H31_kcxxService {
         ybfl: xmzd.zflx,
         zzbz: String(xmzd.sfbz),
         fylbid: xmzd.fylbid,
-        success: true,
       };
     } else {
       // 药品查询逻辑
@@ -136,6 +136,7 @@ export class H31_kcxxService {
         throw new Error('未查到药品字典数据');
       }
 
+      // TODO: ue_read_ksid_mz逻辑未明
       const ksids = [ksid1, ksid2, ksid3, ksid4, ksid5].filter(Boolean);
       const kcxx = await this.h31_kcxxRepository.findOne({
         where: { ypid, ksid: In(ksids), yxbz: 1, kcsl: MoreThan(0) },

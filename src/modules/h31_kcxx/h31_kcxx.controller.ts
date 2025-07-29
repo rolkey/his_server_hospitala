@@ -22,7 +22,7 @@ import { QueryKcjgDto } from './dto/h31-kcxx.dto';
 export class H31_kcxxController {
   constructor(private readonly h31KcxxService: H31_kcxxService) {}
 
-  @Post()
+  @Post('item')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建库存记录' })
   @ApiBody({ type: CreateH31_kcxxDto })
@@ -35,7 +35,7 @@ export class H31_kcxxController {
     return this.h31KcxxService.create(createDto);
   }
 
-  @Get()
+  @Get('item')
   @ApiOperation({ summary: '查询所有库存记录' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -46,7 +46,7 @@ export class H31_kcxxController {
     return this.h31KcxxService.findAll();
   }
 
-  @Get(':ksid/:ypid')
+  @Get('item/:ksid/:ypid')
   @ApiOperation({ summary: '根据主键查询库存记录' })
   @ApiParam({ name: 'ksid', description: '科室ID' })
   @ApiParam({ name: 'ypid', description: '药品ID' })
@@ -59,6 +59,7 @@ export class H31_kcxxController {
     status: HttpStatus.NOT_FOUND,
     description: '库存记录不存在',
   })
+  @Get('item/:ksid/:ypid')
   async findOne(
     @Param('ksid') ksid: string,
     @Param('ypid') ypid: string,
@@ -66,20 +67,20 @@ export class H31_kcxxController {
     return this.h31KcxxService.findOne(ksid, ypid);
   }
 
-  @Patch(':ksid/:ypid')
-  @ApiOperation({ summary: '更新库存记录' })
-  @ApiParam({ name: 'ksid', description: '科室ID' })
-  @ApiParam({ name: 'ypid', description: '药品ID' })
-  @ApiBody({ type: UpdateH31_kcxxDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '返回更新后的库存记录',
-    type: H31_kcxx,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: '库存记录不存在',
-  })
+  //   @Patch(':ksid/:ypid')
+  //   @ApiOperation({ summary: '更新库存记录' })
+  //   @ApiParam({ name: 'ksid', description: '科室ID' })
+  //   @ApiParam({ name: 'ypid', description: '药品ID' })
+  //   @ApiBody({ type: UpdateH31_kcxxDto })
+  //   @ApiResponse({
+  //     status: HttpStatus.OK,
+  //     description: '返回更新后的库存记录',
+  //     type: H31_kcxx,
+  //   })
+  //   @ApiResponse({
+  //     status: HttpStatus.NOT_FOUND,
+  //     description: '库存记录不存在',
+  //   })
   async update(
     @Param('ksid') ksid: string,
     @Param('ypid') ypid: string,
@@ -88,7 +89,7 @@ export class H31_kcxxController {
     return this.h31KcxxService.update(ksid, ypid, updateDto);
   }
 
-  @Delete(':ksid/:ypid')
+  @Delete('item/:ksid/:ypid')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '删除库存记录' })
   @ApiParam({ name: 'ksid', description: '科室ID' })
@@ -101,6 +102,7 @@ export class H31_kcxxController {
     status: HttpStatus.NOT_FOUND,
     description: '库存记录不存在',
   })
+  @Delete('item/:ksid/:ypid')
   async remove(@Param('ksid') ksid: string, @Param('ypid') ypid: string): Promise<void> {
     await this.h31KcxxService.remove(ksid, ypid);
   }
@@ -114,6 +116,7 @@ export class H31_kcxxController {
     description: '返回符合条件的库存记录',
     type: [H31_kcxx],
   })
+  @Get('search/condition')
   async findByCondition(
     @Query('ksid') ksid?: string,
     @Query('ypid') ypid?: string,
@@ -121,7 +124,7 @@ export class H31_kcxxController {
     return this.h31KcxxService.findByCondition({ ksid, ypid });
   }
 
-  @Post('batch')
+  @Post('item/batch')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '批量创建库存记录' })
   @ApiBody({ type: [CreateH31_kcxxDto] })
@@ -159,7 +162,7 @@ export class H31_kcxxController {
   }
 
   @Get('search/queryKcjg')
-  @ApiOperation({ summary: '查询过期药品' })
+  @ApiOperation({ summary: '查询收费项目价格与库存' })
   async queryKcjg(@Query() query: QueryKcjgDto) {
     return this.h31KcxxService.queryKcjg(query);
   }

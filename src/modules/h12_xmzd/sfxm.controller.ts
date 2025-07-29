@@ -16,6 +16,11 @@ export class SfxmController {
     return this.sfxmService.getSfxmData(query);
   }
 
+  @Get('ksids')
+  async getKsConfigs(@Query('id') ksid: string) {
+    return this.sfxmService.initParams(ksid);
+  }
+
   @Get('gs_cxsz')
   async getGsCxsz() {
     return this.configReaderService.readGsCxsz();
