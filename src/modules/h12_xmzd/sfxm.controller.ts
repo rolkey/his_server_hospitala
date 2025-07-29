@@ -13,7 +13,7 @@ export class SfxmController {
 
   @Get('h13_sfxm')
   async getSfxmData(@Query() query: SfxmQueryDto) {
-    return this.sfxmService.h13_sfxm(query);
+    return this.sfxmService.getSfxmData(query);
   }
 
   @Get('gs_cxsz')

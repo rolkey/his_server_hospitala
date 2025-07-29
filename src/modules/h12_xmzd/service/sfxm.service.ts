@@ -1,23 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Ypzd } from '../entity/ypzd.entity';
-import { Kcxx } from '../entity/kcxx.entity';
-import { Xmzd } from '../entity/xmzd.entity';
 import { SfxmQueryDto } from '../dto/sfxm-query.dto';
 import { ParamService } from './param.service';
+import { TempSfxm } from '../entity/temp-sfxm.entity';
 import { SysparNew } from '../entity/__syspar_new.entity';
 
 @Injectable()
 export class SfxmService {
   constructor(
     private readonly paramService: ParamService,
-    @InjectRepository(Ypzd)
-    private readonly ypzdRepository: Repository<Ypzd>,
+    @InjectRepository(TempSfxm)
+    private readonly tempSfxmRepository: Repository<TempSfxm>,
     @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
-    @InjectRepository(Xmzd)
-    private readonly xmzdRepository: Repository<Xmzd>,
   ) {}
 
   private async initParams(uKsid: string): Promise<{
@@ -59,216 +55,217 @@ export class SfxmService {
     return array.length > 0 ? `'${array.join("','")}'` : '';
   }
 
-  async h13_sfxm(query: SfxmQueryDto) {
+  async getSfxmData(query: SfxmQueryDto) {
     const params = await this.initParams(query.uKsid);
     const ls_cxsz = await this.getSystemParam('CKFYFS');
 
-    // 创建药品查询
-    const ypQuery = this.ypzdRepository
-      .createQueryBuilder('yp')
-      .innerJoin(
-        Kcxx,
-        'kc',
-        // 'yp.ypid = kc.ypid AND kc.yxbz = 1 AND ' +
-        //   `((yp.syplid IN ('3','1') AND kc.ksid IN (:...xyksid)) OR ` +
-        //   `(yp.syplid = '2' AND kc.ksid IN (:...qtksid)) OR ` +
-        //   `(yp.syplid IN ('4') AND kc.ksid IN (:...clksid)) OR ` +
-        //   `(yp.syplid IN ('5') AND kc.ksid IN (:...zyksid)) OR ` +
-        //   `(yp.syplid IN ('4') AND kc.ksid IN (:...ssclksid)) OR ` +
-        //   `(yp.syplid IN ('7') AND kc.ksid IN (:...zjksid)) OR ` +
-        //   `(yp.syplid IN ('9') AND kc.ksid IN (:...cyksid))) AND ` +
-        //   `ISNULL(yp.bz1,'0') = '0' AND ` +
-        //   `yp.jsl2 = 0 AND ` +
-        //   `(yp.qt6 = 0 OR yp.qt6 = 2 OR yp.qt6 IS NULL)`,
-        // {
-        //   xyksid: [params.xyksid],
-        //   qtksid: [params.qtksid],
-        //   clksid: [params.clksid],
-        //   zyksid: [params.zyksid],
-        //   ssclksid: [params.ssclksid],
-        //   zjksid: [params.zjksid],
-        //   cyksid: [params.cyksid],
-        // },
-        'yp.ypid = kc.ypid AND kc.yxbz = 1 AND ' +
-          `((yp.syplid IN ('3','1') AND kc.ksid IN (${this.buildArrayString([params.xyksid])})) OR ` +
-          `(yp.syplid = '2' AND kc.ksid IN (${this.buildArrayString([params.qtksid])})) OR ` +
-          `(yp.syplid IN ('4') AND kc.ksid IN (${this.buildArrayString([params.clksid])})) OR ` +
-          `(yp.syplid IN ('5') AND kc.ksid IN (${this.buildArrayString([params.zyksid])})) OR ` +
-          `(yp.syplid IN ('4') AND kc.ksid IN (${this.buildArrayString([params.ssclksid])})) OR ` +
-          `(yp.syplid IN ('7') AND kc.ksid IN (${this.buildArrayString([params.zjksid])})) OR ` +
-          `(yp.syplid IN ('9') AND kc.ksid IN (${this.buildArrayString([params.cyksid])}))) AND ` +
-          `ISNULL(yp.bz1,'0') = '0' AND ` +
-          `yp.jsl2 = 0 AND ` +
-          `(yp.qt6 = 0 OR yp.qt6 = 2 OR yp.qt6 IS NULL)`,
-        {},
-      )
-      .select([
-        `(CASE WHEN yp.ypflid IN ('01','02','03','90','72') THEN 2 ELSE 3 END) as xmzl`,
-        'yp.ypid as xmid',
-        'yp.ypgg as ggxh',
-        'ROUND(kc.pfjg/yp.ysxs, 4) as pfjg',
-        'kc.cjid as cjid',
-        'kc.scph as scph',
-        'ROUND(kc.lsjg/yp.ysxs, 4) as sfdj',
-        'yp.sjjl as jldw',
-        'yp.zwmc as xmmc',
-        'yp.szbm as szbm',
-        'UPPER(yp.pybm) as pybm',
-        'UPPER(yp.wbbm) as wbbm',
-        'UPPER(yp.qtbm) as qtbm',
-        `'' as tcid`,
-        `'' as tcmc`,
-        '1 as sfbz',
-        `'1' as fybz`,
-        'yp.ypflid as fylbid',
-        `'' as bzxx`,
-        `(CASE WHEN yp.abcfl=0 OR LEN(yp.abcfl)=2 THEN CONVERT(varchar(12),yp.abcfl) ELSE '0' + CONVERT(varchar(10),yp.abcfl) END) as ybfl`,
-        'yp.ybfl as nhfl',
-        'yp.zzbz as zzfl',
-        'yp.zwmc as spmc',
-        'kc.gsid as ghid',
-        'kc.ksid as ksid',
-        'yp.jsl1 as psbz',
-        'yp.cfqj as ksbz',
-        '0 as qtbz',
-        'yp.hldw as hldw',
-        'yp.hlxs as hlxs',
-        'yp.ypflbm as ypflbm',
-        'yp.ysxs as ysxs',
-        'yp.fylbid as tjfl',
-        'yp.syplid as zflx',
-        'yp.pwjj as pwjj',
-        "ISNULL(yp.syffid, '') as syffid",
-        `(SELECT SUM(kc2.xsl - ISNULL(kc2.dfsl,0) - ISNULL(kc2.mzdfsl,0) - ISNULL(kc2.ssdfsl,0))
-          FROM h31_kcxx kc2
-          WHERE kc2.ksid=kc.ksid AND kc2.ypid=kc.ypid) as kcsl`,
-        'kc.scpc as scpc',
-        'ISNULL(kc.mzdfsl,0) as mzsl',
-        'ISNULL(kc.dfsl,0) as zysl',
-        `'' as bz2`,
-        `'' as bz3`,
-        `'' as bz4`,
-        `'' as bz5`,
-        'kc.sxrq as sxrq',
-        'yp.gjybbm as bz6',
-        'yp.zysx as bz7',
-        'yp.gjybmc as bz9',
-        `'' as bz10`,
-        `'' as bz11`,
-        `'' as bz12`,
-        'yp.qt7 as zbbz',
-      ]);
-
-    if (ls_cxsz === '0') {
-      ypQuery.andWhere(
-        `kc.scph = (SELECT MIN(kc3.scph) FROM h31_kcxx kc3
-          WHERE kc3.ypid=kc.ypid AND
-          kc3.ksid=kc.ksid AND
-          kc3.xsl - ABS(ISNULL(kc3.mzdfsl,0)+ISNULL(kc3.dfsl,0)+ISNULL(kc3.ssdfsl,0)) >0 AND kc3.yxbz=1)`,
-      );
-    } else if (ls_cxsz === '1') {
-      ypQuery.andWhere(
-        `kc.scph = (SELECT MIN(kc3.scph) FROM h31_kcxx kc3
-          WHERE kc3.ypid=kc.ypid AND
-          kc3.ksid=kc.ksid AND
-          kc3.xsl - ABS(ISNULL(kc3.mzdfsl,0)+ISNULL(kc3.dfsl,0)+ISNULL(kc3.ssdfsl,0)) >0 AND kc3.yxbz=1 AND
-          kc3.sxrq = (SELECT MIN(sxrq) FROM h31_kcxx kc4
-            WHERE kc4.ypid=kc.ypid AND
-            kc4.ksid=kc.ksid AND
-            kc4.xsl - ABS(ISNULL(kc4.mzdfsl,0)+ISNULL(kc4.dfsl,0)+ISNULL(kc4.ssdfsl,0)) >0 AND kc4.yxbz=1))`,
-      );
-    } else {
-      ypQuery.andWhere(`yp.ypfl = '17'`);
-    }
-
-    // 创建项目查询（当bz=1时）
-    let unionQuery = ypQuery.getQuery();
-    const ypParameters = ypQuery.getParameters();
-    console.log('ypParameters 参数信息', ypParameters);
-
-    if (query.bz === 1) {
-      const xmQuery = this.xmzdRepository
-        .createQueryBuilder('xm')
-        .where('xm.yxbz = 1')
-        .andWhere('(xm.xmzl = 1 OR (xm.xmzl = 3 AND xm.dwjb = 1))')
-        .andWhere("(ISNULL(xm.htzfblid, '') = '' OR xm.htzfblid = '2')")
-        .select([
-          'xm.xmzl as xmzl',
-          'xm.xmid as xmid',
-          'xm.ggxh as ggxh',
-          'xm.pfjg as pfjg',
-          'xm.cjid as cjid',
-          'xm.scph as scph',
-          'xm.sfdj as sfdj',
-          'xm.jldw as jldw',
-          'xm.xmmc as xmmc',
-          'xm.szbm as szbm',
-          'UPPER(xm.pybm) as pybm',
-          'UPPER(xm.wbbm) as wbbm',
-          'UPPER(xm.qtbm) as qtbm',
-          'xm.tcid as tcid',
-          'xm.tcmc as tcmc',
-          'xm.sfbz as sfbz',
-          'xm.fybz as fybz',
-          'xm.fylbid as fylbid',
-          'xm.bzxx as bzxx',
-          'xm.zflx as ybfl',
-          'xm.ypfl as nhfl',
-          '1 as zzfl',
-          'xm.xmmc as spmc',
-          `'' as ghid`,
-          'xm.tczfblid as ksid',
-          '0 as psbz',
-          `'' as ksbz`,
-          '0 as qtbz',
-          'LEFT(xm.sfdw, 4) as hldw',
-          '1 as hlxs',
-          `'' as ypflbm`,
-          '1 as ysxs',
-          `'' as tjfl`,
-          `'' as zflx`,
-          '0 as pwjj',
-          `'' as syffid`,
-          '0 as kcsl',
-          `'' as scpc`,
-          '0 as mzsl',
-          '0 as zysl',
-          'xm.tczfblid as bz2',
-          'xm.sgfzfblid as bz3',
-          'xm.qgfzfblid as bz4',
-          'xm.cwflid as bz5',
-          'NULL as sxrq',
-          'xm.gjybbm as bz6',
-          'xm.sm as bz7',
-          'xm.gjybmc as bz9',
-          `'' as bz10`,
-          `'' as bz11`,
-          `'' as bz12`,
-          '0 as zbbz',
-        ]);
-
-      const xmQueryString = xmQuery.getQuery();
-      unionQuery = `(${unionQuery}) UNION ALL (${xmQueryString})`;
-    }
-
-    // 获取总数
-    const countQuery = `SELECT COUNT(*) as total FROM (${unionQuery}) as union_table`;
-    const totalResult = await this.ypzdRepository.query(countQuery, Object.values(ypParameters));
-    const total = parseInt(totalResult[0].total, 10);
-
-    // 分页查询
+    const offset = (query.pageNo - 1) * (query.pageSize || 10);
     const pageSize = query.pageSize || 10;
-    const pageNo = query.pageNo || 1;
-    const offset = (pageNo - 1) * pageSize;
 
-    const resultQuery = `
-      SELECT * FROM (${unionQuery}) as union_table
-      ORDER BY xmmc
-      OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    const dataQuery = this.buildDataQuery(params, ls_cxsz, query, offset, pageSize);
+    const countQuery = this.buildCountQuery(params, ls_cxsz, query);
+
+    const [pageData, total] = await Promise.all([
+      this.tempSfxmRepository.query(dataQuery),
+      this.tempSfxmRepository.query(countQuery),
+    ]);
+
+    return {
+      pageData,
+      total: total[0].count, // 假设总数的返回字段为 count
+    };
+  }
+
+  private buildDataQuery(
+    params,
+    ls_cxsz: string,
+    query: SfxmQueryDto,
+    offset: number,
+    pageSize: number,
+  ): string {
+    if (query.bz === 1) {
+      return `
+        SELECT
+          h00_xmzd.xmzl,
+          h00_xmzd.xmid,
+          h00_xmzd.ggxh,
+          h00_xmzd.pfjg,
+          h00_xmzd.cjid,
+          h00_xmzd.scph,
+          h00_xmzd.sfdj,
+          h00_xmzd.jldw,
+          h00_xmzd.xmmc,
+          h00_xmzd.szbm,
+          UPPER(h00_xmzd.pybm) AS pybm,
+          UPPER(h00_xmzd.wbbm) AS wbbm,
+          UPPER(h00_xmzd.qtbm) AS qtbm,
+          h00_xmzd.tcid,
+          h00_xmzd.tcmc,
+          h00_xmzd.sfbz,
+          h00_xmzd.fybz,
+          h00_xmzd.fylbid,
+          h00_xmzd.bzxx,
+          h00_xmzd.zflx,
+          h00_xmzd.ypfl,
+          1 AS psbz,
+          NULL AS hldw,
+          NULL AS hlxs,
+          NULL AS ypflbm,
+          NULL AS ysxs,
+          NULL AS fylbid,
+          NULL AS syplid,
+          NULL AS pwjj,
+          ISNULL(h00_xmzd.syffid, '') AS syffid,
+          (SELECT SUM(kc.xsl - ISNULL(kc.dfsl, 0) - ISNULL(kc.mzdfsl, 0) - ISNULL(kc.ssdfsl, 0))
+           FROM h31_kcxx kc
+           WHERE kc.ksid = h31_kcxx.ksid AND kc.ypid = h31_kcxx.ypid) AS kcsl,
+          h31_kcxx.scpc,
+          ISNULL(h31_kcxx.mzdfsl, 0) AS mzsl,
+          ISNULL(h31_kcxx.dfsl, 0) AS zysl
+        FROM
+          h00_xmzd
+        WHERE
+          h00_xmzd.yxbz = 1
+          AND ((h00_xmzd.xmzl = 1) OR (h00_xmzd.xmzl = 3 AND h00_xmzd.dwjb = 1))
+          AND (ISNULL(h00_xmzd.htzfblid, '') = '' OR h00_xmzd.htzfblid = '2')
+        ORDER BY h00_xmzd.scph
+        OFFSET ${offset} ROWS
+        FETCH NEXT ${pageSize} ROWS ONLY;
+      `;
+    }
+
+    // 处理 bz != 1 的情况
+    return `
+      SELECT *
+      FROM (
+        SELECT DISTINCT
+          CASE WHEN h30_ypzd.ypflid IN ('01', '02', '03', '90', '72') THEN 2 ELSE 3 END AS xmzl,
+          h30_ypzd.ypid,
+          h30_ypzd.ypgg,
+          ROUND(h31_kcxx.pfjg / h30_ypzd.ysxs, 4) AS pfjg,
+          h31_kcxx.cjid,
+          h31_kcxx.scph,
+          ROUND(h31_kcxx.lsjg / h30_ypzd.ysxs, 4) AS sfdj,
+          h30_ypzd.sjjl,
+          h30_ypzd.zwmc,
+          h30_ypzd.szbm,
+          UPPER(h30_ypzd.pybm) AS pybm,
+          UPPER(h30_ypzd.wbbm) AS wbbm,
+          UPPER(h30_ypzd.qtbm) AS qtbm,
+          h31_kcxx.gsid,
+          h31_kcxx.ksid,
+          h30_ypzd.jsl1,
+          h30_ypzd.cfqj,
+          0 AS psbz,
+          h30_ypzd.hldw,
+          h30_ypzd.hlxs,
+          h30_ypzd.ypflbm,
+          h30_ypzd.ysxs,
+          h30_ypzd.fylbid,
+          h30_ypzd.syplid,
+          h30_ypzd.pwjj,
+          ISNULL(h30_ypzd.syffid, '') AS syffid,
+          (SELECT SUM(kc.xsl - ISNULL(kc.dfsl, 0) - ISNULL(kc.mzdfsl, 0) - ISNULL(kc.ssdfsl, 0))
+           FROM h31_kcxx kc
+           WHERE kc.ksid = h31_kcxx.ksid AND kc.ypid = h31_kcxx.ypid) AS kcsl,
+          h31_kcxx.scpc,
+          ISNULL(h31_kcxx.mzdfsl, 0) AS mzsl,
+          ISNULL(h31_kcxx.dfsl, 0) AS zysl
+        FROM
+          h30_ypzd, h31_kcxx
+        WHERE
+          h30_ypzd.ypid = h31_kcxx.ypid
+          AND h31_kcxx.yxbz = 1
+          AND (
+            (h30_ypzd.syplid IN ('3', '1') AND h31_kcxx.ksid IN (${this.buildArrayString([params.xyksid, params.cyksid])}))
+            OR (h30_ypzd.syplid = '2' AND h31_kcxx.ksid IN (${this.buildArrayString([params.qtksid])}))
+            OR (h30_ypzd.syplid IN ('4') AND h31_kcxx.ksid IN (${this.buildArrayString([params.clksid])}))
+            OR (h30_ypzd.syplid IN ('5') AND h31_kcxx.ksid IN (${this.buildArrayString([params.zyksid])}))
+          )
+          AND ISNULL(h30_ypzd.bz1, '0') = '0'
+          AND h30_ypzd.jsl2 = 0
+          AND (h30_ypzd.qt6 = 0 OR h30_ypzd.qt6 = 2 OR h30_ypzd.qt6 IS NULL)
+          AND (
+            (${ls_cxsz} = '0' AND h31_kcxx.scph = (SELECT MIN(kc.scph)
+                                                    FROM h31_kcxx kc
+                                                    WHERE kc.ypid = h31_kcxx.ypid
+                                                    AND kc.ksid = h31_kcxx.ksid
+                                                    AND kc.xsl - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) > 0
+                                                    AND kc.yxbz = 1))
+            OR (${ls_cxsz} = '1' AND h31_kcxx.scph = (SELECT MIN(kc.scph)
+                                                      FROM h31_kcxx kc
+                                                      WHERE kc.ypid = h31_kcxx.ypid
+                                                      AND kc.ksid = h31_kcxx.ksid
+                                                      AND kc.xsl - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) > 0
+                                                      AND kc.yxbz = 1
+                                                      AND kc.sxrq = (SELECT MIN(sxrq)
+                                                                     FROM h31_kcxx kc1
+                                                                     WHERE kc1.ypid = h31_kcxx.ypid
+                                                                     AND kc1.ksid = h31_kcxx.ksid
+                                                                     AND kc1.xsl - ABS(ISNULL(kc1.mzdfsl, 0) + ISNULL(kc1.dfsl, 0) + ISNULL(kc1.ssdfsl, 0)) > 0
+                                                                     AND kc1.yxbz = 1)))
+          )
+      ) AS result
+      ORDER BY result.scph
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${pageSize} ROWS ONLY;
     `;
+  }
 
-    const pageData = await this.ypzdRepository.query(resultQuery, Object.values(ypParameters));
+  private buildCountQuery(params, ls_cxsz: string, query: SfxmQueryDto): string {
+    if (query.bz === 1) {
+      return `
+        SELECT COUNT(*) AS count
+        FROM h00_xmzd
+        WHERE yxbz = 1
+          AND (
+            (xmzl = 1) OR (xmzl = 3 AND dwjb = 1)
+          )
+          AND (ISNULL(htzfblid, '') = '' OR htzfblid = '2');
+      `;
+    }
 
-    return { pageData, total };
+    return `
+      SELECT COUNT(*) AS count
+      FROM (
+        SELECT DISTINCT
+          CASE WHEN h30_ypzd.ypflid IN ('01', '02', '03', '90', '72') THEN 2 ELSE 3 END AS xmzl,
+          h30_ypzd.ypid
+        FROM
+          h30_ypzd, h31_kcxx
+        WHERE
+          h30_ypzd.ypid = h31_kcxx.ypid
+          AND h31_kcxx.yxbz = 1
+          AND (
+            (h30_ypzd.syplid IN ('3', '1') AND h31_kcxx.ksid IN (${this.buildArrayString([params.xyksid, params.cyksid])}))
+            OR (h30_ypzd.syplid = '2' AND h31_kcxx.ksid IN (${this.buildArrayString([params.qtksid])}))
+            OR (h30_ypzd.syplid IN ('4') AND h31_kcxx.ksid IN (${this.buildArrayString([params.clksid])}))
+            OR (h30_ypzd.syplid IN ('5') AND h31_kcxx.ksid IN (${this.buildArrayString([params.zyksid])}))
+          )
+          AND ISNULL(h30_ypzd.bz1, '0') = '0'
+          AND h30_ypzd.jsl2 = 0
+          AND (h30_ypzd.qt6 = 0 OR h30_ypzd.qt6 = 2 OR h30_ypzd.qt6 IS NULL)
+          AND (
+            (${ls_cxsz} = '0' AND h31_kcxx.scph = (SELECT MIN(kc.scph)
+                                                    FROM h31_kcxx kc
+                                                    WHERE kc.ypid = h31_kcxx.ypid
+                                                    AND kc.ksid = h31_kcxx.ksid
+                                                    AND kc.xsl - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) > 0
+                                                    AND kc.yxbz = 1))
+            OR (${ls_cxsz} = '1' AND h31_kcxx.scph = (SELECT MIN(kc.scph)
+                                                      FROM h31_kcxx kc
+                                                      WHERE kc.ypid = h31_kcxx.ypid
+                                                      AND kc.ksid = h31_kcxx.ksid
+                                                      AND kc.xsl - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) > 0
+                                                      AND kc.yxbz = 1
+                                                      AND kc.sxrq = (SELECT MIN(sxrq)
+                                                                     FROM h31_kcxx kc1
+                                                                     WHERE kc1.ypid = h31_kcxx.ypid
+                                                                     AND kc1.ksid = h31_kcxx.ksid
+                                                                     AND kc1.xsl - ABS(ISNULL(kc1.mzdfsl, 0) + ISNULL(kc1.dfsl, 0) + ISNULL(kc1.ssdfsl, 0)) > 0
+                                                                     AND kc1.yxbz = 1)))
+          )
+      ) AS totalCount;
+    `;
   }
 }
