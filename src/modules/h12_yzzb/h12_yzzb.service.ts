@@ -11,7 +11,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
-import { H12_yzxbDto } from './dto/h12_yzxb.dto';
+import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -284,7 +284,7 @@ export class h12_yzzbService {
    * @param xxData 附加信息数据数组
    * @param h12_yzzbOpe 业务参数
    */
-  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto): Promise<{ success: boolean; message: string }> {
+  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto) {
     const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
 
     // const h12_yzzb_record = this.h12_yzzbRepo.find({
@@ -458,7 +458,7 @@ export class h12_yzzbService {
         await this.h12_yzxbRepo.save(h12_yzxbRow);
       }
 
-      return { success: true, message: '数据保存成功!' };
+      return '数据保存成功!';
     } catch (error) {
       console.error(h12_yzxbRow, error);
       throw new BadRequestException('医嘱信息保存失败！！');
@@ -530,5 +530,28 @@ export class h12_yzzbService {
       yzzh,
     });
     return true;
+  }
+
+  //   合并分组
+  async mergeGroup(h12_yzxbs: UpdateH12_yzxbDto[]) {
+    // 取第一行的组号，更新所有
+    const yzzh = h12_yzxbs[0].yzzh;
+    for (const h12_yzxb of h12_yzxbs) {
+      const { yzlx, yzxh, zyid, mxxh } = h12_yzxb;
+      await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, mxxh }, { yzzh });
+    }
+  }
+
+  // 拆分组
+  async splitGroup(h12_yzxbs: UpdateH12_yzxbDto[]) {
+    // TODO: 从优化的角度来讲，第一行不需要重新获取组号
+    const adviceYzzhs = [];
+    for (const h12_yzxb of h12_yzxbs) {
+      const { yzid, yzlx, yzxh, zyid, mxxh } = h12_yzxb;
+      const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
+      await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, mxxh }, { yzzh });
+      adviceYzzhs.push({ yzid, yzzh });
+    }
+    return adviceYzzhs;
   }
 }

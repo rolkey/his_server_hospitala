@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
-import { H12_yzxbDto } from './dto/h12_yzxb.dto';
+import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 
 @Controller('h12_yzzb')
 export class h12_yzzbController {
@@ -35,5 +35,17 @@ export class h12_yzzbController {
   async removeByYzzh(@Query() data: { zyid: string; yzlx: number; yzzh: number }) {
     const { zyid, yzlx, yzzh } = data;
     return await this.h12_yzzbService.removeByYzzh(zyid, yzlx, yzzh);
+  }
+
+  // 合并组
+  @Post('merge-group')
+  async mergeGroup(@Body() h12_yzxbs: UpdateH12_yzxbDto[]) {
+    return await this.h12_yzzbService.mergeGroup(h12_yzxbs);
+  }
+
+  // 拆分组
+  @Post('split-group')
+  async splitGroup(@Body() h12_yzxbs: UpdateH12_yzxbDto[]) {
+    return await this.h12_yzzbService.splitGroup(h12_yzxbs);
   }
 }

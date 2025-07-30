@@ -139,7 +139,8 @@ export class H31_kcxxService {
       // TODO: ue_read_ksid_mz逻辑未明
       const ksids = [ksid1, ksid2, ksid3, ksid4, ksid5].filter(Boolean);
       const kcxx = await this.h31_kcxxRepository.findOne({
-        where: { ypid, ksid: In(ksids), yxbz: 1, kcsl: MoreThan(0) },
+        // where: { ypid, ksid: In(ksids), yxbz: 1, kcsl: MoreThan(0) },
+        where: { ypid, yxbz: 1 },
         order: { scph: 'ASC' },
       });
 

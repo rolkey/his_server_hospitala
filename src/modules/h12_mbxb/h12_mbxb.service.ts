@@ -18,7 +18,8 @@ export class H12_mbxbService {
   ) {}
 
   async findAll(queryDto: QueryH12_mbxbDto) {
-    const pageSize = queryDto.pageSize || 10;
+    // 当获取数据时，pageSize没有作用
+    const pageSize = queryDto.pageSize || 100;
     const pageNo = queryDto.pageNo || 1;
     const [pageData, total] = await this.h12MbxbRepository.findAndCount({
       where: { mbid: queryDto.mbid },
