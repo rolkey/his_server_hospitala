@@ -1,9 +1,8 @@
 // src/dto/sfxm-query.dto.ts
-import { Allow, IsString } from 'class-validator';
+import { Allow } from 'class-validator';
 
 export class SfxmQueryDto {
   @Allow()
-  @IsString()
   uKsid: string;
 
   @Allow()

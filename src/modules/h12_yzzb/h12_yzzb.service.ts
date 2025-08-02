@@ -496,6 +496,16 @@ export class h12_yzzbService {
     return frequency?.mrcs || 1;
   }
 
+  /**
+   * 校验库存
+   * @param xmid
+   * @param xmmc
+   * @param xmgg
+   * @param ksid
+   * @param requiredQuantity
+   * @param index
+   * @returns
+   */
   private async checkStock(
     xmid: string,
     xmmc: string,
