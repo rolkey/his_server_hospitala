@@ -1,3 +1,4 @@
+import { H31_kcxx } from './../h31_kcxx/h31_kcxx.entity';
 import { Injectable, BadRequestException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,6 +15,8 @@ import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
 // import { Gs_cxszDto } from '@/modules/h12_xmzd/dto/gs_cxsz.dto';
 // import { promises } from 'dns';
 import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
+import { H31_kcxxService } from '@/modules/h31_kcxx/h31_kcxx.service';
+import { KcjgYpidRequestDto, Kcjgxx } from '@/modules/h31_kcxx/dto/kcjg-ypid.dto';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -38,6 +41,7 @@ export class h12_yzxbService {
     private readonly h12YzzbService: h12_yzzbService,
     private readonly configReaderService: ConfigReaderService,
     private readonly sunsoftService: SunsoftService,
+    private readonly h31_kcxxService: H31_kcxxService,
   ) {}
 
   // 取组套
@@ -203,14 +207,22 @@ export class h12_yzxbService {
     return pageData;
   }
 
+  private async _getKcjgA(request: KcjgYpidRequestDto): Promise<Kcjgxx> {
+    const kcjgYpidResponseDto = await this.h31_kcxxService.ueReadKcjgYpid(request);
+    if (kcjgYpidResponseDto.success) {
+      return kcjgYpidResponseDto.data;
+    } else {
+      throw new BadRequestException(kcjgYpidResponseDto.message);
+    }
+  }
+
   /**
    * 获取项目详情
    * @private
    */
   async _getItemDetail(item: any) {
-    const { data } = await this._getKcjg({
+    const kckgxx = await this._getKcjgA({
       lx: 1, // 是否跟item.mblx模板类型有关？
-      value: item.xmid,
       ypid: item.xmid,
       ypmc: item.xmmc,
       xmzl: item.xmzl,
@@ -223,7 +235,7 @@ export class h12_yzxbService {
 
     return {
       ...item,
-      ...data,
+      ...kckgxx,
       ksid: item.zxks || this.departmentId,
     };
   }
@@ -316,7 +328,7 @@ export class h12_yzxbService {
       await this._setChildAdviceBaseInfo(childAdvice, advice);
 
       // 获取子项目详情
-      const childItem = await this._getChildItemDetail(pkgItem);
+      const childItem = await this._getItemDetail(pkgItem);
 
       // 设置子项目信息
       this._setChildItemInfo(childAdvice, childItem);
@@ -354,30 +366,6 @@ export class h12_yzxbService {
     }
 
     childAdvice.yzrq = new Date();
-  }
-
-  /**
-   * 获取子项目详情
-   * @private
-   */
-  async _getChildItemDetail(pkgItem: any) {
-    const { data } = await this._getKcjg({
-      lx: 1,
-      ypid: pkgItem.xmid,
-      ypmc: pkgItem.xmmc,
-      xmzl: pkgItem.xmzl,
-      ksid1: this.g_ksid.xyksid,
-      ksid2: this.g_ksid.cyksid,
-      ksid3: this.g_ksid.zyksid,
-      ksid4: this.g_ksid.clksid,
-      ksid5: this.g_ksid.qtksid,
-    });
-
-    return {
-      ...pkgItem,
-      ...data,
-      ksid: data.zxks || this.gstr_ainf.u_ksid,
-    };
   }
 
   /**

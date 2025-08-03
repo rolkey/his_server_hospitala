@@ -16,6 +16,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 import { SfxmModule } from '../h12_xmzd/sfxm.module';
 import { SunsoftModule } from '../sunsoft/sunsoft.module';
+import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
 
 @Global()
 @Module({
@@ -35,6 +36,7 @@ import { SunsoftModule } from '../sunsoft/sunsoft.module';
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
     forwardRef(() => SunsoftModule),
+    forwardRef(() => H31_kcxxModule),
   ],
   controllers: [h12_yzzbController],
   providers: [h12_yzzbService, h12_yzxbService],
