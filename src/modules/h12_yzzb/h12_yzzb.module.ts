@@ -13,6 +13,8 @@ import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { GyIdentityModule } from '../gy_identity/gy-identity.module';
+import { SfxmModule } from '../h12_xmzd/sfxm.module';
+import { SunsoftModule } from '../sunsoft/sunsoft.module';
 
 @Global()
 @Module({
@@ -30,6 +32,8 @@ import { GyIdentityModule } from '../gy_identity/gy-identity.module';
       h11_brxx,
     ]),
     forwardRef(() => GyIdentityModule),
+    forwardRef(() => SfxmModule),
+    forwardRef(() => SunsoftModule),
   ],
   controllers: [h12_yzzbController],
   providers: [h12_yzzbService],

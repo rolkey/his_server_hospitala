@@ -18,5 +18,8 @@ export class H12_yzxbOpeDto {
   systemId: string;
 
   @Allow()
+  ksid: string;
+
+  @Allow()
   h12_mbxbs: UpdateH12_mbxbDto[];
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
-import DateFormater from '@/utils/DateFormater';
+// import DateFormater from '@/utils/DateFormater';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -11,34 +11,49 @@ import { ModuleRef } from '@nestjs/core';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
 import { Gstr_ainfDto } from '@/modules/h12_xmzd/dto/gstr_ainf.dto';
 import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
-import { Gs_cxszDto } from '@/modules/h12_xmzd/dto/gs_cxsz.dto';
-import { promises } from 'dns';
+// import { Gs_cxszDto } from '@/modules/h12_xmzd/dto/gs_cxsz.dto';
+// import { promises } from 'dns';
+import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
-  // 定义常量 MAX_RECURSION_DEPTH
+  // TODO: 使用Redis缓存参数
   private readonly MAX_RECURSION_DEPTH = 3;
-  private yzrq: string = DateFormater.formatDate1(new Date());
+  private yzrq: Date = new Date();
   private gstr_ainf: Gstr_ainfDto;
   private g_ksid: G_ksidDto;
-  private gs_cxsz: Gs_cxszDto;
+  //   private gs_cxsz: Gs_cxszDto;
   private yzlx: number;
   private zyid: string;
-  private userId: number;
+  private userId: string;
   private systemId: string;
   private departmentId: string;
 
   constructor(
-    @InjectRepository(h12_yzzb)
-    private h12_yzzbRepo: Repository<h12_yzzb>,
-    @InjectRepository(h12_yzxb)
-    private h12_yzxbRepo: Repository<h12_yzxb>,
+    // @InjectRepository(h12_yzzb)
+    // private h12_yzzbRepo: Repository<h12_yzzb>,
+    // @InjectRepository(h12_yzxb)
+    // private h12_yzxbRepo: Repository<h12_yzxb>,
     private readonly gyIdentityService: GyIdentityService,
     private readonly h12YzzbService: h12_yzzbService,
+    private readonly configReaderService: ConfigReaderService,
+    private readonly sunsoftService: SunsoftService,
   ) {}
 
   // 取组套
   async addPackageToAdvice(h12_yzxbs: H12_yzxbOpeDto) {
+    // 变量初始化
+    this.yzlx = h12_yzxbs.yzlx;
+    this.zyid = h12_yzxbs.zyid;
+    this.userId = h12_yzxbs.userId;
+    this.systemId = h12_yzxbs.systemId;
+    this.departmentId = h12_yzxbs.ksid;
+    this.g_ksid = await this.configReaderService.getKsids(this.departmentId);
+    this.gstr_ainf = await this.configReaderService.readGstrAinf({
+      userId: h12_yzxbs.userId,
+      systemId: h12_yzxbs.systemId,
+    });
+
     const adviceList = [];
     try {
       // 1. 初始化变量
@@ -107,7 +122,7 @@ export class h12_yzxbService {
     selectedCount,
     packageGroupId,
     recursionDepth,
-  }): Promise<{ newAdvice: any; mergedItem: any }> {
+  }): Promise<{ newAdvice: h12_yzxb; mergedItem: any }> {
     // 如果是组套第一行，设置组套信息
 
     // 创建医嘱项
@@ -135,7 +150,7 @@ export class h12_yzxbService {
    * 设置医嘱基本信息
    * @private
    */
-  async _setAdviceBaseInfo(advice, { isPackage }) {
+  async _setAdviceBaseInfo(advice: h12_yzxb, { isPackage }) {
     advice.tcbz = isPackage ? 1 : 0;
     advice.sjbz = 1;
     advice.sfbz = isPackage ? 0 : 1;
@@ -143,7 +158,7 @@ export class h12_yzxbService {
     advice.zxbz = 0;
     advice.tzbz = 0;
     advice.tjbz = 0;
-    advice.szbz = 1;
+    // advice.szbz = 1;
     advice.lryid = this.userId;
     advice.hdbz = this.systemId === '13' ? 1 : 0;
 
@@ -167,11 +182,12 @@ export class h12_yzxbService {
     }
 
     advice.yzrq = this.yzrq;
-    advice.isNew = true;
+    // advice.isNew = true;
   }
 
   private async _getKcjg(item: any): Promise<{ data: any }> {
-    return null;
+    const { data } = await this.sunsoftService.forwardRequest('h31_kcxx', 'findAll', null, item);
+    return data;
   }
 
   /**
@@ -297,7 +313,7 @@ export class h12_yzxbService {
    * 设置子医嘱基本信息
    * @private
    */
-  async _setChildAdviceBaseInfo(childAdvice, parentAdvice) {
+  async _setChildAdviceBaseInfo(childAdvice: h12_yzxb, parentAdvice: h12_yzxb) {
     childAdvice.zyid = parentAdvice.zyid;
     childAdvice.zybh = parentAdvice.zybh;
     childAdvice.zycs = parentAdvice.zycs;

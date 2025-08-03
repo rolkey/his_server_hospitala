@@ -2,47 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SfxmQueryDto } from '../dto/sfxm-query.dto';
-import { ParamService } from './param.service';
+import { ConfigReaderService } from './config-reader.service';
 import { TempSfxm } from '../entity/temp-sfxm.entity';
 import { SysparNew } from '../entity/__syspar_new.entity';
 
 @Injectable()
 export class SfxmService {
   constructor(
-    private readonly paramService: ParamService,
     @InjectRepository(TempSfxm)
     private readonly tempSfxmRepository: Repository<TempSfxm>,
     @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
+    private readonly configReaderService: ConfigReaderService,
   ) {}
-
-  public async initParams(uKsid: string): Promise<{
-    xyksid: string;
-    cyksid: string;
-    zyksid: string;
-    clksid: string;
-    qtksid: string;
-    zjksid: string;
-    ssclksid: string;
-  }> {
-    const [xyksid, cyksid, zyksid, clksid, qtksid, zjksid] = await Promise.all([
-      this.paramService.gfGetPara(13, `xy${uKsid}`, '0603', `西药${uKsid}`),
-      this.paramService.gfGetPara(13, `cy${uKsid}`, '0603', `成药${uKsid}`),
-      this.paramService.gfGetPara(13, `zy${uKsid}`, '0604', `中药${uKsid}`),
-      this.paramService.gfGetPara(13, `cl${uKsid}`, '0603', `材料${uKsid}`),
-      this.paramService.gfGetPara(13, `qt${uKsid}`, '0603', `其他${uKsid}`),
-      this.paramService.gfGetPara(13, `zj${uKsid}`, '0603', `针剂${uKsid}`),
-    ]);
-
-    const ssclksid = await this.paramService.gfGetPara(
-      13,
-      `sscl${uKsid}`,
-      clksid,
-      `手术材料${uKsid}`,
-    );
-
-    return { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid };
-  }
 
   private async getSystemParam(paramName: string): Promise<string> {
     const ypzd = await this.sysparNewRepository.findOne({
@@ -56,7 +28,7 @@ export class SfxmService {
   }
 
   async getSfxmData(query: SfxmQueryDto) {
-    const params = await this.initParams(query.uKsid);
+    const params = await this.configReaderService.getKsids(query.uKsid);
     const ls_cxsz = await this.getSystemParam('CKFYFS');
 
     const offset = (query.pageNo - 1) * (query.pageSize || 10);

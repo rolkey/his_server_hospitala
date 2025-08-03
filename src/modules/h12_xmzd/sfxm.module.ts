@@ -1,5 +1,5 @@
 // src/modules/sfxm.module.ts
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SfxmController } from './sfxm.controller';
 import { SfxmService } from './service/sfxm.service';
@@ -11,9 +11,15 @@ import { Kcxx } from './entity/kcxx.entity';
 import { Xmzd } from './entity/xmzd.entity';
 import { SysparNew } from './entity/__syspar_new.entity';
 import { ConfigReaderService } from './service/config-reader.service';
+import { UsrcatModule } from '@/modules/usrcat/usrcat.module';
+import { ksmcModule } from '@/modules/ksmc/ksmc.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TempSfxm, Syspar, Ypzd, Kcxx, Xmzd, SysparNew])],
+  imports: [
+    TypeOrmModule.forFeature([TempSfxm, Syspar, Ypzd, Kcxx, Xmzd, SysparNew]),
+    forwardRef(() => UsrcatModule),
+    forwardRef(() => ksmcModule),
+  ],
   controllers: [SfxmController],
   providers: [SfxmService, ParamService, ConfigReaderService],
 })
