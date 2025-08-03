@@ -140,19 +140,19 @@ export class h12_yzzbService {
     }
 
     // 2. 检查医嘱类型限制
-    if (yzlx === 1 || yzlx === 2 || yzlx === 6) {
-      const existingAdvice = await this.h12_yzzbRepo.findOne({
-        where: { zyid, yzlx, tzbz: 0 },
-      });
+    // if (yzlx === 1 || yzlx === 2 || yzlx === 7) {
+    //   const existingAdvice = await this.h12_yzzbRepo.findOne({
+    //     where: { zyid, yzlx, tzbz: 0 },
+    //   });
 
-      if (existingAdvice) {
-        throw new Error(
-          yzlx === 1
-            ? '长期医嘱没有停止，请先停止再开新医嘱!'
-            : '临时医嘱没有停止，请先停止再开新医嘱!',
-        );
-      }
-    }
+    //   if (existingAdvice) {
+    //     throw new Error(
+    //       yzlx === 1
+    //         ? '长期医嘱没有停止，请先停止再开新医嘱!'
+    //         : '临时医嘱没有停止，请先停止再开新医嘱!',
+    //     );
+    //   }
+    // }
 
     // 3. 获取新的医嘱序号
     const h12_yzzb_record = await this.getYzzb(patientInfo, zyid, yzlx);

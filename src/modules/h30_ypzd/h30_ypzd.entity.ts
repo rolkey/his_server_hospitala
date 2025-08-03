@@ -1,7 +1,7 @@
 // src/modules/h30_ypzd/h30_ypzd.entity.ts
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
-@Entity({ name: 'h30_ypzd', schema: 'sunsoft.dbo' })
+@Entity({ name: 'h30_ypzd', schema: 'dbo' })
 export class H30_ypzd {
   @PrimaryColumn({ type: 'varchar', length: 50, default: '' })
   ypid: string;

@@ -3,516 +3,516 @@ import { Type } from 'class-transformer';
 
 export class Gs_cxszDto {
   @Allow()
-  gh: string;
+  gh?: string;
 
   @Allow()
-  ghfhj: string;
+  ghfhj?: string;
 
   @Allow()
-  zcf: string;
+  zcf?: string;
 
   @Allow()
-  kcgl: string;
+  kcgl?: string;
 
   @Allow()
-  szxz: string;
+  szxz?: string;
 
   @Allow()
-  fpsz: string;
+  fpsz?: string;
 
   @Allow()
-  zysl: string;
+  zysl?: string;
 
   @Allow()
-  xmhb: string;
+  xmhb?: string;
 
   @Allow()
-  fphb: string;
+  fphb?: string;
 
   @Allow()
-  mzws: string;
+  mzws?: string;
 
   @Allow()
-  mzprint: string;
+  mzprint?: string;
 
   @Allow()
-  xnhprint: string;
+  xnhprint?: string;
 
   @Allow()
-  mhcx: string;
+  mhcx?: string;
 
   @Allow()
-  tskc: string;
+  tskc?: string;
 
   @Allow()
-  mzzfbz: string;
+  mzzfbz?: string;
 
   @Allow()
-  fylbid: string;
+  fylbid?: string;
 
   @Allow()
-  yzzxbz: string;
+  yzzxbz?: string;
 
   @Allow()
-  yjk: string;
+  yjk?: string;
 
   @Allow()
-  hsgl: string;
+  hsgl?: string;
 
   @Allow()
-  yzyxsj: string;
+  yzyxsj?: string;
 
   @Allow()
-  tpbz: string;
+  tpbz?: string;
 
   @Allow()
-  yjkzk: string;
+  yjkzk?: string;
 
   @Allow()
-  tfcl: string;
+  tfcl?: string;
 
   @Allow()
-  hskcbz: string;
+  hskcbz?: string;
 
   @Allow()
-  hskcgl: string;
+  hskcgl?: string;
 
   @Allow()
-  hskcglks: string;
+  hskcglks?: string;
 
   @Allow()
-  hskcglks1: string;
+  hskcglks1?: string;
 
   @Allow()
-  yszx: string;
+  yszx?: string;
 
   @Allow()
-  hsxh: string;
+  hsxh?: string;
 
   @Allow()
-  kszybh: string;
+  kszybh?: string;
 
   @Allow()
-  qfsz: string;
+  qfsz?: string;
 
   @Allow()
-  pfjgbz: string;
+  pfjgbz?: string;
 
   @Allow()
-  yfzuto: string;
+  yfzuto?: string;
 
   @Allow()
-  cfprint: string;
+  cfprint?: string;
 
   @Allow()
-  fpjd: string;
+  fpjd?: string;
 
   @Allow()
-  yjkprint: string;
+  yjkprint?: string;
 
   @Allow()
-  fyts: string;
+  fyts?: string;
 
   @Allow()
-  mmjs: string;
+  mmjs?: string;
 
   @Allow()
-  zybh: string;
+  zybh?: string;
 
   @Allow()
-  xjkhbh: string;
+  xjkhbh?: string;
 
   @Allow()
-  mrgj: string;
+  mrgj?: string;
 
   @Allow()
-  mrxf: string;
+  mrxf?: string;
 
   @Allow()
-  mrjg: string;
+  mrjg?: string;
 
   @Allow()
-  mrmz: string;
+  mrmz?: string;
 
   @Allow()
-  xyksid: string;
+  xyksid?: string;
 
   @Allow()
-  cyksid: string;
+  cyksid?: string;
 
   @Allow()
-  zyksid: string;
+  zyksid?: string;
 
   @Allow()
-  clksid: string;
+  clksid?: string;
 
   @Allow()
-  qtksid: string;
+  qtksid?: string;
 
   @Allow()
-  hlfylbid: string;
+  hlfylbid?: string;
 
   @Allow()
-  mrfylbid: string;
+  mrfylbid?: string;
 
   @Allow()
-  kffylbid: string;
+  kffylbid?: string;
 
   @Allow()
-  printgs: string;
+  printgs?: string;
 
   @Allow()
-  basy: string;
+  basy?: string;
 
   @Allow()
-  yzxsall: string;
+  yzxsall?: string;
 
   @Allow()
-  xbl: string;
+  xbl?: string;
 
   @Allow()
-  zyyjfg: string;
+  zyyjfg?: string;
 
   @Allow()
-  hljk: string;
+  hljk?: string;
 
   @Allow()
-  szbahauto: string;
+  szbahauto?: string;
 
   @Allow()
-  bcfylbid: string;
+  bcfylbid?: string;
 
   @Allow()
-  xgfylbid: string;
+  xgfylbid?: string;
 
   @Allow()
-  qtfylbid: string;
+  qtfylbid?: string;
 
   @Allow()
-  ctfylbid: string;
+  ctfylbid?: string;
 
   @Allow()
-  xdfylbid: string;
+  xdfylbid?: string;
 
   @Allow()
-  zyfylbid: string;
+  zyfylbid?: string;
 
   @Allow()
-  mmgl: string;
+  mmgl?: string;
 
   @Allow()
-  yztj: string;
+  yztj?: string;
 
   @Allow()
-  bqgl: string;
+  bqgl?: string;
 
   @Allow()
-  sygd: string;
+  sygd?: string;
 
   @Allow()
-  hl: string[];
+  hl?: string[];
 
   @Allow()
-  bc: string[];
+  bc?: string[];
 
   @Allow()
-  xg: string[];
+  xg?: string[];
 
   @Allow()
-  mr: string[];
+  mr?: string[];
 
   @Allow()
-  qt: string[];
+  qt?: string[];
 
   @Allow()
-  ct: string[];
+  ct?: string[];
 
   @Allow()
-  xd: string[];
+  xd?: string[];
 
   @Allow()
-  zy: string[];
+  zy?: string[];
 
   @Allow()
-  kf: string[];
+  kf?: string[];
 
   @Allow()
-  tmyp: string;
+  tmyp?: string;
 
   @Allow()
-  yzbgs: string;
+  yzbgs?: string;
 
   @Allow()
-  yzsl: string;
+  yzsl?: string;
 
   @Allow()
-  sqdgs: string;
+  sqdgs?: string;
 
   @Allow()
-  mbsz: string;
+  mbsz?: string;
 
   @Allow()
-  ssksid: string;
+  ssksid?: string;
 
   @Allow()
-  zycfjl: string;
+  zycfjl?: string;
 
   @Allow()
-  cfsfzh: string;
+  cfsfzh?: string;
 
   @Allow()
-  cffyr: string;
+  cffyr?: string;
 
   @Allow()
-  dzjm: string;
+  dzjm?: string;
 
   @Allow()
-  cfxx: string;
+  cfxx?: string;
 
   @Allow()
-  mzgs: string;
+  mzgs?: string;
 
   @Allow()
-  jhbz: string;
+  jhbz?: string;
 
   @Allow()
-  yksl: string;
+  yksl?: string;
 
   @Allow()
-  mzsyd: string;
+  mzsyd?: string;
 
   @Allow()
-  yzprintgs: string;
+  yzprintgs?: string;
 
   @Allow()
-  mrsj: string;
+  mrsj?: string;
 
   @Allow()
-  mrxj: string;
+  mrxj?: string;
 
   @Allow()
-  syzd: string;
+  syzd?: string;
 
   @Allow()
-  ckfs: string;
+  ckfs?: string;
 
   @Allow()
-  lyfs: string;
+  lyfs?: string;
 
   @Allow()
-  sysj: string;
+  sysj?: string;
 
   @Allow()
-  khk: string;
+  khk?: string;
 
   @Allow()
-  zysfdz: string;
+  zysfdz?: string;
 
   @Allow()
-  tsyzsx: string;
+  tsyzsx?: string;
 
   @Allow()
-  syplsx: string;
+  syplsx?: string;
 
   @Allow()
-  yzjssl: string;
+  yzjssl?: string;
 
   @Allow()
-  yzfygs: string;
+  yzfygs?: string;
 
   @Allow()
-  yzprint: string;
+  yzprint?: string;
 
   @Allow()
-  zybhsz: string;
+  zybhsz?: string;
 
   @Allow()
-  fpzf: string;
+  fpzf?: string;
 
   @Allow()
-  yzzld: string;
+  yzzld?: string;
 
   @Allow()
-  zysqzld: string;
+  zysqzld?: string;
 
   @Allow()
-  zjksid: string;
+  zjksid?: string;
 
   @Allow()
-  printkhbz: string;
+  printkhbz?: string;
 
   @Allow()
-  printsydbz: string;
+  printsydbz?: string;
 
   @Allow()
-  printkh: string;
+  printkh?: string;
 
   @Allow()
-  printcrk: string;
+  printcrk?: string;
 
   @Allow()
-  printcf: string;
+  printcf?: string;
 
   @Allow()
-  printsyd: string;
+  printsyd?: string;
 
   @Allow()
-  printqd: string;
+  printqd?: string;
 
   @Allow()
-  ssclksid: string;
+  ssclksid?: string;
 
   @Allow()
-  kssz: string;
+  kssz?: string;
 
   @Allow()
-  mzcffj: string;
+  mzcffj?: string;
 
   @Allow()
-  dxbz: string;
+  dxbz?: string;
 
   @Type(() => Date)
   @Allow()
-  updatedate: Date;
+  updatedate?: Date;
 
   @Allow()
-  bljcurl: string;
+  bljcurl?: string;
 
   @Allow()
-  ypflbm: string;
+  ypflbm?: string;
 
   @Allow()
-  pfjmc: string;
+  pfjmc?: string;
 
   @Allow()
-  ykrq: string;
+  ykrq?: string;
 
   @Allow()
-  yjkc: string;
+  yjkc?: string;
 
   @Allow()
-  ckgs: string;
+  ckgs?: string;
 
   @Allow()
-  pdgs: string;
+  pdgs?: string;
 
   @Allow()
-  crgs: string;
+  crgs?: string;
 
   @Allow()
-  fyhb: string;
+  fyhb?: string;
 
   @Allow()
-  bmbz: string;
+  bmbz?: string;
 
   @Allow()
-  zyysbb: string;
+  zyysbb?: string;
 
   @Allow()
-  yzinsert: string;
+  yzinsert?: string;
 
   @Allow()
-  blvb: string;
+  blvb?: string;
 
   @Allow()
-  zyxxts: string;
+  zyxxts?: string;
 
   @Allow()
-  szzyh: string;
+  szzyh?: string;
 
   @Allow()
-  zysort: string;
+  zysort?: string;
 
   @Allow()
-  ysstopbz: string;
+  ysstopbz?: string;
 
   @Allow()
-  yssytsbl: string;
+  yssytsbl?: string;
 
   @Allow()
-  ssvb: string;
+  ssvb?: string;
 
   @Allow()
-  lssyplid: string;
+  lssyplid?: string;
 
   @Allow()
-  lssyplidbz: string;
+  lssyplidbz?: string;
 
   @Allow()
-  sssqvb: string;
+  sssqvb?: string;
 
   @Allow()
-  drgbz: string;
+  drgbz?: string;
 
   @Allow()
-  drgdata: string;
+  drgdata?: string;
 
   @Allow()
-  drghis: string;
+  drghis?: string;
 
   @Allow()
-  fyrbz: string;
+  fyrbz?: string;
 
   @Allow()
-  brsort: string;
+  brsort?: string;
 
   @Allow()
-  fyztn: string;
+  fyztn?: string;
 
   @Allow()
-  zyyjkbz: string;
+  zyyjkbz?: string;
 
   @Allow()
-  mztf: string;
+  mztf?: string;
 
   @Allow()
-  yzprintdw: string;
+  yzprintdw?: string;
 
   @Allow()
-  zytsyzbz: string;
+  zytsyzbz?: string;
 
   @Allow()
-  yfselectbz: string;
+  yfselectbz?: string;
 
   @Allow()
-  yzzhautobz: string;
+  yzzhautobz?: string;
 
   @Allow()
-  zyysfilter: string;
+  zyysfilter?: string;
 
   @Allow()
-  zysytsbz: string;
+  zysytsbz?: string;
 
   @Allow()
-  ybznscauto: string;
+  ybznscauto?: string;
 
   @Allow()
-  yxbzauto: string;
+  yxbzauto?: string;
 
   @Allow()
-  ylmbbz: string;
+  ylmbbz?: string;
 
   @Allow()
-  ylybksid: string;
+  ylybksid?: string;
 
   @Allow()
-  zyysypts: string;
+  zyysypts?: string;
 
   @Allow()
-  zyysjmmm: string;
+  zyysjmmm?: string;
 
   @Allow()
-  zysyzxybz: string;
+  zysyzxybz?: string;
 
   @Allow()
-  mrfyksid: string;
+  mrfyksid?: string;
 
   @Allow()
-  yzlsfybz: string;
+  yzlsfybz?: string;
 
   @Allow()
-  yzdzjmbz: string;
+  yzdzjmbz?: string;
 
   @Allow()
-  ybjkmode: string;
+  ybjkmode?: string;
 }

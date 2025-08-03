@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
@@ -16,9 +16,9 @@ export class SunsoftService {
     const httpMethod = request.method.toLowerCase();
     const headers = { ...request.headers };
     delete headers['host']; // 避免 host 冲突
-    console.log('-------------httpMethod targetUrl', httpMethod, targetUrl);
 
     try {
+      // const axiosInstance = (this.httpService as any).axiosRef;
       let response: { data: ApiResponse };
 
       if (httpMethod === 'get' || httpMethod === 'delete') {
@@ -35,11 +35,12 @@ export class SunsoftService {
       return response.data.data;
     } catch (error) {
       console.error('Sunsoft 转发异常:', error?.response?.data || error.message);
-      return {
-        success: false,
-        message: 'Sunsoft 转发异常',
-        error: error?.response?.data || error.message,
-      };
+      //   return {
+      //     success: false,
+      //     message: 'Sunsoft 转发异常',
+      //     error: error?.response?.data || error.message,
+      //   };
+      throw new BadRequestException(error.message);
     }
   }
 }

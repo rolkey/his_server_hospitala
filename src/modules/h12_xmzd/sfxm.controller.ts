@@ -18,7 +18,7 @@ export class SfxmController {
 
   @Get('ksids')
   async getKsConfigs(@Query('id') ksid: string) {
-    return this.sfxmService.initParams(ksid);
+    return this.configReaderService.getKsids(ksid);
   }
 
   @Get('gs_cxsz')
@@ -26,10 +26,10 @@ export class SfxmController {
     return this.configReaderService.readGsCxsz();
   }
 
-  @Get('gstr_ainf')
-  async getGstrAinf() {
-    return this.configReaderService.readGstrAinf();
-  }
+  //   @Get('gstr_ainf')
+  //   async getGstrAinf() {
+  //     return this.configReaderService.readGstrAinf();
+  //   }
 
   @Get('g_configs')
   async getGConfigs() {
@@ -37,7 +37,7 @@ export class SfxmController {
   }
 
   @Get('configs')
-  async getAllConfigs() {
-    return this.configReaderService.readAllConfigs();
+  async getAllConfigs(@Query() data: { userId: string; systemId: string }) {
+    return this.configReaderService.readAllConfigs(data);
   }
 }

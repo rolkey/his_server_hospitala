@@ -1,5 +1,6 @@
 import { Global, Module, forwardRef } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
+import { h12_yzxbService } from './h12_yzxb.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzzbController } from './h12_yzzb.controller';
@@ -36,7 +37,7 @@ import { SunsoftModule } from '../sunsoft/sunsoft.module';
     forwardRef(() => SunsoftModule),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService],
+  providers: [h12_yzzbService, h12_yzxbService],
   exports: [h12_yzzbService],
 })
 export class h12_yzzbModule {}

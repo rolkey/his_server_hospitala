@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { SunsoftController } from './sunsoft.controller';
 import { SunsoftService } from './sunsoft.service'; // 添加这行
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 
+@Global() // 添加这个装饰器使模块成为全局模块
 @Module({
   imports: [
     ConfigModule,
@@ -17,6 +18,7 @@ import { HttpModule } from '@nestjs/axios';
     }),
   ],
   controllers: [SunsoftController],
+  providers: [SunsoftService],
   exports: [SunsoftService],
 })
 export class SunsoftModule {}

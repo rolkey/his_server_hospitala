@@ -7,6 +7,7 @@ import { G_ksidDto } from '../dto/g_ksid.dto';
 import { usrcat as Usrcat } from '@/modules/usrcat/usrcat.entity';
 import { ksmc as Ksmc } from '@/modules/ksmc/ksmc.entity';
 import { Gstr_ainfDto } from '../dto/gstr_ainf.dto';
+import { Gs_cxszDto } from '../dto/gs_cxsz.dto';
 
 @Injectable()
 export class ConfigReaderService {
@@ -19,7 +20,7 @@ export class ConfigReaderService {
     private readonly paramService: ParamService,
   ) {}
 
-  async readGsCxsz(): Promise<any> {
+  async readGsCxsz(): Promise<Gs_cxszDto> {
     const [
       zybh,
       szbahauto,

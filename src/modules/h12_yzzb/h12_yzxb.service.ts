@@ -186,8 +186,21 @@ export class h12_yzxbService {
   }
 
   private async _getKcjg(item: any): Promise<{ data: any }> {
-    const { data } = await this.sunsoftService.forwardRequest('h31_kcxx', 'findAll', null, item);
-    return data;
+    const query = {
+      ...item,
+      pageNo: 1,
+      pageSize: 10,
+    };
+    const { pageData } = await this.sunsoftService.forwardRequest('h31_kcxx', 'findAll', null, {
+      method: 'get',
+      query,
+    });
+    if (pageData.length === 0) {
+      throw new BadRequestException(
+        `字典中没有项目：${item.ypid} -- ${item.ypmc} ${JSON.stringify(query)}`,
+      );
+    }
+    return pageData;
   }
 
   /**
@@ -196,7 +209,8 @@ export class h12_yzxbService {
    */
   async _getItemDetail(item: any) {
     const { data } = await this._getKcjg({
-      lx: 1,
+      lx: 1, // 是否跟item.mblx模板类型有关？
+      value: item.xmid,
       ypid: item.xmid,
       ypmc: item.xmmc,
       xmzl: item.xmzl,
