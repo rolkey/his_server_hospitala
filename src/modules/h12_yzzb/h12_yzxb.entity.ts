@@ -7,6 +7,7 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
+import { varcharNumberTransformer } from '@/utils/varchar-number.transformer'; // 引入 transformer
 
 @Index('h12_yzxb_mxxh', ['zyid', 'mxxh'], {})
 @Index('h12_yzxb_x', ['zyid', 'yzlx', 'yzxh', 'mxxh'], { unique: true })
@@ -277,7 +278,12 @@ export class h12_yzxb {
   @Column('int', { name: 'ysbz', nullable: true, default: () => '(0)' })
   ysbz: number | null;
 
-  @Column('varchar', { name: 'sjyl1', nullable: true, length: 10 })
+  @Column({
+    type: 'varchar', // 数据库字段类型
+    length: 10, // 数据库字段长度
+    transformer: varcharNumberTransformer, // 应用我们创建的 transformer
+    nullable: true, // 根据你的表定义设置是否允许 NULL
+  })
   sjyl1: string | null;
 
   @Column('int', { name: 'srcs', nullable: true })
