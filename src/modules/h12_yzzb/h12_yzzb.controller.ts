@@ -37,9 +37,8 @@ export class h12_yzzbController {
   }
 
   @Delete('yzzh')
-  async removeByYzzh(@Query() data: { zyid: string; yzlx: number; yzzh: number }) {
-    const { zyid, yzlx, yzzh } = data;
-    return await this.h12_yzzbService.removeByYzzh(zyid, yzlx, yzzh);
+  async removeYzzh(@Query() data: Array<{ zyid: string; yzlx: number; yzzh: number }>) {
+    return await this.h12_yzzbService.removeYzzh(data);
   }
 
   // 合并组

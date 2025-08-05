@@ -17,7 +17,7 @@ import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 import { SfxmModule } from '../h12_xmzd/sfxm.module';
 import { SunsoftModule } from '../sunsoft/sunsoft.module';
 import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
-
+import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
 @Global()
 @Module({
   imports: [
@@ -37,6 +37,7 @@ import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
     forwardRef(() => SfxmModule),
     forwardRef(() => SunsoftModule),
     forwardRef(() => H31_kcxxModule),
+    forwardRef(() => H00TcxbModule),
   ],
   controllers: [h12_yzzbController],
   providers: [h12_yzzbService, h12_yzxbService],

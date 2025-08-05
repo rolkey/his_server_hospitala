@@ -1,5 +1,7 @@
 // src/h12_mbxb/h12_mbxb.entity.ts
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, JoinColumn, ManyToOne, Column } from 'typeorm';
+import { h00_syff } from '../h00_syff/h00_syff.entity';
+import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 
 @Entity({ name: 'h12_mbxb', schema: 'sunsoft.dbo' })
 export class H12_mbxb {
@@ -119,4 +121,12 @@ export class H12_mbxb {
 
   @Column({ name: 'ltbz', type: 'varchar', length: 2, default: '', nullable: true })
   ltbz: string | null;
+
+  @ManyToOne(() => h00_syff)
+  @JoinColumn({ name: 'syffid', referencedColumnName: 'syffid' })
+  syffidEntity: h00_syff;
+
+  @ManyToOne(() => h00_sypl)
+  @JoinColumn({ name: 'syplid', referencedColumnName: 'syplid' })
+  syplidEntity: h00_sypl;
 }

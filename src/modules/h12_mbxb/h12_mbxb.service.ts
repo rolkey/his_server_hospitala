@@ -21,11 +21,18 @@ export class H12_mbxbService {
     // 当获取数据时，pageSize没有作用
     const pageSize = queryDto.pageSize || 100;
     const pageNo = queryDto.pageNo || 1;
-    const [pageData, total] = await this.h12MbxbRepository.findAndCount({
-      where: { mbid: queryDto.mbid },
-      take: pageSize,
-      skip: (pageNo - 1) * pageSize,
-    });
+    const h12MbxbQuery = this.h12MbxbRepository
+      .createQueryBuilder('h12_mbxb')
+      .leftJoinAndSelect('h12_mbxb.syffidEntity', 'syffidEntity')
+      .leftJoinAndSelect('h12_mbxb.syplidEntity', 'syplidEntity')
+      .where('h12_mbxb.mbid = :mbid', { mbid: queryDto.mbid })
+      .orderBy('h12_mbxb.mxxh', 'ASC')
+      .take(pageSize)
+      .skip((pageNo - 1) * pageSize);
+
+    // 执行查询并获取总数
+    const [pageData, total] = await h12MbxbQuery.getManyAndCount();
+
     return { pageData, total };
   }
 

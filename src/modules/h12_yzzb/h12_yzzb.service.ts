@@ -12,6 +12,7 @@ import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
+import { isNotEmpty } from 'class-validator';
 
 @Injectable()
 export class h12_yzzbService {
@@ -520,16 +521,32 @@ export class h12_yzzbService {
 
   /**
    * 删除记录
-   * @param h12_yzxbs 删除的数据，包含主键
+   * @param h12_yzxb 删除的数据，包含主键
    * @returns
    */
   async remove(zyid: string, yzlx: number, yzxh: number, mxxh: number): Promise<boolean> {
+    // TODO: 检查同组是否是最后一条ysbz=1的记录，如果是的话，要同时删除附加项目
     await this.h12_yzxbRepo.delete({
       zyid,
       yzlx,
       yzxh,
       mxxh,
     });
+    return true;
+  }
+
+  async removeYzzh(data: Array<{ zyid: string; yzlx: number; yzzh: number }>): Promise<boolean> {
+    // 注意，这里的附加项目已经被删除掉了
+    const results = await Promise.all(
+      data.map((item) => {
+        const { zyid, yzlx, yzzh } = item;
+        return this.h12_yzxbRepo.delete({
+          zyid,
+          yzlx,
+          yzzh,
+        });
+      }),
+    );
     return true;
   }
 

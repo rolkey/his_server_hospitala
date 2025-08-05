@@ -17,6 +17,8 @@ import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
 import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
 import { H31_kcxxService } from '@/modules/h31_kcxx/h31_kcxx.service';
 import { KcjgYpidRequestDto, Kcjgxx } from '@/modules/h31_kcxx/dto/kcjg-ypid.dto';
+import { mergeObjects } from '@/utils/params';
+import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -42,6 +44,7 @@ export class h12_yzxbService {
     private readonly configReaderService: ConfigReaderService,
     private readonly sunsoftService: SunsoftService,
     private readonly h31_kcxxService: H31_kcxxService,
+    private readonly h00TcxbService: H00TcxbService,
   ) {}
 
   // 取组套
@@ -98,12 +101,13 @@ export class h12_yzxbService {
           item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
         // 处理套餐项目
         if (isPackage) {
-          await this._handlePackageItems({
+          const pachageAdvice = await this._handlePackageItems({
             advice: newAdvice,
             // item: mergedItem,
             mbid,
             recursionDepth: controlData.recursionDepth + 1,
           });
+          adviceList.push(...pachageAdvice);
         }
       }
       return adviceList;
@@ -189,6 +193,11 @@ export class h12_yzxbService {
     // advice.isNew = true;
   }
 
+  /**
+   * 通过字典列表取库存的办法，服务间远程调用
+   * @param item
+   * @returns
+   */
   private async _getKcjg(item: any): Promise<{ data: any }> {
     const query = {
       ...item,
@@ -221,7 +230,7 @@ export class h12_yzxbService {
    * @private
    */
   async _getItemDetail(item: any) {
-    const kckgxx = await this._getKcjgA({
+    const kcjgxx = await this._getKcjgA({
       lx: 1, // 是否跟item.mblx模板类型有关？
       ypid: item.xmid,
       ypmc: item.xmmc,
@@ -233,11 +242,18 @@ export class h12_yzxbService {
       ksid5: this.g_ksid.qtksid,
     });
 
-    return {
-      ...item,
-      ...kckgxx,
-      ksid: item.zxks || this.departmentId,
-    };
+    // return {
+    //   ...item,
+    //   ...kcjgxx,
+    //   ksid: item.zxks || this.departmentId,
+    // };
+    return mergeObjects(
+      {
+        ksid: item.zxks || this.departmentId,
+      },
+      kcjgxx,
+      item,
+    );
   }
 
   /**
@@ -257,7 +273,9 @@ export class h12_yzxbService {
     advice.xmdj = item.sfdj;
     advice.xmgg = item.xmgg;
     advice.syffid = item.syffid || '';
+    advice.syffidEntity = item.syffidEntity;
     advice.syplid = item.syplid || 'QD';
+    advice.syplidEntity = item.syplidEntity;
     advice.pfjg = item.pfjg;
     advice.jldw = item.jldw;
     advice.bzxx = item.bzxx;
@@ -312,17 +330,14 @@ export class h12_yzxbService {
     }
 
     // 获取套餐项目
-    // const packageItems = await adviceModuleApi.getMbxbList({
-    //   mbid,
-    // });
-    const packageItems = [];
+    const packageItems = await this.h00TcxbService.getCombinedData(mbid);
 
     // 创建子医嘱项
-    advice.children = [];
+    const packageAdvices = [];
 
     for (const pkgItem of packageItems) {
       const childAdvice = new h12_yzxb();
-      advice.children.push(childAdvice);
+      packageAdvices.push(childAdvice);
 
       // 设置子医嘱基本信息
       await this._setChildAdviceBaseInfo(childAdvice, advice);
@@ -333,6 +348,8 @@ export class h12_yzxbService {
       // 设置子项目信息
       this._setChildItemInfo(childAdvice, childItem);
     }
+
+    return packageAdvices;
   }
 
   /**
@@ -355,17 +372,15 @@ export class h12_yzxbService {
     childAdvice.hdbz = parentAdvice.hdbz;
     childAdvice.lryid = this.gstr_ainf.u_userid;
     childAdvice.yzzh = parentAdvice.yzzh;
-    childAdvice.ysbz = 0;
-    childAdvice.ypid = parentAdvice.xmid;
+    childAdvice.ysbz = parentAdvice.ysbz;
 
-    // 设置医生信息
-    if (this.gstr_ainf.u_zcid === '0106') {
-      childAdvice.kssxys = this.gstr_ainf.u_userid;
-    } else {
-      childAdvice.ksys = this.gstr_ainf.u_userid;
-    }
+    // 复制医生/护士信息
+    childAdvice.ksys = parentAdvice.ksys;
+    childAdvice.kssxys = parentAdvice.kssxys;
+    childAdvice.kshs = parentAdvice.kshs;
+    childAdvice.kssxhs = parentAdvice.kssxhs;
 
-    childAdvice.yzrq = new Date();
+    childAdvice.yzrq = parentAdvice.yzrq;
   }
 
   /**

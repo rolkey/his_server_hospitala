@@ -359,12 +359,13 @@ export class H31_kcxxService {
       if (request.xmzl === 1) {
         // 处理项目
         const xmzd = await this.h00_xmzdRepository.findOne({
-          where: { xmid: request.ypid, yxbz: 1 },
+          where: { xmid: request.ypid },
+          // TODO: yxbz是啥东东？
         });
 
         if (!xmzd) {
           response.success = false;
-          response.message = `未查到项目字典数据，请核对:${request.ypid}${request.ypmc}`;
+          response.message = `未查到项目字典数据，请核对 [${request.ypid}: ${request.ypmc}]`;
           return response;
         }
 

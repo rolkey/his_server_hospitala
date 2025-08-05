@@ -1,5 +1,7 @@
 // src/h12_mbzb/h12_mbzb.entity.ts
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { ksmc } from '@/modules/ksmc/ksmc.entity';
+import { usrcat } from '@/modules/usrcat/usrcat.entity';
 
 @Entity({ name: 'h12_mbzb', schema: 'sunsoft.dbo' })
 export class H12_mbzb {
@@ -41,4 +43,12 @@ export class H12_mbzb {
 
   @Column({ name: 'bz3', type: 'varchar', length: 10, nullable: true })
   bz3: string | null;
+
+  @ManyToOne(() => ksmc)
+  @JoinColumn({ name: 'ksid', referencedColumnName: 'ksid' })
+  ksidEntity: ksmc;
+
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: 'ysid', referencedColumnName: 'usid' })
+  ysidEntity: usrcat;
 }

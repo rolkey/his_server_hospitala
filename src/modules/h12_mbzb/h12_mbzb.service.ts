@@ -18,7 +18,10 @@ export class H12_mbzbService {
   ) {}
 
   async findAll(queryDto: QueryH12_mbzbDto) {
-    const queryBuilder = this.h12MbzbRepository.createQueryBuilder('h12_mbzb');
+    const queryBuilder = this.h12MbzbRepository
+      .createQueryBuilder('h12_mbzb')
+      .leftJoinAndSelect('h12_mbzb.ksidEntity', 'ksidEntity')
+      .leftJoinAndSelect('h12_mbzb.ysidEntity', 'ysidEntity');
 
     // 费用类别
     if (queryDto.mbfl !== '0') {
