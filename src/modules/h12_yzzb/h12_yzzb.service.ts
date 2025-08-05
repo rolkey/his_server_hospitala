@@ -434,10 +434,10 @@ export class h12_yzzbService {
         }
       }
       // 重新排序执行次数
-      for (let i = 0; i < adviceRow.children?.length; i++) {
+      for (let i = 0; i < adviceRow.additional?.length; i++) {
         adviceRow.zxcs = i + 1;
 
-        adviceRow.children.forEach((item) => {
+        adviceRow.additional.forEach((item) => {
           item.zxcs = i + 1;
           item.ksys = h12_yzxbList[i].ksys;
         });
@@ -461,7 +461,7 @@ export class h12_yzzbService {
 
       return '数据保存成功!';
     } catch (error) {
-      console.error(h12_yzxbRow, error);
+      console.error('错误数据', h12_yzxbRow, '\n', error);
       throw new BadRequestException('医嘱信息保存失败！！');
     }
   }

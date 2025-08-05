@@ -89,7 +89,7 @@ export class H12_yzxbDto {
 export class UpdateH12_yzxbDto extends H12_yzxbDto {
   isNew?: boolean;
   yzid?: string;
-  children: H12_yzxbDto[];
+  additional: H12_yzxbDto[];
 }
 
 export class H12_yzxbResponseDto extends H12_yzxbDto {

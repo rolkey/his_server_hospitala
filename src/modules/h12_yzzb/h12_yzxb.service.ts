@@ -2,13 +2,14 @@ import { H31_kcxx } from './../h31_kcxx/h31_kcxx.entity';
 import { Injectable, BadRequestException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { h12_yzzb } from './h12_yzzb.entity';
+// import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 // import DateFormater from '@/utils/DateFormater';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
+import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { ModuleRef } from '@nestjs/core';
+// import { ModuleRef } from '@nestjs/core';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
 import { Gstr_ainfDto } from '@/modules/h12_xmzd/dto/gstr_ainf.dto';
 import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
@@ -101,7 +102,7 @@ export class h12_yzxbService {
           item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
         // 处理套餐项目
         if (isPackage) {
-          const pachageAdvice = await this._handlePackageItems({
+          const pachageAdvice = await this.handlePackageItems({
             advice: newAdvice,
             // item: mergedItem,
             mbid,
@@ -242,11 +243,6 @@ export class h12_yzxbService {
       ksid5: this.g_ksid.qtksid,
     });
 
-    // return {
-    //   ...item,
-    //   ...kcjgxx,
-    //   ksid: item.zxks || this.departmentId,
-    // };
     return mergeObjects(
       {
         ksid: item.zxks || this.departmentId,
@@ -312,11 +308,11 @@ export class h12_yzxbService {
     if (item.cfqj === '2' && this.gstr_ainf.u_zcid > '0103') {
       alert(`该药品名称是抗生素药：[${item.xmmc}]，请主治医师以上盖冒?`);
       advice.ksys = '';
-      advice.kssxys = this.gstr_ainf.u_userid;
+      advice.kssxys = this.userId;
     } else if (item.cfqj === '3' && this.gstr_ainf.u_zcid > '0102') {
       alert(`该药品名称是抗生素药：[${item.xmmc}]，请副主任医师以上盖冒?`);
       advice.ksys = '';
-      advice.kssxys = this.gstr_ainf.u_userid;
+      advice.kssxys = this.userId;
     }
   }
 
@@ -324,9 +320,13 @@ export class h12_yzxbService {
    * 处理套餐项目
    * @private
    */
-  async _handlePackageItems({ advice, mbid, recursionDepth }) {
+  async handlePackageItems({ advice, mbid, recursionDepth }) {
     if (recursionDepth >= this.MAX_RECURSION_DEPTH) {
       throw new Error('组套嵌套层级超过最大限制');
+    }
+
+    if (!this.g_ksid) {
+      this.g_ksid = await this.configReaderService.getKsids(advice.ksid);
     }
 
     // 获取套餐项目
@@ -336,7 +336,7 @@ export class h12_yzxbService {
     const packageAdvices = [];
 
     for (const pkgItem of packageItems) {
-      const childAdvice = new h12_yzxb();
+      const childAdvice = new UpdateH12_yzxbDto();
       packageAdvices.push(childAdvice);
 
       // 设置子医嘱基本信息
@@ -356,7 +356,7 @@ export class h12_yzxbService {
    * 设置子医嘱基本信息
    * @private
    */
-  async _setChildAdviceBaseInfo(childAdvice: h12_yzxb, parentAdvice: h12_yzxb) {
+  async _setChildAdviceBaseInfo(childAdvice: UpdateH12_yzxbDto, parentAdvice: UpdateH12_yzxbDto) {
     childAdvice.zyid = parentAdvice.zyid;
     childAdvice.zybh = parentAdvice.zybh;
     childAdvice.zycs = parentAdvice.zycs;
@@ -369,10 +369,11 @@ export class h12_yzxbService {
     childAdvice.jsbz = 0;
     childAdvice.zxbz = 0;
     childAdvice.tzbz = 0;
+    childAdvice.tjbz = 0;
     childAdvice.hdbz = parentAdvice.hdbz;
-    childAdvice.lryid = this.gstr_ainf.u_userid;
+    childAdvice.lryid = this.userId;
     childAdvice.yzzh = parentAdvice.yzzh;
-    childAdvice.ysbz = parentAdvice.ysbz;
+    childAdvice.ysbz = 0; // 套餐子项按附加项目来看
 
     // 复制医生/护士信息
     childAdvice.ksys = parentAdvice.ksys;
@@ -381,13 +382,15 @@ export class h12_yzxbService {
     childAdvice.kssxhs = parentAdvice.kssxhs;
 
     childAdvice.yzrq = parentAdvice.yzrq;
+
+    childAdvice.isNew = true;
   }
 
   /**
-   * 设置子项目信息
+   * 设置套餐子项信息
    * @private
    */
-  _setChildItemInfo(childAdvice: h12_yzxb, childItem: any) {
+  _setChildItemInfo(childAdvice: UpdateH12_yzxbDto, childItem: any) {
     childAdvice.xmzl = childItem.xmzl;
     childAdvice.xmid = childItem.xmid;
     childAdvice.xmmc = childItem.xmmc;

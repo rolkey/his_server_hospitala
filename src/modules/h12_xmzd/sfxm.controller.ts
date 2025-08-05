@@ -40,4 +40,27 @@ export class SfxmController {
   async getAllConfigs(@Query() data: { userId: string; systemId: string }) {
     return this.configReaderService.readAllConfigs(data);
   }
+
+  @Get('querySfxm')
+  async querySfxm(
+    @Query()
+    query: {
+      xmzl: string;
+      fylbid: string;
+      value: string;
+      pageNo: number;
+      pageSize: number;
+      ksid: string;
+      ksid1: string;
+      ksid2: string;
+      ksid3: string;
+      ksid4: string;
+      ksid5: string;
+      ksid6: string;
+      ksid7: string;
+      ksid8: string;
+    },
+  ) {
+    return this.sfxmService.querySfxm(query);
+  }
 }

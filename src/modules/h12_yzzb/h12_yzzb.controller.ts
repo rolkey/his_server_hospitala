@@ -37,7 +37,7 @@ export class h12_yzzbController {
   }
 
   @Delete('yzzh')
-  async removeYzzh(@Query() data: Array<{ zyid: string; yzlx: number; yzzh: number }>) {
+  async removeYzzh(@Body() data: Array<{ zyid: string; yzlx: number; yzzh: number }>) {
     return await this.h12_yzzbService.removeYzzh(data);
   }
 
@@ -53,8 +53,14 @@ export class h12_yzzbController {
     return await this.h12_yzzbService.splitGroup(h12_yzxbs);
   }
 
+  // 取组套到医嘱中
   @Post('addPackageToAdvice')
   async addPackageToAdvice(@Body() h12_yzxbs: H12_yzxbOpeDto) {
     return this.h12_yzxbService.addPackageToAdvice(h12_yzxbs);
+  }
+
+  @Post('getPackageItems')
+  async getPackageItems(@Body() data: { advice: any; mbid: string }) {
+    return this.h12_yzxbService.handlePackageItems({ ...data, recursionDepth: 1 });
   }
 }

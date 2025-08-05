@@ -445,7 +445,7 @@ export class Gs_cxszDto {
   drgbz?: string;
 
   @Allow()
-  drgdata?: string;
+  drgData?: string;
 
   @Allow()
   drghis?: string;

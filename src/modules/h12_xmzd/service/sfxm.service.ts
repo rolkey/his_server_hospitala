@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SfxmQueryDto } from '../dto/sfxm-query.dto';
 import { ConfigReaderService } from './config-reader.service';
 import { TempSfxm } from '../entity/temp-sfxm.entity';
 import { SysparNew } from '../entity/__syspar_new.entity';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class SfxmService {
@@ -14,6 +15,8 @@ export class SfxmService {
     @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
     private readonly configReaderService: ConfigReaderService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   private async getSystemParam(paramName: string): Promise<string> {
@@ -239,5 +242,69 @@ export class SfxmService {
           )
       ) AS totalCount;
     `;
+  }
+
+  async querySfxm(params: {
+    xmzl?: string;
+    fylbid?: string;
+    value?: string;
+    pageNo: number;
+    pageSize: number;
+    ksid: string;
+    ksid1: string;
+    ksid2: string;
+    ksid3: string;
+    ksid4: string;
+    ksid5?: string;
+    ksid6?: string;
+    ksid7?: string;
+    ksid8?: string;
+  }): Promise<any> {
+    const upcaseValue = params.value?.toUpperCase();
+    const whereClause = upcaseValue
+      ? ` WHERE ypid LIKE '%${upcaseValue}%' or xmmc LIKE '%${upcaseValue}%' or pybm LIKE '%${upcaseValue}%' or wbbm LIKE '%${upcaseValue}%'`
+      : '';
+
+    const result = await this.dataSource.query(
+      `SELECT COUNT(*) as total FROM dbo.fn_h22_sfxm_xmlr_kcgl_newtcksid_scph_sxrq_bzfl_ksid_wdf(
+          @0, @1, @2, @3, @4, @5, @6, @7, @8
+        ) as fymx ${whereClause}`,
+      [
+        params.ksid,
+        params.ksid1,
+        params.ksid2,
+        params.ksid3,
+        params.ksid4,
+        params.ksid5,
+        params.ksid6,
+        params.ksid7,
+        params.ksid8,
+      ],
+    );
+
+    const offset = (params.pageNo - 1) * params.pageSize;
+    const pageData = await this.dataSource.query(
+      `SELECT * FROM dbo.fn_h22_sfxm_xmlr_kcgl_newtcksid_scph_sxrq_bzfl_ksid_wdf(
+            @0, @1, @2, @3, @4, @5, @6, @7, @8
+        )
+        ${whereClause}
+        ORDER BY (SELECT NULL) OFFSET ${offset} ROWS FETCH NEXT ${params.pageSize} ROWS ONLY`,
+      [
+        params.ksid,
+        params.ksid1,
+        params.ksid2,
+        params.ksid3,
+        params.ksid4,
+        params.ksid5,
+        params.ksid6,
+        params.ksid7,
+        params.ksid8,
+      ],
+    );
+
+    return {
+      total: result[0].total,
+      pageData,
+    };
   }
 }
