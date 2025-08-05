@@ -3,10 +3,10 @@ import { AfterLoad, Column, Entity, Index } from 'typeorm';
 @Index('sk_ypflid', ['ypflid'], { unique: true })
 @Entity('h00_ypfl', { schema: 'dbo' })
 export class h00_ypfl {
-  @Column('char', { primary: true, name: 'ypflid', length: 10 })
+  @Column('varchar', { primary: true, name: 'ypflid', length: 10 })
   ypflid: string;
 
-  @Column('char', { name: 'ypflmc', nullable: true, length: 30 })
+  @Column('varchar', { name: 'ypflmc', nullable: true, length: 30 })
   ypflmc: string | null;
 
   // @Column("char", { name: "szbm", nullable: true, length: 20 })

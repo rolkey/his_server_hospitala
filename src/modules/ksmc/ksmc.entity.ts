@@ -14,7 +14,7 @@ import { fyxx } from '../fyxx/fyxx.entity';
 
 @Entity('__ksmc', { schema: 'dbo' })
 export class ksmc {
-  @Column('char', {
+  @Column('varchar', {
     primary: true,
     name: 'ksid',
     length: 10,
@@ -22,7 +22,7 @@ export class ksmc {
   })
   ksid: string;
 
-  @Column('char', {
+  @Column('varchar', {
     name: 'ksmc',
     nullable: true,
     length: 30,
@@ -30,7 +30,7 @@ export class ksmc {
   })
   ksmc: string | null;
 
-  @Column('char', { name: 'ksflid', length: 10, default: () => "''" })
+  @Column('varchar', { name: 'ksflid', length: 10, default: () => "''" })
   ksflid: string;
 
   // @Column("char", {
@@ -41,7 +41,7 @@ export class ksmc {
   // })
   // szbm: string | null;
 
-  @Column('char', {
+  @Column('varchar', {
     name: 'pybm',
     nullable: true,
     length: 20,
@@ -49,7 +49,7 @@ export class ksmc {
   })
   pybm: string | null;
 
-  @Column('char', {
+  @Column('varchar', {
     name: 'wbbm',
     nullable: true,
     length: 20,

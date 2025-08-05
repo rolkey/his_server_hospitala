@@ -2,7 +2,7 @@ import { AfterLoad, Column, Entity } from 'typeorm';
 
 @Entity('h31_kcxx', { schema: 'dbo' })
 export class H31_kcxx {
-  @Column('char', { primary: true, name: 'ksid', length: 10, default: '' })
+  @Column('varchar', { primary: true, name: 'ksid', length: 10, default: '' })
   ksid: string;
 
   @Column('varchar', { primary: true, name: 'ypid', length: 50 })
@@ -14,7 +14,7 @@ export class H31_kcxx {
   @Column('varchar', { name: 'cjid', nullable: true, length: 60 })
   cjid: string | null;
 
-  @Column('char', { name: 'scph', length: 10, default: '' })
+  @Column('varchar', { name: 'scph', length: 10, default: '' })
   scph: string;
 
   @Column('decimal', { name: 'lsjg', precision: 16, scale: 4, default: 0 })
@@ -23,7 +23,7 @@ export class H31_kcxx {
   @Column('decimal', { name: 'pfjg', precision: 16, scale: 4, default: 0 })
   pfjg: number;
 
-  @Column('char', { name: 'gsid', nullable: true, length: 10, default: '' })
+  @Column('varchar', { name: 'gsid', nullable: true, length: 10, default: '' })
   gsid: string | null;
 
   @Column('varchar', { name: 'jldw', nullable: true, length: 60 })
@@ -71,7 +71,7 @@ export class H31_kcxx {
   @Column('smallint', { name: 'djbz', default: 0 })
   djbz: number;
 
-  @Column('char', { name: 'fphm', nullable: true, length: 20, default: '' })
+  @Column('varchar', { name: 'fphm', nullable: true, length: 20, default: '' })
   fphm: string | null;
 
   @Column('varchar', { name: 'pzwh', nullable: true, length: 60 })
@@ -89,7 +89,7 @@ export class H31_kcxx {
   @Column('int', { name: 'zbbz', nullable: true })
   zbbz: number | null;
 
-  @Column('char', { name: 'scpc', nullable: true, length: 12 })
+  @Column('varchar', { name: 'scpc', nullable: true, length: 12 })
   scpc: string | null;
 
   @Column('varchar', { name: 'xdw', nullable: true, length: 20 })

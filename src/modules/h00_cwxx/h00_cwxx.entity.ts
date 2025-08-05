@@ -2,7 +2,7 @@ import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm
 
 @Entity('h00_cwxx', { schema: 'dbo' })
 export class h00_cwxx {
-  @Column('char', {
+  @Column('varchar', {
     primary: true,
     name: 'cwid',
     length: 10,
@@ -10,7 +10,7 @@ export class h00_cwxx {
   })
   cwid: string;
 
-  @Column('char', { name: 'cwmc', length: 30, default: () => "''" })
+  @Column('varchar', { name: 'cwmc', length: 30, default: () => "''" })
   cwmc: string;
 
   // @Column("char", { name: "cwbh", length: 10, default: () => "''" })

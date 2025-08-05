@@ -16,6 +16,7 @@ import { H31_kcxx } from './h31_kcxx.entity';
 import { CreateH31_kcxxDto } from './dto/create-h31_kcxx.dto';
 import { UpdateH31_kcxxDto } from './dto/update-h31_kcxx.dto';
 import { QueryKcjgDto } from './dto/h31-kcxx.dto';
+import { KcjgYpidRequestDto } from './dto/kcjg-ypid.dto';
 
 @ApiTags('库存信息管理')
 @Controller('h31-kcxx')
@@ -162,8 +163,13 @@ export class H31_kcxxController {
   }
 
   @Get('search/queryKcjg')
-  @ApiOperation({ summary: '查询收费项目价格与库存' })
+  @ApiOperation({ summary: '查询收费项目价格与库存1' })
   async queryKcjg(@Query() query: QueryKcjgDto) {
     return this.h31KcxxService.queryKcjg(query);
+  }
+  @Get('search/ueReadKcjgYpid')
+  @ApiOperation({ summary: '查询收费项目价格与库存2' })
+  async ueReadKcjgYpid(query: KcjgYpidRequestDto) {
+    return this.h31KcxxService.ueReadKcjgYpid(query);
   }
 }

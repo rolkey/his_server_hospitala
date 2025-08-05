@@ -11,35 +11,35 @@ import * as dayjs from 'dayjs';
 
 @Entity('h11_brxx', { schema: 'dbo' })
 export class h11_brxx {
-  @Column('char', { primary: true, name: 'zyid', length: 12 })
+  @Column('varchar', { primary: true, name: 'zyid', length: 12 })
   zyid: string;
 
-  @Column('char', { name: 'zybh', nullable: true, length: 12 })
+  @Column('varchar', { name: 'zybh', nullable: true, length: 12 })
   zybh: string | null;
 
-  @Column('char', { name: 'mzbh', nullable: true, length: 12 })
+  @Column('varchar', { name: 'mzbh', nullable: true, length: 12 })
   mzbh: string | null;
 
   @Column('int', { name: 'zycs', nullable: true })
   zycs: number | null;
 
-  @Column('char', { name: 'brlxid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'brlxid', nullable: true, length: 10 })
   brlxid: string | null;
 
   @ManyToOne(() => h00_brlx)
   @JoinColumn({ name: 'brlxid', referencedColumnName: 'brlxid' })
   brlxidEntity: h00_brlx;
 
-  @Column('char', { name: 'gfbh', nullable: true, length: 10 })
+  @Column('varchar', { name: 'gfbh', nullable: true, length: 10 })
   gfbh: string | null;
 
-  @Column('char', { name: 'brxm', nullable: true, length: 30 })
+  @Column('varchar', { name: 'brxm', nullable: true, length: 30 })
   brxm: string | null;
 
-  @Column('char', { name: 'xbid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'xbid', nullable: true, length: 10 })
   xbid: string | null;
 
-  @Column('char', { name: 'brnl', nullable: true, length: 10 })
+  @Column('varchar', { name: 'brnl', nullable: true, length: 10 })
   brnl: string | null;
 
   @Column('datetime', { name: 'csrq', nullable: true })
@@ -49,61 +49,61 @@ export class h11_brxx {
   @Column('smallint', { name: 'yebz', nullable: true })
   yebz: number | null;
 
-  @Column('char', { name: 'hyzkmc', nullable: true, length: 30 })
+  @Column('varchar', { name: 'hyzkmc', nullable: true, length: 30 })
   hyzkmc: string | null;
 
-  @Column('char', { name: 'hyid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'hyid', nullable: true, length: 10 })
   hyid: string | null;
 
   @Column('varchar', { name: 'csddmc', nullable: true, length: 100 })
   csddmc: string | null;
 
-  @Column('char', { name: 'mzmc', nullable: true, length: 10 })
+  @Column('varchar', { name: 'mzmc', nullable: true, length: 10 })
   mzmc: string | null;
 
-  @Column('char', { name: 'gjid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'gjid', nullable: true, length: 10 })
   gjid: string | null;
 
-  @Column('char', { name: 'sfzh', nullable: true, length: 20 })
+  @Column('varchar', { name: 'sfzh', nullable: true, length: 20 })
   sfzh: string | null;
 
   @Column('varchar', { name: 'gzdw', nullable: true, length: 60 })
   gzdw: string | null;
 
-  @Column('char', { name: 'dwdh', nullable: true, length: 20 })
+  @Column('varchar', { name: 'dwdh', nullable: true, length: 20 })
   dwdh: string | null;
 
-  @Column('char', { name: 'dwyb', nullable: true, length: 10 })
+  @Column('varchar', { name: 'dwyb', nullable: true, length: 10 })
   dwyb: string | null;
 
   @Column('varchar', { name: 'hkdz', nullable: true, length: 100 })
   hkdz: string | null;
 
-  @Column('char', { name: 'hkyb', nullable: true, length: 10 })
+  @Column('varchar', { name: 'hkyb', nullable: true, length: 10 })
   hkyb: string | null;
 
-  @Column('char', { name: 'lxrm', nullable: true, length: 30 })
+  @Column('varchar', { name: 'lxrm', nullable: true, length: 30 })
   lxrm: string | null;
 
-  @Column('char', { name: 'gxid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'gxid', nullable: true, length: 10 })
   gxid: string | null;
 
-  @Column('char', { name: 'lxdz', nullable: true, length: 40 })
+  @Column('varchar', { name: 'lxdz', nullable: true, length: 40 })
   lxdz: string | null;
 
-  @Column('char', { name: 'lxdh', nullable: true, length: 30 })
+  @Column('varchar', { name: 'lxdh', nullable: true, length: 30 })
   lxdh: string | null;
 
-  @Column('char', { name: 'ryksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'ryksid', nullable: true, length: 10 })
   ryksid: string | null;
 
-  @Column('char', { name: 'ryksmc', nullable: true, length: 30 })
+  @Column('varchar', { name: 'ryksmc', nullable: true, length: 30 })
   ryksmc: string | null;
 
-  @Column('char', { name: 'rybs', nullable: true, length: 10 })
+  @Column('varchar', { name: 'rybs', nullable: true, length: 10 })
   rybs: string | null;
 
-  @Column('char', { name: 'rycw', nullable: true, length: 10 })
+  @Column('varchar', { name: 'rycw', nullable: true, length: 10 })
   rycw: string | null;
 
   @ManyToOne(() => h00_cwxx)
@@ -114,30 +114,30 @@ export class h11_brxx {
   @DateTransformer()
   rysj: Date | null;
 
-  @Column('char', { name: 'rybqid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'rybqid', nullable: true, length: 10 })
   rybqid: string | null;
 
   @ManyToOne(() => h00_rybq)
   @JoinColumn({ name: 'rybqid', referencedColumnName: 'rybqid' })
   rybqidEntity: h00_rybq;
 
-  @Column('char', { name: 'zkbqid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'zkbqid', nullable: true, length: 10 })
   zkbqid: string | null;
 
   @ManyToOne(() => h00_rybq)
   @JoinColumn({ name: 'zkbqid', referencedColumnName: 'rybqid' })
   zkbqidEntity: h00_rybq;
 
-  @Column('char', { name: 'cyksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'cyksid', nullable: true, length: 10 })
   cyksid: string | null;
 
-  @Column('char', { name: 'cyksmc', nullable: true, length: 30 })
+  @Column('varchar', { name: 'cyksmc', nullable: true, length: 30 })
   cyksmc: string | null;
 
-  @Column('char', { name: 'cybs', nullable: true, length: 10 })
+  @Column('varchar', { name: 'cybs', nullable: true, length: 10 })
   cybs: string | null;
 
-  @Column('char', { name: 'cycw', nullable: true, length: 10 })
+  @Column('varchar', { name: 'cycw', nullable: true, length: 10 })
   cycw: string | null;
 
   @ManyToOne(() => h00_cwxx)
@@ -151,10 +151,10 @@ export class h11_brxx {
   @Column('int', { name: 'zyts', nullable: true })
   zyts: number | null;
 
-  @Column('char', { name: 'mzzd', nullable: true, length: 120 })
+  @Column('varchar', { name: 'mzzd', nullable: true, length: 120 })
   mzzd: string | null;
 
-  @Column('char', { name: 'ryzd', nullable: true, length: 120 })
+  @Column('varchar', { name: 'ryzd', nullable: true, length: 120 })
   ryzd: string | null;
 
   @ManyToOne(() => jbbmicd10)
@@ -183,7 +183,7 @@ export class h11_brxx {
   @Column('smallint', { name: 'etys', nullable: true })
   etys: number | null;
 
-  @Column('char', { name: 'mzys', nullable: true, length: 12 })
+  @Column('varchar', { name: 'mzys', nullable: true, length: 12 })
   mzys: string | null;
 
   @ManyToOne(() => usrcat)
@@ -196,7 +196,7 @@ export class h11_brxx {
   @Column('decimal', { name: 'cwbz', nullable: true, precision: 6, scale: 2 })
   cwbz: number | null;
 
-  @Column('char', { name: 'qfjsbz', nullable: true, length: 12 })
+  @Column('varchar', { name: 'qfjsbz', nullable: true, length: 12 })
   qfjsbz: string | null;
 
   @Column('decimal', {
@@ -219,7 +219,7 @@ export class h11_brxx {
   @DateTransformer()
   jssj: Date | null;
 
-  @Column('char', { name: 'lsh', nullable: true, length: 15 })
+  @Column('varchar', { name: 'lsh', nullable: true, length: 15 })
   lsh: string | null;
 
   @Column('varchar', { name: 'cyzd', nullable: true, length: 60 })

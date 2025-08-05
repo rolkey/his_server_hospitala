@@ -5,7 +5,7 @@ import { usrcat } from '@/modules/usrcat/usrcat.entity';
 
 @Entity({ name: 'h12_mbzb', schema: 'sunsoft.dbo' })
 export class H12_mbzb {
-  @PrimaryColumn({ name: 'mbid', type: 'char', length: 12 })
+  @PrimaryColumn({ name: 'mbid', type: 'varchar', length: 12 })
   mbid: string;
 
   @PrimaryColumn({ name: 'mblx', type: 'smallint' })

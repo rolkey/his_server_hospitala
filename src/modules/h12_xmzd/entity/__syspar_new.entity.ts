@@ -4,7 +4,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 export class SysparNew {
   @PrimaryColumn({
     name: 'syid',
-    type: 'char',
+    type: 'varchar',
     length: 10,
     nullable: false,
   })
@@ -12,7 +12,7 @@ export class SysparNew {
 
   @PrimaryColumn({
     name: 'prid',
-    type: 'char',
+    type: 'varchar',
     length: 200,
     nullable: false,
   })
@@ -20,7 +20,7 @@ export class SysparNew {
 
   @Column({
     name: 'pnam',
-    type: 'char',
+    type: 'varchar',
     length: 200,
     default: '',
     collation: 'Chinese_PRC_CI_AS',
@@ -30,7 +30,7 @@ export class SysparNew {
 
   @Column({
     name: 'pval',
-    type: 'char',
+    type: 'varchar',
     length: 200,
     default: '',
     collation: 'Chinese_PRC_CI_AS',

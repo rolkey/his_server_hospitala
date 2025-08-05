@@ -17,16 +17,16 @@ export class jbbmicd10 {
   // @Column("char", { name: "szbm", nullable: true, length: 20 })
   // szbm: string | null;
 
-  @Column('char', { name: 'pybm', nullable: true, length: 20 })
+  @Column('varchar', { name: 'pybm', nullable: true, length: 20 })
   pybm: string | null;
 
-  @Column('char', { name: 'wbbm', nullable: true, length: 20 })
+  @Column('varchar', { name: 'wbbm', nullable: true, length: 20 })
   wbbm: string | null;
 
   // @Column("char", { name: "qtbm", nullable: true, length: 20 })
   // qtbm: string | null;
 
-  @Column('char', { name: 'ywm', nullable: true, length: 50 })
+  @Column('varchar', { name: 'ywm', nullable: true, length: 50 })
   ywm: string | null;
 
   @Column('varchar', { name: 'icd11', nullable: true, length: 30 })

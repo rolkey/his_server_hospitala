@@ -19,13 +19,13 @@ import { zcmc } from '../zcmc/zcmc.entity';
 
 @Entity('__usrcat', { schema: 'dbo' })
 export class usrcat {
-  @Column('char', { primary: true, name: 'usid', length: 10 })
+  @Column('varchar', { primary: true, name: 'usid', length: 10 })
   usid: string;
 
-  @Column('char', { name: 'unam', nullable: true, length: 30 })
+  @Column('varchar', { name: 'unam', nullable: true, length: 30 })
   unam: string | null;
 
-  @Column('char', { name: 'pwrd', nullable: true, length: 30 })
+  @Column('varchar', { name: 'pwrd', nullable: true, length: 30 })
   pwrd: string | null;
 
   // @Column("char", { name: "hzsr", nullable: true, length: 30 })
@@ -61,13 +61,13 @@ export class usrcat {
   // @Column("char", { name: "wbbm", nullable: true, length: 20 })
   // wbbm: string | null;
 
-  @Column('char', { name: 'ksid', length: 10 })
+  @Column('varchar', { name: 'ksid', length: 10 })
   ksid: string;
 
-  @Column('char', { name: 'zcid', length: 10 })
+  @Column('varchar', { name: 'zcid', length: 10 })
   zcid: string;
 
-  @Column('char', { name: 'zwid', length: 10 })
+  @Column('varchar', { name: 'zwid', length: 10 })
   zwid: string;
 
   // @Column("char", { name: "zyksid", nullable: true, length: 10 })

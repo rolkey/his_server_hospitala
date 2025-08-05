@@ -2,7 +2,7 @@ import { AfterLoad, Column, Entity, Index } from 'typeorm';
 
 @Entity('h00_syff', { schema: 'dbo' })
 export class h00_syff {
-  @Column('char', {
+  @Column('varchar', {
     primary: true,
     name: 'syffid',
     length: 10,
@@ -10,7 +10,7 @@ export class h00_syff {
   })
   syffid: string;
 
-  @Column('char', {
+  @Column('varchar', {
     name: 'syffmc',
     nullable: true,
     length: 30,

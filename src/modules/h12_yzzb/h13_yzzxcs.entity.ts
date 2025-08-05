@@ -24,24 +24,24 @@ export class h13_yzzxcs {
   @Column('int', { primary: true, name: 'yzlx' })
   yzlx: number;
 
-  @Column('char', { primary: true, name: 'zyid', length: 12 })
+  @Column('varchar', { primary: true, name: 'zyid', length: 12 })
   zyid: string;
 
   @Column('datetime', { primary: true, name: 'zxrq' })
   @DateTransformer()
   zxrq: Date;
 
-  @Column('char', { name: 'ksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'ksid', nullable: true, length: 10 })
   ksid: string | null;
 
   @ManyToOne(() => ksmc)
   @JoinColumn({ name: 'ksid', referencedColumnName: 'ksid' })
   ksidEntity: ksmc;
 
-  @Column('char', { name: 'fydh', nullable: true, length: 12 })
+  @Column('varchar', { name: 'fydh', nullable: true, length: 12 })
   fydh: string | null;
 
-  @Column('char', { name: 'zybh', nullable: true, length: 12 })
+  @Column('varchar', { name: 'zybh', nullable: true, length: 12 })
   zybh: string | null;
 
   @Column('decimal', { name: 'jfyl', nullable: true, precision: 16, scale: 4 })
@@ -53,14 +53,14 @@ export class h13_yzzxcs {
   @Column('smallint', { name: 'sfbz', nullable: true })
   sfbz: number | null;
 
-  @Column('char', { name: 'fylbid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'fylbid', nullable: true, length: 10 })
   fylbid: string | null;
 
   @ManyToOne(() => h00_fylb)
   @JoinColumn({ name: 'fylbid', referencedColumnName: 'fylbid' })
   fylbidEntity: h00_fylb;
 
-  @Column('char', { name: 'jsdh', nullable: true, length: 10 })
+  @Column('varchar', { name: 'jsdh', nullable: true, length: 10 })
   jsdh: string | null;
 
   @Column('smallint', { name: 'jsbz', nullable: true, default: () => '(0)' })
@@ -69,22 +69,22 @@ export class h13_yzzxcs {
   @Column('int', { name: 'zxcs2', nullable: true })
   zxcs2: number | null;
 
-  @Column('char', { name: 'zxhs', nullable: true, length: 10 })
+  @Column('varchar', { name: 'zxhs', nullable: true, length: 10 })
   zxhs: string | null;
 
-  @Column('char', { name: 'zxsj', nullable: true, length: 20 })
+  @Column('varchar', { name: 'zxsj', nullable: true, length: 20 })
   zxsj: string | null;
 
-  @Column('char', { name: 'zflx', nullable: true, length: 12 })
+  @Column('varchar', { name: 'zflx', nullable: true, length: 12 })
   zflx: string | null;
 
-  @Column('char', { name: 'syffid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'syffid', nullable: true, length: 10 })
   syffid: string | null;
 
   @Column('int', { name: 'bzxcs', nullable: true, default: () => '(0)' })
   bzxcs: number | null;
 
-  @Column('char', { name: 'tyrid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'tyrid', nullable: true, length: 10 })
   tyrid: string | null;
 
   @Column('datetime', { name: 'tysj', nullable: true })
@@ -107,7 +107,7 @@ export class h13_yzzxcs {
   })
   sjtysl: number | null;
 
-  @Column('char', { name: 'syrid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'syrid', nullable: true, length: 10 })
   syrid: string | null;
 
   @ManyToOne(() => usrcat)
@@ -131,7 +131,7 @@ export class h13_yzzxcs {
   @DateTransformer()
   fysj: Date | null;
 
-  @Column('char', { name: 'fyrid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'fyrid', nullable: true, length: 10 })
   fyrid: string | null;
 
   @ManyToOne(() => usrcat)
@@ -141,7 +141,7 @@ export class h13_yzzxcs {
   @Column('decimal', { name: 'zxcs', nullable: true, precision: 16, scale: 4 })
   zxcs: number | null;
 
-  @Column('char', { name: 'zkksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'zkksid', nullable: true, length: 10 })
   zkksid: string | null;
 
   @ManyToOne(() => ksmc)
@@ -160,10 +160,10 @@ export class h13_yzzxcs {
   @Column('decimal', { name: 'jzje', nullable: true, precision: 12, scale: 2 })
   jzje: number | null;
 
-  @Column('char', { name: 'jzry', nullable: true, length: 10 })
+  @Column('varchar', { name: 'jzry', nullable: true, length: 10 })
   jzry: string | null;
 
-  @Column('char', { name: 'ybfl', nullable: true, length: 8 })
+  @Column('varchar', { name: 'ybfl', nullable: true, length: 8 })
   ybfl: string | null;
 
   @PrimaryGeneratedColumn({ type: 'int', name: 'maxid' })

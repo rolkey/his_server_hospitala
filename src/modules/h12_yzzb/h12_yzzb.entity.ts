@@ -10,7 +10,7 @@ import { usrcat } from '../usrcat/usrcat.entity';
 @Index('h12_YZZB_ZYID', ['zyid'], {})
 @Entity('h12_yzzb', { schema: 'dbo' })
 export class h12_yzzb {
-  @Column('char', { primary: true, name: 'zyid', length: 12 })
+  @Column('varchar', { primary: true, name: 'zyid', length: 12 })
   zyid: string;
 
   @Column('int', { primary: true, name: 'yzxh' })
@@ -19,29 +19,29 @@ export class h12_yzzb {
   @Column('smallint', { primary: true, name: 'yzlx' })
   yzlx: number;
 
-  @Column('char', { name: 'zybh', nullable: true, length: 12 })
+  @Column('varchar', { name: 'zybh', nullable: true, length: 12 })
   zybh: string | null;
 
   @Column('int', { name: 'zycs', nullable: true })
   zycs: number | null;
 
-  @Column('char', { name: 'brxm', nullable: true, length: 30 })
+  @Column('varchar', { name: 'brxm', nullable: true, length: 30 })
   brxm: string | null;
 
-  @Column('char', { name: 'ksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'ksid', nullable: true, length: 10 })
   ksid: string | null;
 
   @ManyToOne(() => ksmc)
   @JoinColumn({ name: 'ksid', referencedColumnName: 'ksid' })
   ksidEntity: ksmc;
 
-  @Column('char', { name: 'brnl', nullable: true, length: 10 })
+  @Column('varchar', { name: 'brnl', nullable: true, length: 10 })
   brnl: string | null;
 
-  @Column('char', { name: 'bsid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'bsid', nullable: true, length: 10 })
   bsid: string | null;
 
-  @Column('char', { name: 'cwid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'cwid', nullable: true, length: 10 })
   cwid: string | null;
 
   @ManyToOne(() => h00_cwxx)
@@ -68,7 +68,7 @@ export class h12_yzzb {
   @DateTransformer()
   tzsj: Date | null;
 
-  @Column('char', { name: 'tzrid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'tzrid', nullable: true, length: 10 })
   tzrid: string | null;
 
   @ManyToOne(() => usrcat)
@@ -78,13 +78,13 @@ export class h12_yzzb {
   @Column('int', { name: 'etys', nullable: true })
   etys: number | null;
 
-  @Column('char', { name: 'kbid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'kbid', nullable: true, length: 10 })
   kbid: string | null;
 
-  @Column('char', { name: 'yxbz', nullable: true, length: 10 })
+  @Column('varchar', { name: 'yxbz', nullable: true, length: 10 })
   yxbz: string | null;
 
-  @Column('char', { name: 'zkksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'zkksid', nullable: true, length: 10 })
   zkksid: string | null;
 
   @ManyToOne(() => ksmc)

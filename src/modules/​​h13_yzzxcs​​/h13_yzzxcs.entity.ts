@@ -11,16 +11,16 @@ export class h13_yzzxcs {
   @PrimaryColumn({ name: 'yzlx', type: 'int' })
   yzlx: number;
 
-  @PrimaryColumn({ name: 'zyid', type: 'char', length: 12 })
+  @PrimaryColumn({ name: 'zyid', type: 'varchar', length: 12 })
   zyid: string;
 
   @PrimaryColumn({ name: 'zxrq', type: 'datetime' })
   zxrq: Date;
 
-  @Column({ name: 'ksid', type: 'char', length: 10, nullable: true })
+  @Column({ name: 'ksid', type: 'varchar', length: 10, nullable: true })
   ksid: string | null;
 
-  @Column({ name: 'fydh', type: 'char', length: 12, nullable: true })
+  @Column({ name: 'fydh', type: 'varchar', length: 12, nullable: true })
   fydh: string | null;
 
   @Column({ name: 'zybh', type: 'varchar', length: 12, nullable: true })
@@ -38,7 +38,7 @@ export class h13_yzzxcs {
   @Column({ name: 'fylbid', type: 'varchar', length: 10, nullable: true })
   fylbid: string | null;
 
-  @Column({ name: 'jsdh', type: 'char', length: 10, nullable: true })
+  @Column({ name: 'jsdh', type: 'varchar', length: 10, nullable: true })
   jsdh: string | null;
 
   @Column({ name: 'jsbz', type: 'smallint', default: 0, nullable: true })

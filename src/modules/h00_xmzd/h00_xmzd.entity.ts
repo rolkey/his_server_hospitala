@@ -14,7 +14,7 @@ export class H00_xmzd {
   @Column({ type: 'varchar', length: 60, nullable: true })
   cjid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   scph: string | null;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 0, nullable: true })
@@ -50,10 +50,10 @@ export class H00_xmzd {
   @Column({ type: 'int', default: 1, nullable: true })
   sfbz: number | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   fybz: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   fylbid: string | null;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
@@ -62,28 +62,28 @@ export class H00_xmzd {
   @Column({ type: 'datetime', nullable: true })
   sxrq: Date | null;
 
-  @Column({ type: 'char', length: 12, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 12, default: '', nullable: true })
   zflx: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   yjid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   sgfzfblid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   qgfzfblid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   ybzfblid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   htzfblid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   jzzfblid: string | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   tczfblid: string | null;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 0, nullable: true })
@@ -110,13 +110,13 @@ export class H00_xmzd {
   @Column({ type: 'varchar', length: 60, nullable: true })
   sfdw: string | null;
 
-  @Column({ type: 'char', length: 2, nullable: true })
+  @Column({ type: 'varchar', length: 2, nullable: true })
   ypfl: string | null;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, nullable: true })
   zfbl: number | null;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   kcdw: string | null;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
@@ -149,22 +149,22 @@ export class H00_xmzd {
   @Column({ type: 'varchar', length: 20, nullable: true })
   ybid: string | null;
 
-  @Column({ type: 'char', length: 1, nullable: true })
+  @Column({ type: 'varchar', length: 1, nullable: true })
   ybbz: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   uploadcode: string | null;
 
-  @Column({ type: 'char', length: 2, nullable: true })
+  @Column({ type: 'varchar', length: 2, nullable: true })
   fyfs: string | null;
 
-  @Column({ type: 'char', length: 2, nullable: true })
+  @Column({ type: 'varchar', length: 2, nullable: true })
   bz1: string | null;
 
-  @Column({ type: 'char', length: 2, nullable: true })
+  @Column({ type: 'varchar', length: 2, nullable: true })
   bz2: string | null;
 
-  @Column({ type: 'char', length: 2, nullable: true })
+  @Column({ type: 'varchar', length: 2, nullable: true })
   bz3: string | null;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
@@ -179,7 +179,7 @@ export class H00_xmzd {
   @Column({ type: 'varchar', length: 250, nullable: true })
   sm: string | null;
 
-  @Column({ type: 'char', length: 2, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 2, default: '', nullable: true })
   mbfl: string | null;
 
   @Column({ type: 'varchar', length: 10, default: '', nullable: true })

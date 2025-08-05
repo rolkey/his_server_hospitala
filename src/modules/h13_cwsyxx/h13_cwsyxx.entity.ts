@@ -4,7 +4,7 @@ import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 
 @Entity('h13_cwsyxx', { schema: 'dbo' })
 export class h13_cwsyxx {
-  @Column('char', { primary: true, name: 'cwid', length: 10 })
+  @Column('varchar', { primary: true, name: 'cwid', length: 10 })
   cwid: string;
 
   @ManyToOne(() => h00_cwxx)
@@ -14,10 +14,10 @@ export class h13_cwsyxx {
   // @Column("datetime", { name: "lrsj", nullable: true })
   // lrsj: Date | null;
 
-  @Column('char', { name: 'bsid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'bsid', nullable: true, length: 10 })
   bsid: string | null;
 
-  @Column('char', { name: 'ksid', nullable: true, length: 10 })
+  @Column('varchar', { name: 'ksid', nullable: true, length: 10 })
   ksid: string | null;
 
   // @Column("char", { name: "lryid", nullable: true, length: 10 })
@@ -26,7 +26,7 @@ export class h13_cwsyxx {
   // @Column("char", { name: "hsid", nullable: true, length: 10 })
   // hsid: string | null;
 
-  @Column('char', { name: 'zyid', nullable: true, length: 12 })
+  @Column('varchar', { name: 'zyid', nullable: true, length: 12 })
   zyid: string | null;
 
   @ManyToOne(() => h11_brxx)
@@ -57,7 +57,7 @@ export class h13_cwsyxx {
   // @Column("datetime", { name: "fpsj", nullable: true })
   // fpsj: Date | null;
 
-  @Column('char', { name: 'cwfpxx', nullable: true, length: 60 })
+  @Column('varchar', { name: 'cwfpxx', nullable: true, length: 60 })
   cwfpxx: string | null;
 
   // @Column("char", { name: "ysfpxx", nullable: true, length: 60 })

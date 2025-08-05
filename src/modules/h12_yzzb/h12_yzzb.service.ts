@@ -439,7 +439,7 @@ export class h12_yzzbService {
 
         adviceRow.additional.forEach((item) => {
           item.zxcs = i + 1;
-          item.ksys = h12_yzxbList[i].ksys;
+          item.ksys = adviceRow.ksys;
         });
       }
     }

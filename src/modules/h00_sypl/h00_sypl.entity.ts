@@ -2,10 +2,10 @@ import { AfterLoad, Column, Entity, Index } from 'typeorm';
 
 @Entity('h00_sypl', { schema: 'dbo' })
 export class h00_sypl {
-  @Column('char', { primary: true, name: 'syplid', length: 10 })
+  @Column('varchar', { primary: true, name: 'syplid', length: 10 })
   syplid: string;
 
-  @Column('char', { name: 'syplmc', nullable: true, length: 30 })
+  @Column('varchar', { name: 'syplmc', nullable: true, length: 30 })
   syplmc: string | null;
 
   // @Column("char", { name: "szbm", nullable: true, length: 20 })

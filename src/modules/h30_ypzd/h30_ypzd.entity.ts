@@ -9,55 +9,55 @@ export class H30_ypzd {
   @Column({ type: 'varchar', length: 100, nullable: true })
   zwmc: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   bzbm: string;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   ypflid: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   ypflbm: string;
 
   @Column({ type: 'varchar', length: 60, nullable: true })
   ypgg: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   yphl: string;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 0, nullable: true })
   hlxs: number;
 
-  @Column({ type: 'char', length: 8, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 8, default: '', nullable: true })
   hldw: string;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   jxflid: string;
 
-  @Column({ type: 'char', length: 40, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 40, default: '', nullable: true })
   spmc: string;
 
-  @Column({ type: 'char', length: 40, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 40, default: '', nullable: true })
   ywmc: string;
 
-  @Column({ type: 'char', length: 40, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 40, default: '', nullable: true })
   ldmc: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   szbm: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   pybm: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   wbbm: string;
 
-  @Column({ type: 'char', length: 20, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 20, default: '', nullable: true })
   qtbm: string;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   syffid: string;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   syplid: string;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 0, nullable: true })
@@ -66,13 +66,13 @@ export class H30_ypzd {
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 0, nullable: true })
   yrjl: number;
 
-  @Column({ type: 'char', length: 8, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 8, default: '', nullable: true })
   yjjl: string;
 
-  @Column({ type: 'char', length: 8, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 8, default: '', nullable: true })
   ejjl: string;
 
-  @Column({ type: 'char', length: 8, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 8, default: '', nullable: true })
   sjjl: string;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 1, nullable: true })
@@ -84,7 +84,7 @@ export class H30_ypzd {
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 1, nullable: true })
   ysxs: number;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   cfqj: string;
 
   @Column({ type: 'smallint', default: 0, nullable: true })
@@ -120,25 +120,25 @@ export class H30_ypzd {
   @Column({ type: 'smallint', default: 1, nullable: true })
   abcfl: number;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   fylbid: string;
 
-  @Column({ type: 'char', length: 10, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 10, default: '', nullable: true })
   zflx: string;
 
-  @Column({ type: 'char', length: 200, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 200, default: '', nullable: true })
   zyyt: string;
 
-  @Column({ type: 'char', length: 200, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 200, default: '', nullable: true })
   yfyl: string;
 
-  @Column({ type: 'char', length: 200, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 200, default: '', nullable: true })
   zysx: string;
 
-  @Column({ type: 'char', length: 100, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 100, default: '', nullable: true })
   zcff: string;
 
-  @Column({ type: 'char', length: 200, default: '', nullable: true })
+  @Column({ type: 'varchar', length: 200, default: '', nullable: true })
   bzxx: string;
 
   @Column({ type: 'decimal', precision: 16, scale: 4, default: 1, nullable: true })
