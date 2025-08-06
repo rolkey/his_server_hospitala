@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
@@ -11,7 +11,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
-import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
+import { H12_yzxbDto } from './dto/h12_yzxb.dto';
 import { isNotEmpty } from 'class-validator';
 
 @Injectable()
@@ -32,6 +32,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
+    private dataSource: DataSource,
   ) {}
 
   async findAllByPatient(data: { zyid: string; yzlx: string }) {
@@ -433,7 +434,10 @@ export class h12_yzzbService {
           throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
         }
       }
-      // 重新排序执行次数
+
+      // TODO: 校验库存
+
+      // 对子数据重新排序执行次数
       for (let i = 0; i < adviceRow.additional?.length; i++) {
         adviceRow.zxcs = i + 1;
 
@@ -445,25 +449,36 @@ export class h12_yzzbService {
     }
 
     // 2. 保存数据
-    let h12_yzxbRow = null;
-    try {
-      //   await this.h12_yzzbRepo.save(h12_yzzbObj);
+    await this.dataSource.transaction(async (manager) => {
+      //   try {
       for (let i = 0; i < h12_yzxbList.length; i++) {
         const adviceRow = h12_yzxbList[i];
-        if (adviceRow.isNew) {
-          h12_yzxbRow = this.h12_yzxbRepo.create(adviceRow);
-        } else {
-          h12_yzxbRow = await this.h12_yzxbRepo.findOneBy({ yzzh: adviceRow.yzzh });
-          Object.assign(h12_yzxbRow, adviceRow);
-        }
-        await this.h12_yzxbRepo.save(h12_yzxbRow);
-      }
 
-      return '数据保存成功!';
-    } catch (error) {
-      console.error('错误数据', h12_yzxbRow, '\n', error);
-      throw new BadRequestException('医嘱信息保存失败！！');
+        //   附加项目会保存在主记录的附加记录中
+        if (adviceRow.ysbz === 0) continue;
+
+        await this.saveYzxb(adviceRow, manager);
+        // 保存明细
+        if (adviceRow.additional) {
+          for (const additionalItem of adviceRow.additional) {
+            await this.saveYzxb(additionalItem, manager);
+          }
+        }
+      }
+    });
+
+    return '数据保存成功!';
+  }
+
+  async saveYzxb(advice: H12_yzxbDto, manager: EntityManager) {
+    let h12_yzxbRow = null;
+    if (advice.isNew) {
+      h12_yzxbRow = manager.create(h12_yzxb, advice);
+    } else {
+      h12_yzxbRow = await manager.findOneBy(h12_yzxb, { yzzh: advice.yzzh });
+      Object.assign(h12_yzxbRow, advice);
     }
+    return manager.save(h12_yzxbRow);
   }
 
   // 辅助方法
@@ -560,7 +575,7 @@ export class h12_yzzbService {
   }
 
   //   合并分组
-  async mergeGroup(h12_yzxbs: UpdateH12_yzxbDto[]) {
+  async mergeGroup(h12_yzxbs: H12_yzxbDto[]) {
     // 取第一行的组号，更新所有
     const yzzh = h12_yzxbs[0].yzzh;
     for (const h12_yzxb of h12_yzxbs) {
@@ -570,15 +585,17 @@ export class h12_yzzbService {
   }
 
   // 拆分组
-  async splitGroup(h12_yzxbs: UpdateH12_yzxbDto[]) {
+  async splitGroup(h12_yzxbs: H12_yzxbDto[]) {
     // TODO: 从优化的角度来讲，第一行不需要重新获取组号
     const adviceYzzhs = [];
-    for (const h12_yzxb of h12_yzxbs) {
-      const { yzid, yzlx, yzxh, zyid, mxxh } = h12_yzxb;
+    h12_yzxbs?.map(async (h12_yzxbv, index) => {
+      if (index === 0) return; // 第一行不拆分
+      const { yzid, yzlx, yzxh, zyid, mxxh } = h12_yzxbv;
+      if (h12_yzxbv.ysbz === 0) return; // 附加项目不能拆组
       const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
       await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, mxxh }, { yzzh });
       adviceYzzhs.push({ yzid, yzzh });
-    }
+    });
     return adviceYzzhs;
   }
 }

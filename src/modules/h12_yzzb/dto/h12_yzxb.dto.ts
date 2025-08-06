@@ -84,11 +84,11 @@ export class H12_yzxbDto {
   hshdrq?: Date;
   qt1?: string;
   zfbl?: number;
+  isNew?: boolean;
+  yzid?: string;
 }
 
 export class UpdateH12_yzxbDto extends H12_yzxbDto {
-  isNew?: boolean;
-  yzid?: string;
   additional: H12_yzxbDto[];
 }
 

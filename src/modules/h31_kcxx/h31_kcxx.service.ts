@@ -597,6 +597,6 @@ export class H31_kcxxService {
   }
 
   private roundNumber(value: number, decimals: number): number {
-    return Number(value.toFixed(decimals));
+    return Number(value?.toFixed(decimals));
   }
 }
