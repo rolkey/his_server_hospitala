@@ -359,6 +359,7 @@ export class H31_kcxxService {
       if (request.xmzl === 1) {
         // 处理项目
         const xmzd = await this.h00_xmzdRepository.findOne({
+          //   where: { xmid: request.ypid, yxbz: 1 },
           where: { xmid: request.ypid },
           // TODO: yxbz是啥东东？
         });

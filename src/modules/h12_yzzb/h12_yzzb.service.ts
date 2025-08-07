@@ -66,9 +66,9 @@ export class h12_yzzbService {
       .orderBy('h12_yzxb.yzxh', 'ASC')
       .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
-    const [yzzb, h13_yzzxcsList, h12_yzxbList, ksidList, usidList] = await Promise.all([
+    const [yzzb, h12_yzxbList, ksidList, usidList] = await Promise.all([
       queryBuilder.getOne(),
-      h13_yzzxcsqb.getMany(),
+      //   h13_yzzxcsqb.getMany(),
       h12_yzxbqb.getMany(),
       this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
       this.usrcatRepo.find({ select: ['usid', 'unam'] }),
@@ -77,18 +77,18 @@ export class h12_yzzbService {
     // 构建字典
     const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
     const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
-    h13_yzzxcsList.forEach((item) => {
-      item.ksidEntity = ksmcDict[item.ksid] || null;
-      item.zkksidEntity = ksmcDict[item.zkksid] || null;
-      item.syridEntity = usrcatDict[item.syrid] || null;
-      item.fyridEntity = usrcatDict[item.fyrid] || null;
-    });
+    // h13_yzzxcsList.forEach((item) => {
+    //   item.ksidEntity = ksmcDict[item.ksid] || null;
+    //   item.zkksidEntity = ksmcDict[item.zkksid] || null;
+    //   item.syridEntity = usrcatDict[item.syrid] || null;
+    //   item.fyridEntity = usrcatDict[item.fyrid] || null;
+    // });
     h12_yzxbList.forEach((item) => {
       // 找到所有匹配的 h13_yzzxcs
-      const matchedH13 = h13_yzzxcsList.filter(
-        (h13) => h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
-      );
-      item.h13_yzzxcsList = matchedH13;
+      //   const matchedH13 = h13_yzzxcsList.filter(
+      //     (h13) => h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
+      //   );
+      //   item.h13_yzzxcsList = matchedH13;
       // 赋值所有注释掉的 leftJoinAndSelect 关联的字典
       item.ksysEntity = usrcatDict[item.ksys] || null;
       item.kshsEntity = usrcatDict[item.kshs] || null;
@@ -328,6 +328,12 @@ export class h12_yzzbService {
     //   h12_yzxbList.pop();
     // }
 
+    // 处理删除记录
+    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
+      const { zyid, yzlx, yzxh, mxxh } = h12_yzzbOpe.deleteList[i];
+      await this.remove(zyid, yzlx, yzxh, mxxh);
+    }
+
     // 初始化变量
     const today = new Date().getFullYear().toString();
     const firstOrder = h12_yzxbList[0];
@@ -454,8 +460,8 @@ export class h12_yzzbService {
       for (let i = 0; i < h12_yzxbList.length; i++) {
         const adviceRow = h12_yzxbList[i];
 
-        //   附加项目会保存在主记录的附加记录中
-        if (adviceRow.ysbz === 0) continue;
+        // //   附加项目会保存在主记录的附加记录中
+        // if (adviceRow.ysbz === 0) continue;
 
         await this.saveYzxb(adviceRow, manager);
         // 保存明细
@@ -475,10 +481,45 @@ export class h12_yzzbService {
     if (advice.isNew) {
       h12_yzxbRow = manager.create(h12_yzxb, advice);
     } else {
-      h12_yzxbRow = await manager.findOneBy(h12_yzxb, { yzzh: advice.yzzh });
+      // 这样会产生级联操作
+      h12_yzxbRow = await manager.findOneBy(h12_yzxb, {
+        mxxh: advice.mxxh,
+        yzlx: advice.yzlx,
+        yzxh: advice.yzxh,
+        zyid: advice.zyid,
+      });
       Object.assign(h12_yzxbRow, advice);
     }
     return manager.save(h12_yzxbRow);
+    // if (advice.isNew) {
+    //   const h12_yzxbRow = manager.create(h12_yzxb, advice);
+    //   return manager.save(h12_yzxbRow);
+    // } else {
+    //   // 获取非关键字段的其他字段
+    //   const { mxxh, yzlx, yzxh, zyid, ...updateFields } = advice;
+    //   // 直接更新，无需先查询
+    //   //   return manager.update(
+    //   //     h12_yzxb,
+    //   //     {
+    //   //       mxxh: advice.mxxh,
+    //   //       yzlx: advice.yzlx,
+    //   //       yzxh: advice.yzxh,
+    //   //       zyid: advice.zyid,
+    //   //     },
+    //   //     updateFields, // 更新的字段
+    //   //   );
+    //   return manager
+    //     .createQueryBuilder()
+    //     .update(h12_yzxb)
+    //     .set(updateFields)
+    //     .where({
+    //       mxxh: advice.mxxh,
+    //       yzlx: advice.yzlx,
+    //       yzxh: advice.yzxh,
+    //       zyid: advice.zyid,
+    //     })
+    //     .execute();
+    // }
   }
 
   // 辅助方法

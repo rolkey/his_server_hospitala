@@ -16,16 +16,16 @@ import { varcharNumberTransformer } from '@/utils/varchar-number.transformer'; /
 @Index('H12_YZXB_ZYID', ['zyid'], {})
 @Entity('h12_yzxb', { schema: 'dbo' })
 export class h12_yzxb {
-  @PrimaryColumn('smallint', { primary: true, name: 'yzlx' })
+  @PrimaryColumn('smallint', { primary: true, name: 'yzlx', update: false })
   yzlx: number;
 
-  @PrimaryColumn('int', { primary: true, name: 'yzxh' })
+  @PrimaryColumn('int', { primary: true, name: 'yzxh', update: false })
   yzxh: number;
 
-  @PrimaryColumn('varchar', { primary: true, name: 'zyid', length: 12 })
+  @PrimaryColumn('varchar', { primary: true, name: 'zyid', length: 12, update: false })
   zyid: string;
 
-  @PrimaryColumn('int', { primary: true, name: 'mxxh' })
+  @PrimaryColumn('int', { primary: true, name: 'mxxh', update: false })
   mxxh: number;
 
   @Column('varchar', { name: 'zybh', length: 12 })
@@ -381,10 +381,14 @@ export class h12_yzxb {
   })
   zfbl: number | null;
 
-  @ManyToOne(() => h12_yzzb, (h12_yzzb) => h12_yzzb.h12_yzxbList)
+  @ManyToOne(() => h12_yzzb, (h12_yzzb) => h12_yzzb.h12_yzxbList, {
+    cascade: false, // 禁用级联操作
+  })
   @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
   h12_yzzb: h12_yzzb;
 
-  @OneToMany(() => h13_yzzxcs, (h13_yzzxcs) => h13_yzzxcs.h12_yzxb)
-  h13_yzzxcsList: h13_yzzxcs[];
+  //   @OneToMany(() => h13_yzzxcs, (h13_yzzxcs) => h13_yzzxcs.h12_yzxb, {
+  //     cascade: false, // 禁用级联操作
+  //   })
+  //   h13_yzzxcsList: h13_yzzxcs[];
 }

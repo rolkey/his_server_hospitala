@@ -222,7 +222,7 @@ export class h13_yzzxcs {
   @Column('varchar', { name: 'scpc', nullable: true, length: 30 })
   scpc: string | null;
 
-  @ManyToOne(() => h12_yzxb, (h12_yzxb) => h12_yzxb.h13_yzzxcsList)
-  @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
-  h12_yzxb: h12_yzxb;
+  //   @ManyToOne(() => h12_yzxb, (h12_yzxb) => h12_yzxb.h13_yzzxcsList)
+  //   @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
+  //   h12_yzxb: h12_yzxb;
 }
