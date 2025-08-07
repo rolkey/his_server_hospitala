@@ -45,8 +45,9 @@ export class SfxmController {
   async querySfxm(
     @Query()
     query: {
-      xmzl: string;
-      fylbid: string;
+      xmzl?: string;
+      fylbid?: string;
+      ypflbm?: string;
       value: string;
       pageNo: number;
       pageSize: number;
