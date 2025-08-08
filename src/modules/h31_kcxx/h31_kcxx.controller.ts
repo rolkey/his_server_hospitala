@@ -169,7 +169,7 @@ export class H31_kcxxController {
   }
   @Get('search/ueReadKcjgYpid')
   @ApiOperation({ summary: '查询收费项目价格与库存2' })
-  async ueReadKcjgYpid(query: KcjgYpidRequestDto) {
+  async ueReadKcjgYpid(@Query() query: KcjgYpidRequestDto) {
     return this.h31KcxxService.ueReadKcjgYpid(query);
   }
 }

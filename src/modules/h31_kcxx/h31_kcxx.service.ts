@@ -403,7 +403,7 @@ export class H31_kcxxService {
           bz2: '',
           bz3: '',
           ypidn,
-          kcsl: 0,
+          kcsl: 1000,
         };
       } else {
         // 处理药品
