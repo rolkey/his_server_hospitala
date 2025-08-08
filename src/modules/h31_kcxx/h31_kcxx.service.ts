@@ -418,7 +418,7 @@ export class H31_kcxxService {
         }
 
         const xs = ypzd.ysxs || 1;
-        const kcgl = ypzd.jsl2 || 1;
+        const kcgl = ypzd.jsl2 ?? 1;
 
         if (kcgl !== 0) {
           response.success = true;

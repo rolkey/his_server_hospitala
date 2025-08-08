@@ -40,6 +40,8 @@ import { H31_kcxxModule } from './modules/h31_kcxx/h31_kcxx.module';
 import { H12_mbzbModule } from './modules/h12_mbzb/h12_mbzb.module';
 import { H12_mbxbModule } from './modules/h12_mbxb/h12_mbxb.module';
 import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
+import { H30_ypzdModule } from './modules/h30_ypzd/h30_ypzd.module';
+import { H40SqzbModule } from './modules/h40_sqzb/h40_sqzb.module';
 
 @Module({
   imports: [
@@ -79,6 +81,8 @@ import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
     H12_mbzbModule,
     H12_mbxbModule,
     Lis_sflbModule,
+    H30_ypzdModule,
+    H40SqzbModule,
   ],
 })
 export class AppModule {}

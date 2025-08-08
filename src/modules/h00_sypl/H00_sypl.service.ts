@@ -13,4 +13,8 @@ export class h00_syplService {
   findAll() {
     return this.h00_syplRepo.find({});
   }
+
+  findOne(syplid: string) {
+    return this.h00_syplRepo.findOne({ where: { syplid } });
+  }
 }
