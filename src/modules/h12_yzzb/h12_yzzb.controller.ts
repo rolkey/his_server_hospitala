@@ -20,7 +20,7 @@ export class h12_yzzbController {
 
   @Get('createAdvice')
   async createAdvice(@Query() data: { zyid: string; yzlx: number }) {
-    const record = await this.h12_yzzbService.createAdvice(data);
+    const record = await this.h12_yzxbService.createAdvice(data);
     return { record };
   }
 

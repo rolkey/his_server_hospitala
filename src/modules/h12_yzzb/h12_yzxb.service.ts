@@ -1,13 +1,13 @@
-import { H31_kcxx } from './../h31_kcxx/h31_kcxx.entity';
-import { Injectable, BadRequestException, Scope } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
+import DateFormater from '@/utils/DateFormater';
 // import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 // import DateFormater from '@/utils/DateFormater';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
-import { h12_yzzbService } from './h12_yzzb.service';
+// import { h12_yzzbService } from './h12_yzzb.service';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 // import { ModuleRef } from '@nestjs/core';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
@@ -24,6 +24,7 @@ import { H12_yzxbDto } from './dto/h12_yzxb.dto';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { RedisService } from '@/shared/redis.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -49,13 +50,35 @@ export class h12_yzxbService {
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
     private readonly gyIdentityService: GyIdentityService,
-    private readonly h12YzzbService: h12_yzzbService,
+    // private readonly h12YzzbService: h12_yzzbService,
     private readonly configReaderService: ConfigReaderService,
     private readonly sunsoftService: SunsoftService,
     private readonly h31_kcxxService: H31_kcxxService,
     private readonly h00TcxbService: H00TcxbService,
     private dataSource: DataSource,
+    private redisService: RedisService,
   ) {}
+
+  /**
+   * 获取执行次数
+   * @returns 新的执行次数
+   */
+  async getZxcs(zyid: string, yzlx: number): Promise<number> {
+    const zxcsKey = `zxcs:${zyid}:${yzlx}`;
+    const exists = await this.redisService.exists(zxcsKey);
+    if (!exists) {
+      // 获取 h12_yzxbRepo 中的最大 zxcs 值
+      const maxZxcs = await this.h12_yzxbRepo
+        .createQueryBuilder('h12_yzxb')
+        .select('MAX(h12_yzxb.zxcs)', 'maxZxcs')
+        .where({ where: { zyid, yzlx } })
+        .getRawOne();
+
+      // 初始化
+      await this.redisService.set(zxcsKey, maxZxcs?.maxZxcs ?? 1);
+    }
+    return await this.redisService.incr(zxcsKey);
+  }
 
   // 取组套
   async addPackageToAdvice(h12_yzxbs: H12_yzxbOpeDto) {
@@ -128,6 +151,103 @@ export class h12_yzxbService {
   }
 
   /**
+   * 创建新医嘱记录
+   * @param data { zyid: string, yzlx: number }
+   * @returns 新增的医嘱记录对象
+   */
+  async createAdvice(data: { zyid: string; yzlx: number }): Promise<h12_yzxb> {
+    const { zyid, yzlx } = data;
+
+    // 1. 获取病人信息
+    const patientInfo = await this.h11_brxxRepo.findOne({
+      where: { zyid },
+      select: [
+        'zycs',
+        'brxm',
+        'brnl',
+        'etys',
+        'cyksid',
+        'cybs',
+        'rycw',
+        'xbid',
+        'nldw',
+        'nldw1',
+        'zybh',
+        'zkksid',
+      ],
+    });
+
+    if (!patientInfo) {
+      throw new Error('没有该住院号的入院信息!');
+    }
+
+    // 2. 检查医嘱类型限制
+    // if (yzlx === 1 || yzlx === 2 || yzlx === 7) {
+    //   const existingAdvice = await this.h12_yzzbRepo.findOne({
+    //     where: { zyid, yzlx, tzbz: 0 },
+    //   });
+
+    //   if (existingAdvice) {
+    //     throw new Error(
+    //       yzlx === 1
+    //         ? '长期医嘱没有停止，请先停止再开新医嘱!'
+    //         : '临时医嘱没有停止，请先停止再开新医嘱!',
+    //     );
+    //   }
+    // }
+
+    // 3. 获取新的医嘱序号
+    // const h12_yzzb_record = await this.getYzzb(patientInfo, zyid, yzlx);
+
+    // const yzxhNew = h12_yzzb_record.yzxh || 1;
+    const yzxhNew = 1;
+
+    // 4. 计算病人年龄
+    let brnl = patientInfo.brnl || '';
+    if (patientInfo.etys > 0) {
+      brnl = `${brnl}${patientInfo.nldw || ''}${patientInfo.etys}${patientInfo.nldw1 || ''}`;
+    }
+
+    // 5. 创建新医嘱记录
+    const newRecord = new h12_yzxb();
+
+    Object.assign(newRecord, {
+      zyid,
+      mxxh: await this.gyIdentityService.getMax('h12_yzxbn'),
+      zybh: patientInfo.zybh,
+      zycs: patientInfo.zycs,
+      yzlx,
+      bsid: patientInfo.xbid,
+      kbid: patientInfo.zkksid,
+      yzxh: yzxhNew ?? 1,
+      brxm: patientInfo.brxm,
+      brnl: brnl,
+      etys: patientInfo.etys,
+      ksid: patientInfo.cyksid?.trim(),
+      cwid: patientInfo.rycw,
+      jsbz: 0,
+      tzbz: 0, // 停嘱
+      zxbz: 0, // 执行
+      tjbz: 0, // 提交标志
+      ybbz: 1, // 医嘱标志
+      yzzt: 0, // 医嘱状态
+      sjbz: 0, // 上级标志
+      yzrq: DateFormater.formatDate(new Date().toString()),
+      //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
+      //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
+      srcs: 1,
+      kyts: 1,
+      kyfs: 1,
+      yzzh: 0,
+      tpbz: 0, //附加标志
+      hdbz: 0,
+      zxcs: await this.getZxcs(zyid, yzlx),
+    });
+
+    return newRecord;
+  }
+
+  /**
    * 创建医嘱项
    * @private
    */
@@ -144,7 +264,7 @@ export class h12_yzxbService {
     // 如果是组套第一行，设置组套信息
 
     // 创建医嘱项
-    const newAdvice = await this.h12YzzbService.createAdvice({ zyid: this.zyid, yzlx: this.yzlx });
+    const newAdvice = await this.createAdvice({ zyid: this.zyid, yzlx: this.yzlx });
     adviceList.push(newAdvice);
 
     // 设置医嘱基本信息
@@ -498,10 +618,6 @@ export class h12_yzxbService {
       // 特殊医嘱处理
       const specialOrders = ['     术 后 医 嘱', '     重 整 医 嘱', '     产 后 医 嘱'];
       if (specialOrders.includes(adviceRow.xmmc)) {
-        if (!adviceRow.zxcs) {
-          adviceRow.zxcs = i + 1;
-          continue;
-        }
       } else {
         // 验证项目内容
         if (!adviceRow.xmid || adviceRow.xmid.trim() === '') {
