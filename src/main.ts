@@ -39,8 +39,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, // 允许携带凭据（如 cookies）
   });
-  // 在 main.ts 或 app.module.ts 中
-  console.log('REDIS_URL from process.env:', process.env.REDIS_URL);
 
   await app.listen(process.env.APP_PORT || 8085);
   console.log(`🚀 HTTP服务启动成功: http://localhost:${process.env.APP_PORT}`);
