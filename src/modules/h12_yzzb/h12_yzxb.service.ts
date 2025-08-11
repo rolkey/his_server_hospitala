@@ -71,7 +71,7 @@ export class h12_yzxbService {
       const maxZxcs = await this.h12_yzxbRepo
         .createQueryBuilder('h12_yzxb')
         .select('MAX(h12_yzxb.zxcs)', 'maxZxcs')
-        .where({ where: { zyid, yzlx } })
+        .where({ zyid, yzlx })
         .getRawOne();
 
       // 初始化
@@ -95,6 +95,7 @@ export class h12_yzxbService {
     });
 
     const adviceList = [];
+    const messages = [];
     try {
       // 1. 初始化变量
       const controlData = {
@@ -126,15 +127,16 @@ export class h12_yzxbService {
           adviceList,
           isPackage,
           item,
-          index: i,
-          ...controlData,
+          newGroup: true,
+          newZxcs: true,
+          messages,
         });
 
         const mbid =
           item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
         // 处理套餐项目
         if (isPackage) {
-          const pachageAdvice = await this.handlePackageItems({
+          const pachageAdvice = await this.getPackageItems({
             advice: newAdvice,
             // item: mergedItem,
             mbid,
@@ -143,9 +145,9 @@ export class h12_yzxbService {
           adviceList.push(...pachageAdvice);
         }
       }
-      return adviceList;
+      return { adviceList, messages };
     } catch (error) {
-      console.error('添加组套失败:', error);
+      console.error('取组套失败:', error);
       throw error;
     }
   }
@@ -155,8 +157,13 @@ export class h12_yzxbService {
    * @param data { zyid: string, yzlx: number }
    * @returns 新增的医嘱记录对象
    */
-  async createAdvice(data: { zyid: string; yzlx: number }): Promise<h12_yzxb> {
-    const { zyid, yzlx } = data;
+  async createAdvice(data: {
+    zyid: string;
+    yzlx: number;
+    newGroup: boolean;
+    newZxcs: boolean;
+  }): Promise<h12_yzxb> {
+    const { zyid, yzlx, newGroup, newZxcs } = data;
 
     // 1. 获取病人信息
     const patientInfo = await this.h11_brxxRepo.findOne({
@@ -241,7 +248,7 @@ export class h12_yzxbService {
       yzzh: 0,
       tpbz: 0, //附加标志
       hdbz: 0,
-      zxcs: await this.getZxcs(zyid, yzlx),
+      zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
     });
 
     return newRecord;
@@ -253,18 +260,21 @@ export class h12_yzxbService {
    */
   async _createAdviceItem({
     adviceList,
-    currentRow,
     isPackage,
     item,
-    index,
-    selectedCount,
-    packageGroupId,
-    recursionDepth,
+    newGroup,
+    newZxcs,
+    messages,
   }): Promise<{ newAdvice: h12_yzxb; mergedItem: any }> {
     // 如果是组套第一行，设置组套信息
 
     // 创建医嘱项
-    const newAdvice = await this.createAdvice({ zyid: this.zyid, yzlx: this.yzlx });
+    const newAdvice = await this.createAdvice({
+      zyid: this.zyid,
+      yzlx: this.yzlx,
+      newGroup,
+      newZxcs,
+    });
     adviceList.push(newAdvice);
 
     // 设置医嘱基本信息
@@ -279,7 +289,7 @@ export class h12_yzxbService {
     await this._setItemInfo(newAdvice, mergedItem);
 
     // 处理特殊项目
-    await this._handleSpecialItems(newAdvice, mergedItem);
+    await this._handleSpecialItems(newAdvice, mergedItem, messages);
 
     return { newAdvice, mergedItem };
   }
@@ -394,7 +404,7 @@ export class h12_yzxbService {
     advice.xmid = item.xmid;
     advice.ypid = item.xmid;
     advice.xmmc = item.xmmc;
-    advice.xmdw = item.xmdw;
+    advice.xmdw = item.xmdw?.trim();
     advice.xmdj = item.sfdj;
     advice.xmgg = item.xmgg;
     advice.syffid = item.syffid || '';
@@ -408,7 +418,7 @@ export class h12_yzxbService {
     advice.jssj = item.ybfl?.trim();
     advice.cjid = item.cjid;
     advice.ksid = item.ksid;
-    advice.scph = item.scph;
+    advice.scph = item.scph?.trim();
     advice.jfyl = item.jfyl;
     advice.sjyl = item.sjyl;
     advice.sjyl1 = item.sjyl1;
@@ -424,7 +434,11 @@ export class h12_yzxbService {
    * 处理特殊项目
    * @private
    */
-  async _handleSpecialItems(advice: h12_yzxb, item: any) {
+  async _handleSpecialItems(
+    advice: h12_yzxb,
+    item: any,
+    messages: { xmid: string; message: string }[],
+  ) {
     // 处理皮试提示
     if (item.psbz === 1) {
       if (confirm(`该药品名称：[${item.xmmc}]，是否皮试?`)) {
@@ -435,11 +449,17 @@ export class h12_yzxbService {
 
     // 处理抗生素权限
     if (item.cfqj === '2' && this.gstr_ainf.u_zcid > '0103') {
-      alert(`该药品名称是抗生素药：[${item.xmmc}]，请主治医师以上盖冒?`);
+      messages.push({
+        xmid: advice.xmid,
+        message: `该药品名称是抗生素药：[${item.xmmc}]，请主治医师以上盖冒?`,
+      });
       advice.ksys = '';
       advice.kssxys = this.userId;
     } else if (item.cfqj === '3' && this.gstr_ainf.u_zcid > '0102') {
-      alert(`该药品名称是抗生素药：[${item.xmmc}]，请副主任医师以上盖冒?`);
+      messages.push({
+        xmid: advice.xmid,
+        message: `该药品名称是抗生素药：[${item.xmmc}]，请副主任医师以上盖冒?`,
+      });
       advice.ksys = '';
       advice.kssxys = this.userId;
     }
@@ -449,7 +469,7 @@ export class h12_yzxbService {
    * 处理套餐项目
    * @private
    */
-  async handlePackageItems({ advice, mbid, recursionDepth }) {
+  async getPackageItems({ advice, mbid, recursionDepth }) {
     if (recursionDepth >= this.MAX_RECURSION_DEPTH) {
       throw new Error('组套嵌套层级超过最大限制');
     }
@@ -464,12 +484,13 @@ export class h12_yzxbService {
     // 创建子医嘱项
     const packageAdvices = [];
 
-    for (const pkgItem of packageItems) {
+    for (const [index, pkgItem] of packageItems.entries()) {
       const childAdvice = new UpdateH12_yzxbDto();
       packageAdvices.push(childAdvice);
 
       // 设置子医嘱基本信息
       await this._setChildAdviceBaseInfo(childAdvice, advice);
+      childAdvice.zxcs = index + 1;
 
       // 获取子项目详情
       const childItem = await this._getItemDetail(pkgItem);
@@ -492,9 +513,9 @@ export class h12_yzxbService {
     childAdvice.yzlx = parentAdvice.yzlx;
     childAdvice.yzxh = parentAdvice.yzxh;
     childAdvice.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
-    childAdvice.tcbz = 1;
+    childAdvice.tcbz = 0; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
     childAdvice.sjbz = 1;
-    childAdvice.sfbz = parentAdvice.sfbz;
+    childAdvice.sfbz = 1;
     childAdvice.jsbz = 0;
     childAdvice.zxbz = 0;
     childAdvice.tzbz = 0;
@@ -523,7 +544,7 @@ export class h12_yzxbService {
     childAdvice.xmzl = childItem.xmzl;
     childAdvice.xmid = childItem.xmid;
     childAdvice.xmmc = childItem.xmmc;
-    childAdvice.xmdw = childItem.xmdw;
+    childAdvice.xmdw = childItem.xmdw?.trim();
     childAdvice.xmdj = childItem.jldj;
     childAdvice.xmgg = childItem.xmgg;
     childAdvice.pfjg = childItem.pfjg;
@@ -532,9 +553,9 @@ export class h12_yzxbService {
     childAdvice.scph = childItem.scph;
     childAdvice.jfyl = childItem.jlsl;
     childAdvice.sjyl = childItem.jlsl;
-    childAdvice.fylbid = childItem.fylbid;
+    childAdvice.fylbid = childItem.fylbid?.trim();
     childAdvice.sfbz = childItem.sfbz;
-    childAdvice.fybz = childItem.fybz;
+    childAdvice.fybz = childItem.fybz?.trim();
     childAdvice.zflx = childItem.fyfl;
     childAdvice.syplid = childItem.syplid || 'QD';
     childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
@@ -543,7 +564,7 @@ export class h12_yzxbService {
     childAdvice.gjybmc = childItem.gjybmc;
     childAdvice.ltbz = childItem.ltbz;
     childAdvice.sjyl1 = childItem.sjyl1;
-    childAdvice.jldw = childItem.jldw;
+    childAdvice.jldw = childItem.jldw?.trim();
     childAdvice.typbz = childItem.typbz;
     childAdvice.kyts = childItem.kyts;
     childAdvice.kyfs = childItem.kyfs;
@@ -563,7 +584,7 @@ export class h12_yzxbService {
     //   where: { zyid: h12_yzzbOpe.zyid, yzlx: h12_yzzbOpe.yzlx ?? 0 },
     // });
     // 1. 数据验证
-    if (!h12_yzxbList || h12_yzxbList.length === 0) {
+    if (h12_yzxbList.length === 0 && h12_yzzbOpe.deleteList.length === 0) {
       throw new BadRequestException('请录入医嘱内容!');
     }
 
@@ -605,11 +626,11 @@ export class h12_yzxbService {
     }
 
     // 初始化变量
-    const today = new Date().getFullYear().toString();
-    const firstOrder = h12_yzxbList[0];
-    const groupFlag = firstOrder.typbz || '';
-    const groupId = firstOrder.yzzh || 0;
-    const orderDate = firstOrder.yzrq || new Date();
+    // const today = new Date().getFullYear().toString();
+    // const firstOrder = h12_yzxbList[0];
+    // const groupFlag = firstOrder.typbz ?? '';
+    // const groupId = firstOrder.yzzh || 0;
+    // const orderDate = firstOrder.yzrq || new Date();
 
     // 验证医嘱
     for (let i = 0; i < h12_yzxbList.length; i++) {
@@ -730,12 +751,12 @@ export class h12_yzxbService {
         // if (adviceRow.ysbz === 0) continue;
 
         await this.saveYzxb(adviceRow, manager);
-        // 保存明细
-        if (adviceRow.additional) {
-          for (const additionalItem of adviceRow.additional) {
-            await this.saveYzxb(additionalItem, manager);
-          }
-        }
+        // // 保存明细
+        // if (adviceRow.additional) {
+        //   for (const additionalItem of adviceRow.additional) {
+        //     await this.saveYzxb(additionalItem, manager);
+        //   }
+        // }
       }
 
       // 重新处理排序，限制：只有删除才会重排，新增

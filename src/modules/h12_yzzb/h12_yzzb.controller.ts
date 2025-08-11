@@ -19,8 +19,14 @@ export class h12_yzzbController {
   }
 
   @Get('createAdvice')
-  async createAdvice(@Query() data: { zyid: string; yzlx: number }) {
-    const record = await this.h12_yzxbService.createAdvice(data);
+  async createAdvice(
+    @Query() data: { zyid: string; yzlx: number; newZxcs?: boolean; newGroup?: boolean },
+  ) {
+    // 设置默认值
+    const newZxcs = data.newZxcs ?? true;
+    const newGroup = data.newGroup ?? false;
+    const newData = { ...data, newZxcs, newGroup };
+    const record = await this.h12_yzxbService.createAdvice(newData);
     return { record };
   }
 
@@ -61,6 +67,6 @@ export class h12_yzzbController {
 
   @Post('getPackageItems')
   async getPackageItems(@Body() data: { advice: any; mbid: string }) {
-    return this.h12_yzxbService.handlePackageItems({ ...data, recursionDepth: 1 });
+    return this.h12_yzxbService.getPackageItems({ ...data, recursionDepth: 1 });
   }
 }

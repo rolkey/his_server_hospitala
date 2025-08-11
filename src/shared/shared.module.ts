@@ -57,9 +57,8 @@ import { createClient } from 'redis';
       inject: [ConfigService],
       provide: 'REDIS_CLIENT',
       async useFactory(configService: ConfigService) {
-        const client = createClient({
-          url: configService.get('REDIS_URL'),
-        });
+        const url = configService.get('REDIS_URL');
+        const client = createClient({ url });
         await client.connect();
         return client;
       },

@@ -42,13 +42,18 @@ import { H12_mbxbModule } from './modules/h12_mbxb/h12_mbxb.module';
 import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
 import { H30_ypzdModule } from './modules/h30_ypzd/h30_ypzd.module';
 import { H40SqzbModule } from './modules/h40_sqzb/h40_sqzb.module';
+import { resolve } from 'path';
 
 @Module({
   imports: [
     /* 配置文件模块 */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: [
+        resolve(__dirname, '.env'), // 绝对路径
+        resolve(__dirname, '.env.local'),
+      ],
+      expandVariables: true,
     }),
     UsrcatModule,
     PermissionModule,
