@@ -7,7 +7,7 @@ import { csxzController } from './csxz.controller';
 @Global()
 @Module({
   imports: [TypeOrmModule.forFeature([csxz])],
-  // controllers: [csxzController],
+  controllers: [csxzController],
   providers: [csxzService],
   exports: [csxzService],
 })

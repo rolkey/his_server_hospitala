@@ -39,4 +39,8 @@ export class csxzService {
       },
     ];
   }
+
+  findAllPersonnelCategory() {
+    return this.csxzRepo.find({ where: { yxbz: 1, lx: '病人所属' } });
+  }
 }
