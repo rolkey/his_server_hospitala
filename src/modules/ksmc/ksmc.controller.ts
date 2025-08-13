@@ -15,4 +15,16 @@ export class ksmcController {
     const results = await this.ksmcService.findAll();
     return { pageData: results, total: results.length };
   }
+
+  @Get('findWard')
+  async findWard() {
+    const results = await this.ksmcService.findWard();
+    return { pageData: results, total: results.length };
+  }
+
+  @Get('findHospitalizedDept')
+  async findHospitalizedDept() {
+    const results = await this.ksmcService.findHospitalizedDept();
+    return { pageData: results, total: results.length };
+  }
 }

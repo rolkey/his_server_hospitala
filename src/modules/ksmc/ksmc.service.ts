@@ -69,4 +69,22 @@ export class ksmcService {
       ])
       .getMany();
   }
+
+  findWard() {
+    return this.ksmcRepo
+      .createQueryBuilder('ksmc')
+      .where('ksmc.ksflid = :ksflid', { ksflid: '01' })
+      .andWhere("isnull(ksmc.ksfl,'0') in ('0','1')")
+      .andWhere('isnull(ksmc.sjbz,1) = 1')
+      .getMany();
+  }
+
+  findHospitalizedDept() {
+    return this.ksmcRepo
+      .createQueryBuilder('ksmc')
+      .where('ksmc.ksflid = :ksflid', { ksflid: '01' })
+      .andWhere("isnull(ksmc.ksfl,'0') in ('0','2')")
+      .andWhere('isnull(ksmc.sjbz,1) = 1')
+      .getMany();
+  }
 }

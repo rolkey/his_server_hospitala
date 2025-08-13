@@ -22,6 +22,7 @@ import { csxzModule } from './modules/csxz/csxz.module';
 import { fyxxModule } from './modules/fyxx/fyxx.module';
 import { h00_brlxModule } from './modules/h00_brlx/h00_brlx.module';
 import { h00_mzzdModule } from './modules/h00_mzzd/h00_mzzd.module';
+import { h20_jzzbModule } from './modules/h20_jzzb/h20_jzzb.module';
 import { h00_syffModule } from './modules/h00_syff/h00_syff.module';
 import { h00_rybqModule } from './modules/h00_rybq/h00_rybq.module';
 import { h00_syplModule } from './modules/h00_sypl/h00_sypl.module';
@@ -40,6 +41,7 @@ import { H31_kcxxModule } from './modules/h31_kcxx/h31_kcxx.module';
 import { H12_mbzbModule } from './modules/h12_mbzb/h12_mbzb.module';
 import { H12_mbxbModule } from './modules/h12_mbxb/h12_mbxb.module';
 import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
+import { h00_fkfsModule } from './modules/h00_fkfs/h00_fkfs.module';
 
 @Module({
   imports: [
@@ -60,6 +62,7 @@ import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
     csxzModule,
     fyxxModule,
     h00_brlxModule,
+    h20_jzzbModule,
     h00_mzzdModule,
     h00_rybqModule,
     h00_syffModule,
@@ -79,6 +82,7 @@ import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
     H12_mbzbModule,
     H12_mbxbModule,
     Lis_sflbModule,
+    h00_fkfsModule,
   ],
 })
 export class AppModule {}

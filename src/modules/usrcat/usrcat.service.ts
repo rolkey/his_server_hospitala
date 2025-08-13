@@ -166,4 +166,20 @@ export class UsrcatService {
     });
     return user;
   }
+
+  async findOutpatientDoctor() {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .where("isnull(usrcat.zhjy,0)=0 and ((usrcat.zcid like '01%' ) OR (usrcat.zcid like '03%'))")
+      .andWhere("usrcat.usid in (select usid from __ksry where syid='23' or syid='12')")
+      .orderBy('usrcat.usid')
+      .getMany();
+  }
+
+  async findResidentDoctor() {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .where("isnull(usrcat.zhjy,0)=0 and ((usrcat.zcid like '01%' ) OR (usrcat.zcid like '03%'))")
+      .andWhere("usrcat.usid in (select usid from __ksry where syid='12')")
+      .orderBy('usrcat.usid')
+      .getMany();
+  }
 }
