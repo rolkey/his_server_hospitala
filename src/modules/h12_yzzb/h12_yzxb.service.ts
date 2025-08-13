@@ -105,6 +105,11 @@ export class h12_yzxbService {
         recursionDepth: 0,
       };
 
+      // 同组规则：加到同一组时，需要生成yzzh
+      //          加到同一组时，需要生成yzzh
+      const newGroup = (h12_yzxbs.yzzh || 0) === 0;
+      const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
+
       // 2. 处理选中的项目
       for (let i = 0; i < h12_yzxbs.h12_mbxbs.length; i++) {
         const item = h12_yzxbs.h12_mbxbs[i];
@@ -124,13 +129,19 @@ export class h12_yzxbService {
 
         // 创建医嘱项
         const { newAdvice, mergedItem } = await this._createAdviceItem({
-          adviceList,
           isPackage,
           item,
-          newGroup: true,
-          newZxcs: true,
+          newGroup: newGroup,
+          newZxcs: h12_yzxbs.isAdditional ?? true,
           messages,
         });
+        adviceList.push(newAdvice);
+        newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
+        if (h12_yzxbs.yzzh > 0) {
+          newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
+        } else if (h12_yzxbs.yzzh === -1) {
+          newAdvice.yzzh = yzzh; // 组套合并为同组
+        }
 
         const mbid =
           item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
@@ -245,7 +256,7 @@ export class h12_yzxbService {
       srcs: 1,
       kyts: 1,
       kyfs: 1,
-      yzzh: 0,
+      yzzh: newGroup ? await this.gyIdentityService.getMax('h12_yzzh') : 0,
       tpbz: 0, //附加标志
       hdbz: 0,
       zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
@@ -256,10 +267,10 @@ export class h12_yzxbService {
 
   /**
    * 创建医嘱项
-   * @private
+   * @param param0 { isPackage, item, newGroup, newZxcs, messages }
+   * @returns { newAdvice: h12_yzxb; mergedItem: any }
    */
   async _createAdviceItem({
-    adviceList,
     isPackage,
     item,
     newGroup,
@@ -275,7 +286,6 @@ export class h12_yzxbService {
       newGroup,
       newZxcs,
     });
-    adviceList.push(newAdvice);
 
     // 设置医嘱基本信息
     await this._setAdviceBaseInfo(newAdvice, {
@@ -522,18 +532,24 @@ export class h12_yzxbService {
     childAdvice.tjbz = 0;
     childAdvice.hdbz = parentAdvice.hdbz;
     childAdvice.lryid = this.userId;
-    childAdvice.yzzh = parentAdvice.yzzh;
+    // childAdvice.yzzh = parentAdvice.yzzh;
     childAdvice.ysbz = 0; // 套餐子项按附加项目来看
 
+    childAdvice.yzrq = parentAdvice.yzrq;
+
+    childAdvice.isNew = true;
+
+    // 同组基本项++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    childAdvice.yzzh = parentAdvice.yzzh;
     // 复制医生/护士信息
     childAdvice.ksys = parentAdvice.ksys;
     childAdvice.kssxys = parentAdvice.kssxys;
     childAdvice.kshs = parentAdvice.kshs;
     childAdvice.kssxhs = parentAdvice.kssxhs;
-
     childAdvice.yzrq = parentAdvice.yzrq;
-
-    childAdvice.isNew = true;
+    childAdvice.srcs = parentAdvice.srcs;
+    childAdvice.mrcs = parentAdvice.mrcs;
+    childAdvice.syplid = parentAdvice.syplid;
   }
 
   /**

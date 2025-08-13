@@ -58,6 +58,7 @@ import { createClient } from 'redis';
       provide: 'REDIS_CLIENT',
       async useFactory(configService: ConfigService) {
         const url = configService.get('REDIS_URL');
+        console.log('Redis URL from ConfigService:', url); // 打印读取的值
         const client = createClient({ url });
         await client.connect();
         return client;

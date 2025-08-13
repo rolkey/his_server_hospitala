@@ -49,10 +49,7 @@ import { resolve } from 'path';
     /* 配置文件模块 */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [
-        resolve(__dirname, '.env'), // 绝对路径
-        resolve(__dirname, '.env.local'),
-      ],
+      envFilePath: [resolve(__dirname, '.env.local') ?? resolve(__dirname, '.env')],
       expandVariables: true,
     }),
     UsrcatModule,

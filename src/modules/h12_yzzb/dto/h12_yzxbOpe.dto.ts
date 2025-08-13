@@ -20,6 +20,14 @@ export class H12_yzxbOpeDto {
   @Allow()
   ksid: string;
 
+  // 组号：同组医嘱的组号，为空时表示不同组
+  @Allow()
+  yzzh?: number;
+
+  // 是否为附加项目：如果是附加项目则不取新的zxcs，由前端处理zxcs
+  @Allow()
+  isAdditional?: boolean;
+
   @Allow()
   h12_mbxbs: UpdateH12_mbxbDto[];
 }
