@@ -353,7 +353,7 @@ export class ConfigReaderService {
       gstr_ainfDto.u_bgmm = userData.bgmm !== 0;
       gstr_ainfDto.u_mmyx = userData.mmyx !== 0;
       gstr_ainfDto.u_zhjy = userData.zhjy !== 0;
-      gstr_ainfDto.u_ksid = userData.ksid || '';
+      gstr_ainfDto.u_ksid = userData.ksid?.trim() || '';
       gstr_ainfDto.u_zcid = userData.zcid || '';
       gstr_ainfDto.u_zwid = userData.zwid || '';
       gstr_ainfDto.ysgjbm = userData.ybry || '';

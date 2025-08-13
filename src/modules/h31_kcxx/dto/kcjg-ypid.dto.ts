@@ -1,13 +1,31 @@
+import { Allow } from 'class-validator';
 // kcjg-ypid.dto.ts
 export class KcjgYpidRequestDto {
+  @Allow()
   lx: number;
+
+  @Allow()
   ypid: string;
+
+  @Allow()
   ypmc: string;
+
+  @Allow()
   xmzl: number;
+
+  @Allow()
   ksid1: string;
+
+  @Allow()
   ksid2: string;
+
+  @Allow()
   ksid3: string;
+
+  @Allow()
   ksid4: string;
+
+  @Allow()
   ksid5: string;
 }
 

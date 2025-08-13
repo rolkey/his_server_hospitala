@@ -42,13 +42,17 @@ import { H12_mbzbModule } from './modules/h12_mbzb/h12_mbzb.module';
 import { H12_mbxbModule } from './modules/h12_mbxb/h12_mbxb.module';
 import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
 import { h00_fkfsModule } from './modules/h00_fkfs/h00_fkfs.module';
+import { H30_ypzdModule } from './modules/h30_ypzd/h30_ypzd.module';
+import { H40SqzbModule } from './modules/h40_sqzb/h40_sqzb.module';
+import { resolve } from 'path';
 
 @Module({
   imports: [
     /* 配置文件模块 */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: [resolve(__dirname, '.env.local') ?? resolve(__dirname, '.env')],
+      expandVariables: true,
     }),
     UsrcatModule,
     PermissionModule,
@@ -82,7 +86,12 @@ import { h00_fkfsModule } from './modules/h00_fkfs/h00_fkfs.module';
     H12_mbzbModule,
     H12_mbxbModule,
     Lis_sflbModule,
+<<<<<<< HEAD
     h00_fkfsModule,
+=======
+    H30_ypzdModule,
+    H40SqzbModule,
+>>>>>>> c6175a3f05dc37cbcca47931656dbdfdeb5d9f42
   ],
 })
 export class AppModule {}

@@ -18,6 +18,7 @@ import { SfxmModule } from '../h12_xmzd/sfxm.module';
 import { SunsoftModule } from '../sunsoft/sunsoft.module';
 import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
 import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
+import { SharedModule } from '@/shared/shared.module';
 @Global()
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
       h00_sypl,
       h11_brxx,
     ]),
+    SharedModule,
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
     forwardRef(() => SunsoftModule),

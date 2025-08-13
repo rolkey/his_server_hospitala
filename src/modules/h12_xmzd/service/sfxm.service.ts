@@ -247,6 +247,7 @@ export class SfxmService {
   async querySfxm(params: {
     xmzl?: string;
     fylbid?: string;
+    ypflbm?: string;
     value?: string;
     pageNo: number;
     pageSize: number;
@@ -260,10 +261,33 @@ export class SfxmService {
     ksid7?: string;
     ksid8?: string;
   }): Promise<any> {
-    const upcaseValue = params.value?.toUpperCase();
-    const whereClause = upcaseValue
-      ? ` WHERE ypid LIKE '%${upcaseValue}%' or xmmc LIKE '%${upcaseValue}%' or pybm LIKE '%${upcaseValue}%' or wbbm LIKE '%${upcaseValue}%'`
-      : '';
+    const whereArray = [];
+
+    if (params.value) {
+      const upcaseValue = params.value.toUpperCase();
+      whereArray.push(
+        `(ypid LIKE '%${upcaseValue}%' or xmmc LIKE '%${upcaseValue}%' or pybm LIKE '%${upcaseValue}%' or wbbm LIKE '%${upcaseValue}%')`,
+      );
+    }
+    if (params.fylbid) {
+      const fylbid = params.fylbid
+        .split(',')
+        .map((item) => `'${item}'`)
+        .join(',');
+      whereArray.push(`fylbid in (${fylbid})`);
+    }
+    if (params.ypflbm) {
+      const ypflbm = params.ypflbm
+        .split(',')
+        .map((item) => `'${item}'`)
+        .join(',');
+      whereArray.push(`ypflbm in (${ypflbm})`);
+    }
+    if (params.xmzl) {
+      whereArray.push(`xmzl = ${params.xmzl}`);
+    }
+
+    const whereClause = whereArray.length > 0 ? `WHERE ${whereArray.join(' AND ')}` : '';
 
     const result = await this.dataSource.query(
       `SELECT COUNT(*) as total FROM dbo.fn_h22_sfxm_xmlr_kcgl_newtcksid_scph_sxrq_bzfl_ksid_wdf(
@@ -286,8 +310,7 @@ export class SfxmService {
     const pageData = await this.dataSource.query(
       `SELECT * FROM dbo.fn_h22_sfxm_xmlr_kcgl_newtcksid_scph_sxrq_bzfl_ksid_wdf(
             @0, @1, @2, @3, @4, @5, @6, @7, @8
-        )
-        ${whereClause}
+        ) as fymx ${whereClause}
         ORDER BY (SELECT NULL) OFFSET ${offset} ROWS FETCH NEXT ${params.pageSize} ROWS ONLY`,
       [
         params.ksid,

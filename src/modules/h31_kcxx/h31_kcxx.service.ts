@@ -359,6 +359,7 @@ export class H31_kcxxService {
       if (request.xmzl === 1) {
         // 处理项目
         const xmzd = await this.h00_xmzdRepository.findOne({
+          //   where: { xmid: request.ypid, yxbz: 1 },
           where: { xmid: request.ypid },
           // TODO: yxbz是啥东东？
         });
@@ -402,7 +403,7 @@ export class H31_kcxxService {
           bz2: '',
           bz3: '',
           ypidn,
-          kcsl: 0,
+          kcsl: 1000,
         };
       } else {
         // 处理药品
@@ -417,7 +418,7 @@ export class H31_kcxxService {
         }
 
         const xs = ypzd.ysxs || 1;
-        const kcgl = ypzd.jsl2 || 1;
+        const kcgl = ypzd.jsl2 ?? 1;
 
         if (kcgl !== 0) {
           response.success = true;
@@ -597,6 +598,6 @@ export class H31_kcxxService {
   }
 
   private roundNumber(value: number, decimals: number): number {
-    return Number(value.toFixed(decimals));
+    return Number(value?.toFixed(decimals));
   }
 }

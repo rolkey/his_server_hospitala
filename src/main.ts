@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import * as session from 'express-session';
 import { json, urlencoded } from 'express';
 import { ValidationPipe } from '@nestjs/common';
+import { resolve } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -39,6 +40,15 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, // 允许携带凭据（如 cookies）
   });
+  console.log(
+    'REDIS_URL from process.env:',
+    process.env.REDIS_URL,
+    '\n',
+    resolve(__dirname, '.env'), // 绝对路径
+    '\n',
+    resolve(__dirname, '.env.local'),
+  );
+
   await app.listen(process.env.APP_PORT || 8085);
   console.log(`🚀 HTTP服务启动成功: http://localhost:${process.env.APP_PORT}`);
 }

@@ -44,4 +44,12 @@ export class RedisService {
       await this.redisClient.expire(key, ttl);
     }
   }
+
+  async exists(key: string) {
+    return await this.redisClient.exists(key);
+  }
+
+  async incr(key: string) {
+    return await this.redisClient.incr(key);
+  }
 }
