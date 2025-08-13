@@ -86,12 +86,9 @@ import { resolve } from 'path';
     H12_mbzbModule,
     H12_mbxbModule,
     Lis_sflbModule,
-<<<<<<< HEAD
     h00_fkfsModule,
-=======
     H30_ypzdModule,
     H40SqzbModule,
->>>>>>> c6175a3f05dc37cbcca47931656dbdfdeb5d9f42
   ],
 })
 export class AppModule {}
