@@ -51,7 +51,8 @@ import { resolve } from 'path';
     /* 配置文件模块 */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [resolve(__dirname, '.env.local') ?? resolve(__dirname, '.env')],
+      //   envFilePath: [resolve(__dirname, '.env.local') ?? resolve(__dirname, '.env')],
+      envFilePath: ['.env'],
       expandVariables: true,
     }),
     UsrcatModule,
