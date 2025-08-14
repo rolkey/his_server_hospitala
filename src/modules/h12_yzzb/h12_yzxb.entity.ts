@@ -281,7 +281,7 @@ export class h12_yzxb {
   @Column({
     type: 'varchar', // 数据库字段类型
     length: 10, // 数据库字段长度
-    transformer: varcharNumberTransformer, // 应用我们创建的 transformer
+    // transformer: varcharNumberTransformer, // 应用我们创建的 transformer
     nullable: true, // 根据你的表定义设置是否允许 NULL
   })
   sjyl1: string | null;

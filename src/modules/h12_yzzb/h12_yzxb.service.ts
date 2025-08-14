@@ -1,6 +1,12 @@
 import { Inject, Injectable, BadRequestException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import {
+  Repository,
+  DataSource,
+  EntityManager,
+  getMetadataArgsStorage,
+  EntityTarget,
+} from 'typeorm';
 import DateFormater from '@/utils/DateFormater';
 // import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
@@ -25,6 +31,7 @@ import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { RedisService } from '@/shared/redis.service';
+import { filterEntityFields } from '@/utils/entityUrils';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -784,21 +791,36 @@ export class h12_yzxbService {
     return '数据保存成功!';
   }
 
+  // 获取实体的所有列名
   async saveYzxb(advice: H12_yzxbDto, manager: EntityManager) {
     let h12_yzxbRow = null;
     if (advice.isNew) {
       h12_yzxbRow = manager.create(h12_yzxb, advice);
+      return manager.save(h12_yzxbRow);
     } else {
       // 这样会产生级联操作
-      h12_yzxbRow = await manager.findOneBy(h12_yzxb, {
-        mxxh: advice.mxxh,
-        yzlx: advice.yzlx,
-        yzxh: advice.yzxh,
-        zyid: advice.zyid,
-      });
-      Object.assign(h12_yzxbRow, advice);
+      //   h12_yzxbRow = await manager.findOneBy(h12_yzxb, {
+      //     mxxh: advice.mxxh,
+      //     yzlx: advice.yzlx,
+      //     yzxh: advice.yzxh,
+      //     zyid: advice.zyid,
+      //   });
+      //   Object.assign(h12_yzxbRow, advice);
+      //   h12_yzxbRow = manager.merge(h12_yzxb, h12_yzxbRow); // 显式合并变更
+      const { mxxh, yzlx, yzxh, zyid, ...updateFields } = advice;
+      const filteredUpdateFields = filterEntityFields(h12_yzxb, updateFields, manager);
+      const updateResult = await manager.update(
+        h12_yzxb,
+        {
+          mxxh,
+          yzlx,
+          yzxh,
+          zyid,
+        },
+        filteredUpdateFields,
+      );
+      return updateResult;
     }
-    return manager.save(h12_yzxbRow);
     // if (advice.isNew) {
     //   const h12_yzxbRow = manager.create(h12_yzxb, advice);
     //   return manager.save(h12_yzxbRow);

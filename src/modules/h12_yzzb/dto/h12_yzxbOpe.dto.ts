@@ -21,6 +21,7 @@ export class H12_yzxbOpeDto {
   ksid: string;
 
   // 组号：同组医嘱的组号，为空时表示不同组
+  // 如果等于-1则重取yzzh，否则使用传入的yzzh
   @Allow()
   yzzh?: number;
 
