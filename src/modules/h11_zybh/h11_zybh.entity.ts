@@ -2,29 +2,36 @@ import { AfterLoad, Column, Entity, Index } from 'typeorm';
 
 @Entity('h11_zybh', { schema: 'dbo' })
 export class h11_zybh {
-  @Column('varchar', {
+  @Column('decimal', {
     primary: true,
-    name: 'fkfsid',
-    length: 10,
+    name: 'zybh',
+    precision: 18,
+    scale: 0,
     default: () => "''",
   })
-  fkfsid: string;
+  zybh: number | null;
 
-  @Column('varchar', {
-    name: 'fkfsmc',
+  @Column('smallint', {
+    name: 'hsbz',
     nullable: true,
-    length: 30,
     default: () => "''",
   })
-  fkfsmc: string | null;
+  hsbz: number | null;
+
+  @Column('int', {
+    name: 'code',
+    nullable: true,
+    default: () => "''",
+  })
+  code: number | null;
 
   @AfterLoad()
   trim() {
-    if (this.fkfsid) {
-      this.fkfsid = this.fkfsid.trim();
-    }
-    if (this.fkfsmc) {
-      this.fkfsmc = this.fkfsmc.trim();
-    }
+    // if (this.fkfsid) {
+    //   this.fkfsid = this.fkfsid.trim();
+    // }
+    // if (this.fkfsmc) {
+    //   this.fkfsmc = this.fkfsmc.trim();
+    // }
   }
 }

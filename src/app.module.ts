@@ -44,6 +44,7 @@ import { Lis_sflbModule } from './modules/lis_sflb/lis_sflb.module';
 import { h00_fkfsModule } from './modules/h00_fkfs/h00_fkfs.module';
 import { H30_ypzdModule } from './modules/h30_ypzd/h30_ypzd.module';
 import { H40SqzbModule } from './modules/h40_sqzb/h40_sqzb.module';
+import { h11_zybhModule } from './modules/h11_zybh/h11_zybh.module';
 import { resolve } from 'path';
 
 @Module({
@@ -90,6 +91,7 @@ import { resolve } from 'path';
     h00_fkfsModule,
     H30_ypzdModule,
     H40SqzbModule,
+    h11_zybhModule,
   ],
 })
 export class AppModule {}
