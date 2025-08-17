@@ -17,7 +17,7 @@ export class SfxmController {
   }
 
   @Get('ksids')
-  async getKsConfigs(@Query('id') ksid: string) {
+  async getKsConfigs(@Query('ksid') ksid: string) {
     return this.configReaderService.getKsids(ksid);
   }
 

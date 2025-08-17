@@ -95,6 +95,8 @@ export class h12_yzxbService {
     this.userId = h12_yzxbs.userId;
     this.systemId = h12_yzxbs.systemId;
     this.departmentId = h12_yzxbs.ksid;
+
+    // TODO: 这些参数应该放在Redis中，而不是每次都从数据库中读取
     this.g_ksid = await this.configReaderService.getKsids(this.departmentId);
     this.gstr_ainf = await this.configReaderService.readGstrAinf({
       userId: h12_yzxbs.userId,
@@ -113,7 +115,6 @@ export class h12_yzxbService {
       };
 
       // 同组规则：加到同一组时，需要生成yzzh
-      //          加到同一组时，需要生成yzzh
       const newGroup = (h12_yzxbs.yzzh || 0) === 0;
       const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
 

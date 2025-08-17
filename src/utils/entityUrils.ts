@@ -31,18 +31,3 @@ export function filterEntityFields<T>(
 
   return result;
 }
-
-// // 使用示例
-// delete updateFields.isNew;
-// const filteredUpdateFields = filterEntityFields(h12_yzxb, updateFields, manager);
-
-// return manager.update(
-//   h12_yzxb,
-//   {
-//     mxxh,
-//     yzlx,
-//     yzxh,
-//     zyid,
-//   },
-//   filteredUpdateFields,
-// );
