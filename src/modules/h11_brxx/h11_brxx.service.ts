@@ -4,11 +4,14 @@ import { Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
 import { Queryh11_brxxDto, CreateDto, UpdateDto } from './dto';
 import * as dayjs from 'dayjs';
+import { h11_lshService } from '../h11_lsh/h11_lsh.service';
+import { log } from 'console';
 @Injectable()
 export class h11_brxxService {
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
+    private readonly h11_lshService: h11_lshService,
   ) {}
 
   async findAll(queryDto: Queryh11_brxxDto) {
@@ -141,6 +144,7 @@ export class h11_brxxService {
   }
   async create(dto: CreateDto) {
     const entity = this.h11_brxxRepo.create(dto);
+    entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
     return await this.h11_brxxRepo.save(entity);
   }
 

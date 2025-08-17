@@ -17,7 +17,7 @@ export class h11_brxxController {
     return { record: brxx };
   }
 
-  @Post()
+  @Post('create')
   async create(@Body() dto: CreateDto) {
     return await this.h11_brxxService.create(dto);
   }
