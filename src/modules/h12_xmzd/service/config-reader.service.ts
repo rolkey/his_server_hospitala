@@ -433,7 +433,13 @@ export class ConfigReaderService {
     };
   }
 
+  /**
+   * 获取各类药品和材料的ksid
+   * @param uKsid 用户ksid
+   * @returns 返回包含各类药品和材料ksid的对象
+   */
   public async getKsids(uKsid: string): Promise<G_ksidDto> {
+    // 并行获取西药、成药、中药、材料、其他、针剂的ksid
     const [xyksid, cyksid, zyksid, clksid, qtksid, zjksid] = await Promise.all([
       this.paramService.gfGetPara(13, `xy${uKsid}`, '0603', `西药${uKsid}`),
       this.paramService.gfGetPara(13, `cy${uKsid}`, '0603', `成药${uKsid}`),
