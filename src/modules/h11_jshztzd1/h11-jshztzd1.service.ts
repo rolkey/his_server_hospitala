@@ -98,7 +98,6 @@ export class H11Jshztzd1Service {
           cycw,
         },
       );
-      console.warn('1 更新提交 h11Jshztzd1');
     } else {
       // 创建新记录
       const newRecord = this.h11Jshztzd1Repository.create({
@@ -114,7 +113,6 @@ export class H11Jshztzd1Service {
         tjry: gstr_ainf.u_userid,
       });
       await this.h11Jshztzd1Repository.save(newRecord);
-      console.warn('2 新增提交 h11Jshztzd1');
     }
   }
 }
