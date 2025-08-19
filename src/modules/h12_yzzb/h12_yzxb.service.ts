@@ -1,3 +1,4 @@
+import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 import { Inject, Injectable, BadRequestException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -32,6 +33,7 @@ import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { RedisService } from '@/shared/redis.service';
 import { filterEntityFields } from '@/utils/entityUrils';
+import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -64,6 +66,7 @@ export class h12_yzxbService {
     private readonly h00TcxbService: H00TcxbService,
     private dataSource: DataSource,
     private redisService: RedisService,
+    private h11Jshztzd1Service: H11Jshztzd1Service,
   ) {}
 
   /**
@@ -595,13 +598,33 @@ export class h12_yzxbService {
   }
 
   /**
+   * 医嘱提交
+   * @param h12_yzzb1OpeDto
+   */
+  async submitAdvices(h12_yzzb1OpeDto: H12_yzzb1OpeDto) {
+    const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
+      h12_yzzb1OpeDto;
+    await this.saveAdvice({ zyid, yzlx, h12_yzxbs, deleteList });
+    await this.h11Jshztzd1Service.updateOrCreateRecord({
+      zyid,
+      gstr_ainf: { u_ksid: ksid, u_userid: userId },
+      yzlx,
+      ldt_sj: new Date(),
+      cycw,
+      zybh,
+      brxm,
+      qfbz,
+    });
+  }
+
+  /**
    * 验证并保存医嘱数据
    * @param h12_yzzbObj 主表数据
    * @param h12_yzxbList 细表数据数组
    * @param xxData 附加信息数据数组
    * @param h12_yzzbOpe 业务参数
    */
-  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto) {
+  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto, manager?: EntityManager) {
     const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
 
     // const h12_yzzb_record = this.h12_yzzbRepo.find({

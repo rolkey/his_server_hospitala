@@ -19,6 +19,8 @@ import { SunsoftModule } from '../sunsoft/sunsoft.module';
 import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
 import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
 import { SharedModule } from '@/shared/shared.module';
+import { H11Jshztzd1Module } from '../h11_jshztzd1/h11-jshztzd1.module';
+
 @Global()
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { SharedModule } from '@/shared/shared.module';
     forwardRef(() => SunsoftModule),
     forwardRef(() => H31_kcxxModule),
     forwardRef(() => H00TcxbModule),
+    forwardRef(() => H11Jshztzd1Module),
   ],
   controllers: [h12_yzzbController],
   providers: [h12_yzzbService, h12_yzxbService],

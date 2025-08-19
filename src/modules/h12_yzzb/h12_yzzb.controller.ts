@@ -4,6 +4,7 @@ import { h12_yzxbService } from './h12_yzxb.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
+import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 
 @Controller('h12_yzzb')
 export class h12_yzzbController {
@@ -33,6 +34,12 @@ export class h12_yzzbController {
   @Post('saveAdvice')
   async saveAdvice(@Body() h12_yzzbOpeDto: H12_yzzbOpeDto) {
     const record = await this.h12_yzxbService.saveAdvice(h12_yzzbOpeDto);
+    return { record };
+  }
+
+  @Post('submitAdvices')
+  async submitAdvices(@Body() h12_yzzb1OpeDto: H12_yzzb1OpeDto) {
+    const record = await this.h12_yzxbService.submitAdvices(h12_yzzb1OpeDto);
     return { record };
   }
 
