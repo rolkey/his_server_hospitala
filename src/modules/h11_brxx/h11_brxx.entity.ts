@@ -345,43 +345,43 @@ export class h11_brxx {
   jsry: string | null;
 
   @Column('varchar', { name: 'GG1', nullable: true, length: 12 })
-  gg1: string | null;
+  GG1: string | null;
 
   @Column('varchar', { name: 'GG2', nullable: true, length: 12 })
-  gg2: string | null;
+  GG2: string | null;
 
   @Column('varchar', { name: 'GG3', nullable: true, length: 12 })
-  gg3: string | null;
+  GG3: string | null;
 
   @Column('varchar', { name: 'XZZ1', nullable: true, length: 12 })
-  xzz1: string | null;
+  XZZ1: string | null;
 
   @Column('varchar', { name: 'XZZ2', nullable: true, length: 12 })
-  xzz2: string | null;
+  XZZ2: string | null;
 
   @Column('varchar', { name: 'XZZ3', nullable: true, length: 12 })
-  xzz3: string | null;
+  XZZ3: string | null;
 
   @Column('varchar', { name: 'XZZ4', nullable: true, length: 12 })
-  xzz4: string | null;
+  XZZ4: string | null;
 
   @Column('varchar', { name: 'XZZ5', nullable: true, length: 60 })
-  xzz5: string | null;
+  XZZ5: string | null;
 
   @Column('varchar', { name: 'HKDZ1', nullable: true, length: 12 })
-  hkdz1: string | null;
+  HKDZ1: string | null;
 
   @Column('varchar', { name: 'HKDZ2', nullable: true, length: 12 })
-  hkdz2: string | null;
+  HKDZ2: string | null;
 
   @Column('varchar', { name: 'HKDZ3', nullable: true, length: 12 })
-  hkdz3: string | null;
+  HKDZ3: string | null;
 
   @Column('varchar', { name: 'HKDZ4', nullable: true, length: 12 })
-  hkdz4: string | null;
+  HKDZ4: string | null;
 
   @Column('varchar', { name: 'HKDZ5', nullable: true, length: 60 })
-  hkdz5: string | null;
+  HKDZ5: string | null;
 
   @Column('varchar', { name: 'ryzd1', nullable: true, length: 80 })
   ryzd1: string | null;
