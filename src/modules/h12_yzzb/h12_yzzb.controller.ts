@@ -1,16 +1,18 @@
-import { Controller, Get, Query, Delete, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
+import { UsrcatService } from '../usrcat/usrcat.service';
 
 @Controller('h12_yzzb')
 export class h12_yzzbController {
   constructor(
     private readonly h12_yzzbService: h12_yzzbService,
     private readonly h12_yzxbService: h12_yzxbService,
+    private readonly userService: UsrcatService,
   ) {}
 
   @Get('findAllByPatient')
@@ -75,5 +77,11 @@ export class h12_yzzbController {
   @Post('getPackageItems')
   async getPackageItems(@Body() data: { advice: any; mbid: string }) {
     return this.h12_yzxbService.getPackageItems({ ...data, recursionDepth: 1 });
+  }
+
+  /** 管理员重置密码 */
+  @Get('checkPassword/:userId/:pwd')
+  checkPassword(@Param('userId') userId: string, @Param('pwd') pwd: string) {
+    return this.userService.checkPassword(userId, pwd);
   }
 }

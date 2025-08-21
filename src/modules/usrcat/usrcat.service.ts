@@ -108,6 +108,11 @@ export class UsrcatService {
     return true;
   }
 
+  async checkPassword(usid: string, password: string) {
+    const user = await this.UsrcatRepo.findOne({ where: { usid } });
+    return user.pwrd === password;
+  }
+
   async updateProfile(id: string, profile: UpdateProfileDto) {
     const user = await this.findUserProfile(id);
     await this.UsrcatRepo.save(user);

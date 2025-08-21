@@ -1,4 +1,7 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { h12_yzxb } from '@/modules/h12_yzzb/h12_yzxb.entity';
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
+import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 
 @Entity({ name: 'h13_yzzxcs', schema: 'dbo' })
 export class h13_yzzxcs {
@@ -160,4 +163,17 @@ export class h13_yzzxcs {
 
   @Column({ name: 'scrq', type: 'datetime', nullable: true })
   scrq: Date | null;
+
+  @ManyToOne(() => h12_yzxb, (h12_yzxb) => h12_yzxb.mxxh)
+  @JoinColumn([
+    { name: 'yzxh', referencedColumnName: 'yzxh' },
+    { name: 'mxxh', referencedColumnName: 'mxxh' },
+    { name: 'yzlx', referencedColumnName: 'yzlx' },
+    { name: 'zyid', referencedColumnName: 'zyid' },
+  ])
+  h12_yzxb: h12_yzxb;
+
+  @ManyToOne(() => h00_fylb, (h00_fylb) => h00_fylb.fylbid)
+  @JoinColumn([{ name: 'fylbid', referencedColumnName: 'fylbid' }])
+  h00_fylb: h00_fylb;
 }

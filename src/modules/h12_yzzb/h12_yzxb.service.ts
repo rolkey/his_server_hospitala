@@ -7,6 +7,8 @@ import {
   EntityManager,
   getMetadataArgsStorage,
   EntityTarget,
+  In,
+  MoreThanOrEqual,
 } from 'typeorm';
 import DateFormater from '@/utils/DateFormater';
 // import { h12_yzzb } from './h12_yzzb.entity';
@@ -34,6 +36,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { RedisService } from '@/shared/redis.service';
 import { filterEntityFields } from '@/utils/entityUrils';
 import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
+import { h13_yzzxcs } from './h13_yzzxcs.entity';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -58,6 +61,8 @@ export class h12_yzxbService {
     private h00_syplRepo: Repository<h00_sypl>,
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
+    @InjectRepository(h13_yzzxcs)
+    private readonly h13_yzzxcsRepository: Repository<h13_yzzxcs>,
     private readonly gyIdentityService: GyIdentityService,
     // private readonly h12YzzbService: h12_yzzbService,
     private readonly configReaderService: ConfigReaderService,
@@ -1020,5 +1025,67 @@ export class h12_yzxbService {
   ): Promise<boolean> {
     // 实现库存检查逻辑
     return true; // 假设库存足够
+  }
+
+  async stopAdvice(
+    zyid: string,
+    yzlx: number,
+    yzzh: number[],
+    tzsj: Date,
+    mrcs: number,
+    userId: string,
+    u_zcid: string, // 职称ID
+    jsys: string,
+    ysstopbz: string, // 医德停嘱自动退费
+  ) {
+    // 检查是否有费用已经执行
+    const tzsjDate = new Date(tzsj);
+    tzsjDate.setHours(0, 0, 0, 0);
+
+    const h13_yzzxcses = await this.h13_yzzxcsRepository.find({
+      where: {
+        zyid: zyid,
+        yzxh: 1,
+        yzlx: yzlx,
+        yzzh: In(yzzh),
+        zxrq: MoreThanOrEqual(tzsjDate),
+      },
+    });
+    if (h13_yzzxcses.length > 0 && ysstopbz === '0') {
+      throw new BadRequestException('费用已经执行，不能停嘱');
+    }
+
+    const h12_yzxbs = await this.h12_yzxbRepo
+      .createQueryBuilder('h12_yzxb')
+      .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+      .select([
+        'h12_yzxb', // 选择 h13 的所有字段
+        'h00_sypl.mrcs', // 只选择 h12_yzxb 的 xmmc 字段
+      ])
+      .where('h13.zyid = :zyid', { zyid })
+      .andWhere('h13.yzxh = :yzxh', { yzxh: 1 })
+      .andWhere('h13.yzlx = :yzlx', { yzlx })
+      .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
+      .getMany();
+    // 隐性规则
+    // 如果开嘱日期等于停嘱日期，末日次数取首日次数与末日次数大的那个
+    // 如果频次是Q1H,则取停止时间对应的小时数作为末日次数，大于30分钟就多加一次
+    // 更新：停止医生，停止时间，末日次数，停止状态
+    h12_yzxbs.forEach((h12_yzxb) => {
+      Object.assign(h12_yzxb, {
+        mrcs: mrcs > h12_yzxb.syplidEntity.mrcs ? h12_yzxb.syplidEntity.mrcs : mrcs,
+        tzrq: tzsj,
+        tzbz: 1,
+        ...(u_zcid === '0106'
+          ? {
+              jsys: jsys,
+              jssxys: userId,
+            }
+          : {
+              jsys: userId,
+            }),
+      });
+    });
+    await this.h12_yzxbRepo.save(h12_yzxbs);
   }
 }

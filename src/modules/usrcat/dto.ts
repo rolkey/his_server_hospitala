@@ -1,13 +1,5 @@
-
 import { Exclude } from 'class-transformer';
-import {
-  Allow,
-  IsArray,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-} from 'class-validator';
+import { Allow, IsArray, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -36,7 +28,6 @@ export class CreateUserDto {
   @IsOptional()
   @IsArray()
   roleIds?: string[];
-
 
   @IsOptional()
   // @IsNumber()
@@ -71,7 +62,7 @@ export class UpdateUserDto {
   roleIds?: string[];
 }
 
-export class UpdateProfileDto { }
+export class UpdateProfileDto {}
 
 export class GetUserDto {
   @Allow()

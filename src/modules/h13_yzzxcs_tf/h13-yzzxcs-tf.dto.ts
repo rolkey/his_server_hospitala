@@ -1,6 +1,7 @@
 // src/h13-yzzxcs-tf/h13-yzzxcs-tf.dto.ts
 import { PartialType } from '@nestjs/mapped-types';
 import { Allow } from 'class-validator';
+import { DateTransformer } from '@/common/transformers/date.transformer';
 
 export class H13YzzxcsTfBaseDto {
   @Allow()
@@ -16,6 +17,7 @@ export class H13YzzxcsTfBaseDto {
   zyid: string;
 
   @Allow()
+  @DateTransformer()
   zxrq: Date;
 
   @Allow()
@@ -67,6 +69,7 @@ export class H13YzzxcsTfBaseDto {
   tyrid?: string;
 
   @Allow()
+  @DateTransformer()
   tysj?: Date;
 
   @Allow()
@@ -79,6 +82,7 @@ export class H13YzzxcsTfBaseDto {
   syrid?: string;
 
   @Allow()
+  @DateTransformer()
   sysj?: Date;
 
   @Allow()
@@ -91,6 +95,7 @@ export class H13YzzxcsTfBaseDto {
   fybz?: number;
 
   @Allow()
+  @DateTransformer()
   fysj?: Date;
 
   @Allow()
@@ -145,21 +150,25 @@ export class H13YzzxcsTfBaseDto {
   yjry?: string;
 
   @Allow()
+  @DateTransformer()
   yjrq?: Date;
 
   @Allow()
   yzzh?: number;
 
   @Allow()
+  @DateTransformer()
   czrq?: Date;
 
   @Allow()
   scpc?: string;
 
   @Allow()
+  @DateTransformer()
   sxrq?: Date;
 
   @Allow()
+  @DateTransformer()
   scrq?: Date;
 }
 
@@ -189,4 +198,12 @@ export class QueryH13YzzxcsTfDto extends PartialType(H13YzzxcsTfBaseDto) {
 export class H13YzzxcsTfResponseDto extends H13YzzxcsTfBaseDto {
   // 继承所有基础字段
   // 可以添加响应特有的字段或转换
+  @Allow()
+  xmmc: string;
+
+  @Allow()
+  fylbmc: string;
+
+  @Allow()
+  syplmc: string;
 }
