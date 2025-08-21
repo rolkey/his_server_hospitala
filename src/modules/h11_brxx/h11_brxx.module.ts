@@ -11,6 +11,11 @@ import { h00_rybq } from '../h00_rybq/h00_rybq.entity';
 import { jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 import { h11_lsh } from '../h11_lsh/h11_lsh.entity';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
+import { h11_zybh } from '../h11_zybh/h11_zybh.entity';
+import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
+import { ParamService } from '../h12_xmzd/service/param.service';
+import { Syspar } from '../h12_xmzd/entity/syspar.entity';
+import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 
 @Global()
 @Module({
@@ -24,10 +29,13 @@ import { h11_lshService } from '../h11_lsh/h11_lsh.service';
       h00_brlx,
       jbbmicd10,
       h11_lsh,
+      h11_zybh,
+      Syspar,
+      SysparNew,
     ]),
   ],
   controllers: [h11_brxxController],
-  providers: [h11_brxxService, h11_lshService],
+  providers: [h11_brxxService, h11_lshService, h11_zybhService, ParamService],
   exports: [h11_brxxService],
 })
 export class h11_brxxModule {}

@@ -27,6 +27,17 @@ export class h11_zybhService {
     };
   }
 
+  async addUpZYBH(zybh: number) {
+    return this.h11_zybhRepo
+      .createQueryBuilder()
+      .update(h11_zybh)
+      .set({
+        zybh: zybh + 1,
+      })
+      .where('hsbz = 0')
+      .execute();
+  }
+
   /**
    * 根据策略生成住院号/病案号
    * @param strategy 编号策略
