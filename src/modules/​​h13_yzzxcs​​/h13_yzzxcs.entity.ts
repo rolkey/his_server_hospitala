@@ -1,6 +1,5 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { h12_yzxb } from '@/modules/h12_yzzb/h12_yzxb.entity';
-import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 
 @Entity({ name: 'h13_yzzxcs', schema: 'dbo' })

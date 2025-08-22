@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, Equal, In, EntityManager } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { Createh13_yzzxcsDto, Updateh13_yzzxcsDto } from './dto/h13_yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 import { plainToInstance } from 'class-transformer';
-import { getSqlWithParameters } from '@/utils/sql-utils';
+import { getCompleteSqlWithParameters, getSqlWithParameters } from '@/utils/sql-utils';
+import DateFormater from '@/utils/DateFormater';
 
 @Injectable()
 export class h13_yzzxcsService {
+  //   private readonly logger = new Logger(h13_yzzxcsService.name);
+
   constructor(
     @InjectRepository(h13_yzzxcs)
     private readonly h13_yzzxcsRepository: Repository<h13_yzzxcs>,
@@ -369,7 +372,7 @@ export class h13_yzzxcsService {
       .andWhere('yzxh = :yzxh', { yzxh })
       .andWhere('yzlx = :yzlx', { yzlx })
       .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-      .andWhere('CONVERT(char(10), zxrq, 120) >= :zxrq', { zxrq })
+      .andWhere('CONVERT(char(10), zxrq, 120) >= :zxrq', { zxrq: zxrq.substring(0, 10) })
       .andWhere('(fybz IS NULL OR fybz = 0)')
       .andWhere('(clbz IS NULL OR clbz = 0)')
       .execute();
@@ -377,6 +380,7 @@ export class h13_yzzxcsService {
     // 插入大于停医嘱日期的退费记录 - 使用 manager
     const queryBuilder1 = manager
       .createQueryBuilder(h13_yzzxcs, 'h13')
+      .leftJoin('h13.h12_yzxb', 'h12')
       .select([
         'h13.yzxh',
         'h13.mxxh',
@@ -392,7 +396,7 @@ export class h13_yzzxcsService {
         'h13.fylbid',
         'h13.jsdh',
         'h13.jsbz',
-        'MAX(h13.id) as zxcs2',
+        'h13.maxid as zxcs2',
         ':userId as zxhs',
         'h13.zxsj',
         'h13.zflx',
@@ -427,12 +431,13 @@ export class h13_yzzxcsService {
         'h13.yjrq',
         'h13.YZZH',
         ':ldt_sj as czrq',
+        'h12.xmmc',
       ])
       .where('h13.zyid = :zyid', { zyid })
       .andWhere('h13.yzxh = :yzxh', { yzxh })
       .andWhere('h13.yzlx = :yzlx', { yzlx })
       .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-      .andWhere('CONVERT(char(10), h13.zxrq, 120) > :zxrq', { zxrq })
+      .andWhere('CONVERT(char(10), h13.zxrq, 120) > :zxrq', { zxrq: zxrq.substring(0, 10) })
       .andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -442,7 +447,7 @@ export class h13_yzzxcsService {
           .andWhere('tf.yzxh = :yzxh', { yzxh })
           .andWhere('tf.yzlx = :yzlx', { yzlx })
           .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-          .andWhere('CONVERT(char(10), tf.zxrq, 120) > :zxrq', { zxrq })
+          .andWhere('CONVERT(char(10), tf.zxrq, 120) > :zxrq', { zxrq: zxrq.substring(0, 10) })
           .getQuery();
         return `NOT EXISTS (${subQuery})`;
       })
@@ -451,6 +456,7 @@ export class h13_yzzxcsService {
     // 插入等于停医嘱日期的退费记录 - 使用 manager
     const queryBuilder2 = manager
       .createQueryBuilder(h13_yzzxcs, 'h13')
+      .leftJoin('h13.h12_yzxb', 'h12')
       .select([
         'h13.yzxh',
         'h13.mxxh',
@@ -466,16 +472,38 @@ export class h13_yzzxcsService {
         'h13.fylbid',
         'h13.jsdh',
         'h13.jsbz',
-        'MAX(h13.id) as zxcs2',
+        'h13.maxid as zxcs2',
         ':userId as zxhs',
         'h13.zxsj',
         'h13.zflx',
         'h13.syffid',
-        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) END as bzxcs',
+        // 'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) - h13.bzxcs) END as bzxcs',
+        'CASE\n' +
+          '  WHEN h13.fybz = 1 THEN\n' +
+          '   0\n' +
+          '  ELSE\n' +
+          '   -1 * ((case\n' +
+          '     when :mrcs > h13.zxcs then\n' +
+          '      h13.zxcs\n' +
+          '     else\n' +
+          '      h13.zxcs - :mrcs\n' +
+          '   end) - h13.bzxcs)\n' +
+          'END as bzxcs',
         ':userId as tyrid',
         ':ldt_sj as tysj',
         'h13.sqtysl',
-        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) * h13.jfyl END as sjtysl',
+        // 'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) - h13.bzxcs) * h13.jfyl END as sjtysl',
+        'CASE\n' +
+          '  WHEN h13.fybz = 1 THEN\n' +
+          '   0\n' +
+          '  ELSE\n' +
+          '   -1 * ((case\n' +
+          '     when :mrcs > h13.zxcs then\n' +
+          '      h13.zxcs\n' +
+          '     else\n' +
+          '      h13.zxcs - :mrcs\n' +
+          '   end) - h13.bzxcs) * h13.jfyl\n' +
+          'END as sjtysl',
         'h13.syrid',
         ':ldt_sj as sysj',
         'h13.kyts',
@@ -483,7 +511,13 @@ export class h13_yzzxcsService {
         '0 as fybz',
         'h13.fysj',
         'h13.fyrid',
-        '-1 * (h13.zxcs - :mrcs) as zxcs',
+        // '-1 * (case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) as zxcs',
+        '-1 * (case\n' +
+          '  when :mrcs > h13.zxcs then\n' +
+          '   h13.zxcs\n' +
+          '  else\n' +
+          '   h13.zxcs - :mrcs\n' +
+          'end) as zxcs',
         'h13.zkksid',
         '0 as clbz',
         '0 as dybz',
@@ -501,12 +535,15 @@ export class h13_yzzxcsService {
         'h13.yjrq',
         'h13.YZZH',
         ':ldt_sj as czrq',
+        'h12.xmmc',
       ])
       .where('h13.zyid = :zyid', { zyid })
       .andWhere('h13.yzxh = :yzxh', { yzxh })
       .andWhere('h13.yzlx = :yzlx', { yzlx })
       .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-      .andWhere('CONVERT(char(10), h13.zxrq, 120) = :zxrq', { zxrq })
+      .andWhere('CONVERT(char(10), h13.zxrq, 120) = :zxrq', { zxrq: zxrq.substring(0, 10) })
+      .andWhere('h13.fybz = 1')
+      .andWhere('h13.clbz = 1')
       .andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -516,14 +553,20 @@ export class h13_yzzxcsService {
           .andWhere('tf.yzxh = :yzxh', { yzxh })
           .andWhere('tf.yzlx = :yzlx', { yzlx })
           .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-          .andWhere('CONVERT(char(10), tf.zxrq, 120) = :zxrq', { zxrq })
+          .andWhere('CONVERT(char(10), tf.zxrq, 120) = :zxrq', { zxrq: zxrq.substring(0, 10) })
           .getQuery();
         return `NOT EXISTS (${subQuery})`;
       })
       .setParameters({ userId, ldt_sj, mrcs, yzzh });
 
-    console.log('queryBuilder1: ', getSqlWithParameters(queryBuilder1));
-    console.log('queryBuilder2: ', getSqlWithParameters(queryBuilder2));
+    console.log(
+      'queryBuilder1: =========================================\n',
+      getCompleteSqlWithParameters(queryBuilder1),
+    );
+    console.log(
+      'queryBuilder2: =========================================\n',
+      getCompleteSqlWithParameters(queryBuilder2),
+    );
 
     // 先获取要插入的数据
     const [recordsToInsert1, recordsToInsert2] = await Promise.all([
@@ -531,13 +574,62 @@ export class h13_yzzxcsService {
       queryBuilder2.getRawMany(),
     ]);
 
-    // 插入退费记录 - 使用 manager
-    await manager
-      .createQueryBuilder()
-      .insert()
-      .into(H13YzzxcsTf)
-      .values([...recordsToInsert1, ...recordsToInsert2])
-      .execute();
+    const newRecords = [...recordsToInsert1, ...recordsToInsert2].filter((item) => item.zxcs < 0);
+    console.log('退费数据: =========================================\n', newRecords);
+
+    if (newRecords.length > 0) {
+      // 把 [...recordsToInsert1, ...recordsToInsert2] 的数据导入 H13YzzxcsTf 实体中
+      const metadata = manager.getRepository(H13YzzxcsTf).metadata;
+      const columns = metadata.columns
+        .filter((column) => !column.isGenerated) // 忽略自增列
+        .map((column) => column.propertyName); // 获取字段名
+
+      // 这部分代码会生成 insert(maxid)的错误程序
+      //   const h13YzzxcsTfs: H13YzzxcsTf[] = [...recordsToInsert1, ...recordsToInsert2]
+      //     .filter((item) => item.zxcs < 0)
+      //     .map((item) => {
+      //       const h13YzzxcsTf = new H13YzzxcsTf();
+
+      //       // 遍历 H13YzzxcsTf 的属性
+      //       columns.forEach((key) => {
+      //         // 如果属性值是 undefined，则设置为 null
+      //         if (item['h13_'.concat(key)]) {
+      //           h13YzzxcsTf[key] = item['h13_'.concat(key)];
+      //         }
+      //         if (item[key]) {
+      //           h13YzzxcsTf[key] = item[key];
+      //         }
+      //       });
+
+      //       return h13YzzxcsTf;
+      //     });
+
+      //   // 使用 manager 必须同步执行，不能异步同时执行多个UPDATE语句
+      //   await manager.createQueryBuilder().insert().into(H13YzzxcsTf).values(h13YzzxcsTfs).execute();
+
+      // 构建插入 SQL 语句
+      const values = newRecords
+        .map(
+          (record) =>
+            `(${columns
+              .map((column) => {
+                const value = record[column] ?? record['h13_'.concat(column)];
+                // const realValue = typeof value === 'string' ? `'${value}'` : value;
+                console.log('column', column, 'type', typeof value, 'value', value);
+                const realVal =
+                  typeof value === 'object' && value ? DateFormater.formatDate1(value) : value;
+                return realVal !== undefined && realVal !== null ? `'${realVal}'` : 'NULL'; // 处理 null 和 undefined
+              })
+              .join(', ')})`,
+        )
+        .join(', ');
+
+      const sql = `INSERT INTO ${metadata.tableName} (${columns.join(', ')}) VALUES ${values};`;
+      console.log('sql: =========================================\n', sql);
+
+      // 执行 SQL 语句
+      await manager.query(sql);
+    }
 
     // 更新大于停医嘱日期的记录 - 使用 manager
     await manager

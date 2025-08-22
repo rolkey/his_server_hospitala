@@ -106,18 +106,31 @@ export class h12_yzzbController {
   ): Promise<void> {
     const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
 
-    await this.h12_yzxbService.stopAdvice(
-      zyid,
-      yzxh,
-      yzlx,
-      yzzh,
-      new Date(zxrq),
-      mrcs,
-      userId,
-      u_zcid,
-      jsys,
-      ysstopbz,
-    );
+    try {
+      await this.h12_yzxbService.stopAdvice(
+        zyid,
+        yzxh,
+        yzlx,
+        yzzh,
+        new Date(zxrq),
+        mrcs,
+        userId,
+        u_zcid,
+        jsys,
+        ysstopbz,
+      );
+    } catch (error) {
+      // 输出完整的错误信息
+      console.error('停止医嘱时发生错误:', error);
+
+      // 如果需要更详细的错误信息，可以输出错误堆栈
+      if (error instanceof Error) {
+        console.error('错误堆栈:', error.stack);
+      }
+
+      // 根据业务需求，可能需要抛出错误或进行其他错误处理
+      throw error;
+    }
     return;
   }
 }

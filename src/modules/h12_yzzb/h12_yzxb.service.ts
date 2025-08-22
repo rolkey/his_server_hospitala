@@ -1057,46 +1057,35 @@ export class h12_yzxbService {
       .createQueryBuilder('h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
       .select([
-        'h12_yzxb', // 选择 h13 的所有字段
-        'h00_sypl.mrcs', // 只选择 h12_yzxb 的 xmmc 字段
+        'h12_yzxb', // 选择 h12_yzxb 的所有字段
+        'h00_sypl.mrcs',
       ])
-      .where('h13.zyid = :zyid', { zyid })
-      .andWhere('h13.yzxh = :yzxh', { yzxh: 1 })
-      .andWhere('h13.yzlx = :yzlx', { yzlx })
-      .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
+      .where('h12_yzxb.zyid = :zyid', { zyid })
+      .andWhere('h12_yzxb.yzxh = :yzxh', { yzxh: 1 })
+      .andWhere('h12_yzxb.yzlx = :yzlx', { yzlx })
+      .andWhere('h12_yzxb.yzzh IN (:...yzzh)', { yzzh })
+      .andWhere('h12_yzxb.tjbz = 1')
+      .andWhere('h12_yzxb.tzbz = 0')
       .getMany();
     // 隐性规则
     // 如果开嘱日期等于停嘱日期，末日次数取首日次数与末日次数大的那个
     // 如果频次是Q1H,则取停止时间对应的小时数作为末日次数，大于30分钟就多加一次
     // 更新：停止医生，停止时间，末日次数，停止状态
     h12_yzxbs.forEach((h12_yzxb) => {
-      Object.assign(h12_yzxb, {
-        mrcs: mrcs > h12_yzxb.syplidEntity.mrcs ? h12_yzxb.syplidEntity.mrcs : mrcs,
-        tzrq: tzsj,
-        tzbz: 1,
-        ...(u_zcid === '0106'
-          ? {
-              jsys: jsys,
-              jssxys: userId,
-            }
-          : {
-              jsys: userId,
-            }),
-      });
+      h12_yzxb.mrcs = mrcs > h12_yzxb.syplidEntity.mrcs ? h12_yzxb.syplidEntity.mrcs : mrcs;
+      h12_yzxb.tzrq = tzsj;
+      h12_yzxb.tzbz = 1;
+      if (u_zcid === '0106') {
+        h12_yzxb.jsys = jsys;
+        h12_yzxb.jssxys = userId;
+      } else {
+        h12_yzxb.jsys = userId;
+      }
     });
     await this.dataSource.transaction(async (manager) => {
-      await manager.save(h12_yzxb, h12_yzxbs);
+      //   await manager.save(h12_yzxb, h12_yzxbs);
       const zxrq = DateFormater.formatDate1(tzsj);
-      await this.h13_yzzxcsService.wfStopFymx(
-        zyid,
-        yzxh,
-        yzlx,
-        yzzh,
-        zxrq.substring(0, 9),
-        mrcs,
-        userId,
-        manager,
-      );
+      await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
     });
     return true;
   }
