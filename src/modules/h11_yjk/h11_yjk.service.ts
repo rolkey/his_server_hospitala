@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Like } from 'typeorm';
-import { H11Yjk } from './h11-yjk.entity';
-import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto } from './h11-yjk.dto';
+import { H11Yjk } from './h11_yjk.entity';
+import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto } from './h11_yjk.dto';
 
 @Injectable()
 export class H11YjkService {
@@ -40,8 +40,18 @@ export class H11YjkService {
    * @param queryDto 查询参数
    * @returns 预交款记录列表和总数
    */
-  async findAll(queryDto: H11YjkQueryDto): Promise<{ items: H11Yjk[]; total: number }> {
-    const { sjhm, brxm, zyid, ksid, sjzt, startDate, endDate, page = 1, limit = 10 } = queryDto;
+  async findAll(queryDto: H11YjkQueryDto): Promise<{ pageData: H11Yjk[]; total: number }> {
+    const {
+      sjhm,
+      brxm,
+      zyid,
+      ksid,
+      sjzt,
+      startDate,
+      endDate,
+      pageNo = 1,
+      pageSize = 10,
+    } = queryDto;
 
     const queryBuilder = this.h11YjkRepository.createQueryBuilder('yjk');
 
@@ -81,13 +91,13 @@ export class H11YjkService {
     const total = await queryBuilder.getCount();
 
     // 添加分页
-    const items = await queryBuilder
+    const pageData = await queryBuilder
       .orderBy('yjk.sfsj', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((pageNo - 1) * pageSize)
+      .take(pageSize)
       .getMany();
 
-    return { items, total };
+    return { pageData, total };
   }
 
   /**
