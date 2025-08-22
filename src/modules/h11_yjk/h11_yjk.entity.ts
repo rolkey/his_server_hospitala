@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { DateTransformer } from '@/common/transformers/date.transformer';
 
 @Entity('h11_yjk')
 export class H11Yjk {
@@ -6,6 +7,7 @@ export class H11Yjk {
   sjhm: string;
 
   @PrimaryColumn({ name: 'sfsj', type: 'datetime' })
+  @DateTransformer()
   sfsj: Date;
 
   @Column({ name: 'sjlx', type: 'smallint' })
@@ -78,6 +80,7 @@ export class H11Yjk {
   jsdh: string | null;
 
   @Column({ name: 'tksj', type: 'datetime', nullable: true })
+  @DateTransformer()
   tksj: Date | null;
 
   @Column({ name: 'bzxx', type: 'varchar', length: 60, nullable: true })
@@ -87,6 +90,7 @@ export class H11Yjk {
   bzxx1: string | null;
 
   @Column({ name: 'jzrq', type: 'datetime', nullable: true })
+  @DateTransformer()
   jzrq: Date | null;
 
   @Column({ name: 'jzbz', type: 'tinyint', nullable: true, default: 0 })

@@ -6,6 +6,7 @@ import {
   IsDate,
   MaxLength,
   IsInt,
+  Allow,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -177,41 +178,30 @@ export class CreateH11YjkDto {
 export class UpdateH11YjkDto extends CreateH11YjkDto {}
 
 export class H11YjkQueryDto {
-  @IsOptional()
-  @IsString()
+  @Allow()
+  pageNo?: number = 1;
+
+  @Allow()
+  pageSize?: number = 10;
+
+  @Allow()
   sjhm?: string;
 
-  @IsOptional()
-  @IsString()
+  @Allow()
   brxm?: string;
 
-  @IsOptional()
-  @IsString()
+  @Allow()
   zyid?: string;
 
-  @IsOptional()
-  @IsString()
+  @Allow()
   ksid?: string;
 
-  @IsOptional()
-  @IsInt()
+  @Allow()
   sjzt?: number;
 
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
+  @Allow()
   startDate?: Date;
 
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
+  @Allow()
   endDate?: Date;
-
-  @IsOptional()
-  @IsInt()
-  page?: number = 1;
-
-  @IsOptional()
-  @IsInt()
-  limit?: number = 10;
 }
