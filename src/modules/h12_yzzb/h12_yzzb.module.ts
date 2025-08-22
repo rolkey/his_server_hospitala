@@ -20,7 +20,10 @@ import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
 import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
 import { SharedModule } from '@/shared/shared.module';
 import { H11Jshztzd1Module } from '../h11_jshztzd1/h11-jshztzd1.module';
-// import { h13_yzzxcsModule } from '../​​h13_yzzxcs​​/h13_yzzxcs.module';
+import { h13_yzzxcsModule } from '../​​h13_yzzxcs​​/h13_yzzxcs.module';
+import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
+import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
+import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
 @Global()
@@ -37,6 +40,7 @@ import { H11Jshztzd1Module } from '../h11_jshztzd1/h11-jshztzd1.module';
       h00_syff,
       h00_sypl,
       h11_brxx,
+      H13YzzxcsTf,
     ]),
     SharedModule,
     forwardRef(() => GyIdentityModule),
@@ -45,11 +49,11 @@ import { H11Jshztzd1Module } from '../h11_jshztzd1/h11-jshztzd1.module';
     forwardRef(() => H31_kcxxModule),
     forwardRef(() => H00TcxbModule),
     forwardRef(() => H11Jshztzd1Module),
-    // forwardRef(() => h13_yzzxcsModule),
-    // forwardRef(() => UsrcatModule),
+    forwardRef(() => h13_yzzxcsModule),
+    forwardRef(() => H13YzzxcsTfModule),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService, h12_yzxbService],
+  providers: [h12_yzzbService, h12_yzxbService, h13_yzzxcsService],
   exports: [h12_yzzbService, h12_yzxbService],
 })
 export class h12_yzzbModule {}

@@ -4,14 +4,14 @@ import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { Createh13_yzzxcsDto, Updateh13_yzzxcsDto } from './dto/h13_yzzxcs.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
-import { h12_yzxbService } from '../h12_yzzb/h12_yzxb.service';
+// import { h12_yzxbService } from '../h12_yzzb/h12_yzxb.service';
 
 @ApiTags('h13_医嘱执行次数')
 @Controller('h13_yzzxcs')
 export class h13_yzzxcsController {
   constructor(
     private readonly h13_yzzxcsService: h13_yzzxcsService,
-    private readonly h12_yzxbService: h12_yzxbService,
+    // private readonly h12_yzxbService: h12_yzxbService,
   ) {}
 
   @Get()
@@ -127,39 +127,38 @@ export class h13_yzzxcsController {
     return [...currentData, ...futureData];
   }
 
-  @Post('stop-fymx')
-  @ApiOperation({ summary: '停止医嘱费用明细' })
-  @ApiResponse({ status: 200, description: '医嘱停止成功' })
-  async wfStopFymx(
-    @Body()
-    body: {
-      zyid: string;
-      yzxh: number;
-      yzlx: number;
-      yzzh: number[];
-      zxrq: string;
-      mrcs: number;
-      userId: string;
-      u_zcid: string;
-      jsys: string;
-      ysstopbz: string;
-    },
-  ): Promise<void> {
-    const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
+  //   @Post('stop-fymx')
+  //   @ApiOperation({ summary: '停止医嘱费用明细' })
+  //   @ApiResponse({ status: 200, description: '医嘱停止成功' })
+  //   async wfStopFymx(
+  //     @Body()
+  //     body: {
+  //       zyid: string;
+  //       yzxh: number;
+  //       yzlx: number;
+  //       yzzh: number[];
+  //       zxrq: string;
+  //       mrcs: number;
+  //       userId: string;
+  //       u_zcid: string;
+  //       jsys: string;
+  //       ysstopbz: string;
+  //     },
+  //   ): Promise<void> {
+  //     const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
 
-    await this.h12_yzxbService.stopAdvice(
-      zyid,
-      yzxh,
-      //   yzlx,
-      yzzh,
-      new Date(zxrq),
-      mrcs,
-      userId,
-      u_zcid,
-      jsys,
-      ysstopbz,
-    );
-    await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId);
-    return;
-  }
+  //     await this.h12_yzxbService.stopAdvice(
+  //       zyid,
+  //       yzxh,
+  //       yzlx,
+  //       yzzh,
+  //       new Date(zxrq),
+  //       mrcs,
+  //       userId,
+  //       u_zcid,
+  //       jsys,
+  //       ysstopbz,
+  //     );
+  //     return;
+  //   }
 }

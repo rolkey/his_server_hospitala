@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, Equal, In } from 'typeorm';
+import { Repository, MoreThan, Equal, In, EntityManager } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { Createh13_yzzxcsDto, Updateh13_yzzxcsDto } from './dto/h13_yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
@@ -356,219 +356,221 @@ export class h13_yzzxcsService {
     zxrq: string,
     mrcs: number,
     userId: string,
+    manager: EntityManager,
   ): Promise<void> {
-    try {
-      const ldt_sj = new Date();
+    const ldt_sj = new Date();
 
-      // 删除符合条件的记录 - 修改为使用IN条件
-      await this.h13_yzzxcsRepository
-        .createQueryBuilder()
-        .delete()
-        .where('zyid = :zyid', { zyid })
-        .andWhere('yzxh = :yzxh', { yzxh })
-        .andWhere('yzlx = :yzlx', { yzlx })
-        .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-        .andWhere('CONVERT(char(10), zxrq, 120) >= :zxrq', { zxrq })
-        .andWhere('(fybz IS NULL OR fybz = 0)')
-        .andWhere('(clbz IS NULL OR clbz = 0)')
-        .execute();
+    // 删除符合条件的记录 - 使用 manager
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(h13_yzzxcs)
+      .where('zyid = :zyid', { zyid })
+      .andWhere('yzxh = :yzxh', { yzxh })
+      .andWhere('yzlx = :yzlx', { yzlx })
+      .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
+      .andWhere('CONVERT(char(10), zxrq, 120) >= :zxrq', { zxrq })
+      .andWhere('(fybz IS NULL OR fybz = 0)')
+      .andWhere('(clbz IS NULL OR clbz = 0)')
+      .execute();
 
-      // 插入大于停医嘱日期的退费记录
-      const queryBuilder1 = this.h13_yzzxcsRepository
-        .createQueryBuilder('h13')
-        .select([
-          'h13.yzxh',
-          'h13.mxxh',
-          'h13.yzlx',
-          'h13.zyid',
-          "CONVERT(datetime, CONVERT(char(10), h13.zxrq, 120) + ' ' + CONVERT(varchar, GETDATE(), 114)) as zxrq",
-          'h13.ksid',
-          "'' as fydh",
-          'h13.zybh',
-          'h13.jfyl',
-          'h13.xmdj',
-          'h13.sfbz',
-          'h13.fylbid',
-          'h13.jsdh',
-          'h13.jsbz',
-          'MAX(h13.id) as zxcs2',
-          ':userId as zxhs',
-          'h13.zxsj',
-          'h13.zflx',
-          'h13.syffid',
-          'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * (h13.zxcs - h13.bzxcs) END as bzxcs',
-          ':userId as tyrid',
-          ':ldt_sj as tysj',
-          'h13.sqtysl',
-          'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * (h13.zxcs - h13.bzxcs) * h13.jfyl END as sjtysl',
-          'h13.syrid',
-          ':ldt_sj as sysj',
-          'h13.kyts',
-          'h13.zfbl',
-          '0 as fybz',
-          'h13.fysj',
-          'h13.fyrid',
-          '-1 * h13.zxcs as zxcs',
-          'h13.zkksid',
-          '0 as clbz',
-          '0 as dybz',
-          'h13.xnhbz',
-          'h13.jzje',
-          'h13.jzry',
-          'h13.ybfl',
-          'h13.scph',
-          'h13.cjid',
-          'h13.bz1',
-          'h13.zfje',
-          'h13.pfjg',
-          'h13.xmid',
-          'h13.yjry',
-          'h13.yjrq',
-          'h13.YZZH',
-          ':ldt_sj as czrq',
-        ])
-        .where('h13.zyid = :zyid', { zyid })
-        .andWhere('h13.yzxh = :yzxh', { yzxh })
-        .andWhere('h13.yzlx = :yzlx', { yzlx })
-        .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-        .andWhere('CONVERT(char(10), h13.zxrq, 120) > :zxrq', { zxrq })
-        .andWhere((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('*')
-            .from(H13YzzxcsTf, 'tf')
-            .where('tf.zyid = :zyid', { zyid })
-            .andWhere('tf.yzxh = :yzxh', { yzxh })
-            .andWhere('tf.yzlx = :yzlx', { yzlx })
-            .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-            .andWhere('CONVERT(char(10), tf.zxrq, 120) > :zxrq', { zxrq })
-            .getQuery();
-          return `NOT EXISTS (${subQuery})`;
-        })
-        .setParameters({ userId, ldt_sj, yzzh });
+    // 插入大于停医嘱日期的退费记录 - 使用 manager
+    const queryBuilder1 = manager
+      .createQueryBuilder(h13_yzzxcs, 'h13')
+      .select([
+        'h13.yzxh',
+        'h13.mxxh',
+        'h13.yzlx',
+        'h13.zyid',
+        "CONVERT(datetime, CONVERT(char(10), h13.zxrq, 120) + ' ' + CONVERT(varchar, GETDATE(), 114)) as zxrq",
+        'h13.ksid',
+        "'' as fydh",
+        'h13.zybh',
+        'h13.jfyl',
+        'h13.xmdj',
+        'h13.sfbz',
+        'h13.fylbid',
+        'h13.jsdh',
+        'h13.jsbz',
+        'MAX(h13.id) as zxcs2',
+        ':userId as zxhs',
+        'h13.zxsj',
+        'h13.zflx',
+        'h13.syffid',
+        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * (h13.zxcs - h13.bzxcs) END as bzxcs',
+        ':userId as tyrid',
+        ':ldt_sj as tysj',
+        'h13.sqtysl',
+        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * (h13.zxcs - h13.bzxcs) * h13.jfyl END as sjtysl',
+        'h13.syrid',
+        ':ldt_sj as sysj',
+        'h13.kyts',
+        'h13.zfbl',
+        '0 as fybz',
+        'h13.fysj',
+        'h13.fyrid',
+        '-1 * h13.zxcs as zxcs',
+        'h13.zkksid',
+        '0 as clbz',
+        '0 as dybz',
+        'h13.xnhbz',
+        'h13.jzje',
+        'h13.jzry',
+        'h13.ybfl',
+        'h13.scph',
+        'h13.cjid',
+        'h13.bz1',
+        'h13.zfje',
+        'h13.pfjg',
+        'h13.xmid',
+        'h13.yjry',
+        'h13.yjrq',
+        'h13.YZZH',
+        ':ldt_sj as czrq',
+      ])
+      .where('h13.zyid = :zyid', { zyid })
+      .andWhere('h13.yzxh = :yzxh', { yzxh })
+      .andWhere('h13.yzlx = :yzlx', { yzlx })
+      .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
+      .andWhere('CONVERT(char(10), h13.zxrq, 120) > :zxrq', { zxrq })
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('*')
+          .from(H13YzzxcsTf, 'tf')
+          .where('tf.zyid = :zyid', { zyid })
+          .andWhere('tf.yzxh = :yzxh', { yzxh })
+          .andWhere('tf.yzlx = :yzlx', { yzlx })
+          .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
+          .andWhere('CONVERT(char(10), tf.zxrq, 120) > :zxrq', { zxrq })
+          .getQuery();
+        return `NOT EXISTS (${subQuery})`;
+      })
+      .setParameters({ userId, ldt_sj, yzzh });
 
-      // 插入等于停医嘱日期的退费记录
-      const queryBuilder2 = this.h13_yzzxcsRepository
-        .createQueryBuilder('h13')
-        .select([
-          'h13.yzxh',
-          'h13.mxxh',
-          'h13.yzlx',
-          'h13.zyid',
-          "CONVERT(datetime, CONVERT(char(10), h13.zxrq, 120) + ' ' + CONVERT(varchar, GETDATE(), 114)) as zxrq",
-          'h13.ksid',
-          "'' as fydh",
-          'h13.zybh',
-          'h13.jfyl',
-          'h13.xmdj',
-          'h13.sfbz',
-          'h13.fylbid',
-          'h13.jsdh',
-          'h13.jsbz',
-          'MAX(h13.id) as zxcs2',
-          ':userId as zxhs',
-          'h13.zxsj',
-          'h13.zflx',
-          'h13.syffid',
-          'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) END as bzxcs',
-          ':userId as tyrid',
-          ':ldt_sj as tysj',
-          'h13.sqtysl',
-          'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) * h13.jfyl END as sjtysl',
-          'h13.syrid',
-          ':ldt_sj as sysj',
-          'h13.kyts',
-          'h13.zfbl',
-          '0 as fybz',
-          'h13.fysj',
-          'h13.fyrid',
-          '-1 * (h13.zxcs - :mrcs) as zxcs',
-          'h13.zkksid',
-          '0 as clbz',
-          '0 as dybz',
-          'h13.xnhbz',
-          'h13.jzje',
-          'h13.jzry',
-          'h13.ybfl',
-          'h13.scph',
-          'h13.cjid',
-          'h13.bz1',
-          'h13.zfje',
-          'h13.pfjg',
-          'h13.xmid',
-          'h13.yjry',
-          'h13.yjrq',
-          'h13.YZZH',
-          ':ldt_sj as czrq',
-        ])
-        .where('h13.zyid = :zyid', { zyid })
-        .andWhere('h13.yzxh = :yzxh', { yzxh })
-        .andWhere('h13.yzlx = :yzlx', { yzlx })
-        .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-        .andWhere('CONVERT(char(10), h13.zxrq, 120) = :zxrq', { zxrq })
-        .andWhere((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('*')
-            .from(H13YzzxcsTf, 'tf')
-            .where('tf.zyid = :zyid', { zyid })
-            .andWhere('tf.yzxh = :yzxh', { yzxh })
-            .andWhere('tf.yzlx = :yzlx', { yzlx })
-            .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
-            .andWhere('CONVERT(char(10), tf.zxrq, 120) = :zxrq', { zxrq })
-            .getQuery();
-          return `NOT EXISTS (${subQuery})`;
-        })
-        .setParameters({ userId, ldt_sj, mrcs, yzzh });
+    // 插入等于停医嘱日期的退费记录 - 使用 manager
+    const queryBuilder2 = manager
+      .createQueryBuilder(h13_yzzxcs, 'h13')
+      .select([
+        'h13.yzxh',
+        'h13.mxxh',
+        'h13.yzlx',
+        'h13.zyid',
+        "CONVERT(datetime, CONVERT(char(10), h13.zxrq, 120) + ' ' + CONVERT(varchar, GETDATE(), 114)) as zxrq",
+        'h13.ksid',
+        "'' as fydh",
+        'h13.zybh',
+        'h13.jfyl',
+        'h13.xmdj',
+        'h13.sfbz',
+        'h13.fylbid',
+        'h13.jsdh',
+        'h13.jsbz',
+        'MAX(h13.id) as zxcs2',
+        ':userId as zxhs',
+        'h13.zxsj',
+        'h13.zflx',
+        'h13.syffid',
+        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) END as bzxcs',
+        ':userId as tyrid',
+        ':ldt_sj as tysj',
+        'h13.sqtysl',
+        'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((h13.zxcs - :mrcs) - h13.bzxcs) * h13.jfyl END as sjtysl',
+        'h13.syrid',
+        ':ldt_sj as sysj',
+        'h13.kyts',
+        'h13.zfbl',
+        '0 as fybz',
+        'h13.fysj',
+        'h13.fyrid',
+        '-1 * (h13.zxcs - :mrcs) as zxcs',
+        'h13.zkksid',
+        '0 as clbz',
+        '0 as dybz',
+        'h13.xnhbz',
+        'h13.jzje',
+        'h13.jzry',
+        'h13.ybfl',
+        'h13.scph',
+        'h13.cjid',
+        'h13.bz1',
+        'h13.zfje',
+        'h13.pfjg',
+        'h13.xmid',
+        'h13.yjry',
+        'h13.yjrq',
+        'h13.YZZH',
+        ':ldt_sj as czrq',
+      ])
+      .where('h13.zyid = :zyid', { zyid })
+      .andWhere('h13.yzxh = :yzxh', { yzxh })
+      .andWhere('h13.yzlx = :yzlx', { yzlx })
+      .andWhere('h13.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
+      .andWhere('CONVERT(char(10), h13.zxrq, 120) = :zxrq', { zxrq })
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('*')
+          .from(H13YzzxcsTf, 'tf')
+          .where('tf.zyid = :zyid', { zyid })
+          .andWhere('tf.yzxh = :yzxh', { yzxh })
+          .andWhere('tf.yzlx = :yzlx', { yzlx })
+          .andWhere('tf.YZZH IN (:...yzzh)', { yzzh }) // 使用IN条件
+          .andWhere('CONVERT(char(10), tf.zxrq, 120) = :zxrq', { zxrq })
+          .getQuery();
+        return `NOT EXISTS (${subQuery})`;
+      })
+      .setParameters({ userId, ldt_sj, mrcs, yzzh });
 
-      // 先获取要插入的数据
-      const [recordsToInsert1, recordsToInsert2] = await Promise.all([
-        queryBuilder1.getRawMany(),
-        queryBuilder2.getRawMany(),
-      ]);
+    console.log('queryBuilder1: ', getSqlWithParameters(queryBuilder1));
+    console.log('queryBuilder2: ', getSqlWithParameters(queryBuilder2));
 
-      await this.h13YzzxcsTfRepository
-        .createQueryBuilder()
-        .insert()
-        .into(H13YzzxcsTf)
-        .values([...recordsToInsert1, ...recordsToInsert2])
-        .execute();
+    // 先获取要插入的数据
+    const [recordsToInsert1, recordsToInsert2] = await Promise.all([
+      queryBuilder1.getRawMany(),
+      queryBuilder2.getRawMany(),
+    ]);
 
-      // 更新大于停医嘱日期的记录
-      await this.h13_yzzxcsRepository
-        .createQueryBuilder()
-        .update()
-        .set({
-          bzxcs: () => 'zxcs',
-          sjtysl: () => 'zxcs * jfyl',
-          tysj: ldt_sj,
-          tyrid: userId,
-        })
-        .where('zyid = :zyid', { zyid })
-        .andWhere('yzxh = :yzxh', { yzxh })
-        .andWhere('yzlx = :yzlx', { yzlx })
-        .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-        .andWhere('CONVERT(char(10), zxrq, 120) > :zxrq', { zxrq })
-        .execute();
+    // 插入退费记录 - 使用 manager
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(H13YzzxcsTf)
+      .values([...recordsToInsert1, ...recordsToInsert2])
+      .execute();
 
-      // 更新等于停医嘱日期的记录
-      await this.h13_yzzxcsRepository
-        .createQueryBuilder()
-        .update()
-        .set({
-          bzxcs: () => `zxcs - ${mrcs}`,
-          sjtysl: () => `(zxcs - ${mrcs}) * jfyl`,
-          tysj: ldt_sj,
-          tyrid: userId,
-        })
-        .where('zyid = :zyid', { zyid })
-        .andWhere('yzxh = :yzxh', { yzxh })
-        .andWhere('yzlx = :yzlx', { yzlx })
-        .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-        .andWhere('CONVERT(char(10), zxrq, 120) = :zxrq', { zxrq })
-        .execute();
-    } catch (error) {
-      throw new Error(`医嘱停止操作失败: ${error.message}`);
-    }
+    // 更新大于停医嘱日期的记录 - 使用 manager
+    await manager
+      .createQueryBuilder()
+      .update(h13_yzzxcs)
+      .set({
+        bzxcs: () => 'zxcs',
+        sjtysl: () => 'zxcs * jfyl',
+        tysj: ldt_sj,
+        tyrid: userId,
+      })
+      .where('zyid = :zyid', { zyid })
+      .andWhere('yzxh = :yzxh', { yzxh })
+      .andWhere('yzlx = :yzlx', { yzlx })
+      .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
+      .andWhere('CONVERT(char(10), zxrq, 120) > :zxrq', { zxrq })
+      .execute();
+
+    // 更新等于停医嘱日期的记录 - 使用 manager
+    await manager
+      .createQueryBuilder()
+      .update(h13_yzzxcs)
+      .set({
+        bzxcs: () => `zxcs - ${mrcs}`,
+        sjtysl: () => `(zxcs - ${mrcs}) * jfyl`,
+        tysj: ldt_sj,
+        tyrid: userId,
+      })
+      .where('zyid = :zyid', { zyid })
+      .andWhere('yzxh = :yzxh', { yzxh })
+      .andWhere('yzlx = :yzlx', { yzlx })
+      .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
+      .andWhere('CONVERT(char(10), zxrq, 120) = :zxrq', { zxrq })
+      .execute();
   }
 }

@@ -6,6 +6,7 @@ import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 import { UsrcatService } from '../usrcat/usrcat.service';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('h12_yzzb')
 export class h12_yzzbController {
@@ -83,5 +84,40 @@ export class h12_yzzbController {
   @Get('checkPassword/:userId/:pwd')
   checkPassword(@Param('userId') userId: string, @Param('pwd') pwd: string) {
     return this.userService.checkPassword(userId, pwd);
+  }
+
+  @Post('stop-fymx')
+  @ApiOperation({ summary: '停止医嘱费用明细' })
+  @ApiResponse({ status: 200, description: '医嘱停止成功' })
+  async wfStopFymx(
+    @Body()
+    body: {
+      zyid: string;
+      yzxh: number;
+      yzlx: number;
+      yzzh: number[];
+      zxrq: string;
+      mrcs: number;
+      userId: string;
+      u_zcid: string;
+      jsys: string;
+      ysstopbz: string;
+    },
+  ): Promise<void> {
+    const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
+
+    await this.h12_yzxbService.stopAdvice(
+      zyid,
+      yzxh,
+      yzlx,
+      yzzh,
+      new Date(zxrq),
+      mrcs,
+      userId,
+      u_zcid,
+      jsys,
+      ysstopbz,
+    );
+    return;
   }
 }

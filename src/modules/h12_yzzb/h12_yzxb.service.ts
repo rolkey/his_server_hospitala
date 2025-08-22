@@ -13,17 +13,12 @@ import {
 import DateFormater from '@/utils/DateFormater';
 // import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
-// import DateFormater from '@/utils/DateFormater';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
-// import { h12_yzzbService } from './h12_yzzb.service';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-// import { ModuleRef } from '@nestjs/core';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
 import { Gstr_ainfDto } from '@/modules/h12_xmzd/dto/gstr_ainf.dto';
 import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
-// import { Gs_cxszDto } from '@/modules/h12_xmzd/dto/gs_cxsz.dto';
-// import { promises } from 'dns';
 import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
 import { H31_kcxxService } from '@/modules/h31_kcxx/h31_kcxx.service';
 import { KcjgYpidRequestDto, Kcjgxx } from '@/modules/h31_kcxx/dto/kcjg-ypid.dto';
@@ -37,6 +32,7 @@ import { RedisService } from '@/shared/redis.service';
 import { filterEntityFields } from '@/utils/entityUrils';
 import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
+import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -72,6 +68,7 @@ export class h12_yzxbService {
     private dataSource: DataSource,
     private redisService: RedisService,
     private h11Jshztzd1Service: H11Jshztzd1Service,
+    private h13_yzzxcsService: h13_yzzxcsService,
   ) {}
 
   /**
@@ -1029,6 +1026,7 @@ export class h12_yzxbService {
 
   async stopAdvice(
     zyid: string,
+    yzxh: number,
     yzlx: number,
     yzzh: number[],
     tzsj: Date,
@@ -1086,6 +1084,20 @@ export class h12_yzxbService {
             }),
       });
     });
-    await this.h12_yzxbRepo.save(h12_yzxbs);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(h12_yzxb, h12_yzxbs);
+      const zxrq = DateFormater.formatDate1(tzsj);
+      await this.h13_yzzxcsService.wfStopFymx(
+        zyid,
+        yzxh,
+        yzlx,
+        yzzh,
+        zxrq.substring(0, 9),
+        mrcs,
+        userId,
+        manager,
+      );
+    });
+    return true;
   }
 }
