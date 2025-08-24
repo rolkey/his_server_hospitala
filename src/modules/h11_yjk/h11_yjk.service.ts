@@ -2,13 +2,16 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Like } from 'typeorm';
 import { H11Yjk } from './h11_yjk.entity';
-import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto } from './h11_yjk.dto';
+import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto, H11YjkCancelDto } from './h11_yjk.dto';
+import { UpdateH11ZypjDto, H11ZypjPrimaryDto } from '../h11_zypj/h11_zypj.dto';
+import { H11ZypjService } from '../h11_zypj/h11_zypj.service';
 
 @Injectable()
 export class H11YjkService {
   constructor(
     @InjectRepository(H11Yjk)
     private readonly h11YjkRepository: Repository<H11Yjk>,
+    private readonly h11ZypjService: H11ZypjService,
   ) {}
 
   /**
@@ -21,15 +24,30 @@ export class H11YjkService {
     const exists = await this.h11YjkRepository.findOne({
       where: {
         sjhm: createH11YjkDto.sjhm,
-        sfsj: createH11YjkDto.sfsj,
       },
     });
 
     if (exists) {
       throw new BadRequestException(
-        `收据号码 ${createH11YjkDto.sjhm} 在收费时间 ${createH11YjkDto.sfsj} 的记录已存在`,
+        `此号码已被使用，请联系系统管理员,收据号码 ${createH11YjkDto.sjhm} 在收费时间 ${createH11YjkDto.sfsj} 的记录已存在!`,
       );
     }
+
+    const h11ZypjPrimaryDto: H11ZypjPrimaryDto = {
+      pjlxid: 'YJHM',
+      usid: createH11YjkDto.sfyid,
+      fyid: '1',
+    };
+
+    const zypj = await this.h11ZypjService.findOne(h11ZypjPrimaryDto);
+    if (!zypj.dqhm) {
+      throw new BadRequestException(
+        `票据类型 ${h11ZypjPrimaryDto.pjlxid}, 使用者ID ${h11ZypjPrimaryDto.usid}, 费用ID ${h11ZypjPrimaryDto.fyid} 的票据记录不存在，请联系系统管理员!`,
+      );
+    }
+
+    const updateH11ZypjDto: UpdateH11ZypjDto = { dqhm: Number(zypj.dqhm) + 1 };
+    await this.h11ZypjService.update('YJHM', createH11YjkDto.sfyid, '1', updateH11ZypjDto);
 
     const newYjk = this.h11YjkRepository.create(createH11YjkDto);
     return this.h11YjkRepository.save(newYjk);
@@ -108,7 +126,7 @@ export class H11YjkService {
    */
   async findOne(sjhm: string, sfsj: Date): Promise<H11Yjk> {
     const yjk = await this.h11YjkRepository.findOne({
-      where: { sjhm, sfsj },
+      where: { sjhm },
     });
 
     if (!yjk) {
@@ -197,5 +215,37 @@ export class H11YjkService {
       .addGroupBy('yjk.ksmc')
       .orderBy('total', 'DESC')
       .getRawMany();
+  }
+
+  /**
+   * 预交金作废
+   * @param sjhm 收据号码
+   * @param sfsj 收费时间
+   * @param h11YjkCancelDto 更新数据
+   * @returns 更新后的预交款记录
+   */
+  async cancel(h11YjkCancelDto: H11YjkCancelDto): Promise<void> {
+    const yjk = await this.findOne(h11YjkCancelDto.sjhm, null);
+
+    if (!yjk) {
+      throw new NotFoundException(`收据号码为 ${h11YjkCancelDto.sjhm} 的预交款记录不存在!`);
+    }
+    if (yjk?.sjzt === 0 || yjk?.sjzt === 4) {
+      throw new BadRequestException('该预交款记录已经作废！');
+    }
+    if (yjk?.sjzt === 2) {
+      throw new BadRequestException('该预交款记录已经退款！');
+    }
+    if (yjk?.zfyid) {
+      throw new BadRequestException('该预交款记录已经红冲！');
+    }
+
+    await this.h11YjkRepository
+      .createQueryBuilder()
+      .update()
+      .set({ zfyid: h11YjkCancelDto.zfyid })
+      .where('sjhm = :sjhm', { sjhm: yjk.sjhm })
+      .andWhere('sfsj = :sfsj', { sfsj: yjk.sfsj })
+      .execute();
   }
 }

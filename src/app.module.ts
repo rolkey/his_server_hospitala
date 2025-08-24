@@ -49,6 +49,7 @@ import { H13YzzxcsTfModule } from './modules/h13_yzzxcs_tf/h13-yzzxcs-tf.module'
 import { h11_lshModule } from './modules/h11_lsh/h11_lsh.module';
 import { H11Jshztzd1Module } from './modules/h11_jshztzd1/h11-jshztzd1.module';
 import { H11YjkModule } from './modules/h11_yjk/h11_yjk.module';
+import { H11ZypjModule } from './modules/h11_zypj/h11_zypj.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { H11YjkModule } from './modules/h11_yjk/h11_yjk.module';
     h11_lshModule,
     H11Jshztzd1Module,
     H11YjkModule,
+    H11ZypjModule,
   ],
 })
 export class AppModule {}
