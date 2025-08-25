@@ -19,9 +19,9 @@ export class H11YjkController {
     return this.h11YjkService.findAll(queryDto);
   }
 
-  @Post('/cancel')
-  cancel(@Body() h11YjkCancelDto: H11YjkCancelDto) {
-    return this.h11YjkService.cancel(h11YjkCancelDto);
+  @Post('/cancelOrRefund')
+  cancelOrRefund(@Body() h11YjkCancelDto: H11YjkCancelDto) {
+    return this.h11YjkService.cancelOrRefund(h11YjkCancelDto);
   }
 
   // @Get(':sjhm/:sfsj')

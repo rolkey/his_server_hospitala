@@ -224,7 +224,7 @@ export class H11YjkService {
    * @param h11YjkCancelDto 更新数据
    * @returns 更新后的预交款记录
    */
-  async cancel(h11YjkCancelDto: H11YjkCancelDto): Promise<void> {
+  async cancelOrRefund(h11YjkCancelDto: H11YjkCancelDto): Promise<void> {
     const yjk = await this.findOne(h11YjkCancelDto.sjhm, null);
 
     if (!yjk) {
@@ -239,6 +239,22 @@ export class H11YjkService {
     if (yjk?.zfyid) {
       throw new BadRequestException('该预交款记录已经红冲！');
     }
+
+    // 增加一条负数记录
+    const zfYjk = this.h11YjkRepository.create(yjk);
+    zfYjk.sfsj = new Date();
+    zfYjk.sjhm = 'Z' + yjk.sjhm;
+    zfYjk.yjje = -1 * yjk.yjje;
+    zfYjk.sfyxm = h11YjkCancelDto.zfyxm;
+    zfYjk.sfyid = h11YjkCancelDto.zfyid;
+    zfYjk.rmbje = -1 * yjk.rmbje;
+    zfYjk.fkfsid = '1';
+    if (h11YjkCancelDto.type === '2') {
+      zfYjk.sjzt = 2;
+    } else {
+      zfYjk.sjzt = 0;
+    }
+    await this.h11YjkRepository.save(zfYjk);
 
     await this.h11YjkRepository
       .createQueryBuilder()

@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsInt,
   Allow,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -207,9 +208,25 @@ export class H11YjkQueryDto {
 }
 
 export class H11YjkCancelDto {
-  @Allow()
+  @IsNotEmpty({ message: '收据号码不能为空' })
+  @IsString()
+  @MaxLength(10)
   sjhm?: string;
 
-  @Allow()
+  @IsNotEmpty({ message: '作废人员ID不能为空' })
+  @IsString()
+  @MaxLength(10)
   zfyid?: string;
+
+  @IsNotEmpty({ message: '作废人员姓名不能为空' })
+  @IsString()
+  @MaxLength(30)
+  zfyxm?: string;
+
+  @IsNotEmpty({ message: '类型不能为空' })
+  @IsIn(['1', '2'], {
+    message: '类型必须是1或者2',
+  })
+  @IsString()
+  type?: string;
 }
