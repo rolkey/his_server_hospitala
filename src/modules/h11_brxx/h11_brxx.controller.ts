@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { h11_brxxService } from './h11_brxx.service';
-import { Queryh11_brxxDto, CreateDto, UpdateDto } from './dto';
+import { Queryh11_brxxDto, CreateDto, UpdateDto, QueryCostDto } from './dto';
 
 @Controller('h11_brxx')
 export class h11_brxxController {
@@ -25,5 +25,10 @@ export class h11_brxxController {
   @Put()
   async update(@Body() dto: UpdateDto) {
     return await this.h11_brxxService.update(dto);
+  }
+
+  @Get('costDetails')
+  async costDetails(@Query() queryCostDto: QueryCostDto) {
+    return await this.h11_brxxService.costDetails(queryCostDto);
   }
 }

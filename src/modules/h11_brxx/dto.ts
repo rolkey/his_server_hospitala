@@ -12,6 +12,8 @@ import {
   Length,
   IsString,
   isNumber,
+  Matches,
+  IsIn,
 } from 'class-validator';
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
@@ -371,4 +373,37 @@ export class UpdateDto extends CreateDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   @IsString()
   zyid: string;
+}
+
+export class QueryCostDto {
+  @IsNotEmpty({ message: 'ZYID不能为空' })
+  @IsString()
+  zyid?: string;
+
+  @IsNotEmpty({ message: '病人类型ID不能为空' })
+  @IsString()
+  brlxid?: string;
+
+  @IsNotEmpty({ message: '费用开始日期不能为空' })
+  @Matches(/^\d{4}.\d{2}.\d{2}$/, {
+    message: '日期格式必须为YYYY.MM.DD',
+  })
+  @IsString()
+  start?: string;
+
+  @IsNotEmpty({ message: '费用结束日期不能为空' })
+  @Matches(/^\d{4}.\d{2}.\d{2}$/, {
+    message: '日期格式必须为YYYY.MM.DD',
+  })
+  @IsString()
+  end?: string;
+
+  @Allow()
+  ksid?: string;
+
+  @IsNotEmpty({ message: '返回类型不能为空' })
+  @IsIn(['1', '2'], {
+    message: '类型必须是1或者2',
+  })
+  retType?: string;
 }
