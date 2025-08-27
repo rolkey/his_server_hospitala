@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
-import { Queryh11_brxxDto, CreateDto, UpdateDto, QueryCostDto } from './dto';
+import {
+  Queryh11_brxxDto,
+  CreateDto,
+  UpdateDto,
+  QueryCostDetailDto,
+  QueryCostCategoryDto,
+} from './dto';
 import * as dayjs from 'dayjs';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
@@ -159,20 +165,23 @@ export class h11_brxxService {
     return await this.h11_brxxRepo.findOne({ where: { zyid } });
   }
 
-  async costDetails(queryCostDto: QueryCostDto) {
+  async costDetails(queryCostDetailDto: QueryCostDetailDto) {
     try {
-      if (queryCostDto.retType === '1') {
-        // 费用类别
-        return await this.h11_brxxRepo.query(
-          `EXEC dbo.h11_zyjs @zyid='${queryCostDto.zyid}', @brlxid='${queryCostDto.brlxid}', @start='${queryCostDto.start}', @end='${queryCostDto.end}', @ksid='${queryCostDto.ksid}'`,
-        );
-      }
-      if (queryCostDto.retType === '2') {
-        //费用明细
-        return await this.h11_brxxRepo.query(
-          `EXEC dbo.h11_yrqmx_yb @zyid='${queryCostDto.zyid}', @date1='${queryCostDto.start}', @date2='${queryCostDto.end}', @ksid='${queryCostDto.ksid}'`,
-        );
-      }
+      //费用明细
+      return await this.h11_brxxRepo.query(
+        `EXEC dbo.h11_yrqmx_yb @zyid='${queryCostDetailDto.zyid}', @date1='${queryCostDetailDto.start}', @date2='${queryCostDetailDto.end}', @ksid='${queryCostDetailDto.ksid}'`,
+      );
+    } catch (error) {
+      throw new Error(`存储过程执行失败: ${error.message}`);
+    }
+  }
+
+  async costCategory(queryCostCategoryDto: QueryCostCategoryDto) {
+    try {
+      // 费用类别
+      return await this.h11_brxxRepo.query(
+        `EXEC dbo.h11_zyjs @zyid='${queryCostCategoryDto.zyid}', @brlxid='${queryCostCategoryDto.brlxid}', @start='${queryCostCategoryDto.start}', @end='${queryCostCategoryDto.end}', @ksid='${queryCostCategoryDto.ksid}'`,
+      );
     } catch (error) {
       throw new Error(`存储过程执行失败: ${error.message}`);
     }

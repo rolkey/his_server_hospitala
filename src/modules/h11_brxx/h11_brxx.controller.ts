@@ -1,6 +1,12 @@
 import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { h11_brxxService } from './h11_brxx.service';
-import { Queryh11_brxxDto, CreateDto, UpdateDto, QueryCostDto } from './dto';
+import {
+  Queryh11_brxxDto,
+  CreateDto,
+  UpdateDto,
+  QueryCostDetailDto,
+  QueryCostCategoryDto,
+} from './dto';
 
 @Controller('h11_brxx')
 export class h11_brxxController {
@@ -27,8 +33,15 @@ export class h11_brxxController {
     return await this.h11_brxxService.update(dto);
   }
 
+  // 费用类别
   @Get('costDetails')
-  async costDetails(@Query() queryCostDto: QueryCostDto) {
-    return await this.h11_brxxService.costDetails(queryCostDto);
+  async costDetails(@Query() queryCostDetailDto: QueryCostDetailDto) {
+    return await this.h11_brxxService.costDetails(queryCostDetailDto);
+  }
+
+  // 费用明细
+  @Get('costCategory')
+  async costCategory(@Query() queryCostCategoryDto: QueryCostCategoryDto) {
+    return await this.h11_brxxService.costCategory(queryCostCategoryDto);
   }
 }
