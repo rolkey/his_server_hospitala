@@ -16,6 +16,7 @@ import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
+import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 
 @Global()
 @Module({
@@ -32,6 +33,7 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
       h11_zybh,
       Syspar,
       SysparNew,
+      H11Jszb,
     ]),
   ],
   controllers: [h11_brxxController],

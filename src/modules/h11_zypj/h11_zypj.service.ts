@@ -69,7 +69,7 @@ export class H11ZypjService {
     });
 
     if (!found) {
-      throw new NotFoundException(`票据记录 pjlxid=${pjlxid}, usid=${usid}, fyid=${fyid} 不存在`);
+      throw new NotFoundException(`票据记录 pjlxid=${pjlxid}, usid=${usid}, fyid=${fyid} 不存在!`);
     }
 
     // 转换为字符串并去除首尾空格

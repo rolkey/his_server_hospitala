@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { h11_lsh } from './h11_lsh.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 import { Createh11_lshDto } from './h11_lsh.dto';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class h11_lshService {
     private readonly h11_brxxRepository: Repository<h11_brxx>,
     @InjectRepository(h11_lsh)
     private readonly h11_lshRepository: Repository<h11_lsh>,
+    @InjectRepository(H11Jszb)
+    private readonly h11_jszbRepository: Repository<H11Jszb>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -123,11 +126,11 @@ export class h11_lshService {
           currentNumber = maxZyid?.maxZyid ? parseInt(maxZyid.maxZyid) + 1 : 1;
         } else if (lshid === 'JSDH') {
           // 结算单号特殊处理
-          // const maxJsdh = await this.jszbRepository
-          //   .createQueryBuilder()
-          //   .select('MAX(jsdh)', 'maxJsdh')
-          //   .getRawOne();
-          // currentNumber = maxJsdh?.maxJsdh ? parseInt(maxJsdh.maxJsdh) + 1 : 1;
+          const maxJsdh = await this.h11_jszbRepository
+            .createQueryBuilder()
+            .select('MAX(jsdh)', 'maxJsdh')
+            .getRawOne();
+          currentNumber = maxJsdh?.maxJsdh ? parseInt(maxJsdh.maxJsdh) + 1 : 1;
           currentNumber = 1;
         } else {
           // 默认初始值
