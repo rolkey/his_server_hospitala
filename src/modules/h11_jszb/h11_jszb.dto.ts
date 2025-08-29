@@ -15,32 +15,32 @@ export class CreateH11JszbDto {
   @MaxLength(10)
   jsdh: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '住院编号不能为空!' })
   @IsString()
   @MaxLength(12)
   zybh?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '病人姓名不能为空!' })
   @IsString()
   @MaxLength(30)
   brxm?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '病人性别不能为空!' })
   @IsString()
   @MaxLength(10)
   xbid?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '入院时间不能为空!' })
   @Type(() => Date)
   @IsDate()
   rysj?: Date;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '住院ID不能为空!' })
   @IsString()
   @MaxLength(12)
   zyid?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '结算类型不能为空!' })
   @IsInt()
   jslx?: number;
 
@@ -71,7 +71,7 @@ export class CreateH11JszbDto {
   @IsOptional()
   @IsString()
   @MaxLength(10)
-  jmlxid?: string;
+  jmlxid?: string = '1';
 
   @IsOptional()
   @IsString()
@@ -86,47 +86,47 @@ export class CreateH11JszbDto {
   @IsNumber()
   syje?: number;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '终止时间不能为空!' })
   @Type(() => Date)
   @IsDate()
   zzsj?: Date;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '科室ID不能为空!' })
   @IsString()
   @MaxLength(10)
   ksid?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '科室名称不能为空!' })
   @IsString()
   @MaxLength(30)
   ksmc?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '结算人ID不能为空!' })
   @IsString()
   @MaxLength(10)
   jsyid?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '结算时间不能为空!' })
   @Type(() => Date)
   @IsDate()
   jssj?: Date;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '结算人姓名不能为空!' })
   @IsString()
   @MaxLength(30)
   jsyxm?: string;
 
   @IsOptional()
   @IsInt()
-  fpbz?: number;
+  fpbz?: number = 0;
 
   @IsOptional()
   @IsNumber()
-  czf?: number;
+  czf?: number = 0;
 
   @IsOptional()
   @IsInt()
-  sjzt?: number;
+  sjzt?: number = 1;
 
   @IsOptional()
   @Type(() => Date)
@@ -137,6 +137,11 @@ export class CreateH11JszbDto {
   @IsString()
   @MaxLength(10)
   fphm?: string;
+
+  @IsNotEmpty({ message: '病人类型ID不能为空!' })
+  @IsString()
+  @MaxLength(30)
+  brlxid?: string;
 }
 
 export class UpdateH11JszbDto {

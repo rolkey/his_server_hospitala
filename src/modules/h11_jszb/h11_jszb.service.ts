@@ -1,16 +1,22 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { H11Jszb } from './h11_jszb.entity';
 import { CreateH11JszbDto, UpdateH11JszbDto, H11JszbQueryDto } from './h11_jszb.dto';
 import { H11ZypjPrimaryDto } from '../h11_zypj/h11_zypj.dto';
 import { CreateH11JsxbDto } from '../h11_jsxb/h11_jsxb.dto';
+import { CreateH11FpxbDto } from '../h11_fpxb/h11_fpxb.dto';
+import { CreateH11FpzbDto } from '../h11_fpzb/h11_fpzb.dto';
 import { H11ZypjService } from '../h11_zypj/h11_zypj.service';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_brxxService } from '../h11_brxx/h11_brxx.service';
 import { H11YjkService } from '../h11_yjk/h11_yjk.service';
 import { H11FpzbService } from '../h11_fpzb/h11_fpzb.service';
+import { H11Jsxb } from '../h11_jsxb/h11_jsxb.entity';
+import { H11Fpxb } from '../h11_fpxb/h11_fpxb.entity';
+import { H11Fpzb } from '../h11_fpzb/h11_fpzb.entity';
 import { log } from 'console';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class H11JszbService {
@@ -22,53 +28,82 @@ export class H11JszbService {
     private readonly h11_brxxService: h11_brxxService,
     private readonly h11YjkService: H11YjkService,
     private readonly h11FpzbService: H11FpzbService,
+    private dataSource: DataSource,
   ) {}
 
-  async create(createH11JszbDto: CreateH11JszbDto): Promise<string> {
+  async create(createH11JszbDto: CreateH11JszbDto) {
     // 校验金额
     const Amount = await this.verifyAmount(createH11JszbDto);
 
-    const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: '9999', fyid: '1' };
-    const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
-    if (!fphm) {
-      throw new BadRequestException('发票号码获取失败');
-    } else {
-      // 查一下这个发票号码有没有被使用过
-      const fphmRet = await this.h11FpzbService.findOne(fphm);
-      if (fphmRet) {
-        throw new BadRequestException('获取到的发票号码已使用,请重试!');
-      }
-    }
+    // const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: '9999', fyid: '1' };
+    // const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
+    // if (!fphm) {
+    //   throw new BadRequestException('发票号码获取失败');
+    // } else {
+    //   // 查一下这个发票号码有没有被使用过
+    //   const fphmRet = await this.h11FpzbService.findOne(fphm);
+    //   if (fphmRet) {
+    //     throw new BadRequestException('获取到的发票号码已使用,请重试!');
+    //   }
+    // }
 
     const jsdh = (await this.h11_lshService.getSerialNumber('JSDH', '结算单号码', 10)).toString(); //获取结算单号
     if (!jsdh) throw new BadRequestException('结算单号获取失败');
     if (jsdh === '-1') throw new BadRequestException('发票号码获取失败');
 
-    // 生成结算细表
-    // Amount.costCategory.forEach((item) => {
-    //   log('item', item);
-    // });
-    for (let i = 0; i < Amount.costCategory.length; i++) {
-      const createH11JsxbDto: CreateH11JsxbDto = {
-        jsdh: jsdh,
-        fylbid: Amount.costCategory[i].fylbid,
-        fylbmc: Amount.costCategory[i].fylbid,
-        jsje: Amount.costCategory[i].jsje,
-        zfje: Amount.costCategory[i].zfje,
-        gfje: Amount.costCategory[i].zfje,
-        jmje: Amount.costCategory[i].qtje - Amount.costCategory[i].zfje,
-        ssje: Amount.costCategory[i].qtje,
-      };
-      log('createH11JsxbDto', createH11JsxbDto);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // 保存结算主表
+      const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh };
+      const mainEntity = await queryRunner.manager.save(H11Jszb, createDto);
+
+      // 生成结算细表
+      const createH11JsxbDto: CreateH11JsxbDto[] = [];
+      //const createH11FpxbDto: CreateH11FpxbDto[] = [];
+      for (let i = 0; i < Amount.costCategory.length; i++) {
+        createH11JsxbDto[i] = {
+          jsdh: jsdh,
+          fylbid: Amount.costCategory[i].fylbid,
+          fylbmc: Amount.costCategory[i].fylbmc,
+          jsje: Amount.costCategory[i].jsje,
+          zfje: Amount.costCategory[i].zfje,
+          gfje: Amount.costCategory[i].zfje,
+          jmje: Amount.costCategory[i].qtje - Amount.costCategory[i].zfje,
+          ssje: Amount.costCategory[i].qtje,
+        };
+        // createH11FpxbDto[i] = {
+        //   fphm: fphm,
+        //   fpxmid: Amount.costCategory[i].fylbid,
+        //   fpxmmc: Amount.costCategory[i].fylbmc,
+        //   fpxmje: Amount.costCategory[i].jsje,
+        //   fpxmqtje: Amount.costCategory[i].zfje,
+        // };
+      }
+
+      await queryRunner.manager.save(H11Jsxb, createH11JsxbDto); //结算细表
+
+      // const createFPZBDto: CreateH11FpzbDto = { ...createH11JszbDto, jsdh, fphm };
+      // await queryRunner.manager.save(H11Fpzb, createFPZBDto); //发票主表
+      // await queryRunner.manager.save(H11Fpxb, createH11FpxbDto); //发票细表
+
+      await queryRunner.commitTransaction();
+      return mainEntity;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
 
-    log('fphm', fphm);
-    log('Amount', Amount);
-    log('jsdh', jsdh);
-    log('costCategory', Amount.costCategory.length);
-    return '11';
+    // log('fphm', fphm);
+    // log('Amount', Amount);
+    // log('jsdh', jsdh);
+    // log('costCategory', Amount.costCategory.length);
+    return createH11JszbDto;
 
-    const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh, fphm };
+    const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh };
     const entity = this.h11JszbRepository.create(createDto);
     //return await this.h11JszbRepository.save(entity);
 
@@ -137,17 +172,19 @@ export class H11JszbService {
   async verifyAmount(createH11JszbDto: CreateH11JszbDto) {
     // 金额校验
     const costCategory = await this.h11_brxxService.costCategory({
-      zyid: '000000034466', //createH11JszbDto.zyid,
-      brlxid: '0601', //createH11JszbDto.brlxid,
-      start: '2021.05.25', //createH11JszbDto.jssj,
-      end: '2025.06.02', //createH11JszbDto.jssj,
-      ksid: '0109', //createH11JszbDto.ksid,
+      zyid: createH11JszbDto.zyid,
+      brlxid: createH11JszbDto.brlxid,
+      start: dayjs(createH11JszbDto.rysj).format('YYYY.MM.DD'),
+      end: dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD'),
+      ksid: createH11JszbDto.ksid,
     });
+
+    console.log(costCategory);
 
     const advancePayment = await this.h11YjkService.findAll({
       pageNo: 1,
       pageSize: 100,
-      zyid: '000000034466',
+      zyid: createH11JszbDto.zyid,
     });
 
     const zfje = costCategory.reduce((acc, item) => acc + item.jsje, 0);

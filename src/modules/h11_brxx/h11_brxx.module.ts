@@ -17,6 +17,8 @@ import { ParamService } from '../h12_xmzd/service/param.service';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
+import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
+import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 
 @Global()
 @Module({
@@ -34,10 +36,11 @@ import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
       Syspar,
       SysparNew,
       H11Jszb,
+      h00_fylb,
     ]),
   ],
   controllers: [h11_brxxController],
-  providers: [h11_brxxService, h11_lshService, h11_zybhService, ParamService],
+  providers: [h11_brxxService, h11_lshService, h11_zybhService, ParamService, h00_fylbService],
   exports: [h11_brxxService],
 })
 export class h11_brxxModule {}

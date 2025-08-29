@@ -13,4 +13,8 @@ export class h00_fylbService {
   findAll() {
     return this.h00_fylbRepo.find({});
   }
+
+  async findOne(fylbid: string) {
+    return this.h00_fylbRepo.findOne({ where: { fylbid } });
+  }
 }
