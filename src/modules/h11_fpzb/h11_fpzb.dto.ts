@@ -10,12 +10,12 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateH11FpzbDto {
-  @IsNotEmpty({ message: '发票号码不能为空' })
+  @IsOptional()
   @IsString()
   @MaxLength(10)
   fphm: string;
 
-  @IsNotEmpty({ message: '科室号码不能为空' })
+  @IsOptional()
   @IsString()
   @MaxLength(10)
   kshm: string;
@@ -25,7 +25,7 @@ export class CreateH11FpzbDto {
   @MaxLength(12)
   zybh?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '结算单号不能为空' })
   @IsString()
   @MaxLength(10)
   jsdh?: string;

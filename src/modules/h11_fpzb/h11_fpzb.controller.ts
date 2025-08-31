@@ -6,7 +6,7 @@ import { CreateH11FpzbDto, UpdateH11FpzbDto, H11FpzbQueryDto } from './h11_fpzb.
 export class H11FpzbController {
   constructor(private readonly h11FpzbService: H11FpzbService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() createH11FpzbDto: CreateH11FpzbDto) {
     return this.h11FpzbService.create(createH11FpzbDto);
   }

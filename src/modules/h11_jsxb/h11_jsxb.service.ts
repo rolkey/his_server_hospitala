@@ -38,6 +38,26 @@ export class H11JsxbService {
     return { items, total };
   }
 
+  async findAllNotPage(queryDto: H11JsxbQueryDto): Promise<{ items: H11Jsxb[]; total: number }> {
+    const { page = 1, limit = 10, ...filters } = queryDto;
+    const queryBuilder = this.h11JsxbRepository.createQueryBuilder('jsxb');
+
+    // 添加过滤条件
+    if (filters.jsdh) {
+      queryBuilder.andWhere('jsxb.jsdh = :jsdh', { jsdh: filters.jsdh });
+    }
+    if (filters.fylbid) {
+      queryBuilder.andWhere('jsxb.fylbid = :fylbid', { fylbid: filters.fylbid });
+    }
+    if (filters.fylbmc) {
+      queryBuilder.andWhere('jsxb.fylbmc LIKE :fylbmc', { fylbmc: `%${filters.fylbmc}%` });
+    }
+
+    const [items, total] = await queryBuilder.getManyAndCount();
+
+    return { items, total };
+  }
+
   async findOne(jsdh: string, fylbid: string): Promise<H11Jsxb> {
     const found = await this.h11JsxbRepository.findOne({ where: { jsdh, fylbid } });
 

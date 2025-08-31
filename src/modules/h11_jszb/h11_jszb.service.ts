@@ -3,18 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { H11Jszb } from './h11_jszb.entity';
 import { CreateH11JszbDto, UpdateH11JszbDto, H11JszbQueryDto } from './h11_jszb.dto';
-import { H11ZypjPrimaryDto } from '../h11_zypj/h11_zypj.dto';
 import { CreateH11JsxbDto } from '../h11_jsxb/h11_jsxb.dto';
-import { CreateH11FpxbDto } from '../h11_fpxb/h11_fpxb.dto';
-import { CreateH11FpzbDto } from '../h11_fpzb/h11_fpzb.dto';
-import { H11ZypjService } from '../h11_zypj/h11_zypj.service';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_brxxService } from '../h11_brxx/h11_brxx.service';
 import { H11YjkService } from '../h11_yjk/h11_yjk.service';
-import { H11FpzbService } from '../h11_fpzb/h11_fpzb.service';
 import { H11Jsxb } from '../h11_jsxb/h11_jsxb.entity';
-import { H11Fpxb } from '../h11_fpxb/h11_fpxb.entity';
-import { H11Fpzb } from '../h11_fpzb/h11_fpzb.entity';
+import { CreateH11XnhDto } from '../h11_xnh/h11_xnh.dto';
+import { H11Xnh } from '../h11_xnh/h11_xnh.entity';
+import { H11Yjk } from '../h11_yjk/h11_yjk.entity';
+import { h12_yzzb } from '../h12_yzzb/h12_yzzb.entity';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+
 import { log } from 'console';
 import * as dayjs from 'dayjs';
 
@@ -23,29 +22,15 @@ export class H11JszbService {
   constructor(
     @InjectRepository(H11Jszb)
     private readonly h11JszbRepository: Repository<H11Jszb>,
-    private readonly h11ZypjService: H11ZypjService,
     private readonly h11_lshService: h11_lshService,
     private readonly h11_brxxService: h11_brxxService,
     private readonly h11YjkService: H11YjkService,
-    private readonly h11FpzbService: H11FpzbService,
     private dataSource: DataSource,
   ) {}
 
   async create(createH11JszbDto: CreateH11JszbDto) {
     // 校验金额
     const Amount = await this.verifyAmount(createH11JszbDto);
-
-    // const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: '9999', fyid: '1' };
-    // const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
-    // if (!fphm) {
-    //   throw new BadRequestException('发票号码获取失败');
-    // } else {
-    //   // 查一下这个发票号码有没有被使用过
-    //   const fphmRet = await this.h11FpzbService.findOne(fphm);
-    //   if (fphmRet) {
-    //     throw new BadRequestException('获取到的发票号码已使用,请重试!');
-    //   }
-    // }
 
     const jsdh = (await this.h11_lshService.getSerialNumber('JSDH', '结算单号码', 10)).toString(); //获取结算单号
     if (!jsdh) throw new BadRequestException('结算单号获取失败');
@@ -55,13 +40,22 @@ export class H11JszbService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // 保存结算主表
+      // 保存h11_jszb
       const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh };
       const mainEntity = await queryRunner.manager.save(H11Jszb, createDto);
 
+      // 保存h11_xnh 结构
+      const createH11XnhDto: CreateH11XnhDto = {
+        ...createH11JszbDto.paymentType,
+        fphm: jsdh,
+        zyid: createH11JszbDto.zyid,
+        zyh: createH11JszbDto.zybh,
+        brxm: createH11JszbDto.brxm,
+      };
+      await queryRunner.manager.save(H11Xnh, createH11XnhDto);
+
       // 生成结算细表
       const createH11JsxbDto: CreateH11JsxbDto[] = [];
-      //const createH11FpxbDto: CreateH11FpxbDto[] = [];
       for (let i = 0; i < Amount.costCategory.length; i++) {
         createH11JsxbDto[i] = {
           jsdh: jsdh,
@@ -73,20 +67,89 @@ export class H11JszbService {
           jmje: Amount.costCategory[i].qtje - Amount.costCategory[i].zfje,
           ssje: Amount.costCategory[i].qtje,
         };
-        // createH11FpxbDto[i] = {
-        //   fphm: fphm,
-        //   fpxmid: Amount.costCategory[i].fylbid,
-        //   fpxmmc: Amount.costCategory[i].fylbmc,
-        //   fpxmje: Amount.costCategory[i].jsje,
-        //   fpxmqtje: Amount.costCategory[i].zfje,
-        // };
       }
 
       await queryRunner.manager.save(H11Jsxb, createH11JsxbDto); //结算细表
 
-      // const createFPZBDto: CreateH11FpzbDto = { ...createH11JszbDto, jsdh, fphm };
-      // await queryRunner.manager.save(H11Fpzb, createFPZBDto); //发票主表
-      // await queryRunner.manager.save(H11Fpxb, createH11FpxbDto); //发票细表
+      // 修改费用状态
+      // 1.修改预交款状态
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update(H11Yjk)
+        .set({ jsbz: 1, jsdh: jsdh })
+        .where('jsbz = 0')
+        .andWhere('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 2.医嘱主表打上结算标志
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update(h12_yzzb)
+        .set({ jsbz: 1 })
+        .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 3.给医嘱执行表打上结算标志和结算单号
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({ jsbz: 1, jsdh: jsdh })
+        .where('jsbz=0')
+        .andWhere('sfbz=1')
+        .andWhere('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 4.给医嘱执行表打上结算标志和结算单号
+      await queryRunner.query(
+        `UPDATE h13_cwzy SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+	      ( h13_cwzy.jsbz='0') AND
+			  ( h13_cwzy.sfbz='1') AND
+        ( h13_cwzy.tzsj is not null)`,
+        ['1', jsdh, createH11JszbDto.zyid],
+      );
+
+      // 5.给手术细表打上结算标志和结算单号
+      await queryRunner.query(
+        `UPDATE h15_ssxb SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+	      ( h15_ssxb.sfbz = '1' ) AND  
+        ( h15_ssxb.jsbz = '0' ) AND
+        ( convert( char(10),h15_ssxb.ssrq,102) <= $4)`,
+        ['1', jsdh, createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 6.给手术主表表打上结算标志和结算单号
+      await queryRunner.query(
+        `UPDATE h15_sszb SET jsbz = $1 WHERE (zyid = $2) AND
+        ( h15_sszb.jsbz = '0' ) AND
+        ( convert( char(10),h15_sszb.ssrq,102) <= $3)`,
+        ['1', createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 7.给处方执行表打上结算标志和结算单号
+      await queryRunner.query(
+        `UPDATE h12_yzcfxb SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+        ( h12_yzcfxb.jsbz = '0' ) AND
+			  ( h12_yzcfxb.sfbz = '1') AND
+        ( convert( char(10),h12_yzcfxb.rq,102) <= $4)`,
+        ['1', jsdh, createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 8.修改在院状态
+      if (createH11JszbDto.jslx === 1 || createH11JszbDto.jslx === 4) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update('h11_brxx')
+          .set({ zyzt: 4 })
+          .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+          .execute();
+      } else if (createH11JszbDto.jslx === 3) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update('h11_brxx')
+          .set({ zyzt: 7 })
+          .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+          .execute();
+      }
 
       await queryRunner.commitTransaction();
       return mainEntity;
@@ -96,21 +159,9 @@ export class H11JszbService {
     } finally {
       await queryRunner.release();
     }
-
-    // log('fphm', fphm);
-    // log('Amount', Amount);
-    // log('jsdh', jsdh);
-    // log('costCategory', Amount.costCategory.length);
-    return createH11JszbDto;
-
-    const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh };
-    const entity = this.h11JszbRepository.create(createDto);
-    //return await this.h11JszbRepository.save(entity);
-
-    return '1111';
   }
 
-  async findAll(queryDto: H11JszbQueryDto): Promise<{ items: H11Jszb[]; total: number }> {
+  async findAll(queryDto: H11JszbQueryDto): Promise<{ pageData: H11Jszb[]; total: number }> {
     const { page = 1, limit = 10, ...filters } = queryDto;
     const skip = (page - 1) * limit;
 
@@ -136,9 +187,9 @@ export class H11JszbService {
       queryBuilder.andWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
     }
 
-    const [items, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const [pageData, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 
-    return { items, total };
+    return { pageData, total };
   }
 
   async findOne(jsdh: string): Promise<H11Jszb> {
@@ -179,8 +230,6 @@ export class H11JszbService {
       ksid: createH11JszbDto.ksid,
     });
 
-    console.log(costCategory);
-
     const advancePayment = await this.h11YjkService.findAll({
       pageNo: 1,
       pageSize: 100,
@@ -194,6 +243,20 @@ export class H11JszbService {
     const jsjeSum = zfje + qtje;
     const ssjeSum = zfje + qtje;
     const syjeSum = yjje - jsjeSum;
+    const fkje =
+      createH11JszbDto.paymentType.yhje +
+      createH11JszbDto.paymentType.je1 +
+      createH11JszbDto.paymentType.je3 +
+      createH11JszbDto.paymentType.qt3 +
+      createH11JszbDto.paymentType.kbhj +
+      createH11JszbDto.paymentType.qtje4 +
+      createH11JszbDto.paymentType.yfje +
+      createH11JszbDto.paymentType.yfje4;
+    if (ssjeSum - yjje != fkje) {
+      throw new BadRequestException(
+        `传入付款方式总额(${fkje})与后台计算金额(${ssjeSum - yjje})不符,请检查!`,
+      );
+    }
 
     if (jsjeSum != createH11JszbDto.jsje) {
       throw new BadRequestException(

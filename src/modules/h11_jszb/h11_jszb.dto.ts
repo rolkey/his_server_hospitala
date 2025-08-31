@@ -8,6 +8,7 @@ import {
   IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { CreateH11XnhDto } from '../h11_xnh/h11_xnh.dto';
 
 export class CreateH11JszbDto {
   @IsOptional()
@@ -142,6 +143,9 @@ export class CreateH11JszbDto {
   @IsString()
   @MaxLength(30)
   brlxid?: string;
+
+  @IsNotEmpty({ message: '付款方式不能为空!' })
+  paymentType?: CreateH11XnhDto;
 }
 
 export class UpdateH11JszbDto {
