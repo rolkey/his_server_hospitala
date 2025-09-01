@@ -559,14 +559,14 @@ export class h13_yzzxcsService {
       })
       .setParameters({ userId, ldt_sj, mrcs, yzzh });
 
-    console.log(
-      'queryBuilder1: =========================================\n',
-      getCompleteSqlWithParameters(queryBuilder1),
-    );
-    console.log(
-      'queryBuilder2: =========================================\n',
-      getCompleteSqlWithParameters(queryBuilder2),
-    );
+    // console.log(
+    //   'queryBuilder1: =========================================\n',
+    //   getCompleteSqlWithParameters(queryBuilder1),
+    // );
+    // console.log(
+    //   'queryBuilder2: =========================================\n',
+    //   getCompleteSqlWithParameters(queryBuilder2),
+    // );
 
     // 先获取要插入的数据
     const [recordsToInsert1, recordsToInsert2] = await Promise.all([
@@ -575,7 +575,7 @@ export class h13_yzzxcsService {
     ]);
 
     const newRecords = [...recordsToInsert1, ...recordsToInsert2].filter((item) => item.zxcs < 0);
-    console.log('退费数据: =========================================\n', newRecords);
+    // console.log('退费数据: =========================================\n', newRecords);
 
     if (newRecords.length > 0) {
       // 把 [...recordsToInsert1, ...recordsToInsert2] 的数据导入 H13YzzxcsTf 实体中
@@ -614,18 +614,15 @@ export class h13_yzzxcsService {
             `(${columns
               .map((column) => {
                 const value = record[column] ?? record['h13_'.concat(column)];
-                // const realValue = typeof value === 'string' ? `'${value}'` : value;
-                console.log('column', column, 'type', typeof value, 'value', value);
                 const realVal =
                   typeof value === 'object' && value ? DateFormater.formatDate1(value) : value;
-                return realVal !== undefined && realVal !== null ? `'${realVal}'` : 'NULL'; // 处理 null 和 undefined
+                return realVal !== undefined && realVal !== null ? `'${realVal}'` : 'null'; // 处理 null 和 undefined
               })
               .join(', ')})`,
         )
         .join(', ');
 
       const sql = `INSERT INTO ${metadata.tableName} (${columns.join(', ')}) VALUES ${values};`;
-      console.log('sql: =========================================\n', sql);
 
       // 执行 SQL 语句
       await manager.query(sql);
@@ -645,7 +642,7 @@ export class h13_yzzxcsService {
       .andWhere('yzxh = :yzxh', { yzxh })
       .andWhere('yzlx = :yzlx', { yzlx })
       .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-      .andWhere('CONVERT(char(10), zxrq, 120) > :zxrq', { zxrq })
+      .andWhere('CONVERT(char(10), zxrq, 120) > :zxrq', { zxrq: zxrq.substring(0, 10) })
       .execute();
 
     // 更新等于停医嘱日期的记录 - 使用 manager
@@ -662,7 +659,7 @@ export class h13_yzzxcsService {
       .andWhere('yzxh = :yzxh', { yzxh })
       .andWhere('yzlx = :yzlx', { yzlx })
       .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
-      .andWhere('CONVERT(char(10), zxrq, 120) = :zxrq', { zxrq })
+      .andWhere('CONVERT(char(10), zxrq, 120) = :zxrq', { zxrq: zxrq.substring(0, 10) })
       .execute();
   }
 }

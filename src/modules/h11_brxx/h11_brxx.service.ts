@@ -7,6 +7,7 @@ import * as dayjs from 'dayjs';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { log } from 'console';
+import { getCompleteSqlWithParameters } from '@/utils/sql-utils';
 @Injectable()
 export class h11_brxxService {
   constructor(
@@ -56,8 +57,9 @@ export class h11_brxxService {
       queryBuilder.andWhere('h11_brxx.zybh = :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
     }
     if (queryDto.zyzt) {
-      if (queryDto.zyzt === 1 || queryDto.zyzt === 2) {
-        queryBuilder.andWhere('(h11_brxx.zyzt <=2)');
+      const zyzt = Number(queryDto.zyzt);
+      if (zyzt === 1 || zyzt === 2) {
+        queryBuilder.andWhere('(h11_brxx.zyzt <=2 or h11_brxx.zyzt is null)');
       } else {
         queryBuilder.andWhere('(h11_brxx.zyzt = :zyzt)', { zyzt: queryDto.zyzt });
       }
@@ -104,6 +106,7 @@ export class h11_brxxService {
     }
     // 添加分页
     queryBuilder.skip((pageNo - 1) * pageSize).take(pageSize);
+    console.log(getCompleteSqlWithParameters(queryBuilder));
 
     const [pageData, total] = await queryBuilder.getManyAndCount();
     return { pageData, total };
@@ -113,7 +116,7 @@ export class h11_brxxService {
     const query = this.h11_brxxRepo
       .createQueryBuilder('h11_brxx')
       .select([
-        `(SELECT sum(round(jfyl * xmdj * (zxcs - bzxcs) * kyts,2)) 
+        `(SELECT sum(round(jfyl * xmdj * (zxcs - bzxcs) * kyts,2))
 	FROM h13_yzzxcs
 	WHERE h13_yzzxcs.zyid =h11_brxx.zyid) as yzfy`,
         `(SELECT sum(round(a.jfyl * a.xmdj,2))

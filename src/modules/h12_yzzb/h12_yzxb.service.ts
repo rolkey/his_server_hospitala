@@ -1083,7 +1083,7 @@ export class h12_yzxbService {
       }
     });
     await this.dataSource.transaction(async (manager) => {
-      //   await manager.save(h12_yzxb, h12_yzxbs);
+      await manager.save(h12_yzxb, h12_yzxbs);
       const zxrq = DateFormater.formatDate1(tzsj);
       await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
     });
