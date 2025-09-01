@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsInt,
   Allow,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -16,11 +17,11 @@ export class CreateH11YjkDto {
   @MaxLength(10)
   sjhm: string;
 
-  @IsNotEmpty({ message: '收据类型不能为空' })
-  @IsInt()
-  sjlx: number;
-
   @IsOptional()
+  @IsInt()
+  sjlx: number = 1;
+
+  @IsNotEmpty({ message: '住院编号不能为空' })
   @IsString()
   @MaxLength(12)
   zybh?: string;
@@ -30,7 +31,7 @@ export class CreateH11YjkDto {
   @MaxLength(12)
   zyid: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '病人姓名不能为空' })
   @IsString()
   @MaxLength(30)
   brxm?: string;
@@ -59,11 +60,11 @@ export class CreateH11YjkDto {
   @IsNumber()
   yjje: number;
 
-  @IsNotEmpty({ message: '汇兑率不能为空' })
+  @IsOptional()
   @IsNumber()
-  hbhl: number;
+  hbhl: number = 1.0;
 
-  @IsNotEmpty({ message: '人民币金额不能为空' })
+  @IsOptional()
   @IsNumber()
   rmbje: number;
 
@@ -92,9 +93,9 @@ export class CreateH11YjkDto {
   @MaxLength(30)
   sfyxm: string;
 
-  @IsNotEmpty({ message: '收据状态不能为空' })
+  @IsOptional()
   @IsInt()
-  sjzt: number;
+  sjzt: number = 1;
 
   @IsNotEmpty({ message: '收费时间不能为空' })
   @Type(() => Date)
@@ -121,9 +122,9 @@ export class CreateH11YjkDto {
   @MaxLength(30)
   jkrm?: string;
 
-  @IsNotEmpty({ message: '结算标志不能为空' })
+  @IsOptional()
   @IsInt()
-  jsbz: number;
+  jsbz: number = 0;
 
   @IsOptional()
   @IsString()
@@ -204,4 +205,28 @@ export class H11YjkQueryDto {
 
   @Allow()
   endDate?: Date;
+}
+
+export class H11YjkCancelDto {
+  @IsNotEmpty({ message: '收据号码不能为空' })
+  @IsString()
+  @MaxLength(10)
+  sjhm?: string;
+
+  @IsNotEmpty({ message: '作废人员ID不能为空' })
+  @IsString()
+  @MaxLength(10)
+  zfyid?: string;
+
+  @IsNotEmpty({ message: '作废人员姓名不能为空' })
+  @IsString()
+  @MaxLength(30)
+  zfyxm?: string;
+
+  @IsNotEmpty({ message: '类型不能为空' })
+  @IsIn(['1', '2'], {
+    message: '类型必须是1或者2',
+  })
+  @IsString()
+  type?: string;
 }

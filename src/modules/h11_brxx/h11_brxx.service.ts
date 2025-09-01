@@ -2,10 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
-import { Queryh11_brxxDto, CreateDto, UpdateDto } from './dto';
+import {
+  Queryh11_brxxDto,
+  CreateDto,
+  UpdateDto,
+  QueryCostDetailDto,
+  QueryCostCategoryDto,
+} from './dto';
 import * as dayjs from 'dayjs';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
+import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
 import { log } from 'console';
 import { getCompleteSqlWithParameters } from '@/utils/sql-utils';
 @Injectable()
@@ -15,6 +22,7 @@ export class h11_brxxService {
     private h11_brxxRepo: Repository<h11_brxx>,
     private readonly h11_lshService: h11_lshService,
     private readonly h11_zybhService: h11_zybhService,
+    private readonly h00_fylbService: h00_fylbService,
   ) {}
 
   async findAll(queryDto: Queryh11_brxxDto) {
@@ -160,5 +168,34 @@ export class h11_brxxService {
     const { zyid, ...rest } = dto;
     await this.h11_brxxRepo.update(zyid, rest);
     return await this.h11_brxxRepo.findOne({ where: { zyid } });
+  }
+
+  async costDetails(queryCostDetailDto: QueryCostDetailDto) {
+    try {
+      //费用明细
+      return await this.h11_brxxRepo.query(
+        `EXEC dbo.h11_yrqmx_yb @zyid='${queryCostDetailDto.zyid}', @date1='${queryCostDetailDto.start}', @date2='${queryCostDetailDto.end}', @ksid='${queryCostDetailDto.ksid}'`,
+      );
+    } catch (error) {
+      throw new Error(`存储过程执行失败: ${error.message}`);
+    }
+  }
+
+  async costCategory(queryCostCategoryDto: QueryCostCategoryDto) {
+    try {
+      // 费用类别
+      const result = await this.h11_brxxRepo.query(
+        `EXEC dbo.h11_zyjs @zyid='${queryCostCategoryDto.zyid}', @brlxid='${queryCostCategoryDto.brlxid}', @start='${queryCostCategoryDto.start}', @end='${queryCostCategoryDto.end}', @ksid='${queryCostCategoryDto.ksid}'`,
+      );
+      const resultNew = await Promise.all(
+        result.map(async (item) => {
+          const fylb = await this.h00_fylbService.findOne(item.fylbid);
+          return { ...item, fylbmc: fylb?.fylbmc ?? '' };
+        }),
+      );
+      return resultNew;
+    } catch (error) {
+      throw new Error(`存储过程执行失败: ${error.message}`);
+    }
   }
 }

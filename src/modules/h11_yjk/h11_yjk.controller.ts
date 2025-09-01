@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { H11YjkService } from './h11_yjk.service';
-import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto } from './h11_yjk.dto';
+import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto, H11YjkCancelDto } from './h11_yjk.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ParseDatePipe } from './date-parse.pipe';
 
@@ -19,22 +19,27 @@ export class H11YjkController {
     return this.h11YjkService.findAll(queryDto);
   }
 
-  @Get(':sjhm/:sfsj')
-  findOne(@Param('sjhm') sjhm: string, @Param('sfsj', ParseDatePipe) sfsj: Date) {
-    return this.h11YjkService.findOne(sjhm, sfsj);
+  @Post('/cancelOrRefund')
+  cancelOrRefund(@Body() h11YjkCancelDto: H11YjkCancelDto) {
+    return this.h11YjkService.cancelOrRefund(h11YjkCancelDto);
   }
 
-  @Get('zyid/:zyid')
-  findByZyid(@Param('zyid') zyid: string) {
-    return this.h11YjkService.findByZyid(zyid);
-  }
+  // @Get(':sjhm/:sfsj')
+  // findOne(@Param('sjhm') sjhm: string, @Param('sfsj', ParseDatePipe) sfsj: Date) {
+  //   return this.h11YjkService.findOne(sjhm, sfsj);
+  // }
 
-  @Patch(':sjhm/:sfsj')
-  update(
-    @Param('sjhm') sjhm: string,
-    @Param('sfsj', ParseDatePipe) sfsj: Date,
-    @Body() updateH11YjkDto: UpdateH11YjkDto,
-  ) {
-    return this.h11YjkService.update(sjhm, sfsj, updateH11YjkDto);
-  }
+  // @Get('zyid/:zyid')
+  // findByZyid(@Param('zyid') zyid: string) {
+  //   return this.h11YjkService.findByZyid(zyid);
+  // }
+
+  // @Patch(':sjhm/:sfsj')
+  // update(
+  //   @Param('sjhm') sjhm: string,
+  //   @Param('sfsj', ParseDatePipe) sfsj: Date,
+  //   @Body() updateH11YjkDto: UpdateH11YjkDto,
+  // ) {
+  //   return this.h11YjkService.update(sjhm, sfsj, updateH11YjkDto);
+  // }
 }
