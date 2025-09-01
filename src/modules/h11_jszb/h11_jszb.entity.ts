@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { DateTransformer } from '@/common/transformers/date.transformer';
 
 @Entity('h11_jszb')
 export class H11Jszb {
@@ -14,6 +15,7 @@ export class H11Jszb {
   @Column({ name: 'xbid', type: 'varchar', length: 10, nullable: true })
   xbid: string | null;
 
+  @DateTransformer()
   @Column({ name: 'rysj', type: 'datetime', nullable: true })
   rysj: Date | null;
 
@@ -53,6 +55,7 @@ export class H11Jszb {
   @Column({ name: 'syje', type: 'decimal', precision: 16, scale: 4, nullable: true })
   syje: number | null;
 
+  @DateTransformer()
   @Column({ name: 'zzsj', type: 'datetime', nullable: true })
   zzsj: Date | null;
 
@@ -66,6 +69,7 @@ export class H11Jszb {
   jsyid: string | null;
 
   @Column({ name: 'jssj', type: 'datetime', nullable: true })
+  @DateTransformer()
   jssj: Date | null;
 
   @Column({ name: 'jsyxm', type: 'varchar', length: 30, nullable: true })
@@ -80,6 +84,7 @@ export class H11Jszb {
   @Column({ name: 'sjzt', type: 'int', nullable: true })
   sjzt: number | null;
 
+  @DateTransformer()
   @Column({ name: 'sfsj', type: 'datetime', nullable: true })
   sfsj: Date | null;
 

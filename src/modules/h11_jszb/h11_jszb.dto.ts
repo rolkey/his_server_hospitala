@@ -298,13 +298,13 @@ export class H11JszbQueryDto {
   @IsString()
   ksmc?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '当前页不能为空!' })
   @Type(() => Number)
   @IsNumber()
-  page?: number = 1;
+  pageNo?: number = 1;
 
-  @IsOptional()
+  @IsNotEmpty({ message: '每页条数不能为空!' })
   @Type(() => Number)
   @IsNumber()
-  limit?: number = 10;
+  pageSize?: number = 10;
 }

@@ -162,8 +162,8 @@ export class H11JszbService {
   }
 
   async findAll(queryDto: H11JszbQueryDto): Promise<{ pageData: H11Jszb[]; total: number }> {
-    const { page = 1, limit = 10, ...filters } = queryDto;
-    const skip = (page - 1) * limit;
+    const { pageNo = 1, pageSize = 10, ...filters } = queryDto;
+    const skip = (pageNo - 1) * pageSize;
 
     const queryBuilder = this.h11JszbRepository.createQueryBuilder('jszb');
 
@@ -187,7 +187,7 @@ export class H11JszbService {
       queryBuilder.andWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
     }
 
-    const [pageData, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
 
     return { pageData, total };
   }

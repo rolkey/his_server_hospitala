@@ -10,4 +10,9 @@ export class H11JszbController {
   create(@Body() createH11JszbDto: CreateH11JszbDto) {
     return this.h11JszbService.create(createH11JszbDto);
   }
+
+  @Get('findAll')
+  findAll(@Query() query: H11JszbQueryDto) {
+    return this.h11JszbService.findAll(query);
+  }
 }

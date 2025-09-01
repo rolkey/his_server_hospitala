@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { DateTransformer } from '@/common/transformers/date.transformer';
 
 @Entity('h11_fpzb')
 export class H11Fpzb {
@@ -23,9 +24,11 @@ export class H11Fpzb {
   @Column({ name: 'xbid', type: 'varchar', length: 10, nullable: true })
   xbid: string | null;
 
+  @DateTransformer()
   @Column({ name: 'rysj', type: 'datetime', nullable: true })
   rysj: Date | null;
 
+  @DateTransformer()
   @Column({ name: 'zzsj', type: 'datetime', nullable: true })
   zzsj: Date | null;
 
@@ -50,6 +53,7 @@ export class H11Fpzb {
   @Column({ name: 'sfyxm', type: 'varchar', length: 30, nullable: true })
   sfyxm: string | null;
 
+  @DateTransformer()
   @Column({ name: 'sfsj', type: 'datetime', nullable: true })
   sfsj: Date | null;
 
@@ -62,6 +66,7 @@ export class H11Fpzb {
   @Column({ name: 'zfyxm', type: 'varchar', length: 30, nullable: true })
   zfyxm: string | null;
 
+  @DateTransformer()
   @Column({ name: 'zfsj', type: 'datetime', nullable: true })
   zfsj: Date | null;
 
@@ -80,6 +85,7 @@ export class H11Fpzb {
   @Column({ name: 'dzfp', type: 'varchar', length: 20, nullable: true })
   dzfp: string | null;
 
+  @DateTransformer()
   @Column({ name: 'jzrq', type: 'datetime', nullable: true })
   jzrq: Date | null;
 

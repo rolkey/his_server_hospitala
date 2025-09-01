@@ -315,10 +315,10 @@ export class H11FpzbQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  page?: number = 1;
+  pageNo?: number = 1;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  limit?: number = 10;
+  pageSize?: number = 10;
 }

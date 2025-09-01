@@ -11,7 +11,7 @@ export class H11FpzbController {
     return this.h11FpzbService.create(createH11FpzbDto);
   }
 
-  @Get()
+  @Get('findAll')
   findAll(@Query() queryDto: H11FpzbQueryDto) {
     return this.h11FpzbService.findAll(queryDto);
   }

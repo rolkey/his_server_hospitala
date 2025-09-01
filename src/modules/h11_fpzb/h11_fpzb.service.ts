@@ -121,9 +121,9 @@ export class H11FpzbService {
     }
   }
 
-  async findAll(queryDto: H11FpzbQueryDto): Promise<{ items: H11Fpzb[]; total: number }> {
-    const { page = 1, limit = 10, ...filters } = queryDto;
-    const skip = (page - 1) * limit;
+  async findAll(queryDto: H11FpzbQueryDto): Promise<{ pageData: H11Fpzb[]; total: number }> {
+    const { pageNo = 1, pageSize = 10, ...filters } = queryDto;
+    const skip = (pageNo - 1) * pageSize;
 
     const queryBuilder = this.h11FpzbRepository.createQueryBuilder('fpzb');
 
@@ -153,9 +153,9 @@ export class H11FpzbService {
       queryBuilder.andWhere('fpzb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
     }
 
-    const [items, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
 
-    return { items, total };
+    return { pageData, total };
   }
 
   async findOne(fphm: string): Promise<H11Fpzb> {
