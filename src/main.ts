@@ -13,6 +13,8 @@ import { json, urlencoded } from 'express';
 import { ValidationPipe } from '@nestjs/common';
 import { resolve } from 'path';
 
+process.env.TZ = 'Asia/Shanghai';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(json({ limit: '10mb' }));
@@ -47,6 +49,8 @@ async function bootstrap() {
     resolve(__dirname, '.env'), // 绝对路径
     '\n',
     resolve(__dirname, '.env.local'),
+    'Current time:',
+    new Date(),
   );
 
   await app.listen(process.env.APP_PORT || 8085);
