@@ -290,4 +290,64 @@ export class H11JszbService {
 
     return { zfje, qtje, yjje, jsjeSum, ssjeSum, syjeSum, costCategory };
   }
+
+  async cancel(jsdh: string) {
+    const jszb = await this.findOne(jsdh);
+    if (!jszb) {
+      throw new NotFoundException(`结算单号 ${jsdh} 不存在`);
+    }
+
+    if (!jszb.fpzh) {
+      throw new BadRequestException(`该结算单已经作废！`);
+    }
+    if (jszb.sjzt === 0) {
+      throw new BadRequestException(`该结算单已经作废！`);
+    }
+    if (jszb.fpbz === 1) {
+      throw new BadRequestException(`该结算单有发票，请先将发票作废！`);
+    }
+
+    //await this.paramService.gfGetPara(13, `zj${asKsid}`, '0603', `针剂${asKsid}`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // 1.修改h11_brxx
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h11_brxx')
+        .set({ qfjsje: 0, zyzt: 3, jssj: null })
+        .where('zyid = :zyid', { zyid: jszb.zyid })
+        .execute();
+
+      // 2.恢复预结算金额wrc
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h22_yhjl')
+        .set({ sjzt: 0 })
+        .where('mzid = :zyid', { zyid: jszb.zyid })
+        .andWhere('bslx = :bslx', { bslx: '2' })
+        .execute();
+
+      // 3.
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h11_jshz')
+        .set({ jshz: () => 'jshz + :zfje' })
+        .setParameter('zfje', jszb.zfje)
+        .where('mzid = :zyid', { zyid: jszb.zyid })
+        .execute();
+
+      await queryRunner.commitTransaction();
+      return 1;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return this.h11JszbRepository.update(jsdh, { fpbz: 0, sjzt: 0 });
+  }
 }

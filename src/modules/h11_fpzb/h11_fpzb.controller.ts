@@ -20,4 +20,9 @@ export class H11FpzbController {
   findOne(@Param('fphm') fphm: string, @Param('kshm') kshm: string) {
     return this.h11FpzbService.findOne(fphm);
   }
+
+  // @Get('')
+  // cancel(@Param('jsdh') jsdh: string) {
+  //   return this.h11FpzbService.cancel(jsdh);
+  // }
 }

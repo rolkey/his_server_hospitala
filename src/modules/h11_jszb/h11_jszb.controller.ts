@@ -15,4 +15,9 @@ export class H11JszbController {
   findAll(@Query() query: H11JszbQueryDto) {
     return this.h11JszbService.findAll(query);
   }
+
+  @Get('')
+  cancel(@Param('jsdh') jsdh: string) {
+    return this.h11JszbService.cancel(jsdh);
+  }
 }
