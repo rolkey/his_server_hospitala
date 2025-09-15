@@ -23,3 +23,11 @@
 - 复制、修改和发行本项目代码需包含原作者的版权及许可信息，包括但不限于文件头注释、协议等
 
 简单来说，作者只想保留版权，没有任何其他限制。
+
+## 代码统计
+
+- 统计用户提交数
+
+```bash
+git log --author="用户名" --pretty=tformat: --numstat | awk '{ add += $1; subtract += $2 } END { printf "Added lines: %s\nRemoved lines: %s\n", add, subtract }'
+```
