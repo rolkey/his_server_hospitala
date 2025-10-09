@@ -443,7 +443,7 @@ export class h12_yzxbService {
     advice.ksid = item.ksid;
     advice.scph = item.scph?.trim();
     advice.jfyl = item.jfyl;
-    advice.sjyl = item.sjyl;
+    advice.sjyl = item.sjyl1;
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
     advice.fybz = item.fybz;
