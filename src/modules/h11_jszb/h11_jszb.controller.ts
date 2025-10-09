@@ -16,8 +16,8 @@ export class H11JszbController {
     return this.h11JszbService.findAll(query);
   }
 
-  @Get('')
-  cancel(@Param('jsdh') jsdh: string) {
+  @Get('cancel')
+  cancel(@Query('jsdh') jsdh: string) {
     return this.h11JszbService.cancel(jsdh);
   }
 }

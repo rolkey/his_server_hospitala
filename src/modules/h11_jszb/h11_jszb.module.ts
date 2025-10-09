@@ -22,6 +22,9 @@ import { H11Fpxb } from '../h11_fpxb/h11_fpxb.entity';
 import { H11Xnh } from '../h11_xnh/h11_xnh.entity';
 import { h12_yzzb } from '../h12_yzzb/h12_yzzb.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { ParamService } from '../h12_xmzd/service/param.service';
+import { Syspar } from '../h12_xmzd/entity/syspar.entity';
+import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 
 @Module({
   imports: [
@@ -38,6 +41,8 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
       H11Xnh,
       h12_yzzb,
       h13_yzzxcs,
+      Syspar,
+      SysparNew,
     ]),
   ],
   controllers: [H11JszbController],
@@ -50,6 +55,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
     H11FpzbService,
     h00_fylbService,
     H11JsxbService,
+    ParamService,
   ],
   exports: [H11JszbService],
 })
