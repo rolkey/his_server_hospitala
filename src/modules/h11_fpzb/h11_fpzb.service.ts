@@ -70,16 +70,16 @@ export class H11FpzbService {
     const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh });
     const createH11FpxbDto: CreateH11FpxbDto[] = [];
 
-    if (H11Jsxb.items.length <= 0) {
+    if (H11Jsxb.pageData.length <= 0) {
       throw new BadRequestException('结算细表查询失败');
     }
-    for (let i = 0; i < H11Jsxb.items.length; i++) {
+    for (let i = 0; i < H11Jsxb.pageData.length; i++) {
       createH11FpxbDto[i] = {
         fphm: fphm,
-        fpxmid: H11Jsxb.items[i].fylbid,
-        fpxmmc: H11Jsxb.items[i].fylbmc,
-        fpxmje: H11Jsxb.items[i].jsje,
-        fpxmqtje: H11Jsxb.items[i].zfje,
+        fpxmid: H11Jsxb.pageData[i].fylbid,
+        fpxmmc: H11Jsxb.pageData[i].fylbmc,
+        fpxmje: H11Jsxb.pageData[i].jsje,
+        fpxmqtje: H11Jsxb.pageData[i].zfje,
       };
     }
 

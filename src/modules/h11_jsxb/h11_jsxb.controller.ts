@@ -6,4 +6,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 @Controller('h11_jsxb')
 export class H11JsxbController {
   constructor(private readonly h11JsxbService: H11JsxbService) {}
+
+  @Get('findAllNotPage')
+  findAllNotPage(@Query() queryDto: H11JsxbQueryDto) {
+    return this.h11JsxbService.findAllNotPage(queryDto);
+  }
 }

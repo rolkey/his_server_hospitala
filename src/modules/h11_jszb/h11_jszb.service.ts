@@ -171,22 +171,28 @@ export class H11JszbService {
 
     // 添加过滤条件
     if (filters.jsdh) {
-      queryBuilder.andWhere('jszb.jsdh = :jsdh', { jsdh: filters.jsdh });
+      queryBuilder.orWhere('jszb.jsdh = :jsdh', { jsdh: filters.jsdh });
     }
     if (filters.zybh) {
-      queryBuilder.andWhere('jszb.zybh = :zybh', { zybh: filters.zybh });
+      queryBuilder.orWhere('jszb.zybh = :zybh', { zybh: filters.zybh });
     }
     if (filters.brxm) {
-      queryBuilder.andWhere('jszb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
+      queryBuilder.orWhere('jszb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
     }
     if (filters.zyid) {
-      queryBuilder.andWhere('jszb.zyid = :zyid', { zyid: filters.zyid });
+      queryBuilder.orWhere('jszb.zyid = :zyid', { zyid: filters.zyid });
     }
     if (filters.ksid) {
-      queryBuilder.andWhere('jszb.ksid = :ksid', { ksid: filters.ksid });
+      queryBuilder.orWhere('jszb.ksid = :ksid', { ksid: filters.ksid });
     }
     if (filters.ksmc) {
-      queryBuilder.andWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+      queryBuilder.orWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+    }
+    if (filters.start) {
+      queryBuilder.andWhere('jszb.sfsj >= :start', { start: filters.start });
+    }
+    if (filters.end) {
+      queryBuilder.andWhere('jszb.sfsj <= :end', { end: filters.end });
     }
 
     const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
