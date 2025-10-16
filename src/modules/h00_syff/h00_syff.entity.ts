@@ -26,21 +26,21 @@ export class h00_syff {
   // })
   // szbm: string | null;
 
-  // @Column("char", {
-  //   name: "pybm",
-  //   nullable: true,
-  //   length: 20,
-  //   default: () => "''",
-  // })
-  // pybm: string | null;
+  @Column('char', {
+    name: 'pybm',
+    nullable: true,
+    length: 20,
+    default: () => "''",
+  })
+  pybm: string | null;
 
-  // @Column("char", {
-  //   name: "wbbm",
-  //   nullable: true,
-  //   length: 20,
-  //   default: () => "''",
-  // })
-  // wbbm: string | null;
+  @Column('char', {
+    name: 'wbbm',
+    nullable: true,
+    length: 20,
+    default: () => "''",
+  })
+  wbbm: string | null;
 
   // @Column("char", {
   //   name: "qtbm",
@@ -53,16 +53,16 @@ export class h00_syff {
   // @Column("char", { name: "dyflid", nullable: true, length: 10 })
   // dyflid: string | null;
 
-  // @Column("varchar", {
-  //   name: "xmid",
-  //   nullable: true,
-  //   length: 50,
-  //   default: () => "''",
-  // })
-  // xmid: string | null;
+  @Column('varchar', {
+    name: 'xmid',
+    nullable: true,
+    length: 50,
+    default: () => "''",
+  })
+  xmid: string | null;
 
-  // @Column("varchar", { name: "xmid1", nullable: true, length: 50 })
-  // xmid1: string | null;
+  @Column('varchar', { name: 'xmid1', nullable: true, length: 50 })
+  xmid1: string | null;
 
   // @Column("varchar", { name: "xmid2", nullable: true, length: 50 })
   // xmid2: string | null;
@@ -82,16 +82,14 @@ export class h00_syff {
   // @Column("varchar", { name: "ksid", nullable: true, length: 10 })
   // ksid: string | null;
 
-  // @Column("varchar", { name: "bz1", nullable: true, length: 10 })
-  // bz1: string | null;
+  @Column('varchar', { name: 'bz1', nullable: true, length: 10 })
+  xmmc: string | null;
 
   @AfterLoad()
   trim() {
-    if (this.syffid) {
-      this.syffid = this.syffid.trim();
-    }
-    if (this.syffmc) {
-      this.syffmc = this.syffmc.trim();
-    }
+    this.syffid = this.syffid?.trim();
+    this.syffmc = this.syffmc?.trim();
+    this.xmmc = this.xmmc?.trim();
+    this.xmid = this.xmid?.trim();
   }
 }

@@ -7,6 +7,7 @@ import { QueryH00TcxbDto } from '../dto/h00_tcxb.dto';
 import { H00TcxbZyfj } from '../entity/h00_tcxb_zyfj.entity';
 import { H00_xmzd } from '../../h00_xmzd/h00_xmzd.entity';
 import { TcxbCombinedResponseDto } from '../dto/tcxb-combined-response.dto';
+import { h00_syff } from '../../h00_syff/h00_syff.entity';
 
 @Injectable()
 export class H00TcxbService {
@@ -17,6 +18,8 @@ export class H00TcxbService {
     private readonly h00TcxbZyfjRepository: Repository<H00TcxbZyfj>,
     // @InjectRepository(H00_xmzd)
     // private readonly h00XmzdRepository: Repository<H00_xmzd>,
+    @InjectRepository(h00_syff)
+    private readonly h00SyffRepository: Repository<h00_syff>,
   ) {}
 
   /**
@@ -50,6 +53,13 @@ export class H00TcxbService {
     return this.h00TcxbRepository.find({
       where: { tcid },
     });
+  }
+
+  async findBySyffid(syffid: string): Promise<H00Tcxb[]> {
+    const h00_syff_val = await this.h00SyffRepository.findOne({
+      where: { syffid },
+    });
+    return this.findByTcid(h00_syff_val?.xmid?.trim());
   }
 
   async getCombinedData(tcid: string): Promise<TcxbCombinedResponseDto[]> {

@@ -1,4 +1,5 @@
 // src/h12_mbxb/h12_mbxb.dto.ts
+import { All } from '@nestjs/common';
 import { PartialType } from '@nestjs/mapped-types';
 import { Allow } from 'class-validator';
 
@@ -101,6 +102,8 @@ export class QueryH12_mbxbDto extends H12_mbxbBaseDto {
   @Allow()
   pageSize?: number;
   // sortBy?: string;
+  @Allow()
+  syffid?: string;
   // sortOrder?: 'ASC' | 'DESC';
 }
 

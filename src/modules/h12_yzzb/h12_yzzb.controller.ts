@@ -2,7 +2,7 @@ import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/commo
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
 import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
-import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
+import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 import { UsrcatService } from '../usrcat/usrcat.service';
@@ -43,6 +43,12 @@ export class h12_yzzbController {
   @Post('submitAdvices')
   async submitAdvices(@Body() h12_yzzb1OpeDto: H12_yzzb1OpeDto) {
     const record = await this.h12_yzxbService.submitAdvices(h12_yzzb1OpeDto);
+    return { record };
+  }
+
+  @Post('syffTc')
+  async syffTc(@Body() h12_yzxbSyffTcDto: H12_yzxbSyffTcDto) {
+    const record = await this.h12_yzxbService.syffTc(h12_yzxbSyffTcDto);
     return { record };
   }
 

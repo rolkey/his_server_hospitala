@@ -14,7 +14,7 @@ import DateFormater from '@/utils/DateFormater';
 // import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
-import { UpdateH12_yzxbDto } from './dto/h12_yzxb.dto';
+import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
 import { Gstr_ainfDto } from '@/modules/h12_xmzd/dto/gstr_ainf.dto';
@@ -90,6 +90,16 @@ export class h12_yzxbService {
       await this.redisService.set(zxcsKey, maxZxcs?.maxZxcs ?? 1);
     }
     return await this.redisService.incr(zxcsKey);
+  }
+
+  /**
+   * 根据使用方法获取套餐
+   * @param h12_yzxbSyffTcDto 使用方法
+   */
+  async syffTc(h12_yzxbSyffTcDto: H12_yzxbSyffTcDto) {
+    const h00Tcxbs = await this.h00TcxbService.findBySyffid(h12_yzxbSyffTcDto.syffid);
+    if (h00Tcxbs.length > 0) {
+    }
   }
 
   // 取组套

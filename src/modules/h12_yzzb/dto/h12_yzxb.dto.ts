@@ -1,3 +1,4 @@
+import { h12_yzxb } from './../h12_yzxb.entity';
 export class H12_yzxbDto {
   yzlx: number;
   yzxh: number;
@@ -110,4 +111,12 @@ export class H12_yzxbResponseDto extends H12_yzxbDto {
   ksidEntity?: any;
   h12_yzzb?: any;
   h13_yzzxcsList?: any[];
+}
+
+/**
+ * 医嘱用法取套餐
+ */
+export class H12_yzxbSyffTcDto {
+  syffid: string;
+  h12_yzxb: H12_yzxbDto;
 }
