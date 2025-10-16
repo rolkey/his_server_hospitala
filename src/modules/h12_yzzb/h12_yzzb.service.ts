@@ -72,6 +72,7 @@ export class h12_yzzbService {
       this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
       this.usrcatRepo.find({ select: ['usid', 'unam'] }),
     ]);
+    if (!yzzb) return null;
 
     // 构建字典
     const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
@@ -102,9 +103,9 @@ export class h12_yzzbService {
       item.ksidEntity = ksmcDict[item.ksid] || null;
       item.jshsEntity = usrcatDict[item.jshs] || null;
     });
-    yzzb.ksidEntity = ksmcDict[yzzb.ksid] || null;
-    yzzb.zkksidEntity = ksmcDict[yzzb.zkksid] || null;
-    yzzb.tzridEntity = usrcatDict[yzzb.tzrid] || null;
+    yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
+    yzzb.zkksidEntity = ksmcDict[yzzb?.zkksid] || null;
+    yzzb.tzridEntity = usrcatDict[yzzb?.tzrid] || null;
     yzzb.h12_yzxbList = h12_yzxbList;
     return yzzb;
   }
