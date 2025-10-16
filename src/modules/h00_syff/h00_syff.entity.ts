@@ -1,4 +1,5 @@
-import { AfterLoad, Column, Entity, Index } from 'typeorm';
+import { AfterLoad, Column, Entity, OneToOne, JoinColumn } from 'typeorm';
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 
 @Entity('h00_syff', { schema: 'dbo' })
 export class h00_syff {
@@ -82,14 +83,14 @@ export class h00_syff {
   // @Column("varchar", { name: "ksid", nullable: true, length: 10 })
   // ksid: string | null;
 
-  @Column('varchar', { name: 'bz1', nullable: true, length: 10 })
-  xmmc: string | null;
+  @OneToOne(() => H00_xmzd)
+  @JoinColumn({ name: 'xmid', referencedColumnName: 'xmid' })
+  h00_xmzd: H00_xmzd;
 
   @AfterLoad()
   trim() {
     this.syffid = this.syffid?.trim();
     this.syffmc = this.syffmc?.trim();
-    this.xmmc = this.xmmc?.trim();
     this.xmid = this.xmid?.trim();
   }
 }

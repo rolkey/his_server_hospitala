@@ -19,6 +19,16 @@ export class h00_syffService {
     // 使用 QueryBuilder 来构建复杂的带有子查询的条件 [7,8](@ref)
     const queryBuilder = this.h00_syffRepo
       .createQueryBuilder('h00_syff')
+      .leftJoinAndSelect(
+        'h00_syff.h00_xmzd',
+        'h00_xmzd',
+        'h00_syff.xmid = h00_xmzd.xmid and h00_xmzd.xmzl = 1',
+      )
+      //   .leftJoinAndSelect(
+      //     H00_xmzd,
+      //     'h00_xmzd',
+      //     'h00_syff.xmid = h00_xmzd.xmid and h00_xmzd.xmzl = 1',
+      //   )
       .select([
         'h00_syff.syffid',
         'h00_syff.syffmc',
@@ -31,7 +41,6 @@ export class h00_syffService {
         'h00_syff.xmid1',
         'h00_xmzd.xmmc',
       ])
-      .leftJoin(H00_xmzd, 'h00_xmzd', 'h00_syff.xmid = h00_xmzd.xmid and h00_xmzd.xmzl = 1')
       .where('ISNULL(h00_syff.zybz, 1) = 1')
       .andWhere(
         `(ISNULL(h00_syff.xmid1, '1') = '1' OR
