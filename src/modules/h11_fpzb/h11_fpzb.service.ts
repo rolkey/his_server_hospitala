@@ -70,16 +70,16 @@ export class H11FpzbService {
     const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh });
     const createH11FpxbDto: CreateH11FpxbDto[] = [];
 
-    if (H11Jsxb.items.length <= 0) {
+    if (H11Jsxb.pageData.length <= 0) {
       throw new BadRequestException('结算细表查询失败');
     }
-    for (let i = 0; i < H11Jsxb.items.length; i++) {
+    for (let i = 0; i < H11Jsxb.pageData.length; i++) {
       createH11FpxbDto[i] = {
         fphm: fphm,
-        fpxmid: H11Jsxb.items[i].fylbid,
-        fpxmmc: H11Jsxb.items[i].fylbmc,
-        fpxmje: H11Jsxb.items[i].jsje,
-        fpxmqtje: H11Jsxb.items[i].zfje,
+        fpxmid: H11Jsxb.pageData[i].fylbid,
+        fpxmmc: H11Jsxb.pageData[i].fylbmc,
+        fpxmje: H11Jsxb.pageData[i].jsje,
+        fpxmqtje: H11Jsxb.pageData[i].zfje,
       };
     }
 
@@ -129,28 +129,34 @@ export class H11FpzbService {
 
     // 添加过滤条件
     if (filters.fphm) {
-      queryBuilder.andWhere('fpzb.fphm = :fphm', { fphm: filters.fphm });
+      queryBuilder.orWhere('fpzb.fphm LIKE :fphm', { fphm: filters.fphm });
     }
     if (filters.kshm) {
-      queryBuilder.andWhere('fpzb.kshm = :kshm', { kshm: filters.kshm });
+      queryBuilder.orWhere('fpzb.kshm LIKE :kshm', { kshm: filters.kshm });
     }
     if (filters.zybh) {
-      queryBuilder.andWhere('fpzb.zybh = :zybh', { zybh: filters.zybh });
+      queryBuilder.orWhere('fpzb.zybh LIKE :zybh', { zybh: filters.zybh });
     }
     if (filters.jsdh) {
-      queryBuilder.andWhere('fpzb.jsdh = :jsdh', { jsdh: filters.jsdh });
+      queryBuilder.orWhere('fpzb.jsdh LIKE :jsdh', { jsdh: filters.jsdh });
     }
     if (filters.zyid) {
-      queryBuilder.andWhere('fpzb.zyid = :zyid', { zyid: filters.zyid });
+      queryBuilder.orWhere('fpzb.zyid LIKE :zyid', { zyid: filters.zyid });
     }
     if (filters.brxm) {
-      queryBuilder.andWhere('fpzb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
+      queryBuilder.orWhere('fpzb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
     }
     if (filters.ksid) {
-      queryBuilder.andWhere('fpzb.ksid = :ksid', { ksid: filters.ksid });
+      queryBuilder.orWhere('fpzb.ksid LIKE :ksid', { ksid: filters.ksid });
     }
     if (filters.ksmc) {
-      queryBuilder.andWhere('fpzb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+      queryBuilder.orWhere('fpzb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+    }
+    if (filters.start) {
+      queryBuilder.andWhere('fpzb.sfsj >= :start', { start: filters.start });
+    }
+    if (filters.end) {
+      queryBuilder.andWhere('fpzb.sfsj <= :end', { end: filters.end });
     }
 
     const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();

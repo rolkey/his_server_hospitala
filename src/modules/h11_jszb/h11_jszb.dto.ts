@@ -6,6 +6,7 @@ import {
   IsDate,
   MaxLength,
   IsInt,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateH11XnhDto } from '../h11_xnh/h11_xnh.dto';
@@ -297,6 +298,14 @@ export class H11JszbQueryDto {
   @IsOptional()
   @IsString()
   ksmc?: string;
+
+  @IsOptional()
+  @IsString()
+  start?: string;
+
+  @IsOptional()
+  @IsString()
+  end?: string;
 
   @IsNotEmpty({ message: '当前页不能为空!' })
   @Type(() => Number)

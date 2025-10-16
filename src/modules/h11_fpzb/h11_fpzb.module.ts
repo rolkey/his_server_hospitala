@@ -14,10 +14,23 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { H11Yjk } from '../h11_yjk/h11_yjk.entity';
 import { H11JsxbService } from '../h11_jsxb/h11_jsxb.service';
 import { H11Jsxb } from '../h11_jsxb/h11_jsxb.entity';
+import { ParamService } from '../h12_xmzd/service/param.service';
+import { Syspar } from '../h12_xmzd/entity/syspar.entity';
+import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([H11Fpzb, H11Zypj, H11Jszb, h11_lsh, h11_brxx, H11Yjk, H11Jsxb]),
+    TypeOrmModule.forFeature([
+      H11Fpzb,
+      H11Zypj,
+      H11Jszb,
+      h11_lsh,
+      h11_brxx,
+      H11Yjk,
+      H11Jsxb,
+      Syspar,
+      SysparNew,
+    ]),
   ],
   controllers: [H11FpzbController],
   providers: [
@@ -27,6 +40,7 @@ import { H11Jsxb } from '../h11_jsxb/h11_jsxb.entity';
     h11_lshService,
     H11YjkService,
     H11JsxbService,
+    ParamService,
   ],
   exports: [H11FpzbService],
 })

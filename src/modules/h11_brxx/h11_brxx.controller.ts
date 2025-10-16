@@ -28,7 +28,7 @@ export class h11_brxxController {
     return await this.h11_brxxService.create(dto);
   }
 
-  @Put()
+  @Put('update')
   async update(@Body() dto: UpdateDto) {
     return await this.h11_brxxService.update(dto);
   }

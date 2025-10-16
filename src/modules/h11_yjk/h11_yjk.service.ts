@@ -75,23 +75,23 @@ export class H11YjkService {
 
     // 添加筛选条件
     if (sjhm) {
-      queryBuilder.andWhere('yjk.sjhm LIKE :sjhm', { sjhm: `%${sjhm}%` });
+      queryBuilder.orWhere('yjk.sjhm LIKE :sjhm', { sjhm: `%${sjhm}%` });
     }
 
     if (brxm) {
-      queryBuilder.andWhere('yjk.brxm LIKE :brxm', { brxm: `%${brxm}%` });
+      queryBuilder.orWhere('yjk.brxm LIKE :brxm', { brxm: `%${brxm}%` });
     }
 
     if (zyid) {
-      queryBuilder.andWhere('yjk.zyid = :zyid', { zyid });
+      queryBuilder.orWhere('yjk.zyid = :zyid', { zyid });
     }
 
     if (ksid) {
-      queryBuilder.andWhere('yjk.ksid = :ksid', { ksid });
+      queryBuilder.orWhere('yjk.ksid = :ksid', { ksid });
     }
 
     if (sjzt !== undefined) {
-      queryBuilder.andWhere('yjk.sjzt = :sjzt', { sjzt });
+      queryBuilder.orWhere('yjk.sjzt = :sjzt', { sjzt });
     }
 
     if (startDate && endDate) {

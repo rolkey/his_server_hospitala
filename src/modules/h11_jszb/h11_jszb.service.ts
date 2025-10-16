@@ -13,6 +13,7 @@ import { H11Xnh } from '../h11_xnh/h11_xnh.entity';
 import { H11Yjk } from '../h11_yjk/h11_yjk.entity';
 import { h12_yzzb } from '../h12_yzzb/h12_yzzb.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { ParamService } from '../h12_xmzd/service/param.service';
 
 import { log } from 'console';
 import * as dayjs from 'dayjs';
@@ -25,6 +26,7 @@ export class H11JszbService {
     private readonly h11_lshService: h11_lshService,
     private readonly h11_brxxService: h11_brxxService,
     private readonly h11YjkService: H11YjkService,
+    private readonly paramService: ParamService,
     private dataSource: DataSource,
   ) {}
 
@@ -169,22 +171,28 @@ export class H11JszbService {
 
     // 添加过滤条件
     if (filters.jsdh) {
-      queryBuilder.andWhere('jszb.jsdh = :jsdh', { jsdh: filters.jsdh });
+      queryBuilder.orWhere('jszb.jsdh = :jsdh', { jsdh: filters.jsdh });
     }
     if (filters.zybh) {
-      queryBuilder.andWhere('jszb.zybh = :zybh', { zybh: filters.zybh });
+      queryBuilder.orWhere('jszb.zybh = :zybh', { zybh: filters.zybh });
     }
     if (filters.brxm) {
-      queryBuilder.andWhere('jszb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
+      queryBuilder.orWhere('jszb.brxm LIKE :brxm', { brxm: `%${filters.brxm}%` });
     }
     if (filters.zyid) {
-      queryBuilder.andWhere('jszb.zyid = :zyid', { zyid: filters.zyid });
+      queryBuilder.orWhere('jszb.zyid = :zyid', { zyid: filters.zyid });
     }
     if (filters.ksid) {
-      queryBuilder.andWhere('jszb.ksid = :ksid', { ksid: filters.ksid });
+      queryBuilder.orWhere('jszb.ksid = :ksid', { ksid: filters.ksid });
     }
     if (filters.ksmc) {
-      queryBuilder.andWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+      queryBuilder.orWhere('jszb.ksmc LIKE :ksmc', { ksmc: `%${filters.ksmc}%` });
+    }
+    if (filters.start) {
+      queryBuilder.andWhere('jszb.sfsj >= :start', { start: filters.start });
+    }
+    if (filters.end) {
+      queryBuilder.andWhere('jszb.sfsj <= :end', { end: filters.end });
     }
 
     const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
@@ -293,21 +301,24 @@ export class H11JszbService {
 
   async cancel(jsdh: string) {
     const jszb = await this.findOne(jsdh);
+    log(jsdh);
+    log(jszb);
     if (!jszb) {
       throw new NotFoundException(`结算单号 ${jsdh} 不存在`);
     }
-
-    if (!jszb.fpzh) {
-      throw new BadRequestException(`该结算单已经作废！`);
+    if (jszb.fpzh) {
+      throw new BadRequestException(`该结算单已经作废1！`);
     }
     if (jszb.sjzt === 0) {
-      throw new BadRequestException(`该结算单已经作废！`);
+      throw new BadRequestException(`该结算单已经作废2！`);
     }
     if (jszb.fpbz === 1) {
       throw new BadRequestException(`该结算单有发票，请先将发票作废！`);
     }
 
-    //await this.paramService.gfGetPara(13, `zj${asKsid}`, '0603', `针剂${asKsid}`);
+    const jsdhNew = (
+      await this.h11_lshService.getSerialNumber('JSDH', '结算单号码', 10)
+    ).toString(); //获取结算单号
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -336,18 +347,141 @@ export class H11JszbService {
         .update('h11_jshz')
         .set({ jshz: () => 'jshz + :zfje' })
         .setParameter('zfje', jszb.zfje)
-        .where('mzid = :zyid', { zyid: jszb.zyid })
+        .where('zyid = :zyid', { zyid: jszb.zyid })
+        .execute();
+
+      // 4
+      const mmjs = (await this.paramService.gfGetPara(11, 'zybh', '0', '住院号不允许')).toString();
+      log(mmjs);
+      if (mmjs != '1') {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update('h11_xnh')
+          .set({ bz1: '0' })
+          .where('fphm = :fphm', { fphm: jszb.fphm })
+          .execute();
+      }
+
+      // 1.1.修改h13_yzzxcs
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h13_yzzxcs')
+        .set({ jsbz: 0, jsdh: '' })
+        .where('zyid IN (SELECT zyid FROM h11_brxx WHERE zyid = :zyid OR lsh = :zyid)', {
+          zyid: jszb.zyid,
+        })
+        .andWhere('jsdh = :jsdh', { jsdh: jsdh })
+        .execute();
+
+      // 1.1.修改h12_yzzb
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h12_yzzb')
+        .set({ jsbz: 0 })
+        .where('zyid IN (SELECT zyid FROM h11_brxx WHERE zyid = :zyid OR lsh = :zyid)', {
+          zyid: jszb.zyid,
+        })
+        .execute();
+
+      // 1.2.将床位租用表(h13_cwzy)中属于该结算单的内容打上未结算标志
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h13_cwzy')
+        .set({ jsbz: 0, jsdh: '' })
+        .where('jsdh = :jsdh', { jsdh: jsdh })
+        .execute();
+
+      // 1.3.3.将预交款(h11_yjk)中属于该结算单的收据打上未结算标志
+      // ....................
+
+      // 1.4.将医嘱执行表(h12_yzcfxb)中属于该结算单的内容打上未结算标志
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h12_yzcfxb')
+        .set({ jsbz: 0, jsdh: '' })
+        .where('jsdh = :jsdh', { jsdh: jsdh })
+        .execute();
+
+      const yszje = await queryRunner.manager.query(
+        'SELECT isnull(Sum(xmdj*jfyl*zfbl),0) as yszje FROM h15_ssxb WHERE sfbz = 1 And jsdh = $1',
+        [jsdh],
+      );
+      log(yszje[0].yszje);
+
+      // 1.5.将手术主表(h15_sszb)中属于该结算单的内容打上未结算标志
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h15_sszb')
+        .set({ jsbz: 0, yszje: () => 'yszje + ' + yszje[0].yszje })
+        .where('zyid = :zyid', { zyid: jszb.zyid })
+        .execute();
+
+      // 1.6.将手术细表(h15_ssxb)中属于该结算单的内容打上未结算标志
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h15_ssxb')
+        .set({ jsbz: 0, jsdh: '' })
+        .where('jsdh = :jsdh', { jsdh: jsdh })
+        .execute();
+
+      // 1.7.生成一条h11_jszb负数记录
+      await queryRunner.manager.query(
+        `INSERT INTO h11_jszb (
+          jsdh, zybh, brxm, xbid, rysj, zyid, jslx, jsje, zfje, gfje,
+          jmje, qfje, ssje, jmlxid, fpzh, yjje, syje,
+          zzsj, ksid, ksmc, jsyid, jssj, jsyxm, fpbz, czf, sjzt, sfsj, fphm
+        )
+        SELECT 
+          $1, zybh, brxm, xbid, rysj, zyid, jslx, jsje * -1, zfje * -1, gfje * -1,
+          jmje * -1, qfje * -1, ssje * -1, jmlxid, $2, yjje * -1, syje * -1,
+          zzsj, ksid, ksmc, $3, $4, $5, 
+          fpbz, czf, sjzt, $4, fphm 
+        FROM h11_jszb 
+        WHERE jsdh = $2`,
+        [jsdhNew, jsdh, jszb.jsyid, new Date(), jszb.jsyxm],
+      );
+      // 1.8.生成一条h11_jsxb负数记录
+      await queryRunner.manager.query(
+        `INSERT INTO h11_jsxb (
+          jsdh, fylbid, fylbmc, jsje, zfje, gfje, jmje, qfje, ssje
+        )
+        SELECT 
+          $1 as jsdh, fylbid, fylbmc, jsje * -1, zfje * -1, gfje * -1, 
+          jmje * -1, qfje * -1, ssje * -1
+        FROM h11_jsxb 
+        WHERE jsdh = $2`,
+        [jsdhNew, jsdh],
+      );
+
+      // 1.9.生成一条h11_xnh负数记录
+      await queryRunner.manager.query(
+        `INSERT INTO H11_xnh (
+          fphm, zyid, zyh, brxm, ylzh, fyhj, kbhj, sjhj, bsbl, ljfyhj, ljfykb, ljsjhj, lxdz, jgmc, sfje, dbje, yhje, yhkh, je1, je2, bz1, xnhj, je3,
+          szbz, mzbc, qtje1, qtje2, qtje3, qtje4, bzxx, zfje, qt1, qt2, qt3, qt4, yfje, yfje1, yfje2, yfje3, yfje4)
+        SELECT 
+          $1, zyid, zyh, brxm, ylzh, fyhj * -1, kbhj * -1, sjhj * -1, bsbl, ljfyhj * -1, ljfykb * -1, ljsjhj * -1, lxdz, jgmc, sfje * -1, dbje * -1, yhje * -1, yhkh, je1 * -1, je2 * -1, bz1, xnhj * -1, je3 * -1,
+          szbz, mzbc * -1, qtje1 * -1, qtje2 * -1, qtje3 * -1, qtje4 * -1, bzxx, zfje * -1, qt1 * -1, qt2 * -1, qt3 * -1, qt4 * -1,
+          yfje * -1, yfje1 * -1, yfje2 * -1, yfje3 * -1, yfje4 * -1
+        FROM H11_xnh 
+        WHERE fphm = $2`,
+        [jsdhNew, jsdh],
+      );
+
+      // 2.0.修改h11_jszb.fpzh
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update('h11_jszb')
+        .set({ fpzh: jsdhNew })
+        .where('jsdh = :jsdh', { jsdh: jsdh })
         .execute();
 
       await queryRunner.commitTransaction();
-      return 1;
+      return 0;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();
     }
-
-    return this.h11JszbRepository.update(jsdh, { fpbz: 0, sjzt: 0 });
   }
 }

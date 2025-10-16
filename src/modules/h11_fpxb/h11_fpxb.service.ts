@@ -48,6 +48,26 @@ export class H11FpxbService {
     return found;
   }
 
+  async findAllNotPage(queryDto: H11FpxbQueryDto): Promise<{ pageData: H11Fpxb[]; total: number }> {
+    const { page = 1, limit = 10, ...filters } = queryDto;
+    const queryBuilder = this.h11FpxbRepository.createQueryBuilder('fpxb');
+
+    // 添加过滤条件
+    if (filters.fphm) {
+      queryBuilder.andWhere('fpxb.fphm = :fphm', { fphm: filters.fphm });
+    }
+    if (filters.fpxmid) {
+      queryBuilder.andWhere('fpxb.fpxmid = :fpxmid', { fpxmid: filters.fpxmid });
+    }
+    if (filters.fpxmmc) {
+      queryBuilder.andWhere('fpxb.fpxmmc LIKE :fpxmmc', { fpxmmc: `%${filters.fpxmmc}%` });
+    }
+
+    const [pageData, total] = await queryBuilder.getManyAndCount();
+
+    return { pageData, total };
+  }
+
   async update(fphm: string, fpxmid: string, updateH11FpxbDto: UpdateH11FpxbDto): Promise<H11Fpxb> {
     const result = await this.h11FpxbRepository.update({ fphm, fpxmid }, updateH11FpxbDto);
 

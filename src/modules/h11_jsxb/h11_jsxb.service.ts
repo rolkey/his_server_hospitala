@@ -38,7 +38,7 @@ export class H11JsxbService {
     return { items, total };
   }
 
-  async findAllNotPage(queryDto: H11JsxbQueryDto): Promise<{ items: H11Jsxb[]; total: number }> {
+  async findAllNotPage(queryDto: H11JsxbQueryDto): Promise<{ pageData: H11Jsxb[]; total: number }> {
     const { page = 1, limit = 10, ...filters } = queryDto;
     const queryBuilder = this.h11JsxbRepository.createQueryBuilder('jsxb');
 
@@ -53,9 +53,9 @@ export class H11JsxbService {
       queryBuilder.andWhere('jsxb.fylbmc LIKE :fylbmc', { fylbmc: `%${filters.fylbmc}%` });
     }
 
-    const [items, total] = await queryBuilder.getManyAndCount();
+    const [pageData, total] = await queryBuilder.getManyAndCount();
 
-    return { items, total };
+    return { pageData, total };
   }
 
   async findOne(jsdh: string, fylbid: string): Promise<H11Jsxb> {
