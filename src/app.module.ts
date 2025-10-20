@@ -56,6 +56,7 @@ import { H23RytzModule } from './modules/h23_rytz/h23_rytz.module';
 import { H21YlzhModule } from './modules/h21_ylzh/h21_ylzh.module';
 import { H11JsxbModule } from './modules/h11_jsxb/h11_jsxb.module';
 import { H11FpxbModule } from './modules/h11_fpxb/h11_fpxb.module';
+import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
 
 @Module({
   imports: [
@@ -113,6 +114,7 @@ import { H11FpxbModule } from './modules/h11_fpxb/h11_fpxb.module';
     H21YlzhModule,
     H11JsxbModule,
     H11FpxbModule,
+    H11XnhModule,
   ],
 })
 export class AppModule {}

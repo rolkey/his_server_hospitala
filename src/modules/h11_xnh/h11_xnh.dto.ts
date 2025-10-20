@@ -361,8 +361,8 @@ export class H11XnhQueryDto {
   ylzh?: string;
 
   @IsOptional()
-  page?: number = 1;
+  pageNo?: number = 1;
 
   @IsOptional()
-  limit?: number = 10;
+  pageSize?: number = 10;
 }

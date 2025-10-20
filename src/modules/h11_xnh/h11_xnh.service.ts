@@ -16,9 +16,9 @@ export class H11XnhService {
     return await this.h11XnhRepository.save(entity);
   }
 
-  async findAll(queryDto: H11XnhQueryDto): Promise<{ items: H11Xnh[]; total: number }> {
-    const { page = 1, limit = 10, ...filters } = queryDto;
-    const skip = (page - 1) * limit;
+  async findAll(queryDto: H11XnhQueryDto): Promise<{ pageData: H11Xnh[]; total: number }> {
+    const { pageNo = 1, pageSize = 10, ...filters } = queryDto;
+    const skip = (pageNo - 1) * pageSize;
 
     const queryBuilder = this.h11XnhRepository.createQueryBuilder('xnh');
 
@@ -39,9 +39,9 @@ export class H11XnhService {
       queryBuilder.andWhere('xnh.ylzh = :ylzh', { ylzh: filters.ylzh });
     }
 
-    const [items, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
 
-    return { items, total };
+    return { pageData, total };
   }
 
   async findOne(fphm: string): Promise<H11Xnh> {
