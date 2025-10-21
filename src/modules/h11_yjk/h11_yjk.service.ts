@@ -69,6 +69,7 @@ export class H11YjkService {
       endDate,
       pageNo = 1,
       pageSize = 10,
+      jzzt,
     } = queryDto;
 
     const queryBuilder = this.h11YjkRepository.createQueryBuilder('yjk');
@@ -92,6 +93,10 @@ export class H11YjkService {
 
     if (sjzt !== undefined) {
       queryBuilder.orWhere('yjk.sjzt = :sjzt', { sjzt });
+    }
+
+    if (jzzt) {
+      queryBuilder.orWhere(`(yjk.jzbz = :jzzt or :jzzt = '99')`, { jzzt });
     }
 
     if (startDate && endDate) {

@@ -205,6 +205,9 @@ export class H11YjkQueryDto {
 
   @Allow()
   endDate?: Date;
+
+  @Allow()
+  jzzt?: string;
 }
 
 export class H11YjkCancelDto {
