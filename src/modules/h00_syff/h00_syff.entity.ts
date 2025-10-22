@@ -19,13 +19,13 @@ export class h00_syff {
   })
   syffmc: string | null;
 
-  // @Column("char", {
-  //   name: "szbm",
-  //   nullable: true,
-  //   length: 20,
-  //   default: () => "''",
-  // })
-  // szbm: string | null;
+  @Column('char', {
+    name: 'szbm',
+    nullable: true,
+    length: 20,
+    default: () => "''",
+  })
+  szbm: string | null;
 
   @Column('char', {
     name: 'pybm',

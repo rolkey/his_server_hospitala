@@ -51,7 +51,9 @@ export class h00_syffService {
            AND h00_syffxm.ksid = :as_ksid
          )))`,
       )
-      .setParameter('as_ksid', as_ksid);
+      .setParameter('as_ksid', as_ksid)
+      .orderBy('h00_syff.szbm'); // 添加排序条件，按 szbm 升序排序
+    //   .addOrderBy('h00_syff.syffid'); // 可选：添加二级排序条件;
 
     return await queryBuilder.getMany();
   }
