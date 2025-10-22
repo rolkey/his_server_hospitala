@@ -14,11 +14,11 @@ export class csxz {
   @Column('int', { name: 'no1', nullable: true })
   no: number | null;
 
-  // @Column("varchar", { name: "bz1", nullable: true, length: 60 })
-  // bz1: string | null;
+  @Column('varchar', { name: 'bz1', nullable: true, length: 60 })
+  bz1: string | null;
 
-  // @Column("varchar", { name: "bz2", nullable: true, length: 30 })
-  // bz2: string | null;
+  @Column('varchar', { name: 'bz2', nullable: true, length: 30 })
+  bz2: string | null;
 
   // @Column("varchar", { name: "bz3", nullable: true, length: 30 })
   // bz3: string | null;
@@ -32,11 +32,11 @@ export class csxz {
   // @Column("varchar", { name: "bz5", nullable: true, length: 50 })
   // bz5: string | null;
 
-  // @Column("varchar", { name: "pybm", nullable: true, length: 20 })
-  // pybm: string | null;
+  @Column('varchar', { name: 'pybm', nullable: true, length: 20 })
+  pybm: string | null;
 
-  // @Column("varchar", { name: "wbbm", nullable: true, length: 20 })
-  // wbbm: string | null;
+  @Column('varchar', { name: 'wbbm', nullable: true, length: 20 })
+  wbbm: string | null;
 
   // @Column("varchar", { name: "qtbm", nullable: true, length: 20 })
   // qtbm: string | null;
