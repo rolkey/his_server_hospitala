@@ -266,7 +266,7 @@ export class SfxmService {
     if (params.value) {
       const upcaseValue = params.value.toUpperCase();
       whereArray.push(
-        `(ypid LIKE '%${upcaseValue}%' or xmmc LIKE '%${upcaseValue}%' or pybm LIKE '%${upcaseValue}%' or wbbm LIKE '%${upcaseValue}%')`,
+        `(xmid LIKE '%${upcaseValue}%' or xmmc LIKE '%${upcaseValue}%' or pybm LIKE '%${upcaseValue}%' or wbbm LIKE '%${upcaseValue}%')`,
       );
     }
     if (params.fylbid) {

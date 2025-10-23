@@ -416,6 +416,7 @@ export class ConfigReaderService {
       gs_zymc: await this.paramService.gfGetPara(50, 'zysymc', '0', '编码与名称'),
       gs_cwxs: await this.paramService.gfGetPara(13, 'zycwxs', '1', '住院显示床位'),
       gs_szbah: await this.paramService.gfGetPara(60, 'szbah', '0', '病案与住院号一致'),
+      gs_zydjf: await this.paramService.gfGetPara(13, 'zydjf', '0', '中药代煎费'),
     };
   }
 
