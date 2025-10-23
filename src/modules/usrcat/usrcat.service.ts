@@ -187,4 +187,12 @@ export class UsrcatService {
       .orderBy('usrcat.usid')
       .getMany();
   }
+
+  async findTollCollector() {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .where('isnull(usrcat.zhjy,0)=0')
+      .andWhere("usrcat.usid in (select usid from __ksry where syid='12')")
+      .orderBy('usrcat.usid')
+      .getMany();
+  }
 }

@@ -14,4 +14,9 @@ export class UsrcatNewController {
   findResidentDoctor() {
     return this.userService.findResidentDoctor();
   }
+
+  @Get('findTollCollector')
+  findTollCollector() {
+    return this.userService.findTollCollector();
+  }
 }

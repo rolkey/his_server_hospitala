@@ -70,6 +70,7 @@ export class H11YjkService {
       pageNo = 1,
       pageSize = 10,
       jzzt,
+      sfyid,
     } = queryDto;
 
     const queryBuilder = this.h11YjkRepository.createQueryBuilder('yjk');
@@ -88,15 +89,19 @@ export class H11YjkService {
     }
 
     if (ksid) {
-      queryBuilder.orWhere('yjk.ksid = :ksid', { ksid });
+      queryBuilder.andWhere(`(yjk.ksid = :ksid or :ksid = '0')`, { ksid });
     }
 
     if (sjzt !== undefined) {
-      queryBuilder.orWhere('yjk.sjzt = :sjzt', { sjzt });
+      queryBuilder.andWhere('yjk.sjzt = :sjzt', { sjzt });
     }
 
     if (jzzt) {
-      queryBuilder.orWhere(`(yjk.jzbz = :jzzt or :jzzt = '99')`, { jzzt });
+      queryBuilder.andWhere(`(yjk.jzbz = :jzzt or :jzzt = '99')`, { jzzt });
+    }
+
+    if (sfyid) {
+      queryBuilder.andWhere(`(yjk.sfyid = :sfyid or :sfyid = '0')`, { sfyid });
     }
 
     if (startDate && endDate) {
