@@ -393,6 +393,10 @@ export class h11_brxx {
   @JoinColumn({ name: 'yish', referencedColumnName: 'data' })
   yishEntity: csxz;
 
+  @ManyToOne(() => csxz)
+  @JoinColumn({ name: 'bz4', referencedColumnName: 'data' })
+  bz4Entity: csxz;
+
   @Column('varchar', { name: 'zrhs', nullable: true, length: 10 })
   zrhs: string | null;
 

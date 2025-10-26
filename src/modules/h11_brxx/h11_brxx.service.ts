@@ -42,6 +42,7 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
       .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
       .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
+      .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
