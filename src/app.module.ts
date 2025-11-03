@@ -13,7 +13,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PermissionModule } from './modules/permission/permission.module';
 import { RoleModule } from './modules/role/role.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { SunsoftModule } from './modules/sunsoft/sunsoft.module';
+// import { SunsoftModule } from './modules/sunsoft/sunsoft.module';
 import { UsrcatModule } from './modules/usrcat/usrcat.module';
 import { ModuleModule } from './modules/module/module.module';
 import { SystemModule } from './modules/system/system.module';
@@ -73,7 +73,7 @@ import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
     AuthModule,
     SharedModule,
     ModuleModule,
-    SunsoftModule,
+    // SunsoftModule,
     SystemModule,
     reportModule,
     csxzModule,
@@ -117,4 +117,4 @@ import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
     H11XnhModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

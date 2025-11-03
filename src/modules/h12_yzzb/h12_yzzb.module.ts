@@ -15,7 +15,7 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 import { SfxmModule } from '../h12_xmzd/sfxm.module';
-import { SunsoftModule } from '../sunsoft/sunsoft.module';
+// import { SunsoftModule } from '../sunsoft/sunsoft.module';
 import { H31_kcxxModule } from '../h31_kcxx/h31_kcxx.module';
 import { H00TcxbModule } from '../h00_tcxb/h00_tcxb.module';
 import { SharedModule } from '@/shared/shared.module';
@@ -46,7 +46,7 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
     SharedModule,
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
-    forwardRef(() => SunsoftModule),
+    // forwardRef(() => SunsoftModule),
     forwardRef(() => H31_kcxxModule),
     forwardRef(() => H00TcxbModule),
     forwardRef(() => H11Jshztzd1Module),
@@ -57,4 +57,4 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
   providers: [h12_yzzbService, h12_yzxbService, h13_yzzxcsService],
   exports: [h12_yzzbService, h12_yzxbService],
 })
-export class h12_yzzbModule {}
+export class h12_yzzbModule { }

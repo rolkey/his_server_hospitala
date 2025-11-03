@@ -19,7 +19,7 @@ import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { ConfigReaderService } from '@/modules/h12_xmzd/service/config-reader.service';
 import { Gstr_ainfDto } from '@/modules/h12_xmzd/dto/gstr_ainf.dto';
 import { G_ksidDto } from '@/modules/h12_xmzd/dto/g_ksid.dto';
-import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
+// import { SunsoftService } from '@/modules/sunsoft/sunsoft.service';
 import { H31_kcxxService } from '@/modules/h31_kcxx/h31_kcxx.service';
 import { KcjgYpidRequestDto, Kcjgxx } from '@/modules/h31_kcxx/dto/kcjg-ypid.dto';
 import { mergeObjects } from '@/utils/params';
@@ -62,14 +62,14 @@ export class h12_yzxbService {
     private readonly gyIdentityService: GyIdentityService,
     // private readonly h12YzzbService: h12_yzzbService,
     private readonly configReaderService: ConfigReaderService,
-    private readonly sunsoftService: SunsoftService,
+    // private readonly sunsoftService: SunsoftService,
     private readonly h31_kcxxService: H31_kcxxService,
     private readonly h00TcxbService: H00TcxbService,
     private dataSource: DataSource,
     private redisService: RedisService,
     private h11Jshztzd1Service: H11Jshztzd1Service,
     private h13_yzzxcsService: h13_yzzxcsService,
-  ) {}
+  ) { }
 
   /**
    * 获取执行次数
@@ -371,23 +371,23 @@ export class h12_yzxbService {
    * @param item
    * @returns
    */
-  private async _getKcjg(item: any): Promise<{ data: any }> {
-    const query = {
-      ...item,
-      pageNo: 1,
-      pageSize: 10,
-    };
-    const { pageData } = await this.sunsoftService.forwardRequest('h31_kcxx', 'findAll', null, {
-      method: 'get',
-      query,
-    });
-    if (pageData.length === 0) {
-      throw new BadRequestException(
-        `字典中没有项目：${item.ypid} -- ${item.ypmc} ${JSON.stringify(query)}`,
-      );
-    }
-    return pageData;
-  }
+  // private async _getKcjg(item: any): Promise<{ data: any }> {
+  //   const query = {
+  //     ...item,
+  //     pageNo: 1,
+  //     pageSize: 10,
+  //   };
+  //   const { pageData } = await this.sunsoftService.forwardRequest('h31_kcxx', 'findAll', null, {
+  //     method: 'get',
+  //     query,
+  //   });
+  //   if (pageData.length === 0) {
+  //     throw new BadRequestException(
+  //       `字典中没有项目：${item.ypid} -- ${item.ypmc} ${JSON.stringify(query)}`,
+  //     );
+  //   }
+  //   return pageData;
+  // }
 
   private async _getKcjgA(request: KcjgYpidRequestDto): Promise<Kcjgxx> {
     const kcjgYpidResponseDto = await this.h31_kcxxService.ueReadKcjgYpid(request);
