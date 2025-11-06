@@ -139,4 +139,33 @@ export class h12_yzzbController {
     }
     return;
   }
+
+  @Post('unSubmit')
+  async unSubmit(@Body() data: { zyid: string; yzxh: number; yzlx: number; yzzh: number[] }) {
+    const { zyid, yzxh, yzlx, yzzh } = data;
+    return this.h12_yzxbService.unSubmit(zyid, yzxh, yzlx, yzzh);
+  }
+
+  @Post('unStop')
+  async unStop(@Body() data: { zyid: string; yzxh: number; yzlx: number; yzzh: number[] }) {
+    const { zyid, yzxh, yzlx, yzzh } = data;
+    return this.h12_yzxbService.unSubmit(zyid, yzxh, yzlx, yzzh);
+  }
+
+  @Post('reorganize')
+  async reorganize(
+    @Body()
+    data: {
+      zyid: string;
+      yzxh: number;
+      czlx: number;
+      yzzh: number[];
+      userId: string;
+      u_zcid: string;
+      jsys: string;
+    },
+  ) {
+    const { zyid, yzxh, czlx, yzzh, userId, u_zcid, jsys } = data;
+    return this.h12_yzxbService.reorganize(zyid, yzxh, czlx, yzzh, userId, u_zcid, jsys);
+  }
 }

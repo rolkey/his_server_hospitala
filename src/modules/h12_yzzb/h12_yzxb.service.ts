@@ -1099,4 +1099,37 @@ export class h12_yzxbService {
     });
     return true;
   }
+
+  async unSubmit(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
+    // TODO: 实现未提交医嘱逻辑
+    return true;
+  }
+  async unStop(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
+    // TODO: 实现未提交医嘱逻辑
+    return true;
+  }
+
+  // 重整医嘱
+  async reorganize(
+    zyid: string,
+    yzxh: number,
+    czlx: number,
+    yzzh: number[],
+    userId: string,
+    u_zcid: string,
+    jsys: string,
+  ) {
+    // TODO: 实现未提交医嘱逻辑
+    return true;
+  }
+
+  //   const { code } = await adviceApi.reorganize({
+  //     zyid: doctorMainStore.selectPatient.zyid,
+  //     yzxh: 1,
+  //     czlx: signAdviceForm.value.czlx,
+  //     yzzh,
+  //     userId: doctorConfigStore.gstr_ainf.u_userid,
+  //     u_zcid: doctorConfigStore.gstr_ainf.u_zcid,
+  //     jsys: signAdviceForm.value.jsys,
+  //   });
 }
