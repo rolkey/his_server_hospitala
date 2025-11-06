@@ -47,7 +47,51 @@ export class h11_brxxService {
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
       .addSelect(['cyzdEntity.icd11,cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
-      .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`);
+      .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
+      // 添加新的计算字段
+      .addSelect(
+        `CASE
+        WHEN h11_brxx.zyzt < 3 THEN
+          DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
+        ELSE
+          DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
+      END`,
+        'zyts1',
+      )
+      .addSelect('0', 'isfinish')
+      .addSelect(
+        `(SELECT CASE
+        WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+        WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+        ELSE 0
+      END FROM (
+        SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
+        ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
+        FROM h12_yzxb
+        WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
+      ) AS y WHERE y.fsp = 1)`,
+        'isexecute',
+      )
+      .addSelect(
+        `(SELECT CASE
+        WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+        WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+        ELSE 0
+      END FROM (
+        SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
+        ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
+        FROM h12_yzxb
+        WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
+      ) AS y WHERE y.fsp = 1)`,
+        'isnew',
+      )
+      .addSelect(
+        `CASE
+        WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
+        ELSE 0
+      END`,
+        'istoday',
+      );
 
     if (queryDto?.value) {
       queryBuilder.andWhere(
@@ -118,7 +162,21 @@ export class h11_brxxService {
     console.log(getCompleteSqlWithParameters(queryBuilder));
 
     const [pageData, total] = await queryBuilder.getManyAndCount();
-    return { pageData, total };
+
+    const rawResult = await queryBuilder.getRawMany();
+    // 合并计算字段到实体中
+    const result = pageData.map((entity) => {
+      const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid); // 假设 id 是实体的主键
+      return {
+        ...entity,
+        zyts1: matchedRaw?.zyts1,
+        isexecute: matchedRaw?.isexecute,
+        isnew: matchedRaw?.isnew,
+        istoday: matchedRaw?.istoday,
+        ztbz: entity.zyzt === 4 ? 1 : 0,
+      };
+    });
+    return { pageData: result, total };
   }
 
   async findOne(zyid: string) {

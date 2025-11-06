@@ -4,10 +4,6 @@
             "type": "node",
             "request": "launch",
             "name": "医生站服务",
-            "skipFiles": [
-                "<node_modules>/**",
-                "<disk>/**"
-            ],
             "runtimeExecutable": "pnpm", // 或 "npm"、"yarn"
             "runtimeArgs": [
                 "run",

@@ -437,6 +437,16 @@ export class h11_brxx {
 
   yjk: number;
 
+  zyts1: number;
+
+  isexecute: number;
+
+  isnew: number;
+
+  istoday: number;
+
+  ztbz: number;
+
   @AfterLoad()
   trim() {
     if (this.ylzh) {
