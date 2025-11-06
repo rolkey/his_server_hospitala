@@ -69,7 +69,7 @@ export class h12_yzxbService {
     private redisService: RedisService,
     private h11Jshztzd1Service: H11Jshztzd1Service,
     private h13_yzzxcsService: h13_yzzxcsService,
-  ) { }
+  ) {}
 
   /**
    * 获取执行次数
