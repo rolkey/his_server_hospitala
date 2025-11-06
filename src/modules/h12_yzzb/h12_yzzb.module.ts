@@ -24,6 +24,7 @@ import { h13_yzzxcsModule } from '../​​h13_yzzxcs​​/h13_yzzxcs.module';
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
+import { ContextService } from '@/shared/context.service';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
@@ -43,7 +44,6 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
       h11_brxx,
       H13YzzxcsTf,
     ]),
-    SharedModule,
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
     // forwardRef(() => SunsoftModule),
@@ -52,9 +52,10 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
     forwardRef(() => H11Jshztzd1Module),
     forwardRef(() => h13_yzzxcsModule),
     forwardRef(() => H13YzzxcsTfModule),
+    forwardRef(() => SharedModule),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService, h12_yzxbService, h13_yzzxcsService],
+  providers: [h12_yzzbService, h12_yzxbService, h13_yzzxcsService, ContextService],
   exports: [h12_yzzbService, h12_yzxbService],
 })
-export class h12_yzzbModule { }
+export class h12_yzzbModule {}

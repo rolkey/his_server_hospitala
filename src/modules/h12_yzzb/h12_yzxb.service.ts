@@ -33,20 +33,24 @@ import { filterEntityFields } from '@/utils/entityUrils';
 import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
+import { RequestContext } from '@nestjs/microservices';
+import { REQUEST } from '@nestjs/core';
+import { ContextService } from '@/shared/context.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
   // TODO: 使用Redis缓存参数
   private readonly MAX_RECURSION_DEPTH = 3;
-  private yzrq: Date = new Date();
-  private gstr_ainf: Gstr_ainfDto;
-  private g_ksid: G_ksidDto;
-  //   private gs_cxsz: Gs_cxszDto;
-  private yzlx: number;
-  private zyid: string;
-  private userId: string;
-  private systemId: string;
-  private departmentId: string;
+  //   private readonly context: RequestContext;
+  //   private yzrq: Date = new Date();
+  //   private gstr_ainf: Gstr_ainfDto;
+  //   private g_ksid: G_ksidDto;
+  //   //   private gs_cxsz: Gs_cxszDto;
+  //   private yzlx: number;
+  //   private zyid: string;
+  //   private userId: string;
+  //   private systemId: string;
+  //   private departmentId: string;
 
   constructor(
     // @InjectRepository(h12_yzzb)
@@ -69,7 +73,66 @@ export class h12_yzxbService {
     private redisService: RedisService,
     private h11Jshztzd1Service: H11Jshztzd1Service,
     private h13_yzzxcsService: h13_yzzxcsService,
-  ) {}
+    private contextService: ContextService,
+  ) {
+    // this.context = new RequestContext();
+  }
+
+  get yzrq(): Date {
+    return this.contextService.get('yzrq');
+  }
+  set yzrq(value: Date) {
+    this.contextService.set('yzrq', value);
+  }
+
+  get gstr_ainf(): Gstr_ainfDto {
+    return this.contextService.get('gstr_ainf');
+  }
+  set gstr_ainf(value: Gstr_ainfDto) {
+    this.contextService.set('gstr_ainf', value);
+  }
+
+  get g_ksid(): G_ksidDto {
+    return this.contextService.get('g_ksid');
+  }
+  set g_ksid(value: G_ksidDto) {
+    this.contextService.set('g_ksid', value);
+  }
+
+  get yzlx(): number {
+    return this.contextService.get('yzlx');
+  }
+  set yzlx(value: number) {
+    this.contextService.set('yzlx', value);
+  }
+
+  get zyid(): string {
+    return this.contextService.get('zyid');
+  }
+  set zyid(value: string) {
+    this.contextService.set('zyid', value);
+  }
+
+  get userId(): string {
+    return this.contextService.get('userId');
+  }
+  set userId(value: string) {
+    this.contextService.set('userId', value);
+  }
+
+  get systemId(): string {
+    return this.contextService.get('systemId');
+  }
+  set systemId(value: string) {
+    this.contextService.set('systemId', value);
+  }
+
+  get departmentId(): string {
+    return this.contextService.get('departmentId');
+  }
+  set departmentId(value: string) {
+    this.contextService.set('departmentId', value);
+  }
 
   /**
    * 获取执行次数
@@ -1100,12 +1163,30 @@ export class h12_yzxbService {
     return true;
   }
 
+  // 取消提交
   async unSubmit(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
-    // TODO: 实现未提交医嘱逻辑
+    // 实现未提交医嘱逻辑
+    // dw_1.SetItem(ll_current,'tjbz',0)
+    // dw_1.SetItem(ll_current,'szbz',0)
+    // dw_1.SetItem(ll_current,'yzzt',0)
+    await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh) }, { tjbz: 0, yzzt: 0 });
     return true;
   }
+
+  // 取消停嘱
   async unStop(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
     // TODO: 实现未提交医嘱逻辑
+    // dw_1.setitem(i, 'tzbz', 0)
+    // dw_1.setitem(i, 'tzrq', ldt_sj)
+    // dw_1.setitem(i, 'jsys', '')
+    // dw_1.setitem(i, 'jshs', '')
+    // dw_1.setitem(i, 'jssxys', '')
+    // dw_1.setitem(i, 'jssxhs', '')
+    // dw_1.setitem(i, 'mrcs', ll_mrcs)
+    await this.h12_yzxbRepo.update(
+      { yzlx, yzxh, zyid, yzzh: In(yzzh) },
+      { tzbz: 0, tzrq: null, jsys: null, jshs: null, jssxys: null, jssxhs: null, mrcs: null },
+    );
     return true;
   }
 
@@ -1114,6 +1195,7 @@ export class h12_yzxbService {
     zyid: string,
     yzxh: number,
     czlx: number,
+    kssj: Date,
     yzzh: number[],
     userId: string,
     u_zcid: string,

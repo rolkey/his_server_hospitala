@@ -159,13 +159,14 @@ export class h12_yzzbController {
       zyid: string;
       yzxh: number;
       czlx: number;
+      kssj: Date;
       yzzh: number[];
       userId: string;
       u_zcid: string;
       jsys: string;
     },
   ) {
-    const { zyid, yzxh, czlx, yzzh, userId, u_zcid, jsys } = data;
-    return this.h12_yzxbService.reorganize(zyid, yzxh, czlx, yzzh, userId, u_zcid, jsys);
+    const { zyid, yzxh, czlx, kssj, yzzh, userId, u_zcid, jsys } = data;
+    return this.h12_yzxbService.reorganize(zyid, yzxh, czlx, kssj, yzzh, userId, u_zcid, jsys);
   }
 }

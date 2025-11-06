@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisService } from './redis.service';
 import { createClient } from 'redis';
+import { ContextService } from './context.service';
 
 @Global()
 @Module({
@@ -83,6 +84,6 @@ import { createClient } from 'redis';
       }),
     },
   ],
-  exports: [SharedService, RedisService],
+  exports: [SharedService, RedisService, ContextService],
 })
 export class SharedModule {}
