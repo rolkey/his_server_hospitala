@@ -15,6 +15,7 @@ import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
 import { log } from 'console';
 import { getCompleteSqlWithParameters } from '@/utils/sql-utils';
+import DateFormater from '@/utils/DateFormater';
 @Injectable()
 export class h11_brxxService {
   constructor(
@@ -159,7 +160,7 @@ export class h11_brxxService {
     }
     // 添加分页
     queryBuilder.skip((pageNo - 1) * pageSize).take(pageSize);
-    console.log(getCompleteSqlWithParameters(queryBuilder));
+    // console.log(getCompleteSqlWithParameters(queryBuilder));
 
     const [pageData, total] = await queryBuilder.getManyAndCount();
 
@@ -167,6 +168,7 @@ export class h11_brxxService {
     // 合并计算字段到实体中
     const result = pageData.map((entity) => {
       const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid); // 假设 id 是实体的主键
+
       return {
         ...entity,
         zyts1: matchedRaw?.zyts1,
@@ -174,6 +176,11 @@ export class h11_brxxService {
         isnew: matchedRaw?.isnew,
         istoday: matchedRaw?.istoday,
         ztbz: entity.zyzt === 4 ? 1 : 0,
+        rysj: entity.rysj ? DateFormater.formatDate(entity.rysj.toDateString()) : '',
+        cysj: entity.cysj ? DateFormater.formatDate(entity.cysj.toDateString()) : '',
+        ryqzsj: entity.ryqzsj ? DateFormater.formatDate(entity.ryqzsj.toDateString()) : '',
+        jssj: entity.jssj ? DateFormater.formatDate(entity.jssj.toDateString()) : '',
+        csrq: entity.csrq ? DateFormater.formatDate(entity.csrq.toDateString()) : '',
       };
     });
     return { pageData: result, total };
