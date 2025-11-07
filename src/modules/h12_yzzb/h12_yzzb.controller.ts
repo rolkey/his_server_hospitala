@@ -157,16 +157,16 @@ export class h12_yzzbController {
     return this.h12_yzxbService.sign(zyid, yzxh, yzlx, yzzh, userId, u_zcid, jsys);
   }
 
-  @Post('unSubmit')
-  async unSubmit(@Body() data: { zyid: string; yzxh: number; yzlx: number; yzzh: number[] }) {
+  @Post('unSign')
+  async unSign(@Body() data: { zyid: string; yzxh: number; yzlx: number; yzzh: number[] }) {
     const { zyid, yzxh, yzlx, yzzh } = data;
-    return this.h12_yzxbService.unSubmit(zyid, yzxh, yzlx, yzzh);
+    return this.h12_yzxbService.unSign(zyid, yzxh, yzlx, yzzh);
   }
 
   @Post('unStop')
   async unStop(@Body() data: { zyid: string; yzxh: number; yzlx: number; yzzh: number[] }) {
     const { zyid, yzxh, yzlx, yzzh } = data;
-    return this.h12_yzxbService.unSubmit(zyid, yzxh, yzlx, yzzh);
+    return this.h12_yzxbService.unStop(zyid, yzxh, yzlx, yzzh);
   }
 
   @Post('reorganize')

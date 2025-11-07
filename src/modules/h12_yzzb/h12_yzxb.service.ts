@@ -1164,12 +1164,13 @@ export class h12_yzxbService {
   }
 
   // 取消提交
-  async unSubmit(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
+  async unSign(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
     // 实现未提交医嘱逻辑
-    // dw_1.SetItem(ll_current,'tjbz',0)
-    // dw_1.SetItem(ll_current,'szbz',0)
-    // dw_1.SetItem(ll_current,'yzzt',0)
-    await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh) }, { tjbz: 0, yzzt: 0 });
+    // 执行过的医嘱不能取消签名
+    await this.h12_yzxbRepo.update(
+      { yzlx, yzxh, zyid, yzzh: In(yzzh), zxbz: 0 },
+      { tjbz: 0, yzzt: 0 },
+    );
     return true;
   }
 
