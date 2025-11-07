@@ -83,6 +83,7 @@ import { ContextService } from './context.service';
         transform: true, // 自动类型转换
       }),
     },
+    ContextService,
   ],
   exports: [SharedService, RedisService, ContextService],
 })
