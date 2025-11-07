@@ -117,4 +117,4 @@ import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
     H11XnhModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
