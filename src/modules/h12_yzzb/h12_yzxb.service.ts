@@ -1200,7 +1200,11 @@ export class h12_yzxbService {
     u_zcid: string,
     jsys: string,
   ) {
-    // TODO: 实现未提交医嘱逻辑
+    // 实现提交医嘱逻辑
+    const ysxx =
+      u_zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
+
+    await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
     return true;
   }
   // 重整医嘱
