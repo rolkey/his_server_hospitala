@@ -998,9 +998,15 @@ export class h12_yzxbService {
   async mergeGroup(h12_yzxbs: H12_yzxbDto[]) {
     // 取第一行的组号，更新所有
     const yzzh = h12_yzxbs[0].yzzh;
-    for (const h12_yzxb of h12_yzxbs) {
-      const { yzlx, yzxh, zyid, mxxh } = h12_yzxb;
-      await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, mxxh }, { yzzh });
+    const { zyid } = h12_yzxbs[0];
+    const otherYzzh = [
+      ...new Set(h12_yzxbs.filter((item) => item.yzzh !== yzzh).map((item) => item.yzzh)),
+    ];
+    // 删除其他组的附加项目
+    if (otherYzzh.length > 0) {
+      // 删除附加项目，只保留主卧龙岗
+      await this.h12_yzxbRepo.delete({ zyid, yzlx: 1, yzzh: In(otherYzzh), ysbz: 0 });
+      await this.h12_yzxbRepo.update({ zyid, yzlx: 1, yzzh: In(otherYzzh) }, { yzzh });
     }
   }
 
