@@ -1208,18 +1208,140 @@ export class h12_yzxbService {
     await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
     return true;
   }
-  // 重整医嘱
+  // 重整医嘱 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   async reorganize(
     zyid: string,
     yzxh: number,
     czlx: number,
     kssj: Date,
-    yzzh: number[],
     userId: string,
     u_zcid: string,
     jsys: string,
+    ysstopbz: string, // 医德停嘱自动退费
   ) {
-    // TODO: 实现未提交医嘱逻辑
+    // 校验医嘱执行
+    const feeCount = await this._validateOrderExecutions(zyid, yzxh, kssj);
+    if (feeCount > 0) {
+      throw new BadRequestException(
+        `医嘱执行时间超过${DateFormater.formatDate1(kssj)}，不能重整！！`,
+      );
+    }
+
+    // 停嘱
+    //   查找未停医嘱
+    const h12_yzxbsQuery = this.h12_yzxbRepo
+      .createQueryBuilder('h12_yzxb')
+      .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
+      .where('h12_yzxb.zyid = :zyid and h12_yzxb.yzlx=1 and h12_yzxb.tzbz=0 and h12_yzxb.yzxh=1', {
+        zyid,
+      })
+      .orderBy('h12_yzxb.yzrq', 'ASC')
+      .addOrderBy('h12_yzxb.zxcs', 'ASC')
+      .addOrderBy('h12_yzxb.mxxh', 'ASC')
+      .addOrderBy('h12_yzxb.typbz', 'ASC');
+    const h12_yzxbs = await h12_yzxbsQuery.getMany();
+    const yzzh = [...new Set(h12_yzxbs.map((item) => item.yzzh))];
+    try {
+      await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz);
+
+      // 拷贝医嘱
+      const newH12_yzxb = [];
+
+      // 创建标志医嘱
+      ////写上术后或重整
+      const flagAdvice = await this.createAdvice({ zyid, yzlx: 1, newGroup: true, newZxcs: true });
+      if (u_zcid === '0106') {
+        flagAdvice.ksys = jsys;
+        flagAdvice.kssxys = userId;
+      } else {
+        flagAdvice.ksys = userId;
+      }
+      if (czlx === 1 || czlx === 2) {
+        flagAdvice.xmmc = '     重 整 医 嘱';
+      } else if (czlx === 4) {
+        flagAdvice.xmmc = '     术 后 医 嘱';
+      } else {
+        flagAdvice.xmmc = '     产 后 医 嘱';
+      }
+      flagAdvice.yzrq = kssj;
+      flagAdvice.zxcs = 0;
+      flagAdvice.sfbz = 0;
+      flagAdvice.ysbz = 1;
+      flagAdvice.tjbz = 1;
+      flagAdvice.jsbz = 1;
+      flagAdvice.zxbz = 1;
+      flagAdvice.tzbz = 1;
+      flagAdvice.pfjg = 0;
+      flagAdvice.xmdj = 0;
+      flagAdvice.xmid = '0000000';
+      //   flagAdvice.fylbid = '00';
+      newH12_yzxb.push(flagAdvice);
+
+      // h12_yzxbs.forEach(async (advice) =>
+      for (const [index, advice] of h12_yzxbs.entries()) {
+        const newAdvice = await this.createAdvice({
+          zyid,
+          yzlx: 1,
+          newGroup: false,
+          newZxcs: false,
+        });
+        const { yzlx, yzrq, mxxh, ksys, kssxys, srcs, ...copyValue } = advice;
+
+        Object.assign(newAdvice, copyValue);
+
+        newAdvice.yzzh -= 200;
+        newAdvice.yzrq = kssj;
+        newAdvice.tcbz = 0;
+        newAdvice.sjbz = 0;
+        newAdvice.sfbz = index + 1;
+        newAdvice.jsbz = 0;
+        newAdvice.zxbz = 0;
+        newAdvice.tzbz = 0;
+        newAdvice.hdbz = 0;
+        newAdvice.zxcs = 0;
+        newAdvice.lryid = userId;
+        if (u_zcid === '0106') {
+          newAdvice.ksys = jsys;
+          newAdvice.kssxys = userId;
+        } else {
+          newAdvice.ksys = userId;
+        }
+        newAdvice.srcs = advice.syplidEntity?.mrcs ?? 0;
+
+        newH12_yzxb.push(newAdvice);
+      }
+      await this.h12_yzxbRepo.save(newH12_yzxb);
+    } catch (error) {
+      console.error(error);
+      throw new BadRequestException('重整医嘱失败');
+    }
+
     return true;
+  }
+
+  /**
+   * 校验医嘱执行
+   * @param zyid
+   * @param zxrq
+   * @returns
+   */
+  private async _validateOrderExecutions(zyid: string, yzxh: number, zxrq: Date): Promise<number> {
+    // 使用QueryBuilder构建复杂查询
+    const queryResult = await this.h13_yzzxcsRepository
+      .createQueryBuilder('exec')
+      .innerJoin(
+        h12_yzxb,
+        'order',
+        'exec.zyid = order.zyid AND exec.yzxh = order.yzxh AND exec.yzlx = order.yzlx AND exec.mxxh = order.mxxh',
+      )
+      .select('SUM((exec.zxcs - exec.bzxcs) * exec.jfyl)', 'totalCount')
+      .where('exec.zyid = :zyid', { zyid })
+      .andWhere('exec.yzlx = 1')
+      .andWhere('exec.yzxh = :yzxh', { yzxh })
+      .andWhere('order.tzbz = 0')
+      .andWhere('exec.zxrq > :zxrq', { zxrq })
+      .getRawOne();
+
+    return parseFloat(queryResult?.totalCount || '0');
   }
 }

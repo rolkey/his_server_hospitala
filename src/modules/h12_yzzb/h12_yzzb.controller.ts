@@ -176,14 +176,24 @@ export class h12_yzzbController {
       zyid: string;
       yzxh: number;
       czlx: number;
-      kssj: Date;
-      yzzh: number[];
+      kssj: string;
       userId: string;
       u_zcid: string;
       jsys: string;
+      ysstopbz: string;
     },
   ) {
-    const { zyid, yzxh, czlx, kssj, yzzh, userId, u_zcid, jsys } = data;
-    return this.h12_yzxbService.reorganize(zyid, yzxh, czlx, kssj, yzzh, userId, u_zcid, jsys);
+    const { zyid, yzxh, czlx, kssj, userId, u_zcid, jsys, ysstopbz } = data;
+    const kssjDate = new Date(kssj);
+    return this.h12_yzxbService.reorganize(
+      zyid,
+      yzxh,
+      czlx,
+      kssjDate,
+      userId,
+      u_zcid,
+      jsys,
+      ysstopbz,
+    );
   }
 }
