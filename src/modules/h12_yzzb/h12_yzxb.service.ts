@@ -1012,7 +1012,7 @@ export class h12_yzxbService {
 
   // 拆分组
   async splitGroup(h12_yzxbs: H12_yzxbDto[]) {
-    // TODO: 从优化的角度来讲，第一行不需要重新获取组号
+    // 从优化的角度来讲，第一行不需要重新获取组号
     const adviceYzzhs = [];
     h12_yzxbs?.map(async (h12_yzxbv, index) => {
       if (index === 0) return; // 第一行不拆分
