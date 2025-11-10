@@ -335,11 +335,9 @@ export class h11_brxxService {
         'istoday',
       );
 
-    // 4️⃣ 查询详细数据 + raw 结果
-    const [pageData, rawResult] = await Promise.all([
-      detailQuery.getMany(),
-      detailQuery.getRawMany(),
-    ]);
+    // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
+    const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
+
 
     // 5️⃣ 合并结果
     const result = pageData.map((entity) => {
