@@ -23,7 +23,7 @@ export class h11_brxxService {
     private readonly h11_lshService: h11_lshService,
     private readonly h11_zybhService: h11_zybhService,
     private readonly h00_fylbService: h00_fylbService,
-  ) { }
+  ) {}
 
   // async findAll(queryDto: Queryh11_brxxDto) {
   //   const pageSize = queryDto.pageSize || 10;
@@ -195,7 +195,7 @@ export class h11_brxxService {
     // --- 动态查询条件 ---
     if (queryDto?.value) {
       baseQuery.andWhere(
-        `(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value 
+        `(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value
         OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)`,
         { value: `%${queryDto?.value}%` },
       );
@@ -338,7 +338,6 @@ export class h11_brxxService {
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
-
     // 5️⃣ 合并结果
     const result = pageData.map((entity) => {
       const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
@@ -358,7 +357,6 @@ export class h11_brxxService {
 
     return { pageData: result, total: raw.length };
   }
-
 
   async findOne(zyid: string) {
     const query = this.h11_brxxRepo
