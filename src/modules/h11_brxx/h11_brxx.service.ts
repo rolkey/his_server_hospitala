@@ -9,12 +9,11 @@ import {
   QueryCostDetailDto,
   QueryCostCategoryDto,
 } from './dto';
-import * as dayjs from 'dayjs';
+import dayjs = require('dayjs');
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
-import { log } from 'console';
-import { getCompleteSqlWithParameters } from '@/utils/sql-utils';
+
 import DateFormater from '@/utils/DateFormater';
 @Injectable()
 export class h11_brxxService {
@@ -24,16 +23,266 @@ export class h11_brxxService {
     private readonly h11_lshService: h11_lshService,
     private readonly h11_zybhService: h11_zybhService,
     private readonly h00_fylbService: h00_fylbService,
-  ) {}
+  ) { }
+
+  // async findAll(queryDto: Queryh11_brxxDto) {
+  //   const pageSize = queryDto.pageSize || 10;
+  //   const pageNo = queryDto.pageNo || 1;
+
+  //   // 使用QueryBuilder来避免参数类型问题
+  //   // const queryBuilder = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+
+  //   const queryBuilder = this.h11_brxxRepo
+  //     .createQueryBuilder('h11_brxx')
+  //     .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
+  //     .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
+  //     .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
+  //     .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
+  //     .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+  //     .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
+  //     .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
+  //     .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
+  //     .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
+  //     .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
+  //     .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
+  //     .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
+  //     .addSelect(['cyzdEntity.icd11,cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
+  //     .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
+  //     // 添加新的计算字段
+  //     .addSelect(
+  //       `CASE
+  //           WHEN h11_brxx.zyzt < 3 THEN
+  //               DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
+  //           ELSE
+  //               DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
+  //       END`,
+  //       'zyts1',
+  //     )
+  //     .addSelect('0', 'isfinish')
+  //     .addSelect(
+  //       `(SELECT CASE
+  //       WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+  //       WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+  //           ELSE 0
+  //       END FROM (
+  //           SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
+  //           ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
+  //           FROM h12_yzxb
+  //           WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
+  //       ) AS y WHERE y.fsp = 1)`,
+  //       'isexecute',
+  //     )
+  //     .addSelect(
+  //       `(SELECT CASE
+  //       WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+  //       WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+  //           ELSE 0
+  //       END FROM (
+  //           SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
+  //           ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
+  //           FROM h12_yzxb
+  //           WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
+  //       ) AS y WHERE y.fsp = 1)`,
+  //       'isnew',
+  //     )
+  //     .addSelect(
+  //       `CASE
+  //       WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
+  //           ELSE 0
+  //       END`,
+  //       'istoday',
+  //     );
+
+  //   if (queryDto?.value) {
+  //     queryBuilder.andWhere(
+  //       '(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
+  //       { value: `%${queryDto?.value}%` },
+  //     );
+  //   }
+  //   // 添加查询条件
+  //   if (queryDto.brxm) {
+  //     queryBuilder.andWhere('h11_brxx.brxm LIKE :brxm', { brxm: `%${queryDto.brxm.trim()}%` });
+  //   }
+  //   if (queryDto.jtdh) {
+  //     queryBuilder.andWhere('h11_brxx.jtdh = :jtdh', { jtdh: `%${queryDto.jtdh.trim()}%` });
+  //   }
+  //   if (queryDto.zybh) {
+  //     queryBuilder.andWhere('h11_brxx.zybh = :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
+  //   }
+  //   if (queryDto.zyzt) {
+  //     const zyzt = Number(queryDto.zyzt);
+  //     if (zyzt === 1 || zyzt === 2) {
+  //       queryBuilder.andWhere('(h11_brxx.zyzt <=2 or h11_brxx.zyzt is null)');
+  //     } else {
+  //       queryBuilder.andWhere('(h11_brxx.zyzt = :zyzt)', { zyzt: queryDto.zyzt });
+  //     }
+  //   }
+  //   if (queryDto.ryksid) {
+  //     queryBuilder.andWhere('h11_brxx.ryksid LIKE :ryksid', {
+  //       ryksid: `%${queryDto.ryksid.trim()}%`,
+  //     });
+  //   }
+  //   if (queryDto.mzys) {
+  //     queryBuilder.andWhere('h11_brxx.mzys LIKE  :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
+  //   }
+  //   if (queryDto.sxys) {
+  //     queryBuilder.andWhere('h11_brxx.sxys LIKE  :sxys', { sxys: `%${queryDto.sxys.trim()}%` });
+  //   }
+  //   if (queryDto.rykssj && queryDto.ryjssj) {
+  //     queryBuilder.andWhere('(h11_brxx.rysj BETWEEN :start AND :end)', {
+  //       start: dayjs(queryDto.rykssj).format('YYYY-MM-DD 00:00:00'),
+  //       end: dayjs(queryDto.ryjssj).format('YYYY-MM-DD 23:59:59'),
+  //     });
+  //   }
+  //   if (queryDto.cykssj && queryDto.cyjssj) {
+  //     queryBuilder.andWhere('(h11_brxx.cysj BETWEEN :start AND :end)', {
+  //       start: dayjs(queryDto.cykssj).format('YYYY-MM-DD 00:00:00'),
+  //       end: dayjs(queryDto.cyjssj).format('YYYY-MM-DD 23:59:59'),
+  //     });
+  //   }
+  //   if (queryDto.ylzh) {
+  //     queryBuilder.andWhere('h11_brxx.ylzh = :ylzh', { ylzh: queryDto.ylzh.trim() });
+  //   }
+  //   if (queryDto.sfzh) {
+  //     queryBuilder.andWhere('h11_brxx.sfzh LIKE :sfzh', { sfzh: `%${queryDto.sfzh.trim()}%` });
+  //   }
+  //   if (queryDto.rycw) {
+  //     queryBuilder.andWhere('h11_brxx.rycw = :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
+  //   }
+
+  //   if (queryDto.ryjssj && queryDto.ryjssj) {
+  //     queryBuilder.orderBy('h11_brxx.rysj', 'ASC');
+  //   } else if (queryDto.cykssj && queryDto.cyjssj) {
+  //     queryBuilder.orderBy('h11_brxx.cysj', 'ASC');
+  //   } else {
+  //     queryBuilder.orderBy('h11_brxx.rysj', 'ASC');
+  //   }
+  //   // 添加分页
+  //   queryBuilder.skip((pageNo - 1) * pageSize).take(pageSize);
+  //   // console.log(getCompleteSqlWithParameters(queryBuilder));
+
+  //   const [pageData, total] = await queryBuilder.getManyAndCount();
+
+  //   const rawResult = await queryBuilder.getRawMany();
+  //   // 合并计算字段到实体中
+  //   const result = pageData.map((entity) => {
+  //     const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid); // 假设 id 是实体的主键
+
+  //     return {
+  //       ...entity,
+  //       zyts1: matchedRaw?.zyts1,
+  //       isexecute: matchedRaw?.isexecute,
+  //       isnew: matchedRaw?.isnew,
+  //       istoday: matchedRaw?.istoday,
+  //       ztbz: entity.zyzt === 4 ? 1 : 0,
+  //       rysj: entity.rysj ? DateFormater.formatDate(entity.rysj.toDateString()) : '',
+  //       cysj: entity.cysj ? DateFormater.formatDate(entity.cysj.toDateString()) : '',
+  //       ryqzsj: entity.ryqzsj ? DateFormater.formatDate(entity.ryqzsj.toDateString()) : '',
+  //       jssj: entity.jssj ? DateFormater.formatDate(entity.jssj.toDateString()) : '',
+  //       csrq: entity.csrq ? DateFormater.formatDate(entity.csrq.toDateString()) : '',
+  //     };
+  //   });
+  //   return { pageData: result, total };
+  // }
 
   async findAll(queryDto: Queryh11_brxxDto) {
     const pageSize = queryDto.pageSize || 10;
     const pageNo = queryDto.pageNo || 1;
 
-    // 使用QueryBuilder来避免参数类型问题
-    // const queryBuilder = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+    // 1️⃣ 基础查询（不含关联表）
+    const baseQuery = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
 
-    const queryBuilder = this.h11_brxxRepo
+    // --- 动态查询条件 ---
+    if (queryDto?.value) {
+      baseQuery.andWhere(
+        `(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value 
+        OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)`,
+        { value: `%${queryDto?.value}%` },
+      );
+    }
+
+    if (queryDto.brxm) {
+      baseQuery.andWhere('h11_brxx.brxm LIKE :brxm', { brxm: `%${queryDto.brxm.trim()}%` });
+    }
+
+    if (queryDto.jtdh) {
+      baseQuery.andWhere('h11_brxx.jtdh LIKE :jtdh', { jtdh: `%${queryDto.jtdh.trim()}%` });
+    }
+
+    if (queryDto.zybh) {
+      baseQuery.andWhere('h11_brxx.zybh LIKE :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
+    }
+
+    if (queryDto.zyzt) {
+      const zyzt = Number(queryDto.zyzt);
+      if (zyzt === 1 || zyzt === 2) {
+        baseQuery.andWhere('(h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL)');
+      } else {
+        baseQuery.andWhere('h11_brxx.zyzt = :zyzt', { zyzt });
+      }
+    }
+
+    if (queryDto.ryksid) {
+      baseQuery.andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
+    }
+
+    if (queryDto.mzys) {
+      baseQuery.andWhere('h11_brxx.mzys LIKE :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
+    }
+
+    if (queryDto.sxys) {
+      baseQuery.andWhere('h11_brxx.sxys LIKE :sxys', { sxys: `%${queryDto.sxys.trim()}%` });
+    }
+
+    if (queryDto.rykssj && queryDto.ryjssj) {
+      baseQuery.andWhere('(h11_brxx.rysj BETWEEN :start AND :end)', {
+        start: dayjs(queryDto.rykssj).format('YYYY-MM-DD 00:00:00'),
+        end: dayjs(queryDto.ryjssj).format('YYYY-MM-DD 23:59:59'),
+      });
+    }
+
+    if (queryDto.cykssj && queryDto.cyjssj) {
+      baseQuery.andWhere('(h11_brxx.cysj BETWEEN :start AND :end)', {
+        start: dayjs(queryDto.cykssj).format('YYYY-MM-DD 00:00:00'),
+        end: dayjs(queryDto.cyjssj).format('YYYY-MM-DD 23:59:59'),
+      });
+    }
+
+    if (queryDto.ylzh) {
+      baseQuery.andWhere('h11_brxx.ylzh = :ylzh', { ylzh: queryDto.ylzh.trim() });
+    }
+
+    if (queryDto.sfzh) {
+      baseQuery.andWhere('h11_brxx.sfzh LIKE :sfzh', { sfzh: `%${queryDto.sfzh.trim()}%` });
+    }
+
+    if (queryDto.rycw) {
+      baseQuery.andWhere('h11_brxx.rycw LIKE :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
+    }
+
+    // 排序
+    if (queryDto.ryjssj && queryDto.ryjssj) {
+      baseQuery.orderBy('h11_brxx.rysj', 'ASC');
+    } else if (queryDto.cykssj && queryDto.cyjssj) {
+      baseQuery.orderBy('h11_brxx.cysj', 'ASC');
+    } else {
+      baseQuery.orderBy('h11_brxx.rysj', 'ASC');
+    }
+
+    // 2️⃣ 第一次查询 — 仅分页ID + 总数
+    const { raw } = await baseQuery
+      .select('h11_brxx.zyid', 'zyid')
+      .skip((pageNo - 1) * pageSize)
+      .take(pageSize)
+      .getRawAndEntities();
+
+    const ids = raw.map((row) => row.zyid);
+    if (ids.length === 0) {
+      return { pageData: [], total: 0 };
+    }
+
+    // 3️⃣ 第二次查询 — 详情 + Join + 计算字段
+    const detailQuery = this.h11_brxxRepo
       .createQueryBuilder('h11_brxx')
       .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
       .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
@@ -46,145 +295,70 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
-      .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
-      .addSelect(['cyzdEntity.icd11,cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
+      .addSelect([
+        'ryzdEntity.icd11',
+        'ryzdEntity.icd11mc',
+        'ryzdEntity.ybbm',
+        'ryzdEntity.ybmc',
+        'cyzdEntity.icd11',
+        'cyzdEntity.icd11mc',
+        'cyzdEntity.ybbm',
+        'cyzdEntity.ybmc',
+      ])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
-      // 添加新的计算字段
+      .whereInIds(ids)
       .addSelect(
         `CASE
-            WHEN h11_brxx.zyzt < 3 THEN
-                DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
-            ELSE
-                DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
+          WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
+          ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
         END`,
         'zyts1',
       )
       .addSelect('0', 'isfinish')
       .addSelect(
         `(SELECT CASE
-        WHEN ISNULL(y.kshs, '0') = '0' THEN 1
-        WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
-            ELSE 0
-        END FROM (
+            WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+            WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+            ELSE 0 END
+          FROM (
             SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
             ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
             FROM h12_yzxb
             WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
-        ) AS y WHERE y.fsp = 1)`,
+          ) AS y WHERE y.fsp = 1)`,
         'isexecute',
       )
       .addSelect(
-        `(SELECT CASE
-        WHEN ISNULL(y.kshs, '0') = '0' THEN 1
-        WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
-            ELSE 0
-        END FROM (
-            SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
-            ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
-            FROM h12_yzxb
-            WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
-        ) AS y WHERE y.fsp = 1)`,
-        'isnew',
-      )
-      .addSelect(
         `CASE
-        WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
-            ELSE 0
-        END`,
+          WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
+          ELSE 0 END`,
         'istoday',
       );
 
-    if (queryDto?.value) {
-      queryBuilder.andWhere(
-        '(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
-        { value: `%${queryDto?.value}%` },
-      );
-    }
-    // 添加查询条件
-    if (queryDto.brxm) {
-      queryBuilder.andWhere('h11_brxx.brxm LIKE :brxm', { brxm: `%${queryDto.brxm.trim()}%` });
-    }
-    if (queryDto.jtdh) {
-      queryBuilder.andWhere('h11_brxx.jtdh = :jtdh', { jtdh: `%${queryDto.jtdh.trim()}%` });
-    }
-    if (queryDto.zybh) {
-      queryBuilder.andWhere('h11_brxx.zybh = :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
-    }
-    if (queryDto.zyzt) {
-      const zyzt = Number(queryDto.zyzt);
-      if (zyzt === 1 || zyzt === 2) {
-        queryBuilder.andWhere('(h11_brxx.zyzt <=2 or h11_brxx.zyzt is null)');
-      } else {
-        queryBuilder.andWhere('(h11_brxx.zyzt = :zyzt)', { zyzt: queryDto.zyzt });
-      }
-    }
-    if (queryDto.ryksid) {
-      queryBuilder.andWhere('h11_brxx.ryksid LIKE :ryksid', {
-        ryksid: `%${queryDto.ryksid.trim()}%`,
-      });
-    }
-    if (queryDto.mzys) {
-      queryBuilder.andWhere('h11_brxx.mzys LIKE  :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
-    }
-    if (queryDto.sxys) {
-      queryBuilder.andWhere('h11_brxx.sxys LIKE  :sxys', { sxys: `%${queryDto.sxys.trim()}%` });
-    }
-    if (queryDto.rykssj && queryDto.ryjssj) {
-      queryBuilder.andWhere('(h11_brxx.rysj BETWEEN :start AND :end)', {
-        start: dayjs(queryDto.rykssj).format('YYYY-MM-DD 00:00:00'),
-        end: dayjs(queryDto.ryjssj).format('YYYY-MM-DD 23:59:59'),
-      });
-    }
-    if (queryDto.cykssj && queryDto.cyjssj) {
-      queryBuilder.andWhere('(h11_brxx.cysj BETWEEN :start AND :end)', {
-        start: dayjs(queryDto.cykssj).format('YYYY-MM-DD 00:00:00'),
-        end: dayjs(queryDto.cyjssj).format('YYYY-MM-DD 23:59:59'),
-      });
-    }
-    if (queryDto.ylzh) {
-      queryBuilder.andWhere('h11_brxx.ylzh = :ylzh', { ylzh: queryDto.ylzh.trim() });
-    }
-    if (queryDto.sfzh) {
-      queryBuilder.andWhere('h11_brxx.sfzh LIKE :sfzh', { sfzh: `%${queryDto.sfzh.trim()}%` });
-    }
-    if (queryDto.rycw) {
-      queryBuilder.andWhere('h11_brxx.rycw = :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
-    }
+    // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
+    const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
-    if (queryDto.ryjssj && queryDto.ryjssj) {
-      queryBuilder.orderBy('h11_brxx.rysj', 'ASC');
-    } else if (queryDto.cykssj && queryDto.cyjssj) {
-      queryBuilder.orderBy('h11_brxx.cysj', 'ASC');
-    } else {
-      queryBuilder.orderBy('h11_brxx.rysj', 'ASC');
-    }
-    // 添加分页
-    queryBuilder.skip((pageNo - 1) * pageSize).take(pageSize);
-    // console.log(getCompleteSqlWithParameters(queryBuilder));
 
-    const [pageData, total] = await queryBuilder.getManyAndCount();
-
-    const rawResult = await queryBuilder.getRawMany();
-    // 合并计算字段到实体中
+    // 5️⃣ 合并结果
     const result = pageData.map((entity) => {
-      const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid); // 假设 id 是实体的主键
-
+      const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
       return {
         ...entity,
         zyts1: matchedRaw?.zyts1,
         isexecute: matchedRaw?.isexecute,
-        isnew: matchedRaw?.isnew,
         istoday: matchedRaw?.istoday,
         ztbz: entity.zyzt === 4 ? 1 : 0,
-        rysj: entity.rysj ? DateFormater.formatDate(entity.rysj.toDateString()) : '',
-        cysj: entity.cysj ? DateFormater.formatDate(entity.cysj.toDateString()) : '',
-        ryqzsj: entity.ryqzsj ? DateFormater.formatDate(entity.ryqzsj.toDateString()) : '',
-        jssj: entity.jssj ? DateFormater.formatDate(entity.jssj.toDateString()) : '',
-        csrq: entity.csrq ? DateFormater.formatDate(entity.csrq.toDateString()) : '',
+        rysj: entity.rysj ? dayjs(entity.rysj).format('YYYY-MM-DD HH:mm:ss') : '',
+        cysj: entity.cysj ? dayjs(entity.cysj).format('YYYY-MM-DD HH:mm:ss') : '',
+        ryqzsj: entity.ryqzsj ? dayjs(entity.ryqzsj).format('YYYY-MM-DD HH:mm:ss') : '',
+        jssj: entity.jssj ? dayjs(entity.jssj).format('YYYY-MM-DD HH:mm:ss') : '',
+        csrq: entity.csrq ? dayjs(entity.csrq).format('YYYY-MM-DD HH:mm:ss') : '',
       };
     });
-    return { pageData: result, total };
+
+    return { pageData: result, total: raw.length };
   }
+
 
   async findOne(zyid: string) {
     const query = this.h11_brxxRepo
