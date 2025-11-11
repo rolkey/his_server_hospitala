@@ -134,6 +134,14 @@ export class h12_yzxbService {
     this.contextService.set('departmentId', value);
   }
 
+  get contexted(): boolean {
+    return this.contextService.get('contexted');
+  }
+
+  set contexted(value: boolean) {
+    this.contextService.set('contexted', value);
+  }
+
   /**
    * 获取执行次数
    * @returns 新的执行次数
@@ -167,86 +175,90 @@ export class h12_yzxbService {
 
   // 取组套
   async addPackageToAdvice(h12_yzxbs: H12_yzxbOpeDto) {
-    // 变量初始化
-    this.yzlx = h12_yzxbs.yzlx;
-    this.zyid = h12_yzxbs.zyid;
-    this.userId = h12_yzxbs.userId;
-    this.systemId = h12_yzxbs.systemId;
-    this.departmentId = h12_yzxbs.ksid;
-
-    // TODO: 这些参数应该放在Redis中，而不是每次都从数据库中读取
-    this.g_ksid = await this.configReaderService.getKsids(this.departmentId);
-    this.gstr_ainf = await this.configReaderService.readGstrAinf({
-      userId: h12_yzxbs.userId,
-      systemId: h12_yzxbs.systemId,
-    });
-
     const adviceList = [];
     const messages = [];
-    try {
-      // 1. 初始化变量
-      const controlData = {
-        selectedCount: 0,
-        currentRow: 0,
-        packageGroupId: 0,
-        recursionDepth: 0,
-      };
+    const context = this.contextService.getAll() || this.contextService.initializeContext();
+    await this.contextService.run(context, async () => {
+      this.contexted = true;
+      // 变量初始化
+      this.yzlx = h12_yzxbs.yzlx;
+      this.zyid = h12_yzxbs.zyid;
+      this.userId = h12_yzxbs.userId;
+      this.systemId = h12_yzxbs.systemId;
+      this.departmentId = h12_yzxbs.ksid;
 
-      // 同组规则：加到同一组时，需要生成yzzh
-      const newGroup = (h12_yzxbs.yzzh || 0) === 0;
-      const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
+      // TODO: 这些参数应该放在Redis中，而不是每次都从数据库中读取
+      this.g_ksid = await this.configReaderService.getKsids(this.departmentId);
+      this.gstr_ainf = await this.configReaderService.readGstrAinf({
+        userId: h12_yzxbs.userId,
+        systemId: h12_yzxbs.systemId,
+      });
 
-      // 2. 处理选中的项目
-      for (let i = 0; i < h12_yzxbs.h12_mbxbs.length; i++) {
-        const item = h12_yzxbs.h12_mbxbs[i];
+      try {
+        // 1. 初始化变量
+        const controlData = {
+          selectedCount: 0,
+          currentRow: 0,
+          packageGroupId: 0,
+          recursionDepth: 0,
+        };
 
-        // 判断是否是组套项目
-        let isPackage = item.tcbz === 1;
-        if (
-          item.xmid.includes('T') ||
-          (isPackage && (item.fylbid === '02' || item.fylbid === '90'))
-        ) {
-          isPackage = true;
-        } else {
-          isPackage = false;
-        }
+        // 同组规则：加到同一组时，需要生成yzzh
+        const newGroup = (h12_yzxbs.yzzh || 0) === 0;
+        const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
 
-        // 3. 处理选中的项目
+        // 2. 处理选中的项目
+        for (let i = 0; i < h12_yzxbs.h12_mbxbs.length; i++) {
+          const item = h12_yzxbs.h12_mbxbs[i];
 
-        // 创建医嘱项
-        const { newAdvice, mergedItem } = await this._createAdviceItem({
-          isPackage,
-          item,
-          newGroup: newGroup,
-          newZxcs: h12_yzxbs.isAdditional ?? true,
-          messages,
-        });
-        adviceList.push(newAdvice);
-        newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
-        if (h12_yzxbs.yzzh > 0) {
-          newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
-        } else if (h12_yzxbs.yzzh === -1) {
-          newAdvice.yzzh = yzzh; // 组套合并为同组
-        }
+          // 判断是否是组套项目
+          let isPackage = item.tcbz === 1;
+          if (
+            item.xmid.includes('T') ||
+            (isPackage && (item.fylbid === '02' || item.fylbid === '90'))
+          ) {
+            isPackage = true;
+          } else {
+            isPackage = false;
+          }
 
-        const mbid =
-          item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
-        // 处理套餐项目
-        if (isPackage) {
-          const pachageAdvice = await this.getPackageItems({
-            advice: newAdvice,
-            // item: mergedItem,
-            mbid,
-            recursionDepth: controlData.recursionDepth + 1,
+          // 3. 处理选中的项目
+
+          // 创建医嘱项
+          const { newAdvice, mergedItem } = await this._createAdviceItem({
+            isPackage,
+            item,
+            newGroup: newGroup,
+            newZxcs: h12_yzxbs.isAdditional ?? true,
+            messages,
           });
-          adviceList.push(...pachageAdvice);
+          adviceList.push(newAdvice);
+          newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
+          if (h12_yzxbs.yzzh > 0) {
+            newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
+          } else if (h12_yzxbs.yzzh === -1) {
+            newAdvice.yzzh = yzzh; // 组套合并为同组
+          }
+
+          const mbid =
+            item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
+          // 处理套餐项目
+          if (isPackage) {
+            const pachageAdvice = await this.getPackageItems({
+              advice: newAdvice,
+              // item: mergedItem,
+              mbid,
+              recursionDepth: controlData.recursionDepth + 1,
+            });
+            adviceList.push(...pachageAdvice);
+          }
         }
+      } catch (error) {
+        console.error('取组套失败:', error);
+        throw error;
       }
-      return { adviceList, messages };
-    } catch (error) {
-      console.error('取组套失败:', error);
-      throw error;
-    }
+    });
+    return { adviceList, messages };
   }
 
   /**
@@ -561,15 +573,7 @@ export class h12_yzxbService {
     }
   }
 
-  /**
-   * 处理套餐项目
-   * @private
-   */
-  async getPackageItems({ advice, mbid, recursionDepth }) {
-    if (recursionDepth >= this.MAX_RECURSION_DEPTH) {
-      throw new Error('组套嵌套层级超过最大限制');
-    }
-
+  private async _processPackageItems(advice: any, mbid: string, packageAdvices: any[]) {
     if (!this.g_ksid) {
       this.g_ksid = await this.configReaderService.getKsids(advice.ksid);
     }
@@ -578,23 +582,46 @@ export class h12_yzxbService {
     const packageItems = await this.h00TcxbService.getCombinedData(mbid);
 
     // 创建子医嘱项
+    try {
+      for (const [index, pkgItem] of packageItems.entries()) {
+        const childAdvice = new UpdateH12_yzxbDto();
+        packageAdvices.push(childAdvice);
+
+        // 设置子医嘱基本信息
+        await this._setChildAdviceBaseInfo(childAdvice, advice);
+        childAdvice.zxcs = index + 1;
+
+        // 获取子项目详情
+        const childItem = await this._getItemDetail(pkgItem);
+
+        // 设置子项目信息
+        this._setChildItemInfo(childAdvice, childItem);
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  /**
+   * 处理套餐项目
+   * @private
+   */
+  async getPackageItems({ advice, mbid, recursionDepth }) {
+    if (recursionDepth >= this.MAX_RECURSION_DEPTH) {
+      throw new Error('组套嵌套层级超过最大限制');
+    }
     const packageAdvices = [];
 
-    for (const [index, pkgItem] of packageItems.entries()) {
-      const childAdvice = new UpdateH12_yzxbDto();
-      packageAdvices.push(childAdvice);
-
-      // 设置子医嘱基本信息
-      await this._setChildAdviceBaseInfo(childAdvice, advice);
-      childAdvice.zxcs = index + 1;
-
-      // 获取子项目详情
-      const childItem = await this._getItemDetail(pkgItem);
-
-      // 设置子项目信息
-      this._setChildItemInfo(childAdvice, childItem);
+    if (this.contexted) {
+      await this._processPackageItems(advice, mbid, packageAdvices);
+    } else {
+      const context = this.contextService.getAll() || this.contextService.initializeContext();
+      this.contexted = true;
+      await this.contextService.run(context, async () => {
+        await this._processPackageItems(advice, mbid, packageAdvices);
+      });
     }
-
     return packageAdvices;
   }
 
