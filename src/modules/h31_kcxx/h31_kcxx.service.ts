@@ -404,6 +404,8 @@ export class H31_kcxxService {
           bz3: '',
           ypidn,
           kcsl: 1000,
+          gjybbm: xmzd.gjybbm,
+          gjybmc: xmzd.gjybmc,
         };
       } else {
         // 处理药品
@@ -450,6 +452,8 @@ export class H31_kcxxService {
             kcsl: 0,
             xs,
             kcgl,
+            gjybbm: ypzd.gjybbm,
+            gjybmc: ypzd.gjybmc,
           };
           return response;
         }
@@ -569,6 +573,8 @@ export class H31_kcxxService {
           kcsl,
           xs,
           kcgl,
+          gjybbm: ypzd.gjybbm,
+          gjybmc: ypzd.gjybmc,
         };
 
         // 库存不足处理
@@ -576,7 +582,7 @@ export class H31_kcxxService {
           // 调用ueReadKcjgXmid方法
           // 这里需要实现ueReadKcjgXmid的调用逻辑
           // 如果失败，设置错误信息
-          response.message = `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允使用该药品或材料，请手工录入附加!`;
+          response.message = `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允许使用该药品或材料，请手工录入附加!`;
         } else if (xs * kcsl < 3) {
           response.message = `${ypzd.zwmc},${request.ypid}关联科室药品库存为:${this.roundNumber(
             kcsl * xs,
