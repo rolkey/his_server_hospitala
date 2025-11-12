@@ -18,7 +18,7 @@ export class h11_lshService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async getMax(asTableName: string, anNeedCount: number = 1): Promise<number> {
+  public async getMax(asTableName: string, anNeedCount: number = 1): Promise<number> {
     if (!anNeedCount || anNeedCount < 1) {
       return -1;
     }

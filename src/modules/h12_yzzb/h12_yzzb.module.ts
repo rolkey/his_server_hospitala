@@ -26,6 +26,10 @@ import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { ContextService } from '@/shared/context.service';
 import { BabyAdviceService } from './baby-advice.service';
+import { h11_lshService } from '../h11_lsh/h11_lsh.service';
+import { h11_lshModule } from '../h11_lsh/h11_lsh.module';
+import { h11_lsh } from '../h11_lsh/h11_lsh.entity';
+import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
@@ -42,6 +46,8 @@ import { BabyAdviceService } from './baby-advice.service';
       h00_fylb,
       h00_syff,
       h00_sypl,
+      h11_lsh,
+      H11Jszb,
       h11_brxx,
       H13YzzxcsTf,
     ]),
@@ -54,6 +60,7 @@ import { BabyAdviceService } from './baby-advice.service';
     forwardRef(() => h13_yzzxcsModule),
     forwardRef(() => H13YzzxcsTfModule),
     forwardRef(() => SharedModule),
+    forwardRef(() => h11_lshModule),
   ],
   controllers: [h12_yzzbController],
   providers: [
@@ -62,6 +69,7 @@ import { BabyAdviceService } from './baby-advice.service';
     h13_yzzxcsService,
     ContextService,
     BabyAdviceService,
+    h11_lshService,
   ],
   exports: [h12_yzzbService, h12_yzxbService],
 })

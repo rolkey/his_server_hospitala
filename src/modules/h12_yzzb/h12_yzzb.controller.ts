@@ -201,6 +201,6 @@ export class h12_yzzbController {
 
   @Post('generateBaby')
   async generateBabyAdvice(@Body() generateDto: { zyid: string; ysid: string }) {
-    return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.zyid);
+    return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.ysid);
   }
 }

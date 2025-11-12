@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
+import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 
 @Injectable()
 export class BabyAdviceService {
@@ -10,6 +11,7 @@ export class BabyAdviceService {
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
     private readonly configReaderService: ConfigReaderService,
+    private readonly h11_lshService: h11_lshService,
   ) {}
 
   /**
@@ -44,11 +46,14 @@ export class BabyAdviceService {
    */
   private async baby_getMotherRecord(zyid: string): Promise<h11_brxx> {
     const motherRecord = await this.h11_brxxRepo.findOne({
-      where: { zyid: zyid },
+      where: { zyid },
     });
 
     if (motherRecord?.yebz === 1) {
       throw new HttpException('该患者是婴儿，不能生成毛毛，请选择母亲!', HttpStatus.BAD_REQUEST);
+    }
+    if (motherRecord?.xbid === '1') {
+      throw new HttpException('该患者是男性，不能生成毛毛，请选择母亲!', HttpStatus.BAD_REQUEST);
     }
     if (!motherRecord) {
       throw new HttpException('未找到对应的母亲记录', HttpStatus.NOT_FOUND);
@@ -92,19 +97,20 @@ export class BabyAdviceService {
     gs_cxsz: any,
   ): Promise<any> {
     // 生成新的流水号
-    const newZyid = await this.baby_generateLsh('ZYID', '住院ID号', 12);
+    const newZyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
     if (newZyid === '-1') {
       throw new HttpException('生成流水号失败', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // 获取最大住院次数
-    const maxZycs = await this.h11_brxxRepo
-      .createQueryBuilder('brxx')
-      .select('MAX(brxx.zycs)', 'maxZycs')
-      .where('brxx.zybh = :zybh', { zybh: babyInfo.zybh })
-      .getRawOne();
+    // const maxZycs = await this.h11_brxxRepo
+    //   .createQueryBuilder('brxx')
+    //   .select('MAX(brxx.zycs)', 'maxZycs')
+    //   .where('brxx.zybh = :zybh', { zybh: babyInfo.zybh })
+    //   .getRawOne();
 
-    const zycs = (maxZycs?.maxZycs || 0) + 1;
+    // const zycs = (maxZycs?.maxZycs || 0) + 1;
+    const zycs = motherRecord.zycs;
     const currentTime = new Date();
 
     // 创建毛毛记录
@@ -181,19 +187,6 @@ export class BabyAdviceService {
     delete (babyRecord as any).id;
 
     return babyRecord;
-  }
-
-  /**
-   * 生成流水号
-   */
-  private async baby_generateLsh(type: string, desc: string, length: number): Promise<string> {
-    // 实现逻辑（根据实际业务）
-    try {
-      const timestamp = new Date().getTime();
-      return `LSH${timestamp}`;
-    } catch (error) {
-      return '-1';
-    }
   }
 
   /**
