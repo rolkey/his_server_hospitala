@@ -5,6 +5,9 @@ import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
+/**
+ * 单一个Service程序过多，应该把一部分功能拆分出来，放在new里面
+ */
 @Injectable()
 export class h12_yzxbService {
   constructor(
