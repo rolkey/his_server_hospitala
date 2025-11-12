@@ -58,6 +58,8 @@ export class Kcjgxx {
   kcsl: number;
   xs?: number;
   kcgl?: number;
+  gjybbm: string;
+  gjybmc: string;
 }
 
 export class KcjgYpidResponseDto {
