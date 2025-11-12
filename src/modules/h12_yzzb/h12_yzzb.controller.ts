@@ -7,12 +7,14 @@ import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 import { UsrcatService } from '../usrcat/usrcat.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { BabyAdviceService } from './baby-advice.service';
 
 @Controller('h12_yzzb')
 export class h12_yzzbController {
   constructor(
     private readonly h12_yzzbService: h12_yzzbService,
     private readonly h12_yzxbService: h12_yzxbService,
+    private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
   ) {}
 
@@ -127,12 +129,7 @@ export class h12_yzzbController {
       );
     } catch (error) {
       // 输出完整的错误信息
-      console.error('停止医嘱时发生错误:', error);
-
-      // 如果需要更详细的错误信息，可以输出错误堆栈
-      if (error instanceof Error) {
-        console.error('错误堆栈:', error.stack);
-      }
+      console.error('停止医嘱错误:', error);
 
       // 根据业务需求，可能需要抛出错误或进行其他错误处理
       throw error;
@@ -195,5 +192,15 @@ export class h12_yzzbController {
       jsys,
       ysstopbz,
     );
+  }
+
+  @Get('v-flag')
+  async vFlag() {
+    return '1.0.0.0';
+  }
+
+  @Post('generateBaby')
+  async generateBabyAdvice(@Body() generateDto: { zyid: string; ysid: string }) {
+    return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.zyid);
   }
 }

@@ -25,6 +25,7 @@ import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service'
 import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { ContextService } from '@/shared/context.service';
+import { BabyAdviceService } from './baby-advice.service';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
@@ -55,7 +56,13 @@ import { ContextService } from '@/shared/context.service';
     forwardRef(() => SharedModule),
   ],
   controllers: [h12_yzzbController],
-  providers: [h12_yzzbService, h12_yzxbService, h13_yzzxcsService, ContextService],
+  providers: [
+    h12_yzzbService,
+    h12_yzxbService,
+    h13_yzzxcsService,
+    ContextService,
+    BabyAdviceService,
+  ],
   exports: [h12_yzzbService, h12_yzxbService],
 })
 export class h12_yzzbModule {}
