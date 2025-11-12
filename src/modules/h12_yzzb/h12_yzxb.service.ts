@@ -186,6 +186,7 @@ export class h12_yzxbService {
       this.userId = h12_yzxbs.userId;
       this.systemId = h12_yzxbs.systemId;
       this.departmentId = h12_yzxbs.ksid;
+      this.yzrq = new Date();
 
       // TODO: 这些参数应该放在Redis中，而不是每次都从数据库中读取
       this.g_ksid = await this.configReaderService.getKsids(this.departmentId);
@@ -513,7 +514,7 @@ export class h12_yzxbService {
     advice.ypid = item.xmid;
     advice.xmmc = item.xmmc;
     advice.xmdw = item.xmdw?.trim();
-    advice.xmdj = item.sfdj;
+    advice.xmdj = item.lsjg;
     advice.xmgg = item.xmgg;
     advice.syffid = item.syffid || '';
     advice.syffidEntity = item.syffidEntity;
