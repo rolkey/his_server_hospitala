@@ -1,15 +1,21 @@
 // src/h12_mbzb/h12_mbzb.module.ts
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { H12_mbzb } from './h12_mbzb.entity';
 import { H12_mbzbService } from './h12_mbzb.service';
 import { H12_mbzbController } from './h12_mbzb.controller';
 import { ksmc } from '@/modules/ksmc/ksmc.entity';
 import { usrcat } from '@/modules/usrcat/usrcat.entity';
+import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
+import { H12_mbxbService } from '../h12_mbxb/h12_mbxb.service';
+import { H12_mbxb } from '../h12_mbxb/h12_mbxb.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([H12_mbzb, ksmc, usrcat])],
-  providers: [H12_mbzbService],
+  imports: [
+    TypeOrmModule.forFeature([H12_mbzb, ksmc, usrcat, H12_mbxb]),
+    forwardRef(() => H13YzzxcsTfModule),
+  ],
+  providers: [H12_mbzbService, H12_mbxbService],
   controllers: [H12_mbzbController],
   exports: [H12_mbzbService],
 })

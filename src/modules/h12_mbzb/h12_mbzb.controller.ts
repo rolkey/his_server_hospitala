@@ -6,6 +6,7 @@ import {
   UpdateH12_mbzbDto,
   QueryH12_mbzbDto,
   H12_mbzbResponseDto,
+  H12_mbSaveDto,
 } from './h12_mbzb.dto';
 
 @Controller('h12-mbzb')
@@ -28,6 +29,11 @@ export class H12_mbzbController {
   @Post()
   async create(@Body() createDto: CreateH12_mbzbDto): Promise<H12_mbzbResponseDto> {
     return this.h12MbzbService.create(createDto);
+  }
+
+  @Post('saveMb')
+  async saveMb(@Body() h12_mbSaveDto: H12_mbSaveDto) {
+    return this.h12MbzbService.saveMb(h12_mbSaveDto);
   }
 
   @Put(':mbid/:mblx')

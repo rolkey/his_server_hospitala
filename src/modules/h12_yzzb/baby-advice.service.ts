@@ -208,19 +208,19 @@ export class BabyAdviceService {
   /**
    * 验证是否可以生成毛毛
    */
-  async baby_validateBabyCreation(zyid: string): Promise<{ valid: boolean; message?: string }> {
-    try {
-      const babyCount = await this.h11_brxxRepo.count({
-        where: { lsh: zyid, yebz: 1 },
-      });
+  //   async baby_validateBabyCreation(zyid: string): Promise<{ valid: boolean; message?: string }> {
+  //     try {
+  //       const babyCount = await this.h11_brxxRepo.count({
+  //         where: { lsh: zyid, yebz: 1 },
+  //       });
 
-      if (babyCount >= 2) {
-        return { valid: false, message: '该母亲已是双胞胎，无法再生成毛毛' };
-      }
+  //       if (babyCount >= 2) {
+  //         return { valid: false, message: '该母亲已是双胞胎，无法再生成毛毛' };
+  //       }
 
-      return { valid: true };
-    } catch (error) {
-      return { valid: false, message: error.message };
-    }
-  }
+  //       return { valid: true };
+  //     } catch (error) {
+  //       return { valid: false, message: error.message };
+  //     }
+  //   }
 }

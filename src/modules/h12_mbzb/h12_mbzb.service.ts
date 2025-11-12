@@ -1,3 +1,4 @@
+import { H12_mbSaveDto } from './h12_mbzb.dto';
 // src/h12_mbzb/h12_mbzb.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,12 +10,17 @@ import {
   QueryH12_mbzbDto,
   H12_mbzbResponseDto,
 } from './h12_mbzb.dto';
+import { H12_mbxb } from '../h12_mbxb/h12_mbxb.entity';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 @Injectable()
 export class H12_mbzbService {
   constructor(
     @InjectRepository(H12_mbzb)
     private readonly h12MbzbRepository: Repository<H12_mbzb>,
+    @InjectRepository(H12_mbxb)
+    private readonly h12MbxbRepository: Repository<H12_mbxb>,
+    // private readonly gyIdentityService: GyIdentityService,
   ) {}
 
   async findAll(queryDto: QueryH12_mbzbDto) {
@@ -91,6 +97,37 @@ export class H12_mbzbService {
     await this.h12MbzbRepository.update({ mbid, mblx }, updateDto);
     const updatedItem = await this.h12MbzbRepository.findOne({ where: { mbid, mblx } });
     return updatedItem ? this.toResponseDto(updatedItem) : null;
+  }
+
+  async _getMaxMbid(): Promise<string> {
+    const dateStr = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+    const mbzb = await this.h12MbzbRepository
+      .createQueryBuilder('h12_mbzb')
+      .select('MAX(mbid)', 'maxMbid')
+      .where(`mbid like '${dateStr}%'`)
+      .getRawOne();
+    if (mbzb.maxMbid) {
+      return (Number(mbzb.maxMbid) + 1).toString();
+    } else {
+      return dateStr + '0001';
+    }
+  }
+
+  //  保存模板
+  async saveMb(h12_mbSaveDto: H12_mbSaveDto) {
+    const newItem = this.h12MbzbRepository.create(h12_mbSaveDto);
+    newItem.mbid = await this._getMaxMbid();
+    const savedItem = await this.h12MbzbRepository.save(newItem);
+    await Promise.all(
+      h12_mbSaveDto.h12mbxb.map(async (item, index) => {
+        item.mbid = savedItem.mbid;
+        item.mblx = savedItem.mblx;
+        item.mxxh = index + 1;
+        const mbxb = this.h12MbxbRepository.create(item);
+        await this.h12MbxbRepository.save(mbxb);
+      }),
+    );
+    return true;
   }
 
   async delete(mbid: string, mblx: number): Promise<void> {

@@ -1,6 +1,7 @@
 // src/h12_mbzb/h12_mbzb.dto.ts
 import { PartialType } from '@nestjs/mapped-types';
 import { Allow } from 'class-validator';
+import { CreateH12_mbxbDto } from '../h12_mbxb/h12_mbxb.dto';
 
 export class H12_mbzbBaseDto {
   @Allow()
@@ -57,4 +58,9 @@ export class QueryH12_mbzbDto extends H12_mbzbBaseDto {
 export class H12_mbzbResponseDto extends H12_mbzbBaseDto {
   // 继承所有基础字段
   // 可以添加响应特有的字段或转换
+}
+
+export class H12_mbSaveDto extends CreateH12_mbzbDto {
+  @Allow()
+  h12mbxb: CreateH12_mbxbDto[];
 }
