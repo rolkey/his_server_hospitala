@@ -146,12 +146,12 @@ export class h12_yzzbController {
       yzlx: number;
       yzzh: number[];
       userId: string;
-      u_zcid: string;
+      zcid: string;
       jsys: string;
     },
   ) {
-    const { zyid, yzxh, yzlx, yzzh, userId, u_zcid, jsys } = data;
-    return this.h12_yzxbService.sign(zyid, yzxh, yzlx, yzzh, userId, u_zcid, jsys);
+    const { zyid, yzxh, yzlx, yzzh, userId, zcid, jsys } = data;
+    return this.h12_yzxbService.sign(zyid, yzxh, yzlx, yzzh, userId, zcid, jsys);
   }
 
   @Post('unSign')

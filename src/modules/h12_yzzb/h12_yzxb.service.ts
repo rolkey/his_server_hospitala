@@ -1232,12 +1232,11 @@ export class h12_yzxbService {
     yzlx: number,
     yzzh: number[],
     userId: string,
-    u_zcid: string,
+    zcid: string,
     jsys: string,
   ) {
     // 实现提交医嘱逻辑
-    const ysxx =
-      u_zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
+    const ysxx = zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
 
     await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
     return true;
