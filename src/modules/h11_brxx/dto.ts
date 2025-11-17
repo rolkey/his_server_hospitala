@@ -366,6 +366,10 @@ export class Queryh11_brxxDto extends QueryDto {
 
   @Allow()
   value?: string;
+
+  @Allow()
+  cycw?: string;
+
 }
 
 export class UpdateDto extends CreateDto {
@@ -424,3 +428,25 @@ export class QueryCostCategoryDto {
   @Allow()
   ksid?: string;
 }
+
+export class bedAllocationDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'cwid不能为空' })
+  cwid?: string;
+
+  @IsNotEmpty({ message: 'ksid不能为空' })
+  ksid?: string;
+
+  @IsNotEmpty({ message: 'rysj不能为空' })
+  rysj?: Date;
+
+
+  @IsNotEmpty({ message: 'lryid不能为空' })
+  lryid?: string;
+
+  @IsNotEmpty({ message: 'lryxm不能为空' })
+  lryxm?: string;
+}
+

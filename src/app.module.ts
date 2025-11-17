@@ -1,4 +1,4 @@
-import { H31_kcxx } from './modules/h31_kcxx/h31_kcxx.entity';
+
 /**********************************
  * @Author: Ronnie Zhang
  * @LastEditor: Ronnie Zhang
@@ -64,7 +64,7 @@ import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
     ConfigModule.forRoot({
       isGlobal: true,
       //   envFilePath: [resolve(__dirname, '.env.local') ?? resolve(__dirname, '.env')],
-      envFilePath: ['.env'],
+      envFilePath: ['.env.local', '.env'],
       expandVariables: true,
     }),
     UsrcatModule,
@@ -117,4 +117,4 @@ import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
     H11XnhModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

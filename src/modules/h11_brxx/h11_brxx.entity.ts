@@ -7,7 +7,7 @@ import { h00_brlx } from '../h00_brlx/h00_brlx.entity';
 import { csxz } from '../csxz/csxz.entity';
 import { h00_rybq } from '../h00_rybq/h00_rybq.entity';
 import { jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
-import * as dayjs from 'dayjs';
+import dayjs = require('dayjs');
 
 @Entity('h11_brxx', { schema: 'dbo' })
 export class h11_brxx {
