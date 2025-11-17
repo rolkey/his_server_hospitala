@@ -1,5 +1,5 @@
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
-import { Inject, Injectable, BadRequestException, Scope } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Scope, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Repository,
@@ -36,6 +36,7 @@ import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service'
 import { RequestContext } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
 import { ContextService } from '@/shared/context.service';
+import { h12_yzzbService } from './h12_yzzb.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -63,6 +64,9 @@ export class h12_yzxbService {
     private h11_brxxRepo: Repository<h11_brxx>,
     @InjectRepository(h13_yzzxcs)
     private readonly h13_yzzxcsRepository: Repository<h13_yzzxcs>,
+
+    @Inject(forwardRef(() => h12_yzzbService))
+    private readonly h12_yzzbService: h12_yzzbService,
     private readonly gyIdentityService: GyIdentityService,
     // private readonly h12YzzbService: h12_yzzbService,
     private readonly configReaderService: ConfigReaderService,
@@ -314,10 +318,10 @@ export class h12_yzxbService {
     // }
 
     // 3. 获取新的医嘱序号
-    // const h12_yzzb_record = await this.getYzzb(patientInfo, zyid, yzlx);
+    const h12_yzzb_record = await this.h12_yzzbService.getYzzb(patientInfo, zyid, yzlx);
 
-    // const yzxhNew = h12_yzzb_record.yzxh || 1;
-    const yzxhNew = 1;
+    const yzxhNew = h12_yzzb_record.yzxh || 1;
+    // const yzxhNew = 1;
 
     // 4. 计算病人年龄
     let brnl = patientInfo.brnl || '';
@@ -1325,7 +1329,7 @@ export class h12_yzxbService {
         newAdvice.yzzh -= 200;
         newAdvice.yzrq = kssj;
         newAdvice.tcbz = 0;
-        newAdvice.sjbz = 0;
+        newAdvice.sjbz = 2;
         newAdvice.sfbz = index + 1;
         newAdvice.jsbz = 0;
         newAdvice.zxbz = 0;
