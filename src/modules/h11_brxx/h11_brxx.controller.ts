@@ -51,4 +51,6 @@ export class h11_brxxController {
   async bedAllocation(@Body() dto: bedAllocationDto) {
     return await this.h11_brxxService.bedAllocation(dto);
   }
+
+
 }

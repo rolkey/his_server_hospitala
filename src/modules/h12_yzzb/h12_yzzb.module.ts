@@ -30,6 +30,7 @@ import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_lshModule } from '../h11_lsh/h11_lsh.module';
 import { h11_lsh } from '../h11_lsh/h11_lsh.entity';
 import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
+import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
@@ -66,11 +67,12 @@ import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
   providers: [
     h12_yzzbService,
     h12_yzxbService,
+    h12_yzxbServiceNew,
     h13_yzzxcsService,
     ContextService,
     BabyAdviceService,
     h11_lshService,
   ],
-  exports: [h12_yzzbService, h12_yzxbService],
+  exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })
-export class h12_yzzbModule {}
+export class h12_yzzbModule { }

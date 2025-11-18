@@ -1,4 +1,4 @@
-import { Allow } from 'class-validator';
+import { Allow, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
 import { UpdateH12_yzxbDto, H12_yzxbDto } from './h12_yzxb.dto';
 
 /**
@@ -19,4 +19,34 @@ export class H12_yzzbOpeDto {
 
   @Allow()
   deleteList: H12_yzxbDto[];
+}
+
+
+
+export class reviewDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'yzxh不能为空' })
+  @IsArray()
+  yzxh?: number[];
+
+  @IsNotEmpty({ message: 'mxxh不能为空' })
+  @IsArray()
+  mxxh?: number[];
+
+  @IsNotEmpty({ message: 'yzlx不能为空' })
+  yzlx?: number;
+
+  @IsNotEmpty({ message: 'rysj不能为空' })
+  rq?: Date;
+
+  @IsNotEmpty({ message: 'kshs不能为空' })
+  kshs?: string;
+
+  @IsNotEmpty({ message: 'jshs不能为空' })
+  jshs?: string;
+
+  @IsOptional()
+  kssxhs?: string;
 }

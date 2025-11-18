@@ -14,6 +14,7 @@ import {
   isNumber,
   Matches,
   IsIn,
+  IsArray,
 } from 'class-validator';
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
@@ -449,4 +450,7 @@ export class bedAllocationDto {
   @IsNotEmpty({ message: 'lryxm不能为空' })
   lryxm?: string;
 }
+
+
+
 
