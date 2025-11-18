@@ -1046,14 +1046,13 @@ export class h12_yzxbService {
   async splitGroup(h12_yzxbs: H12_yzxbDto[]) {
     // 从优化的角度来讲，第一行不需要重新获取组号
     const adviceYzzhs = [];
-    h12_yzxbs?.map(async (h12_yzxbv, index) => {
-      if (index === 0) return; // 第一行不拆分
+    for (const [index, h12_yzxbv] of h12_yzxbs.entries()) {
       const { yzid, yzlx, yzxh, zyid, mxxh } = h12_yzxbv;
       if (h12_yzxbv.ysbz === 0) return; // 附加项目不能拆组
       const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
       await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, mxxh }, { yzzh });
       adviceYzzhs.push({ yzid, yzzh });
-    });
+    }
     return adviceYzzhs;
   }
 

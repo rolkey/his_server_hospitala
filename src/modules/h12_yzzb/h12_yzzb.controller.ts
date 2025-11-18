@@ -17,7 +17,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) { }
+  ) {}
 
   @Get('findAllByPatient')
   async findAllByPatient(@Query() data: { zyid: string; yzlx: string }) {
@@ -81,18 +81,18 @@ export class h12_yzzbController {
   // 取组套到医嘱中
   @Post('addPackageToAdvice')
   async addPackageToAdvice(@Body() h12_yzxbs: H12_yzxbOpeDto) {
-    return this.h12_yzxbService.addPackageToAdvice(h12_yzxbs);
+    return await this.h12_yzxbService.addPackageToAdvice(h12_yzxbs);
   }
 
   @Post('getPackageItems')
   async getPackageItems(@Body() data: { advice: any; mbid: string }) {
-    return this.h12_yzxbService.getPackageItems({ ...data, recursionDepth: 1 });
+    return await this.h12_yzxbService.getPackageItems({ ...data, recursionDepth: 1 });
   }
 
   /** 管理员重置密码 */
   @Get('checkPassword/:userId/:pwd')
-  checkPassword(@Param('userId') userId: string, @Param('pwd') pwd: string) {
-    return this.userService.checkPassword(userId, pwd);
+  async checkPassword(@Param('userId') userId: string, @Param('pwd') pwd: string) {
+    return await this.userService.checkPassword(userId, pwd);
   }
 
   @Post('stop-fymx')
@@ -204,7 +204,6 @@ export class h12_yzzbController {
   async generateBabyAdvice(@Body() generateDto: { zyid: string; ysid: string }) {
     return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.ysid);
   }
-
 
   @Post('review')
   async review(@Body() dto: reviewDto) {
