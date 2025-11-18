@@ -352,7 +352,7 @@ export class h12_yzxbService {
       tjbz: 0, // 提交标志
       ybbz: 1, // 医嘱标志
       yzzt: 0, // 医嘱状态
-      sjbz: 0, // 上级标志
+      sjbz: 1, // 数据标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
       //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
