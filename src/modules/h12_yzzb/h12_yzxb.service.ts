@@ -515,7 +515,7 @@ export class h12_yzxbService {
     }
     advice.xmzl = item.xmzl;
     advice.xmid = item.xmid;
-    advice.ypid = item.xmid;
+    advice.ypid = item.ypid;
     advice.xmmc = item.xmmc;
     advice.xmdw = item.xmdw?.trim();
     advice.xmdj = item.lsjg;
