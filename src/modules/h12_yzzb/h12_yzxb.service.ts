@@ -344,7 +344,7 @@ export class h12_yzxbService {
       brxm: patientInfo.brxm,
       brnl: brnl,
       etys: patientInfo.etys,
-      ksid: patientInfo.cyksid?.trim(),
+      ksid: patientInfo.cyksid ? patientInfo.cyksid.trim() : patientInfo.ryksid.trim(),
       cwid: patientInfo.rycw,
       jsbz: 0,
       tzbz: 0, // 停嘱
