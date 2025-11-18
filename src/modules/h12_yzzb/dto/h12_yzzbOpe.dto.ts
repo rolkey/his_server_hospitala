@@ -50,3 +50,33 @@ export class reviewDto {
   @IsOptional()
   kssxhs?: string;
 }
+
+
+
+export class executeDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'beginDate不能为空' })
+  beginDate?: Date;
+
+  @IsNotEmpty({ message: 'endDate不能为空' })
+  endDate?: Date;
+
+  @IsNotEmpty({ message: 'zxhs不能为空' })
+  zxhs?: string;
+
+  @IsNotEmpty({ message: 'zxks不能为空' })
+  zxks?: string;
+
+  @IsNotEmpty({ message: 'executeType不能为空' })
+  executeType?: string;
+
+  @IsOptional()
+  newYear?: string;
+
+  @IsOptional()
+  medicine?: string;
+
+}
+

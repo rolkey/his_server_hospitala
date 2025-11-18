@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { H12_yzzbOpeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, H12_yzzbOpeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -208,5 +208,10 @@ export class h12_yzzbController {
   @Post('review')
   async review(@Body() dto: reviewDto) {
     return await this.h12_yzxbServiceNew.review(dto);
+  }
+
+  @Post('execute')
+  async execute(@Body() dto: executeDto) {
+    return await this.h12_yzxbServiceNew.execute(dto);
   }
 }
