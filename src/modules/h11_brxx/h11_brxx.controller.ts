@@ -6,11 +6,12 @@ import {
   UpdateDto,
   QueryCostDetailDto,
   QueryCostCategoryDto,
+  bedAllocationDto,
 } from './dto';
 
 @Controller('h11_brxx')
 export class h11_brxxController {
-  constructor(private readonly h11_brxxService: h11_brxxService) {}
+  constructor(private readonly h11_brxxService: h11_brxxService) { }
 
   @Get('findAll')
   async findAll(@Query() queryDto: Queryh11_brxxDto) {
@@ -43,5 +44,11 @@ export class h11_brxxController {
   @Get('costCategory')
   async costCategory(@Query() queryCostCategoryDto: QueryCostCategoryDto) {
     return await this.h11_brxxService.costCategory(queryCostCategoryDto);
+  }
+
+  //分配床位
+  @Post('bedAllocation')
+  async bedAllocation(@Body() dto: bedAllocationDto) {
+    return await this.h11_brxxService.bedAllocation(dto);
   }
 }

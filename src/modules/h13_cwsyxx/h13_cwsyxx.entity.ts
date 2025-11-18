@@ -11,8 +11,8 @@ export class h13_cwsyxx {
   @JoinColumn({ name: 'cwid', referencedColumnName: 'cwid' })
   cwidEntity: h00_cwxx;
 
-  // @Column("datetime", { name: "lrsj", nullable: true })
-  // lrsj: Date | null;
+  @Column("datetime", { name: "lrsj", nullable: true })
+  lrsj: Date | null;
 
   @Column('varchar', { name: 'bsid', nullable: true, length: 10 })
   bsid: string | null;
@@ -20,8 +20,8 @@ export class h13_cwsyxx {
   @Column('varchar', { name: 'ksid', nullable: true, length: 10 })
   ksid: string | null;
 
-  // @Column("char", { name: "lryid", nullable: true, length: 10 })
-  // lryid: string | null;
+  @Column("char", { name: "lryid", nullable: true, length: 10 })
+  lryid: string | null;
 
   // @Column("char", { name: "hsid", nullable: true, length: 10 })
   // hsid: string | null;

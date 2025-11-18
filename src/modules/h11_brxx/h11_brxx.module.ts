@@ -19,6 +19,7 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
+import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 
 @Global()
 @Module({
@@ -27,6 +28,7 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
       h11_brxx,
       ksmc,
       h00_cwxx,
+      h13_cwsyxx,
       usrcat,
       h00_rybq,
       h00_brlx,
@@ -43,4 +45,4 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
   providers: [h11_brxxService, h11_lshService, h11_zybhService, ParamService, h00_fylbService],
   exports: [h11_brxxService],
 })
-export class h11_brxxModule {}
+export class h11_brxxModule { }
