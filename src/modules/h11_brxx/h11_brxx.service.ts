@@ -23,6 +23,7 @@ import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 @Injectable()
 export class h11_brxxService {
 
+
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
@@ -331,4 +332,6 @@ export class h11_brxxService {
       }
     });
   }
+
+
 }

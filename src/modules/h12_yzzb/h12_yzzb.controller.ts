@@ -1,22 +1,23 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { H12_yzzbOpeDto } from './dto/h12_yzzbOpe.dto';
+import { H12_yzzbOpeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
 import { UsrcatService } from '../usrcat/usrcat.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BabyAdviceService } from './baby-advice.service';
-
+import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
 @Controller('h12_yzzb')
 export class h12_yzzbController {
   constructor(
     private readonly h12_yzzbService: h12_yzzbService,
     private readonly h12_yzxbService: h12_yzxbService,
+    private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) {}
+  ) { }
 
   @Get('findAllByPatient')
   async findAllByPatient(@Query() data: { zyid: string; yzlx: string }) {
@@ -202,5 +203,11 @@ export class h12_yzzbController {
   @Post('generateBaby')
   async generateBabyAdvice(@Body() generateDto: { zyid: string; ysid: string }) {
     return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.ysid);
+  }
+
+
+  @Post('review')
+  async review(@Body() dto: reviewDto) {
+    return await this.h12_yzxbServiceNew.review(dto);
   }
 }
