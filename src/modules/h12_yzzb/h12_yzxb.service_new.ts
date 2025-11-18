@@ -4,7 +4,7 @@ import { DataSource, In, Repository } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
@@ -29,23 +29,33 @@ export class h12_yzxbServiceNew {
 
   //护士复核医嘱
   async review(dto: reviewDto) {
-    let yzxbList = await this.h12_yzxbRepo.find({
-      where: {
-        zyid: dto.zyid,
-        yzlx: dto.yzlx,
-        yzxh: In([...dto.yzxh]),
-        mxxh: In([...dto.mxxh])
-      },
-      select: {
-        kshs: true,
-        hdhs: true,
-        hshdrq: true,
-        zyid: true,
-        yzlx: true,
-        yzxh: true,
-        mxxh: true
-      }
-    })
+    const [yzzb, yzxbList] = await Promise.all([
+      this.h12_yzzbRepo.findOne({
+        where: {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          yzxh: 1,
+        },
+      }),
+      this.h12_yzxbRepo.find({
+        where: {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          yzxh: In([...dto.yzxh]),
+          mxxh: In([...dto.mxxh])
+        },
+        select: {
+          kshs: true,
+          hdhs: true,
+          hshdrq: true,
+          zyid: true,
+          yzlx: true,
+          yzxh: true,
+          mxxh: true
+        }
+      }),
+    ])
+
     yzxbList.forEach((yzxb) => {
       if (yzxb.kshs) {
         throw new CustomException(ERR.ERR_10000, '该医嘱已经复核,复核工号：' + yzxb.kshs);
@@ -54,26 +64,49 @@ export class h12_yzxbServiceNew {
         throw new CustomException(ERR.ERR_10000, '该医嘱已经核对,核对工号：' + yzxb.hshd);
       }
       yzxb.kshs = dto.kshs
-      yzxb.hshd = dto.jshs
-      // yzxb.hshdrq = new Date()
+      yzxb.hshd = dto.kshs
+      yzxb.hdbz = 1
+      if (dto.yzlx === 2) {
+        yzxb.jshs = dto.jshs
+        yzxb.tzrq = dto.rq
+      }
+      if (dto.yzlx === 1 && yzzb.tzsj) {
+        yzxb.jshs = dto.jshs
+        yzxb.tzrq = dto.rq
+        // yzxb.tzrq = yzzb.tzsj
+      }
     })
     await this.h12_yzxbRepo.save(yzxbList)
-    // await this.dataSource.transaction(async (manager) => {
-    //   try {
-    //     const brxxRepository = manager.getRepository(h11_brxx)
-    //     const [brxx] = await Promise.all([
-    //       brxxRepository.findOne({
-    //         where: { zyid: dto.zyid },
-    //         select: { rycw: true, cycw: true, zyid: true }
-    //       }),
-    //     ])
-    //     if (!brxx) {
-    //       throw new CustomException(ERR.ERR_10000, '未找到有效住院信息');
-    //     }
-    //   } catch (error) {
-    //     console.error(error);
-    //     throw new CustomException(ERR.ERR_10000, error.message ?? '复核失败');
-    //   }
-    // });
+
+  }
+
+  //护士执行医嘱
+  async execute(dto: executeDto) {
+
+    try {
+      let zxbz = '10'
+
+      let { zxhs, zxks, zyid, executeType, beginDate, endDate, newYear = '', medicine = '', } = dto
+
+      if (executeType === '0') executeType = '%'
+
+      await this.dataSource.query(
+        `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+          @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
+        [
+          zxbz,
+          zyid,
+          zxks,
+          beginDate,
+          endDate,
+          zxhs,
+          executeType,
+        ]
+      );
+
+    } catch (error) {
+      console.error(error);
+      throw new CustomException(ERR.ERR_10000, error.message ?? '执行医嘱失败');
+    }
   }
 }
