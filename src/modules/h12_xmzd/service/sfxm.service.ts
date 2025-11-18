@@ -284,7 +284,10 @@ export class SfxmService {
       whereArray.push(`ypflbm in (${ypflbm})`);
     }
     if (params.xmzl) {
-      whereArray.push(`xmzl = ${params.xmzl}`);
+      if (params.xmzl === '4') {
+        whereArray.push(`xmid like 'T%'`);
+        whereArray.push(`xmzl = 1`);
+      } else whereArray.push(`xmzl = ${params.xmzl}`);
     }
 
     const whereClause = whereArray.length > 0 ? `WHERE ${whereArray.join(' AND ')}` : '';
