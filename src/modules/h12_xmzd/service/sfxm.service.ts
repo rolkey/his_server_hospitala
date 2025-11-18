@@ -285,7 +285,8 @@ export class SfxmService {
     }
     if (params.xmzl) {
       if (params.xmzl === '4') {
-        whereArray.push(`xmmc like 'T%'`);
+        whereArray.push(`xmid like 'T%'`);
+        whereArray.push(`xmzl = 1`);
       } else whereArray.push(`xmzl = ${params.xmzl}`);
     }
 
