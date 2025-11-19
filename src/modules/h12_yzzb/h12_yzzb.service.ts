@@ -61,13 +61,14 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
     if (data.yzzt == 1) {
-
-      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt) ', { yzzt: data.yzzt })
+      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt })
     }
     const getYzzxcs = async () => {
       if (data.yzzxcs === '1') {
         const h13_yzzxcsqb = this.h13_yzzxcsRepo.createQueryBuilder('h13_yzzxcs')
           .leftJoinAndSelect('h13_yzzxcs.fylbidEntity', 'h13_fylbidEntity')
+          .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
+          .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx',
             { zyid: data.zyid, yzlx: data.yzlx || '' })
           .orderBy('h13_yzzxcs.yzxh', 'ASC')

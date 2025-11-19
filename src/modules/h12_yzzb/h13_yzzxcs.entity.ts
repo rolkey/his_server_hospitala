@@ -4,6 +4,7 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { ksmc } from '../ksmc/ksmc.entity';
 import { usrcat } from '../usrcat/usrcat.entity';
 import { DateTransformer } from '@/common/transformers/date.transformer';
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 @Index('h13_yzzxcs_fydh', ['fydh'], {})
 @Index('H13_YZZXCS_JSDH', ['zyid', 'jsdh'], {})
 @Index('h13_yzzxcs_maxid', ['zyid', 'maxid'], {})
@@ -225,4 +226,10 @@ export class h13_yzzxcs {
   @ManyToOne(() => h12_yzxb, (h12_yzxb) => h12_yzxb.h13_yzzxcsList, { cascade: false, })
   @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
   h12_yzxb: h12_yzxb;
+
+
+  @ManyToOne(() => H00_xmzd)
+  @JoinColumn({ name: "xmid", referencedColumnName: "xmid" })
+  xmidEntity: H00_xmzd;
+
 }

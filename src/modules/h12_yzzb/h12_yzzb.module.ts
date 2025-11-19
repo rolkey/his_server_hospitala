@@ -33,7 +33,7 @@ import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
-
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 @Global()
 @Module({
   imports: [
@@ -51,6 +51,7 @@ import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
       H11Jszb,
       h11_brxx,
       H13YzzxcsTf,
+      H00_xmzd
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),

@@ -6,14 +6,21 @@
  * Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
  **********************************/
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 
 @Injectable()
-export class RedisService {
+export class RedisService implements OnModuleInit {
   @Inject('REDIS_CLIENT')
   private redisClient: RedisClientType;
 
+  async onModuleInit() {
+    console.log('[Redis] Connecting...');
+
+    await this.redisClient.connect();
+
+    console.log('[Redis] Connected');
+  }
   async get(key: string) {
     return await this.redisClient.get(key);
   }
