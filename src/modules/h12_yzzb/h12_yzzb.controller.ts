@@ -17,16 +17,12 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) { }
+  ) {}
 
   @Get('findAllByPatient')
-  async findAllByPatient(@Query() data: {
-    zyid: string;
-    yzlx: string,
-    yzzt?: number,
-    yzzxcs?: string
-  }) {
-
+  async findAllByPatient(
+    @Query() data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string },
+  ) {
     const record = await this.h12_yzzbService.findAllByPatient(data);
     return { record };
   }
