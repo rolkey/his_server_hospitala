@@ -29,6 +29,10 @@ export class h12_yzxbServiceNew {
 
   //护士复核医嘱
   async review(dto: reviewDto) {
+    let where = {
+      zyid: dto.zyid,
+      yzlx: dto.yzlx,
+    }
     const [yzzb, yzxbList] = await Promise.all([
       this.h12_yzzbRepo.findOne({
         where: {
@@ -38,21 +42,11 @@ export class h12_yzxbServiceNew {
         },
       }),
       this.h12_yzxbRepo.find({
-        where: {
-          zyid: dto.zyid,
-          yzlx: dto.yzlx,
-          yzxh: In([...dto.yzxh]),
-          mxxh: In([...dto.mxxh])
-        },
-        select: {
-          kshs: true,
-          hdhs: true,
-          hshdrq: true,
-          zyid: true,
-          yzlx: true,
-          yzxh: true,
-          mxxh: true
-        }
+        where: where,
+        select: ['kshs', 'hdhs', 'hshdrq',
+          'zyid', 'yzlx', 'yzxh',
+          'mxxh', 'hshd',
+          'hdbz', 'jshs', 'tzrq', 'xmmc']
       }),
     ])
 
@@ -77,19 +71,56 @@ export class h12_yzxbServiceNew {
       }
     })
     await this.h12_yzxbRepo.save(yzxbList)
-
   }
-
   //护士执行医嘱
   async execute(dto: executeDto) {
 
     try {
       let zxbz = '10'
 
-      let { zxhs, zxks, zyid, executeType, beginDate, endDate, newYear = '', medicine = '', } = dto
+      let { zxhs, zxks, zyid,
+        executeType, beginDate, endDate,
+        newYear = '', medicine = '', mxxh } = dto
 
-      if (executeType === '0') executeType = '%'
-
+      const [yzzb, yzxbList] = await Promise.all([
+        this.h12_yzzbRepo.findOne({
+          where: {
+            zyid: dto.zyid,
+            yzlx: In([1, 2, 7]),
+            yzxh: 1,
+          },
+        }),
+        this.h12_yzxbRepo.find({
+          where: {
+            zyid: dto.zyid,
+            yzlx: In([1, 2, 7]),
+          },
+          select: ['kshs', 'hdhs', 'hshdrq',
+            'zyid', 'yzlx', 'yzxh',
+            'mxxh', 'hshd',
+            'hdbz', 'jshs', 'tzrq', 'xmmc']
+        }),
+      ])
+      if (executeType === '0') {
+        executeType = '%'
+        const index = yzxbList.findIndex(item => !item.hshd)
+        if (index !== -1) {
+          const xmmc = yzxbList[index].xmmc
+          throw new CustomException(ERR.ERR_10000, `[${xmmc}] 未复核,请先复核医嘱`);
+        }
+      }
+      if (executeType === '101') {
+        executeType = String(mxxh)
+        zxbz = '9'
+      }
+      if (executeType === '102') {
+        executeType = '%'
+        zxbz = '5'
+      }
+      if (executeType === '103') {
+        executeType = '%'
+        zxbz = '3'
+      }
       await this.dataSource.query(
         `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
           @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,

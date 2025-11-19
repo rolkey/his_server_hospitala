@@ -78,5 +78,7 @@ export class executeDto {
   @IsOptional()
   medicine?: string;
 
+  @IsOptional()
+  mxxh?: number;
 }
 

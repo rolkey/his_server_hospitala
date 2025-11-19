@@ -30,9 +30,14 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) {}
+  ) { }
 
-  async findAllByPatient(data: { zyid: string; yzlx: string }) {
+  async findAllByPatient(data: {
+    zyid: string;
+    yzlx: string,
+    yzzt?: number,
+    yzzxcs?: string
+  }) {
     const queryBuilder = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
@@ -40,16 +45,6 @@ export class h12_yzzbService {
         zyid: data.zyid,
         yzlx: data.yzlx ?? '',
       });
-
-    // const h13_yzzxcsqb = this.h13_yzzxcsRepo
-    //   .createQueryBuilder('h13_yzzxcs')
-    //   .leftJoinAndSelect('h13_yzzxcs.fylbidEntity', 'h13_fylbidEntity')
-    //   .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx', {
-    //     zyid: data.zyid,
-    //     yzlx: data.yzlx || '',
-    //   })
-    //   .orderBy('h13_yzzxcs.yzxh', 'ASC')
-    //   .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
 
     const h12_yzxbqb = this.h12_yzxbRepo
       .createQueryBuilder('h12_yzxb')
@@ -65,30 +60,47 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
-    const [yzzb, h12_yzxbList, ksidList, usidList] = await Promise.all([
+    if (data.yzzt == 1) {
+
+      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt) ', { yzzt: data.yzzt })
+    }
+    const getYzzxcs = async () => {
+      if (data.yzzxcs === '1') {
+        const h13_yzzxcsqb = this.h13_yzzxcsRepo.createQueryBuilder('h13_yzzxcs')
+          .leftJoinAndSelect('h13_yzzxcs.fylbidEntity', 'h13_fylbidEntity')
+          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx',
+            { zyid: data.zyid, yzlx: data.yzlx || '' })
+          .orderBy('h13_yzzxcs.yzxh', 'ASC')
+          .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
+        return await h13_yzzxcsqb.getMany();
+      }
+      return []
+    }
+
+    const [yzzb, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
       queryBuilder.getOne(),
-      //   h13_yzzxcsqb.getMany(),
       h12_yzxbqb.getMany(),
       this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
       this.usrcatRepo.find({ select: ['usid', 'unam'] }),
+      getYzzxcs()
     ]);
     if (!yzzb) return null;
 
     // 构建字典
     const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
     const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
-    // h13_yzzxcsList.forEach((item) => {
-    //   item.ksidEntity = ksmcDict[item.ksid] || null;
-    //   item.zkksidEntity = ksmcDict[item.zkksid] || null;
-    //   item.syridEntity = usrcatDict[item.syrid] || null;
-    //   item.fyridEntity = usrcatDict[item.fyrid] || null;
-    // });
+    h13_yzzxcsList.forEach((item) => {
+      item.ksidEntity = ksmcDict[item.ksid] || null;
+      item.zkksidEntity = ksmcDict[item.zkksid] || null;
+      item.syridEntity = usrcatDict[item.syrid] || null;
+      item.fyridEntity = usrcatDict[item.fyrid] || null;
+    });
     h12_yzxbList.forEach((item) => {
       // 找到所有匹配的 h13_yzzxcs
-      //   const matchedH13 = h13_yzzxcsList.filter(
-      //     (h13) => h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
-      //   );
-      //   item.h13_yzzxcsList = matchedH13;
+      const matchedH13 = h13_yzzxcsList.filter(
+        (h13) => h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
+      );
+      item.h13_yzzxcsList = matchedH13;
       // 赋值所有注释掉的 leftJoinAndSelect 关联的字典
       item.ksysEntity = usrcatDict[item.ksys] || null;
       item.kshsEntity = usrcatDict[item.kshs] || null;
