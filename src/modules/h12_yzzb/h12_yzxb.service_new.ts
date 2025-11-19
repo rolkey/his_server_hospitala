@@ -89,7 +89,7 @@ export class h12_yzxbServiceNew {
   async execute(dto: executeDto) {
     try {
       let zxbz = '10';
-      let {
+      const {
         zxhs,
         zxks,
         zyid,
@@ -131,7 +131,7 @@ export class h12_yzxbServiceNew {
         }),
       ]);
       if (executeType === '0') {
-        executeType = '%';
+        const executeType = '%';
         const index = yzxbList.findIndex((item) => !item.kshs);
         if (index !== -1) {
           const xmmc = yzxbList[index].xmmc;
@@ -139,15 +139,15 @@ export class h12_yzxbServiceNew {
         }
       }
       if (executeType === '101') {
-        executeType = String(mxxh);
+        const executeType = String(mxxh);
         zxbz = '9';
       }
       if (executeType === '102') {
-        executeType = '%';
+        const executeType = '%';
         zxbz = '5';
       }
       if (executeType === '103') {
-        executeType = '%';
+        const executeType = '%';
         zxbz = '3';
       }
       await this.dataSource.query(
