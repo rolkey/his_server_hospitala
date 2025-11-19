@@ -608,7 +608,6 @@ export class h12_yzxbService {
 
         // 设置子项目信息
         this._setChildItemInfo(childAdvice, childItem);
-        childAdvice.ksid = advice.ksid;
       }
     } catch (error) {
       console.error(error);
@@ -648,6 +647,7 @@ export class h12_yzxbService {
     childAdvice.zycs = parentAdvice.zycs;
     childAdvice.yzlx = parentAdvice.yzlx;
     childAdvice.yzxh = parentAdvice.yzxh;
+    childAdvice.ksid = parentAdvice.ksid;
     childAdvice.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
     childAdvice.tcbz = 0; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
     childAdvice.sjbz = 1;
@@ -655,7 +655,9 @@ export class h12_yzxbService {
     childAdvice.jsbz = 0;
     childAdvice.zxbz = 0;
     childAdvice.tzbz = 0;
+    childAdvice.tybz = 0;
     childAdvice.tjbz = 0;
+    childAdvice.tpbz = 0;
     childAdvice.hdbz = parentAdvice.hdbz;
     childAdvice.lryid = this.userId;
     // childAdvice.yzzh = parentAdvice.yzzh;
