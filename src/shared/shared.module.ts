@@ -61,7 +61,7 @@ import { ContextService } from './context.service';
         const url = configService.get('REDIS_URL');
         console.log('Redis URL from ConfigService:', url); // 打印读取的值
         const client = createClient({ url });
-        await client.connect();
+        // await client.connect();
         return client;
       },
     },
@@ -87,4 +87,4 @@ import { ContextService } from './context.service';
   ],
   exports: [SharedService, RedisService, ContextService],
 })
-export class SharedModule {}
+export class SharedModule { }

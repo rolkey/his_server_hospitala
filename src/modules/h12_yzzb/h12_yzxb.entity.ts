@@ -393,4 +393,8 @@ export class h12_yzxb {
   //     cascade: false, // 禁用级联操作
   //   })
   //   h13_yzzxcsList: h13_yzzxcs[];
+  @OneToMany(() => h13_yzzxcs, (h13_yzzxcs) => h13_yzzxcs.h12_yzxb, {
+    cascade: false, // 禁用级联操作
+  })
+  h13_yzzxcsList: h13_yzzxcs[];
 }

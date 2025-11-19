@@ -36,7 +36,7 @@ import { TempSfxm } from '../h12_xmzd/entity/temp-sfxm.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
-
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 @Global()
 @Module({
   imports: [
@@ -56,6 +56,7 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
       H13YzzxcsTf,
       TempSfxm,
       SysparNew,
+      H00_xmzd,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
