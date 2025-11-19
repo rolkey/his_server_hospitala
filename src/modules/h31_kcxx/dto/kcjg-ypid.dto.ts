@@ -41,6 +41,7 @@ export class Kcjgxx {
   ypgg: string;
   fyfs: string;
   ybfl: string;
+  //   zflx: string;
   zzbz: string;
   cfqj: string;
   zysx: string;

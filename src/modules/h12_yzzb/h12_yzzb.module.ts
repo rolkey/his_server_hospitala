@@ -31,6 +31,9 @@ import { h11_lshModule } from '../h11_lsh/h11_lsh.module';
 import { h11_lsh } from '../h11_lsh/h11_lsh.entity';
 import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
+import { SfxmService } from '../h12_xmzd/service/sfxm.service';
+import { TempSfxm } from '../h12_xmzd/entity/temp-sfxm.entity';
+import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 
@@ -51,6 +54,8 @@ import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
       H11Jszb,
       h11_brxx,
       H13YzzxcsTf,
+      TempSfxm,
+      SysparNew,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -72,7 +77,8 @@ import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
     ContextService,
     BabyAdviceService,
     h11_lshService,
+    SfxmService,
   ],
   exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })
-export class h12_yzzbModule { }
+export class h12_yzzbModule {}

@@ -381,7 +381,7 @@ export class H31_kcxxService {
         response.data = {
           lsjg,
           pfjg,
-          scph: '',
+          scph: xmzd.scph,
           cjid: '',
           gsid: '',
           kcdw: xmzd.kcdw,
@@ -555,7 +555,7 @@ export class H31_kcxxService {
           sfdw: ypzd.sjjl,
           ypgg: ypzd.ypgg,
           fyfs: ypzd.syplid,
-          ybfl,
+          ybfl: ybfl,
           zzbz: String(ypzd.zzbz),
           cfqj: ypzd.cfqj,
           zysx: ypzd.zysx,

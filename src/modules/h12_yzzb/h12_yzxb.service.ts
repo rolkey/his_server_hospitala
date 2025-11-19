@@ -37,6 +37,7 @@ import { RequestContext } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
 import { ContextService } from '@/shared/context.service';
 import { h12_yzzbService } from './h12_yzzb.service';
+import { SfxmService } from '../h12_xmzd/service/sfxm.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -78,6 +79,7 @@ export class h12_yzxbService {
     private h11Jshztzd1Service: H11Jshztzd1Service,
     private h13_yzzxcsService: h13_yzzxcsService,
     private contextService: ContextService,
+    private sfxmService: SfxmService,
   ) {
     // this.context = new RequestContext();
   }
@@ -177,7 +179,11 @@ export class h12_yzxbService {
     }
   }
 
-  // 取组套
+  /**
+   * 取组套
+   * @param h12_yzxbs
+   * @returns
+   */
   async addPackageToAdvice(h12_yzxbs: H12_yzxbOpeDto) {
     const adviceList = [];
     const messages = [];
@@ -469,7 +475,7 @@ export class h12_yzxbService {
   //   return pageData;
   // }
 
-  private async _getKcjgA(request: KcjgYpidRequestDto): Promise<Kcjgxx> {
+  private async _getKcjgA(request: KcjgYpidRequestDto): Promise<any> {
     const kcjgYpidResponseDto = await this.h31_kcxxService.ueReadKcjgYpid(request);
     if (kcjgYpidResponseDto.success) {
       return kcjgYpidResponseDto.data;
@@ -528,7 +534,7 @@ export class h12_yzxbService {
     advice.jldw = item.jldw;
     advice.bzxx = item.bzxx;
     advice.typbz = item.typbz || '';
-    advice.jssj = item.ybfl?.trim();
+    advice.jssj = item.zflx?.trim();
     advice.cjid = item.cjid;
     advice.ksid = item.ksid;
     advice.scph = item.scph?.trim();
@@ -537,6 +543,7 @@ export class h12_yzxbService {
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
     advice.fybz = item.fybz;
+    // advice.zflx = item.ybfl;
     advice.zflx = item.fyfl;
     advice.gjybbm = item.gjybbm;
     advice.gjybmc = item.gjybmc;
@@ -589,7 +596,7 @@ export class h12_yzxbService {
     // 创建子医嘱项
     try {
       for (const [index, pkgItem] of packageItems.entries()) {
-        const childAdvice = new UpdateH12_yzxbDto();
+        const childAdvice = new h12_yzxb();
         packageAdvices.push(childAdvice);
 
         // 设置子医嘱基本信息
@@ -601,6 +608,7 @@ export class h12_yzxbService {
 
         // 设置子项目信息
         this._setChildItemInfo(childAdvice, childItem);
+        childAdvice.ksid = advice.ksid;
       }
     } catch (error) {
       console.error(error);
@@ -634,7 +642,7 @@ export class h12_yzxbService {
    * 设置子医嘱基本信息
    * @private
    */
-  async _setChildAdviceBaseInfo(childAdvice: UpdateH12_yzxbDto, parentAdvice: UpdateH12_yzxbDto) {
+  async _setChildAdviceBaseInfo(childAdvice: h12_yzxb, parentAdvice: UpdateH12_yzxbDto) {
     childAdvice.zyid = parentAdvice.zyid;
     childAdvice.zybh = parentAdvice.zybh;
     childAdvice.zycs = parentAdvice.zycs;
@@ -674,10 +682,11 @@ export class h12_yzxbService {
    * 设置套餐子项信息
    * @private
    */
-  _setChildItemInfo(childAdvice: UpdateH12_yzxbDto, childItem: any) {
+  _setChildItemInfo(childAdvice: h12_yzxb, childItem: any) {
     childAdvice.xmzl = childItem.xmzl;
-    childAdvice.xmid = childItem.xmid;
-    childAdvice.xmmc = childItem.xmmc;
+    childAdvice.xmid = childItem.xmid?.trim();
+    childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
+    childAdvice.xmmc = childItem.xmmc?.trim();
     childAdvice.xmdw = childItem.xmdw?.trim();
     childAdvice.xmdj = childItem.jldj;
     childAdvice.xmgg = childItem.xmgg;
@@ -690,18 +699,19 @@ export class h12_yzxbService {
     childAdvice.fylbid = childItem.fylbid?.trim();
     childAdvice.sfbz = childItem.sfbz;
     childAdvice.fybz = childItem.fybz?.trim();
-    childAdvice.zflx = childItem.fyfl;
+    childAdvice.zflx = childItem.ybfl?.trim();
     childAdvice.syplid = childItem.syplid || 'QD';
     childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
-    childAdvice.jssj = childItem.ybfl;
     childAdvice.gjybbm = childItem.gjybbm;
     childAdvice.gjybmc = childItem.gjybmc;
     childAdvice.ltbz = childItem.ltbz;
     childAdvice.sjyl1 = childItem.sjyl1;
     childAdvice.jldw = childItem.jldw?.trim();
     childAdvice.typbz = childItem.typbz;
-    childAdvice.kyts = childItem.kyts;
-    childAdvice.kyfs = childItem.kyfs;
+    // childAdvice.jssj = childItem.ybfl?.trim();
+    childAdvice.jssj = childItem.zflx?.trim();
+    // childAdvice.kyts = childItem.kyts;
+    // childAdvice.kyfs = childItem.kyfs;
   }
 
   /**
