@@ -1162,15 +1162,7 @@ export class h12_yzxbService {
     const tzsjDate = new Date(tzsj);
     tzsjDate.setHours(0, 0, 0, 0);
 
-    const h13_yzzxcses = await this.h13_yzzxcsRepository.find({
-      where: {
-        zyid: zyid,
-        yzxh: 1,
-        yzlx: yzlx,
-        yzzh: In(yzzh),
-        zxrq: MoreThanOrEqual(tzsjDate),
-      },
-    });
+    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, tzsjDate);
     if (h13_yzzxcses.length > 0 && ysstopbz === '0') {
       throw new BadRequestException('费用已经执行，不能停嘱');
     }
@@ -1210,6 +1202,54 @@ export class h12_yzxbService {
       await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
     });
     return true;
+  }
+
+  /**
+   * 检查是否可以作废
+   * @param zyid
+   * @param yzlx
+   * @param yzzh
+   * @param tzsj
+   */
+  async checkOrderVoidable(zyid: string, yzlx: number, yzzh: number[]) {
+    const h12_yzxbs = await this.h12_yzxbRepo.find({
+      where: {
+        zyid: zyid,
+        yzxh: 1,
+        yzlx: yzlx,
+        yzzh: In(yzzh),
+      },
+    });
+
+    const h12_yzxb = h12_yzxbs[0];
+    if (h12_yzxb.clbz === 1) {
+      throw new BadRequestException('检查已经处理，不能作废！！');
+    }
+
+    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, new Date(h12_yzxb.ksrq));
+    if (h13_yzzxcses.length > 0) {
+      throw new BadRequestException('费用已经执行，不能作废！！');
+    }
+  }
+
+  async voidable(zyid: string, yzlx: number, yzzh: number[], tzsj: string) {
+    await this.checkOrderVoidable(zyid, yzlx, yzzh);
+    await this.h12_yzxbRepo.update(
+      { zyid: zyid, yzxh: 1, yzlx: yzlx, yzzh: In(yzzh) },
+      { sjbz: 0, hdbz: 1 },
+    );
+  }
+
+  async checkExecute(zyid: string, yzlx: number, yzzh: number[], tzsjDate: Date) {
+    return await this.h13_yzzxcsRepository.find({
+      where: {
+        zyid: zyid,
+        yzxh: 1,
+        yzlx: yzlx,
+        yzzh: In(yzzh),
+        zxrq: MoreThanOrEqual(tzsjDate),
+      },
+    });
   }
 
   // 取消提交

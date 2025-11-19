@@ -216,4 +216,10 @@ export class h12_yzzbController {
   async execute(@Body() dto: executeDto) {
     return await this.h12_yzxbServiceNew.execute(dto);
   }
+
+  @Post('voidable')
+  async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[]; tzsj: string }) {
+    const { zyid, yzlx, yzzh, tzsj } = data;
+    return this.h12_yzxbService.voidable(zyid, yzlx, yzzh, tzsj);
+  }
 }
