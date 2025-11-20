@@ -359,6 +359,7 @@ export class h12_yzxbService {
       ybbz: 1, // 医嘱标志
       yzzt: 0, // 医嘱状态
       sjbz: 1, // 数据标志
+      tybz: 0, // 数据标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
       //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
@@ -425,6 +426,7 @@ export class h12_yzxbService {
     advice.zxbz = 0;
     advice.tzbz = 0;
     advice.tjbz = 0;
+    advice.tybz = 0;
     // advice.szbz = 1;
     advice.lryid = this.userId;
     advice.hdbz = this.systemId === '13' ? 1 : 0;
@@ -521,7 +523,7 @@ export class h12_yzxbService {
     }
     advice.xmzl = item.xmzl;
     advice.xmid = item.xmid;
-    advice.ypid = item.ypid;
+    advice.ypid = item.ypid ?? item.xmid;
     advice.xmmc = item.xmmc;
     advice.xmdw = item.xmdw?.trim();
     advice.xmdj = item.lsjg;
@@ -543,8 +545,7 @@ export class h12_yzxbService {
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
     advice.fybz = item.fybz;
-    // advice.zflx = item.ybfl;
-    advice.zflx = item.fyfl;
+    advice.zflx = item.ybfl?.trim();
     advice.gjybbm = item.gjybbm;
     advice.gjybmc = item.gjybmc;
     advice.ltbz = item.ltbz;
@@ -690,11 +691,10 @@ export class h12_yzxbService {
     childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
     childAdvice.xmmc = childItem.xmmc?.trim();
     childAdvice.xmdw = childItem.xmdw?.trim();
-    childAdvice.xmdj = childItem.jldj;
+    childAdvice.xmdj = childItem.lsjg; // jldj;
     childAdvice.xmgg = childItem.xmgg;
     childAdvice.pfjg = childItem.pfjg;
     childAdvice.cjid = childItem.cjid;
-    childAdvice.ksid = childItem.ksid;
     childAdvice.scph = childItem.scph;
     childAdvice.jfyl = childItem.jlsl;
     childAdvice.sjyl = childItem.jlsl;
@@ -702,6 +702,7 @@ export class h12_yzxbService {
     childAdvice.sfbz = childItem.sfbz;
     childAdvice.fybz = childItem.fybz?.trim();
     childAdvice.zflx = childItem.ybfl?.trim();
+    childAdvice.jssj = childItem.zflx?.trim();
     childAdvice.syplid = childItem.syplid || 'QD';
     childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
     childAdvice.gjybbm = childItem.gjybbm;
@@ -711,7 +712,6 @@ export class h12_yzxbService {
     childAdvice.jldw = childItem.jldw?.trim();
     childAdvice.typbz = childItem.typbz;
     // childAdvice.jssj = childItem.ybfl?.trim();
-    childAdvice.jssj = childItem.zflx?.trim();
     // childAdvice.kyts = childItem.kyts;
     // childAdvice.kyfs = childItem.kyfs;
   }

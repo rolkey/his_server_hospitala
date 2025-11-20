@@ -421,6 +421,11 @@ export class H31_kcxxService {
 
         const xs = ypzd.ysxs || 1;
         const kcgl = ypzd.jsl2 ?? 1;
+        // 处理医保分类
+        let ybfl = ypzd.abcfl?.toString() || '0';
+        if (ybfl !== '0' && ybfl.length === 1) {
+          ybfl = '0' + ybfl;
+        }
 
         if (kcgl !== 0) {
           response.success = true;
@@ -434,10 +439,11 @@ export class H31_kcxxService {
             sfdw: ypzd.sjjl,
             ypgg: ypzd.ypgg,
             fyfs: ypzd.syplid,
-            ybfl: ypzd.abcfl?.toString().padStart(2, '0') || '00',
+            ybfl: ybfl,
             zzbz: String(ypzd.zzbz),
             cfqj: ypzd.cfqj,
             zysx: ypzd.zysx,
+            // zflx: ypzd.zflx,
             psbz: ypzd.jsl1?.toString() || '',
             syffid: ypzd.syffid,
             zxks: '',
@@ -518,12 +524,6 @@ export class H31_kcxxService {
             .orderBy('kcxx.scph')
             .limit(1)
             .getRawOne();
-        }
-
-        // 处理医保分类
-        let ybfl = ypzd.abcfl?.toString() || '0';
-        if (ybfl !== '0' && ybfl.length === 1) {
-          ybfl = '0' + ybfl;
         }
 
         // 计算总库存
