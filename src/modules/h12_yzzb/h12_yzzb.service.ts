@@ -30,14 +30,9 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) { }
+  ) {}
 
-  async findAllByPatient(data: {
-    zyid: string;
-    yzlx: string,
-    yzzt?: number,
-    yzzxcs?: string
-  }) {
+  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
@@ -61,29 +56,32 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
     if (data.yzzt == 1) {
-      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt })
+      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt });
     }
     const getYzzxcs = async () => {
       if (data.yzzxcs === '1') {
-        const h13_yzzxcsqb = this.h13_yzzxcsRepo.createQueryBuilder('h13_yzzxcs')
+        const h13_yzzxcsqb = this.h13_yzzxcsRepo
+          .createQueryBuilder('h13_yzzxcs')
           .leftJoinAndSelect('h13_yzzxcs.fylbidEntity', 'h13_fylbidEntity')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
-          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx',
-            { zyid: data.zyid, yzlx: data.yzlx || '' })
+          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx', {
+            zyid: data.zyid,
+            yzlx: data.yzlx || '',
+          })
           .orderBy('h13_yzzxcs.yzxh', 'ASC')
           .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
         return await h13_yzzxcsqb.getMany();
       }
-      return []
-    }
+      return [];
+    };
 
     const [yzzb, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
       queryBuilder.getOne(),
       h12_yzxbqb.getMany(),
       this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
       this.usrcatRepo.find({ select: ['usid', 'unam'] }),
-      getYzzxcs()
+      getYzzxcs(),
     ]);
     if (!yzzb) return null;
 
