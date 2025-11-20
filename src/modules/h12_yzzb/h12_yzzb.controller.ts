@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { executeDto, H12_yzzbOpeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, H12_yzzbOpeDto, removeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -17,7 +17,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) {}
+  ) { }
 
   @Get('findAllByPatient')
   async findAllByPatient(
@@ -215,6 +215,11 @@ export class h12_yzzbController {
   @Post('execute')
   async execute(@Body() dto: executeDto) {
     return await this.h12_yzxbServiceNew.execute(dto);
+  }
+
+  @Post('deleteCost')
+  async delete(@Body() dto: removeDto) {
+    return await this.h12_yzxbServiceNew.deleteCost(dto);
   }
 
   @Post('voidable')

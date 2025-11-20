@@ -4,11 +4,12 @@ import { DataSource, In, Repository } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { executeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, removeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { syspar_newService } from '../syspar_new/syspar_new.service';
+import { h13_yzzxcs } from './h13_yzzxcs.entity';
 /**
  * 单一个Service程序过多，应该把一部分功能拆分出来，放在new里面
  */
@@ -19,13 +20,15 @@ export class h12_yzxbServiceNew {
     private h12_yzzbRepo: Repository<h12_yzzb>,
     @InjectRepository(h12_yzxb)
     private h12_yzxbRepo: Repository<h12_yzxb>,
+    @InjectRepository(h13_yzzxcs)
+    private h13_yzzxcsRepo: Repository<h13_yzzxcs>,
     private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
     private readonly syspar_newService: syspar_newService,
-  ) {}
+  ) { }
 
   // 取组套
-  async addPackageToAdvice() {}
+  async addPackageToAdvice() { }
 
   //护士复核医嘱
   async review(dto: reviewDto) {
@@ -74,13 +77,12 @@ export class h12_yzxbServiceNew {
       yzxb.hdbz = 1;
       yzxb.yzzt = 1;
       if (dto.yzlx === 2) {
+        if (!yzxb.tzrq) yzxb.tzrq = dto.rq;
         yzxb.jshs = dto.jshs;
-        yzxb.tzrq = dto.rq;
       }
       if (dto.yzlx === 1 && yzzb.tzsj) {
+        if (!yzxb.tzrq) yzxb.tzrq = dto.rq;
         yzxb.jshs = dto.jshs;
-        yzxb.tzrq = dto.rq;
-        // yzxb.tzrq = yzzb.tzsj
       }
     });
     await this.h12_yzxbRepo.save(yzxbList);
@@ -89,18 +91,9 @@ export class h12_yzxbServiceNew {
   async execute(dto: executeDto) {
     try {
       let zxbz = '10';
-      const {
-        zxhs,
-        zxks,
-        zyid,
-        executeType,
-        beginDate,
-        endDate,
-        newYear = '',
-        medicine = '',
-        mxxh,
-      } = dto;
-
+      const
+        { zxhs, zxks, zyid, beginDate, endDate, newYear = '', medicine = '', mxxh, } = dto;
+      let executeType = dto.executeType
       const [yzzb, yzxbList] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: {
@@ -115,23 +108,12 @@ export class h12_yzxbServiceNew {
             yzlx: In([1, 2, 7]),
           },
           select: [
-            'kshs',
-            'hdhs',
-            'hshdrq',
-            'zyid',
-            'yzlx',
-            'yzxh',
-            'mxxh',
-            'hshd',
-            'hdbz',
-            'jshs',
-            'tzrq',
-            'xmmc',
+            'kshs', 'hdhs', 'hshdrq', 'zyid', 'yzlx', 'yzxh', 'mxxh', 'hshd', 'hdbz', 'jshs', 'tzrq', 'xmmc',
           ],
         }),
       ]);
       if (executeType === '0') {
-        const executeType = '%';
+        executeType = '%';
         const index = yzxbList.findIndex((item) => !item.kshs);
         if (index !== -1) {
           const xmmc = yzxbList[index].xmmc;
@@ -139,15 +121,15 @@ export class h12_yzxbServiceNew {
         }
       }
       if (executeType === '101') {
-        const executeType = String(mxxh);
+        executeType = String(mxxh);
         zxbz = '9';
       }
       if (executeType === '102') {
-        const executeType = '%';
+        executeType = '%';
         zxbz = '5';
       }
       if (executeType === '103') {
-        const executeType = '%';
+        executeType = '%';
         zxbz = '3';
       }
       await this.dataSource.query(
@@ -171,5 +153,49 @@ export class h12_yzxbServiceNew {
       console.error(error);
       throw new CustomException(ERR.ERR_10000, error.message ?? '执行医嘱失败');
     }
+  }
+
+  async deleteCost(dto: removeDto) {
+    if (!dto.mxxhList.length) {
+      return
+    }
+    await this.dataSource.transaction(async (manager) => {
+      try {
+        const h13_yzzxcsRepository = manager.getRepository(h13_yzzxcs)
+
+        const h13_yzzxcsList = await h13_yzzxcsRepository.createQueryBuilder('h13_yzzxcs')
+
+          .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
+          .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
+          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.mxxh IN (:...mxxhList)', {
+            zyid: dto.zyid,
+            yzlx: dto.yzlx || '',
+            mxxhList: dto.mxxhList,
+          }).getMany()
+
+        h13_yzzxcsList.forEach(item => {
+          if (item.xmidEntity.xmzl === 1 && item.clbz === 1) {
+            throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已执行，不能删除`);
+          }
+          if (item.xmidEntity.xmzl !== 1 && item.fydh) {
+            throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已生成领药单，请发药科室退回单号【${item.fydh}】才可以删除!`);
+          }
+        })
+
+        const mxxhList = h13_yzzxcsList.map((item) => item.mxxh)
+
+        if (mxxhList.length) {
+          await h13_yzzxcsRepository.delete({
+            zyid: dto.zyid,
+            yzlx: dto.yzlx,
+            mxxh: In([...mxxhList])
+          })
+        }
+
+      } catch (error) {
+        console.error(error);
+        throw new CustomException(ERR.ERR_10000, error.message ?? '分配床位失败');
+      }
+    });
   }
 }
