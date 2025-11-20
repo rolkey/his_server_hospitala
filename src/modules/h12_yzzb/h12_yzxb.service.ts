@@ -536,7 +536,9 @@ export class h12_yzxbService {
     advice.jldw = item.jldw;
     advice.bzxx = item.bzxx;
     advice.typbz = item.typbz || '';
-    advice.jssj = item.zflx?.trim();
+    // advice.zflx = item.ybfl?.trim();
+    advice.zflx = item.fyfs?.trim();
+    advice.jssj = item.ybfl?.trim();
     advice.cjid = item.cjid;
     advice.ksid = item.ksid;
     advice.scph = item.scph?.trim();
@@ -545,7 +547,6 @@ export class h12_yzxbService {
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
     advice.fybz = item.fybz;
-    advice.zflx = item.ybfl?.trim();
     advice.gjybbm = item.gjybbm;
     advice.gjybmc = item.gjybmc;
     advice.ltbz = item.ltbz;
@@ -701,8 +702,9 @@ export class h12_yzxbService {
     childAdvice.fylbid = childItem.fylbid?.trim();
     childAdvice.sfbz = childItem.sfbz;
     childAdvice.fybz = childItem.fybz?.trim();
-    childAdvice.zflx = childItem.ybfl?.trim();
-    childAdvice.jssj = childItem.zflx?.trim();
+    // childAdvice.zflx = childItem.ybfl?.trim();
+    childAdvice.zflx = childItem.fyfs?.trim();
+    childAdvice.jssj = childItem.ybfl?.trim();
     childAdvice.syplid = childItem.syplid || 'QD';
     childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
     childAdvice.gjybbm = childItem.gjybbm;
