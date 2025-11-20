@@ -199,7 +199,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.2';
+    return '1.0.0.3';
   }
 
   @Post('generateBaby')
