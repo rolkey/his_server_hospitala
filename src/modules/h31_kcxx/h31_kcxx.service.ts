@@ -379,6 +379,7 @@ export class H31_kcxxService {
 
         response.success = true;
         response.data = {
+          ksid: null,
           lsjg,
           pfjg,
           scph: xmzd.scph,
@@ -425,6 +426,7 @@ export class H31_kcxxService {
         if (kcgl !== 0) {
           response.success = true;
           response.data = {
+            ksid: null,
             lsjg: 0,
             pfjg: 0,
             scph: '',
@@ -546,6 +548,7 @@ export class H31_kcxxService {
 
         response.success = true;
         response.data = {
+          ksid: lsKsid,
           lsjg,
           pfjg,
           scph: kcxx?.scph || '',

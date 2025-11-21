@@ -521,6 +521,7 @@ export class h12_yzxbService {
     if (!item.typbz) {
       advice.yzzh = await this.gyIdentityService.getMax('h12_yzzh');
     }
+    advice.ksid = item.ksid ?? advice.ksid;
     advice.xmzl = item.xmzl;
     advice.xmid = item.xmid;
     advice.ypid = item.ypid ?? item.xmid;
@@ -540,7 +541,6 @@ export class h12_yzxbService {
     advice.zflx = item.fyfs?.trim();
     advice.jssj = item.ybfl?.trim();
     advice.cjid = item.cjid;
-    advice.ksid = item.ksid;
     advice.scph = item.scph?.trim();
     advice.jfyl = item.jfyl;
     advice.sjyl = item.sjyl1;
@@ -610,6 +610,7 @@ export class h12_yzxbService {
 
         // 设置子项目信息
         this._setChildItemInfo(childAdvice, childItem);
+        childAdvice.ypid = mbid;
       }
     } catch (error) {
       console.error(error);
@@ -651,8 +652,9 @@ export class h12_yzxbService {
     childAdvice.yzxh = parentAdvice.yzxh;
     childAdvice.ksid = parentAdvice.ksid;
     childAdvice.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
-    childAdvice.tcbz = 0; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
+    childAdvice.tcbz = 1; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
     childAdvice.sjbz = 1;
+    childAdvice.kyts = 1;
     childAdvice.sfbz = 1;
     childAdvice.jsbz = 0;
     childAdvice.zxbz = 0;
@@ -660,6 +662,8 @@ export class h12_yzxbService {
     childAdvice.tybz = 0;
     childAdvice.tjbz = 0;
     childAdvice.tpbz = 0;
+    childAdvice.yzzt = 0;
+    childAdvice.kyfs = 1;
     childAdvice.hdbz = parentAdvice.hdbz;
     childAdvice.lryid = this.userId;
     // childAdvice.yzzh = parentAdvice.yzzh;
@@ -672,7 +676,6 @@ export class h12_yzxbService {
     // 同组基本项++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     childAdvice.yzzh = parentAdvice.yzzh;
     // 复制医生/护士信息
-    childAdvice.ksys = parentAdvice.ksys;
     childAdvice.kssxys = parentAdvice.kssxys;
     childAdvice.kshs = parentAdvice.kshs;
     childAdvice.kssxhs = parentAdvice.kssxhs;
@@ -687,9 +690,10 @@ export class h12_yzxbService {
    * @private
    */
   _setChildItemInfo(childAdvice: h12_yzxb, childItem: any) {
+    childAdvice.ksid = childItem.ksid ?? childAdvice.ksid;
     childAdvice.xmzl = childItem.xmzl;
     childAdvice.xmid = childItem.xmid?.trim();
-    childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
+    // childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
     childAdvice.xmmc = childItem.xmmc?.trim();
     childAdvice.xmdw = childItem.xmdw?.trim();
     childAdvice.xmdj = childItem.lsjg; // jldj;
