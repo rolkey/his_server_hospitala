@@ -213,15 +213,14 @@ export class h12_yzxbService {
           packageGroupId: 0,
           recursionDepth: 0,
         };
+        const groupControl = {};
 
         // 同组规则：加到同一组时，需要生成yzzh
         const newGroup = (h12_yzxbs.yzzh || 0) === 0;
         const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
 
         // 2. 处理选中的项目
-        for (let i = 0; i < h12_yzxbs.h12_mbxbs.length; i++) {
-          const item = h12_yzxbs.h12_mbxbs[i];
-
+        for (const [index, item] of h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).entries()) {
           // 判断是否是组套项目
           let isPackage = item.tcbz === 1;
           if (
@@ -249,6 +248,27 @@ export class h12_yzxbService {
             newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
           } else if (h12_yzxbs.yzzh === -1) {
             newAdvice.yzzh = yzzh; // 组套合并为同组
+          }
+
+          // 处理附加项目
+          const additionals = h12_yzxbs.h12_mbxbs.filter(
+            (mbxb) => mbxb.bz2 && mbxb.yzzh === item.yzzh,
+          );
+          if (!groupControl[item.yzzh] && additionals?.length > 0) {
+            // 取明细
+            for (const [index, additional] of additionals.entries()) {
+              const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
+                await this._createAdviceItem({
+                  isPackage: false,
+                  item: additional,
+                  newGroup: false,
+                  newZxcs: false,
+                  messages,
+                });
+              additionalAdvice.mxxh = index;
+              additionalAdvice.yzzh = newAdvice.yzzh;
+              adviceList.push(additionalAdvice);
+            }
           }
 
           const mbid =
