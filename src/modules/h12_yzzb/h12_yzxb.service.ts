@@ -269,6 +269,7 @@ export class h12_yzxbService {
               additionalAdvice.yzzh = newAdvice.yzzh;
               adviceList.push(additionalAdvice);
             }
+            groupControl[item.yzzh] = 1;
           }
 
           const mbid =
