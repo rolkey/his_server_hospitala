@@ -38,6 +38,7 @@ import { REQUEST } from '@nestjs/core';
 import { ContextService } from '@/shared/context.service';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { SfxmService } from '../h12_xmzd/service/sfxm.service';
+import { ypFylbid } from '@/constants/advice.contants';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -267,9 +268,13 @@ export class h12_yzxbService {
                 });
               additionalAdvice.mxxh = index;
               additionalAdvice.yzzh = newAdvice.yzzh;
+              additionalAdvice.ysbz = 0;
+              additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
               adviceList.push(additionalAdvice);
+
+              newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
             }
-            groupControl[item.yzzh] = 1;
+            groupControl[item.yzzh] = 1; // 避免注射组套子项重复取同组子项
           }
 
           const mbid =
