@@ -386,22 +386,8 @@ export class h12_yzxbServiceNew {
         yzxh: 1,
         mxxh: In(dto.mxxhList || []),
       },
-      select: [
-        'kshs',
-        'hdhs',
-        'hshdrq',
-        'zyid',
-        'yzlx',
-        'yzxh',
-        'mxxh',
-        'hshd',
-        'yzzt',
-        'hdbz',
-        'jshs',
-        'tzrq',
-        'xmmc',
-        'h13_yzzxcsList'
-      ],
+      select: { h13_yzzxcsList: true },
+      relations: { h13_yzzxcsList: true }
     })
     for (const item of yzxbList) {
       if (item?.h13_yzzxcsList?.length) {
