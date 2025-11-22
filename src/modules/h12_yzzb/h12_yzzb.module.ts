@@ -4,7 +4,7 @@ import { h12_yzxbService } from './h12_yzxb.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzzbController } from './h12_yzzb.controller';
-import { h13_yzzxcs } from './h13_yzzxcs.entity';
+
 import { h12_yzxb } from './h12_yzxb.entity';
 import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { ksmc } from '../ksmc/ksmc.entity';
@@ -37,6 +37,8 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 // import { H00TcxbService } from '../h00_tcxb/service/h00_tcxb.service';
 // import { UsrcatModule } from '../usrcat/usrcat.module';
 import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
+import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 @Global()
 @Module({
   imports: [
@@ -57,6 +59,7 @@ import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
       TempSfxm,
       SysparNew,
       H00_xmzd,
+      H31Lyjl
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -82,4 +85,4 @@ import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
   ],
   exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })
-export class h12_yzzbModule {}
+export class h12_yzzbModule { }

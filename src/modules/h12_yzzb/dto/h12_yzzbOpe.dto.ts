@@ -83,6 +83,14 @@ export class executeDto {
 }
 
 
+export class costDto {
+  @IsNotEmpty({ message: 'mxxh不能为空' })
+  mxxh?: number;
+
+  @IsOptional()
+  bzxcs?: number;
+}
+
 export class removeDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid?: string;
@@ -90,8 +98,11 @@ export class removeDto {
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
 
+  @IsNotEmpty({ message: 'zxhs不能为空' })
+  zxhs?: string;
+
   @IsNotEmpty({ message: 'mxxhList不能为空' })
   @IsArray()
-  mxxhList?: number[];
+  mxxhList?: costDto[];
 }
 

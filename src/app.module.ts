@@ -58,6 +58,7 @@ import { H11JsxbModule } from './modules/h11_jsxb/h11_jsxb.module';
 import { H11FpxbModule } from './modules/h11_fpxb/h11_fpxb.module';
 import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
 import { syspar_newModule } from './modules/syspar_new/syspar_new.module';
+import { H31LyjlModule } from './modules/h31_lyjl/h31_lyjl.module';
 
 @Module({
   imports: [
@@ -116,7 +117,8 @@ import { syspar_newModule } from './modules/syspar_new/syspar_new.module';
     H11JsxbModule,
     H11FpxbModule,
     H11XnhModule,
-    syspar_newModule
+    syspar_newModule,
+    H31LyjlModule
   ],
 })
 export class AppModule { }

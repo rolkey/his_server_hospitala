@@ -1,7 +1,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { syspar_new } from './syspar_new.entity';
 import { syspar } from './syspar.entity';
 
@@ -116,7 +116,6 @@ export class syspar_newService {
   }
 
   async findOne(syid: string, prid: string) {
-
     return this.sysparRepo.findOne({
       where: {
         syid: syid,
@@ -124,13 +123,13 @@ export class syspar_newService {
       }
     });
   }
-  async findNewOne(syid: string, prid: string) {
-    return this.syspar_newRepo.findOne({
-      where: {
-        syid: syid,
-        prid: prid
-      }
-    });
+  async findNewOne(syid: string, prid: string, manager?: EntityManager) {
+    const where = {
+      syid: syid,
+      prid: prid
+    }
+    return manager ? manager.findOne(syspar_new, { where }) :
+      this.syspar_newRepo.findOne({ where });
   }
   async updateNew(syid: string, prid: string, pval: string) {
     await this.syspar_newRepo.update({ syid, prid, }, { pval });

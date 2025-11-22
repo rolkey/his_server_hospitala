@@ -31,7 +31,7 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { RedisService } from '@/shared/redis.service';
 import { filterEntityFields } from '@/utils/entityUrils';
 import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
-import { h13_yzzxcs } from './h13_yzzxcs.entity';
+
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 import { RequestContext } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
@@ -39,6 +39,7 @@ import { ContextService } from '@/shared/context.service';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { SfxmService } from '../h12_xmzd/service/sfxm.service';
 import { ypFylbid } from '@/constants/advice.contants';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
