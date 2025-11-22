@@ -12,6 +12,7 @@ import {
 } from './h12_mbzb.dto';
 import { H12_mbxb } from '../h12_mbxb/h12_mbxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
+import { H00TcxbZyfj } from '../h00_tcxb/entity/h00_tcxb_zyfj.entity';
 
 @Injectable()
 export class H12_mbzbService {
@@ -20,7 +21,10 @@ export class H12_mbzbService {
     private readonly h12MbzbRepository: Repository<H12_mbzb>,
     @InjectRepository(H12_mbxb)
     private readonly h12MbxbRepository: Repository<H12_mbxb>,
+    // @InjectRepository(H00TcxbZyfj)
+    // private readonly h00TcxbZyfjRepository: Repository<H00TcxbZyfj>,
     // private readonly gyIdentityService: GyIdentityService,
+    // private dataSource: DataSource,
   ) {}
 
   async findAll(queryDto: QueryH12_mbzbDto) {
@@ -124,9 +128,20 @@ export class H12_mbzbService {
         item.mblx = savedItem.mblx;
         item.mxxh = index + 1;
         const mbxb = this.h12MbxbRepository.create(item);
-        await this.h12MbxbRepository.save(mbxb);
+        return this.h12MbxbRepository.save(mbxb);
+        // 如果是中药处方，保存中药明细
       }),
     );
+    // if (h12_mbSaveDto.cyTcxb?.length > 0) {
+    //   await Promise.all(
+    //     h12_mbSaveDto.cyTcxb.map(async (item, index) => {
+    //       item.mxxh = index + 1;
+    //       item.tcid = newItem.mbid;
+    //       const newTcxb = this.h00TcxbZyfjRepository.create(item);
+    //       return this.h00TcxbZyfjRepository.save(newTcxb);
+    //     }),
+    //   );
+    // }
     return true;
   }
 
