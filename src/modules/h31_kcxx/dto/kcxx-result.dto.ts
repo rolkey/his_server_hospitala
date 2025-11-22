@@ -10,7 +10,7 @@ export class KcxxResultDto {
     gsid: string;
     ypidn: string;
     kcsl: number;
-    xs?: number;
+    xs?: number; // 系数
     kcgl?: number;
   };
 }
