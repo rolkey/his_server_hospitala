@@ -8,7 +8,6 @@ import { executeDto, removeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { syspar_newService } from '../syspar_new/syspar_new.service';
-
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 /**
@@ -144,12 +143,12 @@ export class h12_yzxbServiceNew {
         if (syspar_new.pval === '1') {
           throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
         }
-        await this.syspar_newService.updateNew('99', 'zyyzfyzxbz', '1');
+        // await this.syspar_newService.updateNew('99', 'zyyzfyzxbz', '1');
         await this.dataSource.query(
           `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
           [zxks, zyid, zxhs, 0],
         );
-        await this.syspar_newService.updateNew('99', 'zyyzfyzxbz', '0');
+        // await this.syspar_newService.updateNew('99', 'zyyzfyzxbz', '0');
       }
     } catch (error) {
       console.error(error);
@@ -164,13 +163,25 @@ export class h12_yzxbServiceNew {
     }
     await this.dataSource.transaction(async (manager) => {
       try {
+
+        const syspar_new = await this.syspar_newService.findNewOne('99', 'zyyzfyzxbz', manager);
+
+        if (syspar_new.pval === '1') {
+          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
+        }
+
         const h13_yzzxcsRepository = manager.getRepository(h13_yzzxcs)
 
         const h13_yzzxcsList = await h13_yzzxcsRepository.createQueryBuilder('h13_yzzxcs')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
           .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl',)
-          .addSelect(['H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
+          .addSelect(['H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.zyid', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
+          .leftJoin('h13_yzzxcs.H13YzzxcsTfList', 'H13YzzxcsTfList')
+          .addSelect(['H13YzzxcsTfList.zxcs',
+            'H13YzzxcsTfList.yzxh', 'H13YzzxcsTfList.mxxh',
+            'H13YzzxcsTfList.fybz', 'H13YzzxcsTfList.fydh',
+            'H13YzzxcsTfList.yzlx', 'H13YzzxcsTfList.zyid', 'H13YzzxcsTfList.zxcs2'])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.mxxh IN (:...mxxhList)', {
             zyid: dto.zyid,
             yzlx: dto.yzlx || '',
@@ -182,29 +193,38 @@ export class h12_yzxbServiceNew {
           return
         }
         h13_yzzxcsList.forEach(item => {
-          if (item.xmidEntity.xmzl !== 1 && item.fydh) {
 
-          }
-          else if (item.xmidEntity.xmzl !== 1 && item?.H31Lyjl?.ckclbz === 1) {
+          if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl !== 1 && item?.H31Lyjl?.ckclbz === 1) {
             throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已发药，请走退费流程!`);
           }
-          else if (item.xmidEntity.xmzl !== 1 && item.fydh) {
+          else if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl !== 1 && item.fydh) {
             throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已生成领药单，请发药科室退回单号【${item.fydh}】才可以删除!`);
           }
 
-          if (item.xmidEntity.xmzl === 1 && item.clbz === 1) {
+          const H13YzzxcsTfList = item.H13YzzxcsTfList
+
+          const index = H13YzzxcsTfList.findIndex(item => item.fybz === 0)
+
+          if (index !== -1 && item.fydh) {
+            throw new CustomException(ERR.ERR_10000, `退药单 [${H13YzzxcsTfList[index].fydh}] 未执行退药`);
+          }
+          const bzxcs = H13YzzxcsTfList.reduce((val, item) => {
+            return item.zxcs + val
+          }, 0)
+
+          if (item.zxcs + bzxcs !== 0 && item.fydh) {
+            throw new CustomException(ERR.ERR_10000, `单号 [${item.fydh}] 未退完全部执行次数`);
+          }
+
+          if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl === 1 && item.clbz === 1) {
             throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已执行，不能删除`);
           }
-          // if (item.bzxcs !== item.zxcs) {
-          //   throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已生成领药单，请发药科室退回单号【${item.fydh}】才可以删除!`);
-          // }
-        })
 
-        const mxxhList = h13_yzzxcsList.map((item) => item.mxxh)
+        })
         await h13_yzzxcsRepository.delete({
           zyid: dto.zyid,
           yzlx: dto.yzlx,
-          mxxh: In([...mxxhList])
+          mxxh: In(h13_yzzxcsList.map((item) => item.mxxh))
         })
       } catch (error) {
         console.error(error);
@@ -220,6 +240,12 @@ export class h12_yzxbServiceNew {
     }
     await this.dataSource.transaction(async (manager) => {
       try {
+        const syspar_new = await this.syspar_newService.findNewOne('99', 'zyyzfyzxbz', manager);
+
+        if (syspar_new.pval === '1') {
+          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
+        }
+
         const h13_yzzxcsRepository = manager.getRepository(h13_yzzxcs)
 
         const H13YzzxcsTfRepository = manager.getRepository(H13YzzxcsTf)
@@ -227,18 +253,22 @@ export class h12_yzxbServiceNew {
         const h13_yzzxcsList = await h13_yzzxcsRepository.createQueryBuilder('h13_yzzxcs')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
-          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl', `H31Lyjl.ksid=h13_yzzxcs.ksid`)
-          .addSelect(['H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
+          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
+          .addSelect(['H31Lyjl.zyid', 'H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.mxxh IN (:...mxxhList)', {
             zyid: dto.zyid,
             yzlx: dto.yzlx || '',
             mxxhList: dto.mxxhList.map(item => item.mxxh),
           }).getMany()
+
         if (!h13_yzzxcsList.length) {
           return
         }
+
         let H13YzzxcsTfList: H13YzzxcsTf[] = []
+
         h13_yzzxcsList.forEach(item => {
+
           if (item.xmidEntity.xmzl === 1 && item.clbz === 1) {
             throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已执行，不能退费`);
           }
@@ -253,7 +283,7 @@ export class h12_yzxbServiceNew {
             ...item,
             czrq: new Date(),
             zxrq: new Date(),
-            fydh: null,
+            fydh: '',
             zxcs2: item.maxid,
             zxhs: dto.zxhs,
             zxcs: -1 * h13_yzzxcs.bzxcs,
@@ -265,12 +295,18 @@ export class h12_yzxbServiceNew {
             fybz: 0,
           })
           item.bzxcs = h13_yzzxcs.bzxcs
+          item.H31Lyjl = undefined
+          item.H13YzzxcsTfList = undefined
         })
 
         await Promise.all([
           h13_yzzxcsRepository.save(h13_yzzxcsList),
           H13YzzxcsTfRepository.save(H13YzzxcsTfList)
         ])
+        await manager.query(
+          `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
+          ['', dto.zyid, dto.zxhs, 0],
+        );
       } catch (error) {
         console.error(error);
         throw new CustomException(ERR.ERR_10000, error.message ?? '删除费用失败');

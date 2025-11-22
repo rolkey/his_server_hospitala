@@ -165,12 +165,13 @@ export class H13YzzxcsTf {
   @Column({ name: 'scrq', type: 'datetime', nullable: true })
   scrq: Date | null;
 
-  @ManyToOne(() => h13_yzzxcs)
+  @ManyToOne(() => h13_yzzxcs, { cascade: false })
   @JoinColumn([
     { name: 'yzxh', referencedColumnName: 'yzxh' },
     { name: 'mxxh', referencedColumnName: 'mxxh' },
     { name: 'yzlx', referencedColumnName: 'yzlx' },
     { name: 'zyid', referencedColumnName: 'zyid' },
+    { name: 'zxcs2', referencedColumnName: 'maxid' },
   ])
   h13_yzzxcs?: h13_yzzxcs;
 }

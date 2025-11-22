@@ -146,7 +146,10 @@ export class h13_yzzxcs {
   @Column({ name: 'ybfl', type: 'varchar', length: 8, nullable: true })
   ybfl: string | null;
 
-  @Column({ name: 'maxid', type: 'int', generated: 'identity' })
+  @Column({
+    name: 'maxid', type: 'int', nullable: true, insert: false,
+    update: false
+  })
   maxid: number;
 
   @Column({ name: 'scph', type: 'varchar', length: 12, nullable: true })
@@ -205,13 +208,16 @@ export class h13_yzzxcs {
   @JoinColumn({ name: "xmid", referencedColumnName: "xmid" })
   xmidEntity: H00_xmzd;
 
-  @ManyToOne(() => H31Lyjl)
+  @ManyToOne(() => H31Lyjl, {
+    cascade: false, // 禁用级联操作
+    nullable: true
+  })
   @JoinColumn([
     { name: 'fydh', referencedColumnName: 'djbh' },
     { name: 'ksid', referencedColumnName: 'ksid' },
     { name: 'zyid', referencedColumnName: 'zyid' },
   ])
-  H31Lyjl: H31Lyjl;
+  H31Lyjl?: H31Lyjl;
 
   @OneToMany(() => H13YzzxcsTf, (H13YzzxcsTf) => H13YzzxcsTf.h13_yzzxcs, {
     cascade: false, // 禁用级联操作
