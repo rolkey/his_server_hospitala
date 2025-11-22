@@ -207,21 +207,38 @@ export class h12_yzzbController {
     return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.ysid);
   }
 
+  /**
+ * 护士复核医嘱
+ */
   @Post('review')
   async review(@Body() dto: reviewDto) {
     return await this.h12_yzxbServiceNew.review(dto);
   }
 
+
+  /**
+   * 护士执行医嘱
+   */
   @Post('execute')
   async execute(@Body() dto: executeDto) {
     return await this.h12_yzxbServiceNew.execute(dto);
   }
 
+
+  /**
+   * 删除医嘱费用
+   */
   @Post('deleteCost')
   async delete(@Body() dto: removeDto) {
     return await this.h12_yzxbServiceNew.deleteCost(dto);
   }
-
+  /**
+   * 医嘱退费
+   */
+  @Post('refundCost')
+  async refund(@Body() dto: removeDto) {
+    return await this.h12_yzxbServiceNew.refundCost(dto);
+  }
   @Post('voidable')
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[]; tzsj: string }) {
     const { zyid, yzlx, yzzh, tzsj } = data;

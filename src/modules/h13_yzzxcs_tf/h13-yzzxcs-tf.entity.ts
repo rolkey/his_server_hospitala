@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Entity({ name: 'h13_yzzxcs_tf', schema: 'dbo' })
 export class H13YzzxcsTf {
@@ -119,7 +120,10 @@ export class H13YzzxcsTf {
   @Column({ name: 'ybfl', type: 'varchar', length: 8, nullable: true })
   ybfl: string | null;
 
-  @Column({ name: 'maxid', type: 'int', generated: 'identity' })
+  @Column({
+    name: 'maxid', type: 'int', nullable: true, insert: false,
+    update: false
+  })
   maxid: number;
 
   @Column({ name: 'scph', type: 'varchar', length: 12, nullable: true })
@@ -160,4 +164,13 @@ export class H13YzzxcsTf {
 
   @Column({ name: 'scrq', type: 'datetime', nullable: true })
   scrq: Date | null;
+
+  @ManyToOne(() => h13_yzzxcs)
+  @JoinColumn([
+    { name: 'yzxh', referencedColumnName: 'yzxh' },
+    { name: 'mxxh', referencedColumnName: 'mxxh' },
+    { name: 'yzlx', referencedColumnName: 'yzlx' },
+    { name: 'zyid', referencedColumnName: 'zyid' },
+  ])
+  h13_yzzxcs?: h13_yzzxcs;
 }

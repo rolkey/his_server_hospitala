@@ -6,8 +6,8 @@ import { DateTransformer } from '@/common/transformers/date.transformer';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
-import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { varcharNumberTransformer } from '@/utils/varchar-number.transformer'; // 引入 transformer
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Index('h12_yzxb_mxxh', ['zyid', 'mxxh'], {})
 @Index('h12_yzxb_x', ['zyid', 'yzlx', 'yzxh', 'mxxh'], { unique: true })
