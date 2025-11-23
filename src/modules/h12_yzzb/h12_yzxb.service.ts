@@ -86,6 +86,14 @@ export class h12_yzxbService {
     // this.context = new RequestContext();
   }
 
+  get brxx(): h11_brxx {
+    return this.contextService.get('brxx');
+  }
+
+  set brxx(value: h11_brxx) {
+    this.contextService.set('brxx', value);
+  }
+
   get yzrq(): Date {
     return this.contextService.get('yzrq');
   }
@@ -618,6 +626,26 @@ export class h12_yzxbService {
     if (!this.g_ksid) {
       this.g_ksid = await this.configReaderService.getKsids(advice.ksid);
     }
+    if (!this.brxx) {
+      this.brxx = await this.h11_brxxRepo.findOne({
+        where: { zyid: advice.zyid },
+        select: [
+          'zycs',
+          'brxm',
+          'brnl',
+          'etys',
+          'cyksid',
+          'cybs',
+          'rycw',
+          'xbid',
+          'nldw',
+          'nldw1',
+          'zybh',
+          'zkksid',
+        ],
+      });
+    }
+    const patientInfo = this.brxx;
 
     // 获取套餐项目
     const packageItems = await this.h00TcxbService.getCombinedData(mbid);
@@ -631,6 +659,9 @@ export class h12_yzxbService {
         // 设置子医嘱基本信息
         await this._setChildAdviceBaseInfo(childAdvice, advice);
         childAdvice.zxcs = index + 1;
+        childAdvice.ksid = patientInfo.cyksid
+          ? patientInfo.cyksid.trim()
+          : patientInfo.ryksid.trim();
 
         // 获取子项目详情
         const childItem = await this._getItemDetail(pkgItem);
@@ -757,6 +788,7 @@ export class h12_yzxbService {
     const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
       h12_yzzb1OpeDto;
     await this.saveAdvice({ zyid, yzlx, h12_yzxbs, deleteList });
+    // 提交医嘱消息
     await this.h11Jshztzd1Service.updateOrCreateRecord({
       zyid,
       gstr_ainf: { u_ksid: ksid, u_userid: userId },
