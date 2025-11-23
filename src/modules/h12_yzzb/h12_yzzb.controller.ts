@@ -17,7 +17,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) { }
+  ) {}
 
   @Get('findAllByPatient')
   async findAllByPatient(
@@ -199,7 +199,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.3';
+    return '1.0.0.4';
   }
 
   @Post('generateBaby')
@@ -208,13 +208,12 @@ export class h12_yzzbController {
   }
 
   /**
- * 护士复核医嘱
- */
+   * 护士复核医嘱
+   */
   @Post('review')
   async review(@Body() dto: reviewDto) {
     return await this.h12_yzxbServiceNew.review(dto);
   }
-
 
   /**
    * 护士执行医嘱
@@ -223,7 +222,6 @@ export class h12_yzzbController {
   async execute(@Body() dto: executeDto) {
     return await this.h12_yzxbServiceNew.execute(dto);
   }
-
 
   /**
    * 删除医嘱费用
@@ -241,13 +239,12 @@ export class h12_yzzbController {
   }
 
   /**
-    * 医嘱退回
-    */
+   * 医嘱退回
+   */
   @Post('refundAdvice')
   async refundAdvice(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.refundAdvice(dto);
   }
-
 
   @Post('voidable')
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[]; tzsj: string }) {
