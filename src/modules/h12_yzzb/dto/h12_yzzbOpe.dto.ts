@@ -91,7 +91,7 @@ export class costDto {
   bzxcs?: number;
 }
 
-export class removeDto {
+export class adviceDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid?: string;
 
@@ -104,5 +104,6 @@ export class removeDto {
   @IsNotEmpty({ message: 'mxxhList不能为空' })
   @IsArray()
   mxxhList?: costDto[];
+
 }
 

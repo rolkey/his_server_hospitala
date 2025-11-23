@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { executeDto, H12_yzzbOpeDto, removeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, H12_yzzbOpeDto, adviceDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -17,7 +17,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) {}
+  ) { }
 
   @Get('findAllByPatient')
   async findAllByPatient(
@@ -229,16 +229,26 @@ export class h12_yzzbController {
    * 删除医嘱费用
    */
   @Post('deleteCost')
-  async delete(@Body() dto: removeDto) {
+  async delete(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.deleteCost(dto);
   }
   /**
    * 医嘱退费
    */
   @Post('refundCost')
-  async refund(@Body() dto: removeDto) {
+  async refund(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.refundCost(dto);
   }
+
+  /**
+    * 医嘱退回
+    */
+  @Post('refundAdvice')
+  async refundAdvice(@Body() dto: adviceDto) {
+    return await this.h12_yzxbServiceNew.refundAdvice(dto);
+  }
+
+
   @Post('voidable')
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[]; tzsj: string }) {
     const { zyid, yzlx, yzzh, tzsj } = data;
