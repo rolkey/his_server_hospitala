@@ -1291,13 +1291,13 @@ export class h12_yzxbService {
       throw new BadRequestException('检查已经处理，不能作废！！');
     }
 
-    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, new Date(h12_yzxb.ksrq));
+    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, new Date(h12_yzxb.yzrq));
     if (h13_yzzxcses.length > 0) {
       throw new BadRequestException('费用已经执行，不能作废！！');
     }
   }
 
-  async voidable(zyid: string, yzlx: number, yzzh: number[], tzsj: string) {
+  async voidable(zyid: string, yzlx: number, yzzh: number[]) {
     await this.checkOrderVoidable(zyid, yzlx, yzzh);
     await this.h12_yzxbRepo.update(
       { zyid: zyid, yzxh: 1, yzlx: yzlx, yzzh: In(yzzh) },
