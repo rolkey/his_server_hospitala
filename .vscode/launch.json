@@ -7,7 +7,7 @@
             "runtimeExecutable": "pnpm", // 或 "npm"、"yarn"
             "runtimeArgs": [
                 "run",
-                "start:dev"
+                "start:debug"
             ], // 对应 package.json 中的脚本
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}", // 确保工作目录正确
