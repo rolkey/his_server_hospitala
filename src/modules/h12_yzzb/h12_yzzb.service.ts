@@ -2,7 +2,6 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
-import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { ksmc } from '../ksmc/ksmc.entity';
 import { usrcat } from '../usrcat/usrcat.entity';
@@ -10,7 +9,7 @@ import { h12_yzxb } from './h12_yzxb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import DateFormater from '@/utils/DateFormater';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { isNotEmpty } from 'class-validator';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Injectable()
 export class h12_yzzbService {
@@ -30,7 +29,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) {}
+  ) { }
 
   async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo
@@ -62,9 +61,11 @@ export class h12_yzzbService {
       if (data.yzzxcs === '1') {
         const h13_yzzxcsqb = this.h13_yzzxcsRepo
           .createQueryBuilder('h13_yzzxcs')
-          .leftJoinAndSelect('h13_yzzxcs.fylbidEntity', 'h13_fylbidEntity')
+          .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
+          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
+          .addSelect(['H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx', {
             zyid: data.zyid,
             yzlx: data.yzlx || '',

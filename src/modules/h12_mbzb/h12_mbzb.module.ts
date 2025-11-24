@@ -9,10 +9,11 @@ import { usrcat } from '@/modules/usrcat/usrcat.entity';
 import { H13YzzxcsTfModule } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.module';
 import { H12_mbxbService } from '../h12_mbxb/h12_mbxb.service';
 import { H12_mbxb } from '../h12_mbxb/h12_mbxb.entity';
+import { H00TcxbZyfj } from '../h00_tcxb/entity/h00_tcxb_zyfj.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([H12_mbzb, ksmc, usrcat, H12_mbxb]),
+    TypeOrmModule.forFeature([H12_mbzb, ksmc, usrcat, H12_mbxb, H00TcxbZyfj]),
     forwardRef(() => H13YzzxcsTfModule),
   ],
   providers: [H12_mbzbService, H12_mbxbService],

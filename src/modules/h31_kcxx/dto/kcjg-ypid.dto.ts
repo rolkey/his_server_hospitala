@@ -31,6 +31,7 @@ export class KcjgYpidRequestDto {
 
 // 库存价格信息
 export class Kcjgxx {
+  ksid: string;
   lsjg: number;
   pfjg: number;
   scph: string;

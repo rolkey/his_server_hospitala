@@ -125,18 +125,20 @@ export class H31_kcxxService {
       const kcxxResult = await this.h31_kcxxRepository
         .createQueryBuilder('kcxx')
         .select([
-          'kcxx.xsl - COALESCE(kcxx.mzdfsl, 0) - COALESCE(kcxx.dfsl, 0) - COALESCE(kcxx.ssdfsl, 0) as kcsl',
-          'COALESCE(kcxx.lsjg, 0) as lsjg',
-          'COALESCE(kcxx.pfjg, 0) as pfjg',
-          'kcxx.scph as scph',
-          'kcxx.gsid as gsid',
-          'kcxx.cjid as cjid',
-          'COALESCE(kcxx.ypid, "") as ypidn',
+          `kcxx.xsl - COALESCE(kcxx.mzdfsl, 0) - COALESCE(kcxx.dfsl, 0) -
+                COALESCE(kcxx.ssdfsl, 0) as kcsl,
+          COALESCE(kcxx.lsjg, 0) as lsjg,
+          COALESCE(kcxx.pfjg, 0) as pfjg,
+          kcxx.scph as scph,
+          kcxx.gsid as gsid,
+          kcxx.cjid as cjid,
+          COALESCE(kcxx.ypid, '') as ypidn`,
         ])
         .where('kcxx.ksid IN (:asKsid)', { asKsid })
         .andWhere('kcxx.yxbz = 1')
         .andWhere(
-          'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) - :adSl >= 0',
+          `kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) +
+                COALESCE(kcxx.ssdfsl, 0)) - :adSl >= 0`,
           { adSl },
         )
         .andWhere(
@@ -379,6 +381,7 @@ export class H31_kcxxService {
 
         response.success = true;
         response.data = {
+          ksid: null,
           lsjg,
           pfjg,
           scph: xmzd.scph,
@@ -425,6 +428,7 @@ export class H31_kcxxService {
         if (kcgl !== 0) {
           response.success = true;
           response.data = {
+            ksid: null,
             lsjg: 0,
             pfjg: 0,
             scph: '',
@@ -546,6 +550,7 @@ export class H31_kcxxService {
 
         response.success = true;
         response.data = {
+          ksid: lsKsid,
           lsjg,
           pfjg,
           scph: kcxx?.scph || '',
@@ -581,8 +586,22 @@ export class H31_kcxxService {
         if (kcsl <= 0) {
           // 调用ueReadKcjgXmid方法
           // 这里需要实现ueReadKcjgXmid的调用逻辑
+          const { data } = await this.ueReadKcjgXmid(ypzd.ypid, ypzd.zwmc, ypzd.ypgg, lsKsid, 1);
           // 如果失败，设置错误信息
-          response.message = `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允许使用该药品或材料，请手工录入附加!`;
+
+          if (data) {
+            response.data.lsjg = data.lsjg;
+            response.data.pfjg = data.pfjg;
+            response.data.scph = data.scph;
+            response.data.cjid = data.cjid;
+            response.data.gsid = data.gsid;
+            response.data.ypidn = data.ypidn;
+            response.data.kcsl = data.kcsl;
+            response.data.xs = data.xs;
+            response.data.kcgl = data.kcgl;
+          } else {
+            response.message = `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允许使用该药品或材料，请手工录入附加!`;
+          }
         } else if (xs * kcsl < 3) {
           response.message = `${ypzd.zwmc},${request.ypid}关联科室药品库存为:${this.roundNumber(
             kcsl * xs,

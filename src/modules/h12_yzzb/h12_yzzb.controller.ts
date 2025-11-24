@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { executeDto, H12_yzzbOpeDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, H12_yzzbOpeDto, adviceDto, reviewDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -199,7 +199,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.3';
+    return '1.0.0.4';
   }
 
   @Post('generateBaby')
@@ -207,19 +207,48 @@ export class h12_yzzbController {
     return await this.babyAdviceService.baby_generateAdvice(generateDto.zyid, generateDto.ysid);
   }
 
+  /**
+   * 护士复核医嘱
+   */
   @Post('review')
   async review(@Body() dto: reviewDto) {
     return await this.h12_yzxbServiceNew.review(dto);
   }
 
+  /**
+   * 护士执行医嘱
+   */
   @Post('execute')
   async execute(@Body() dto: executeDto) {
     return await this.h12_yzxbServiceNew.execute(dto);
   }
 
+  /**
+   * 删除医嘱费用
+   */
+  @Post('deleteCost')
+  async delete(@Body() dto: adviceDto) {
+    return await this.h12_yzxbServiceNew.deleteCost(dto);
+  }
+  /**
+   * 医嘱退费
+   */
+  @Post('refundCost')
+  async refund(@Body() dto: adviceDto) {
+    return await this.h12_yzxbServiceNew.refundCost(dto);
+  }
+
+  /**
+   * 医嘱退回
+   */
+  @Post('refundAdvice')
+  async refundAdvice(@Body() dto: adviceDto) {
+    return await this.h12_yzxbServiceNew.refundAdvice(dto);
+  }
+
   @Post('voidable')
-  async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[]; tzsj: string }) {
-    const { zyid, yzlx, yzzh, tzsj } = data;
-    return this.h12_yzxbService.voidable(zyid, yzlx, yzzh, tzsj);
+  async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[] }) {
+    const { zyid, yzlx, yzzh } = data;
+    return this.h12_yzxbService.voidable(zyid, yzlx, yzzh);
   }
 }

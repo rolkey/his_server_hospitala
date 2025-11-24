@@ -2,6 +2,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Allow } from 'class-validator';
 import { CreateH12_mbxbDto } from '../h12_mbxb/h12_mbxb.dto';
+// import { H00TcxbZyfjBaseDto } from '../h00_tcxb/dto/h00_tcxb_zyfj.dto';
 
 export class H12_mbzbBaseDto {
   @Allow()
@@ -63,4 +64,6 @@ export class H12_mbzbResponseDto extends H12_mbzbBaseDto {
 export class H12_mbSaveDto extends CreateH12_mbzbDto {
   @Allow()
   h12mbxb: CreateH12_mbxbDto[];
+  //   @Allow()
+  //   cyTcxb: H00TcxbZyfjBaseDto[];
 }

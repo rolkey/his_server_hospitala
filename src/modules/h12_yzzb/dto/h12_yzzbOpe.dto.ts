@@ -82,3 +82,28 @@ export class executeDto {
   mxxh?: number;
 }
 
+
+export class costDto {
+  @IsNotEmpty({ message: 'mxxh不能为空' })
+  mxxh?: number;
+
+  @IsOptional()
+  bzxcs?: number;
+}
+
+export class adviceDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'yzlx不能为空' })
+  yzlx?: number;
+
+  @IsNotEmpty({ message: 'zxhs不能为空' })
+  zxhs?: string;
+
+  @IsNotEmpty({ message: 'mxxhList不能为空' })
+  @IsArray()
+  mxxhList?: costDto[];
+
+}
+

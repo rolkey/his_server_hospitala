@@ -31,13 +31,15 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { RedisService } from '@/shared/redis.service';
 import { filterEntityFields } from '@/utils/entityUrils';
 import { H11Jshztzd1Service } from '../h11_jshztzd1/h11-jshztzd1.service';
-import { h13_yzzxcs } from './h13_yzzxcs.entity';
+
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 import { RequestContext } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
 import { ContextService } from '@/shared/context.service';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { SfxmService } from '../h12_xmzd/service/sfxm.service';
+import { ypFylbid } from '@/constants/advice.contants';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -82,6 +84,14 @@ export class h12_yzxbService {
     private sfxmService: SfxmService,
   ) {
     // this.context = new RequestContext();
+  }
+
+  get brxx(): h11_brxx {
+    return this.contextService.get('brxx');
+  }
+
+  set brxx(value: h11_brxx) {
+    this.contextService.set('brxx', value);
   }
 
   get yzrq(): Date {
@@ -213,15 +223,14 @@ export class h12_yzxbService {
           packageGroupId: 0,
           recursionDepth: 0,
         };
+        const groupControl = {};
 
         // 同组规则：加到同一组时，需要生成yzzh
         const newGroup = (h12_yzxbs.yzzh || 0) === 0;
         const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
 
         // 2. 处理选中的项目
-        for (let i = 0; i < h12_yzxbs.h12_mbxbs.length; i++) {
-          const item = h12_yzxbs.h12_mbxbs[i];
-
+        for (const [index, item] of h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).entries()) {
           // 判断是否是组套项目
           let isPackage = item.tcbz === 1;
           if (
@@ -249,6 +258,32 @@ export class h12_yzxbService {
             newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
           } else if (h12_yzxbs.yzzh === -1) {
             newAdvice.yzzh = yzzh; // 组套合并为同组
+          }
+
+          // 处理附加项目
+          const additionals = h12_yzxbs.h12_mbxbs.filter(
+            (mbxb) => mbxb.bz2 && mbxb.yzzh === item.yzzh,
+          );
+          if (!groupControl[item.yzzh] && additionals?.length > 0) {
+            // 取明细
+            for (const [index, additional] of additionals.entries()) {
+              const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
+                await this._createAdviceItem({
+                  isPackage: false,
+                  item: additional,
+                  newGroup: false,
+                  newZxcs: false,
+                  messages,
+                });
+              additionalAdvice.mxxh = index;
+              additionalAdvice.yzzh = newAdvice.yzzh;
+              additionalAdvice.ysbz = 0;
+              additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+              adviceList.push(additionalAdvice);
+
+              newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+            }
+            groupControl[item.yzzh] = 1; // 避免注射组套子项重复取同组子项
           }
 
           const mbid =
@@ -359,6 +394,7 @@ export class h12_yzxbService {
       ybbz: 1, // 医嘱标志
       yzzt: 0, // 医嘱状态
       sjbz: 1, // 数据标志
+      tybz: 0, // 数据标志
       yzrq: DateFormater.formatDate(new Date().toString()),
       //   ksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.cyksid } }),
       //   zkksidEntity: await this.ksmcRepo.findOne({ where: { ksid: patientInfo.zkksid } }),
@@ -425,6 +461,7 @@ export class h12_yzxbService {
     advice.zxbz = 0;
     advice.tzbz = 0;
     advice.tjbz = 0;
+    advice.tybz = 0;
     // advice.szbz = 1;
     advice.lryid = this.userId;
     advice.hdbz = this.systemId === '13' ? 1 : 0;
@@ -519,9 +556,10 @@ export class h12_yzxbService {
     if (!item.typbz) {
       advice.yzzh = await this.gyIdentityService.getMax('h12_yzzh');
     }
+    advice.ksid = item.ksid ?? advice.ksid;
     advice.xmzl = item.xmzl;
     advice.xmid = item.xmid;
-    advice.ypid = item.ypid;
+    advice.ypid = item.ypid ?? item.xmid;
     advice.xmmc = item.xmmc;
     advice.xmdw = item.xmdw?.trim();
     advice.xmdj = item.lsjg;
@@ -534,17 +572,16 @@ export class h12_yzxbService {
     advice.jldw = item.jldw;
     advice.bzxx = item.bzxx;
     advice.typbz = item.typbz || '';
-    advice.jssj = item.zflx?.trim();
+    // advice.zflx = item.ybfl?.trim();
+    advice.zflx = item.fyfs?.trim();
+    advice.jssj = item.ybfl?.trim();
     advice.cjid = item.cjid;
-    advice.ksid = item.ksid;
     advice.scph = item.scph?.trim();
     advice.jfyl = item.jfyl;
     advice.sjyl = item.sjyl1;
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
     advice.fybz = item.fybz;
-    // advice.zflx = item.ybfl;
-    advice.zflx = item.fyfl;
     advice.gjybbm = item.gjybbm;
     advice.gjybmc = item.gjybmc;
     advice.ltbz = item.ltbz;
@@ -589,6 +626,26 @@ export class h12_yzxbService {
     if (!this.g_ksid) {
       this.g_ksid = await this.configReaderService.getKsids(advice.ksid);
     }
+    if (!this.brxx) {
+      this.brxx = await this.h11_brxxRepo.findOne({
+        where: { zyid: advice.zyid },
+        select: [
+          'zycs',
+          'brxm',
+          'brnl',
+          'etys',
+          'cyksid',
+          'cybs',
+          'rycw',
+          'xbid',
+          'nldw',
+          'nldw1',
+          'zybh',
+          'zkksid',
+        ],
+      });
+    }
+    const patientInfo = this.brxx;
 
     // 获取套餐项目
     const packageItems = await this.h00TcxbService.getCombinedData(mbid);
@@ -602,12 +659,16 @@ export class h12_yzxbService {
         // 设置子医嘱基本信息
         await this._setChildAdviceBaseInfo(childAdvice, advice);
         childAdvice.zxcs = index + 1;
+        childAdvice.ksid = patientInfo.cyksid
+          ? patientInfo.cyksid.trim()
+          : patientInfo.ryksid.trim();
 
         // 获取子项目详情
         const childItem = await this._getItemDetail(pkgItem);
 
         // 设置子项目信息
         this._setChildItemInfo(childAdvice, childItem);
+        childAdvice.ypid = mbid;
       }
     } catch (error) {
       console.error(error);
@@ -649,8 +710,9 @@ export class h12_yzxbService {
     childAdvice.yzxh = parentAdvice.yzxh;
     childAdvice.ksid = parentAdvice.ksid;
     childAdvice.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
-    childAdvice.tcbz = 0; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
+    childAdvice.tcbz = 1; // 套餐标志tcbz与收费标志sfbz是互为相反的标志
     childAdvice.sjbz = 1;
+    childAdvice.kyts = 1;
     childAdvice.sfbz = 1;
     childAdvice.jsbz = 0;
     childAdvice.zxbz = 0;
@@ -658,6 +720,8 @@ export class h12_yzxbService {
     childAdvice.tybz = 0;
     childAdvice.tjbz = 0;
     childAdvice.tpbz = 0;
+    childAdvice.yzzt = 0;
+    childAdvice.kyfs = 1;
     childAdvice.hdbz = parentAdvice.hdbz;
     childAdvice.lryid = this.userId;
     // childAdvice.yzzh = parentAdvice.yzzh;
@@ -670,7 +734,6 @@ export class h12_yzxbService {
     // 同组基本项++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     childAdvice.yzzh = parentAdvice.yzzh;
     // 复制医生/护士信息
-    childAdvice.ksys = parentAdvice.ksys;
     childAdvice.kssxys = parentAdvice.kssxys;
     childAdvice.kshs = parentAdvice.kshs;
     childAdvice.kssxhs = parentAdvice.kssxhs;
@@ -685,23 +748,25 @@ export class h12_yzxbService {
    * @private
    */
   _setChildItemInfo(childAdvice: h12_yzxb, childItem: any) {
+    childAdvice.ksid = childItem.ksid ?? childAdvice.ksid;
     childAdvice.xmzl = childItem.xmzl;
     childAdvice.xmid = childItem.xmid?.trim();
-    childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
+    // childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
     childAdvice.xmmc = childItem.xmmc?.trim();
     childAdvice.xmdw = childItem.xmdw?.trim();
-    childAdvice.xmdj = childItem.jldj;
+    childAdvice.xmdj = childItem.lsjg; // jldj;
     childAdvice.xmgg = childItem.xmgg;
     childAdvice.pfjg = childItem.pfjg;
     childAdvice.cjid = childItem.cjid;
-    childAdvice.ksid = childItem.ksid;
     childAdvice.scph = childItem.scph;
     childAdvice.jfyl = childItem.jlsl;
     childAdvice.sjyl = childItem.jlsl;
     childAdvice.fylbid = childItem.fylbid?.trim();
     childAdvice.sfbz = childItem.sfbz;
     childAdvice.fybz = childItem.fybz?.trim();
-    childAdvice.zflx = childItem.ybfl?.trim();
+    // childAdvice.zflx = childItem.ybfl?.trim();
+    childAdvice.zflx = childItem.fyfs?.trim();
+    childAdvice.jssj = childItem.ybfl?.trim();
     childAdvice.syplid = childItem.syplid || 'QD';
     childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
     childAdvice.gjybbm = childItem.gjybbm;
@@ -711,7 +776,6 @@ export class h12_yzxbService {
     childAdvice.jldw = childItem.jldw?.trim();
     childAdvice.typbz = childItem.typbz;
     // childAdvice.jssj = childItem.ybfl?.trim();
-    childAdvice.jssj = childItem.zflx?.trim();
     // childAdvice.kyts = childItem.kyts;
     // childAdvice.kyfs = childItem.kyfs;
   }
@@ -724,6 +788,7 @@ export class h12_yzxbService {
     const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
       h12_yzzb1OpeDto;
     await this.saveAdvice({ zyid, yzlx, h12_yzxbs, deleteList });
+    // 提交医嘱消息
     await this.h11Jshztzd1Service.updateOrCreateRecord({
       zyid,
       gstr_ainf: { u_ksid: ksid, u_userid: userId },
@@ -1226,13 +1291,13 @@ export class h12_yzxbService {
       throw new BadRequestException('检查已经处理，不能作废！！');
     }
 
-    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, new Date(h12_yzxb.ksrq));
+    const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, new Date(h12_yzxb.yzrq));
     if (h13_yzzxcses.length > 0) {
       throw new BadRequestException('费用已经执行，不能作废！！');
     }
   }
 
-  async voidable(zyid: string, yzlx: number, yzzh: number[], tzsj: string) {
+  async voidable(zyid: string, yzlx: number, yzzh: number[]) {
     await this.checkOrderVoidable(zyid, yzlx, yzzh);
     await this.h12_yzxbRepo.update(
       { zyid: zyid, yzxh: 1, yzlx: yzlx, yzzh: In(yzzh) },

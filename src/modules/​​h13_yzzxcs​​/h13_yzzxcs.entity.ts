@@ -1,6 +1,11 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { h12_yzxb } from '@/modules/h12_yzzb/h12_yzxb.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
+import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
+import { ksmc } from '../ksmc/ksmc.entity';
+import { usrcat } from '../usrcat/usrcat.entity';
+import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
+import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 
 @Entity({ name: 'h13_yzzxcs', schema: 'dbo' })
 export class h13_yzzxcs {
@@ -21,6 +26,12 @@ export class h13_yzzxcs {
 
   @Column({ name: 'ksid', type: 'varchar', length: 10, nullable: true })
   ksid: string | null;
+
+
+  @ManyToOne(() => ksmc)
+  @JoinColumn({ name: "ksid", referencedColumnName: "ksid" })
+  ksidEntity: ksmc;
+
 
   @Column({ name: 'fydh', type: 'varchar', length: 12, nullable: true })
   fydh: string | null;
@@ -79,6 +90,11 @@ export class h13_yzzxcs {
   @Column({ name: 'syrid', type: 'varchar', length: 10, nullable: true })
   syrid: string | null;
 
+
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: "syrid", referencedColumnName: "usid" })
+  syridEntity: usrcat;
+
   @Column({ name: 'sysj', type: 'datetime', nullable: true })
   sysj: Date | null;
 
@@ -97,11 +113,20 @@ export class h13_yzzxcs {
   @Column({ name: 'fyrid', type: 'varchar', length: 10, nullable: true })
   fyrid: string | null;
 
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: "fyrid", referencedColumnName: "usid" })
+  fyridEntity: usrcat;
+
   @Column({ name: 'zxcs', type: 'decimal', precision: 16, scale: 4, nullable: true })
   zxcs: number | null;
 
   @Column({ name: 'zkksid', type: 'varchar', length: 10, nullable: true })
   zkksid: string | null;
+
+
+  @ManyToOne(() => ksmc)
+  @JoinColumn({ name: "zkksid", referencedColumnName: "ksid" })
+  zkksidEntity: ksmc;
 
   @Column({ name: 'clbz', type: 'int', default: 0, nullable: true })
   clbz: number;
@@ -121,7 +146,10 @@ export class h13_yzzxcs {
   @Column({ name: 'ybfl', type: 'varchar', length: 8, nullable: true })
   ybfl: string | null;
 
-  @Column({ name: 'maxid', type: 'int', generated: 'identity' })
+  @Column({
+    name: 'maxid', type: 'int', nullable: true, insert: false,
+    update: false
+  })
   maxid: number;
 
   @Column({ name: 'scph', type: 'varchar', length: 12, nullable: true })
@@ -175,4 +203,25 @@ export class h13_yzzxcs {
   @ManyToOne(() => h00_fylb, (h00_fylb) => h00_fylb.fylbid)
   @JoinColumn([{ name: 'fylbid', referencedColumnName: 'fylbid' }])
   h00_fylb: h00_fylb;
+
+  @ManyToOne(() => H00_xmzd)
+  @JoinColumn({ name: "xmid", referencedColumnName: "xmid" })
+  xmidEntity: H00_xmzd;
+
+  @ManyToOne(() => H31Lyjl, {
+    cascade: false, // 禁用级联操作
+    nullable: true
+  })
+  @JoinColumn([
+    { name: 'fydh', referencedColumnName: 'djbh' },
+    { name: 'ksid', referencedColumnName: 'ksid' },
+    { name: 'zyid', referencedColumnName: 'zyid' },
+  ])
+  H31Lyjl?: H31Lyjl;
+
+  @OneToMany(() => H13YzzxcsTf, (H13YzzxcsTf) => H13YzzxcsTf.h13_yzzxcs, {
+    cascade: false, // 禁用级联操作
+  })
+  H13YzzxcsTfList: H13YzzxcsTf[];
+
 }
