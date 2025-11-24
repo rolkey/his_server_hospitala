@@ -20,7 +20,9 @@ export class H23RytzService {
     const { page = 1, pageSize = 10, ...filters } = queryDto;
     const skip = (page - 1) * pageSize;
 
-    const queryBuilder = this.h23RytzRepository.createQueryBuilder('rytz');
+    const queryBuilder = this.h23RytzRepository
+      .createQueryBuilder('rytz')
+      .leftJoinAndSelect('rytz.ryqkEntity', 'ryqkEntity');
 
     // 添加过滤条件
     if (filters.tzdh) {
