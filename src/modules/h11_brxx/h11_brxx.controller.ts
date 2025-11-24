@@ -7,6 +7,7 @@ import {
   QueryCostDetailDto,
   QueryCostCategoryDto,
   bedAllocationDto,
+  QueryDto,
 } from './dto';
 
 @Controller('h11_brxx')
@@ -23,6 +24,12 @@ export class h11_brxxController {
     const brxx = await this.h11_brxxService.findOne(data.zyid);
     return { record: brxx };
   }
+
+  @Get('findPatientTotal')
+  async findPatientTotal(@Query() queryDto: QueryDto) {
+    return this.h11_brxxService.findPatientTotal(queryDto);
+  }
+
 
   @Post('create')
   async create(@Body() dto: CreateDto) {

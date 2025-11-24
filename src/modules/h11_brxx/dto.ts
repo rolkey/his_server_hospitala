@@ -340,6 +340,9 @@ export class QueryDto {
   @Allow()
   ryksid?: string;
 
+  @Allow()
+  zkksid?: string;
+
   @OnlyOneOf('ryjssj', { message: '入院开始时间和入院结束时间不能同时为空' })
   rykssj?: string;
 

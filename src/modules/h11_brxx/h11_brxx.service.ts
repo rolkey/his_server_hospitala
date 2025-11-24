@@ -9,6 +9,7 @@ import {
   QueryCostDetailDto,
   QueryCostCategoryDto,
   bedAllocationDto,
+  QueryDto,
 } from './dto';
 import dayjs = require('dayjs');
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
@@ -73,6 +74,10 @@ export class h11_brxxService {
 
     if (queryDto.ryksid) {
       baseQuery.andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
+    }
+
+    if (queryDto.zkksid) {
+      baseQuery.andWhere(' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )', { zkksid: `%${queryDto.zkksid.trim()}%` });
     }
 
     if (queryDto.mzys) {
@@ -334,4 +339,74 @@ export class h11_brxxService {
   }
 
 
+  async findPatientTotal(queryDto: QueryDto) {
+    const {
+      sxys = '',
+      ryksid = '',
+      zkksid = '',
+      rykssj,
+      ryjssj,
+      cykssj,
+      cyjssj,
+    } = queryDto;
+
+    // 通用日期格式化函数
+    const buildDateRange = (start: string, end: string) => ({
+      start: dayjs(start).format('YYYY-MM-DD 00:00:00'),
+      end: dayjs(end).format('YYYY-MM-DD 23:59:59'),
+    });
+
+    // 创建通用 QueryBuilder 函数
+    const qb = () => this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+
+    const rysjRange = buildDateRange(rykssj, ryjssj);
+    const cysjRange = buildDateRange(cykssj, cyjssj);
+
+    // 1. myQuery
+    const myQuery = qb()
+      .andWhere('h11_brxx.sxys LIKE :sxys', { sxys: `%${sxys.trim()}%` })
+      .andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${ryksid.trim()}%` })
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
+
+    // 2. zkQuery
+    const zkQuery = qb()
+      .andWhere(
+        `EXISTS (
+        SELECT 1 
+        FROM h13_brzkqk zk 
+        WHERE zk.zyid = h11_brxx.zyid 
+          AND zk.ksid LIKE :zkksid
+      )`,
+        { zkksid: `%${zkksid.trim()}%` },
+      )
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
+
+    // 3. inQuery (在院)
+    const inQuery = qb()
+      .andWhere('(h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL)')
+      .andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${ryksid.trim()}%` })
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
+
+    // 4. dbQuery (待办)
+    const dbQuery = qb()
+      .andWhere('h11_brxx.zyzt <= 3')
+      .andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${ryksid.trim()}%` })
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
+
+    // 5. outQuery (出院)
+    const outQuery = qb()
+      .andWhere('h11_brxx.zyzt = 4')
+      .andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${ryksid.trim()}%` })
+      .andWhere('h11_brxx.cysj BETWEEN :start AND :end', cysjRange);
+
+    const [my, zk, IN, db, out] = await Promise.all([
+      myQuery.getCount(),
+      zkQuery.getCount(),
+      inQuery.getCount(),
+      dbQuery.getCount(),
+      outQuery.getCount(),
+    ]);
+
+    return { my, zk, in: IN, db, out };
+  }
 }
