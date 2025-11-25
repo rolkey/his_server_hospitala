@@ -2,7 +2,12 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { H11Jszb } from './h11_jszb.entity';
-import { CreateH11JszbDto, UpdateH11JszbDto, H11JszbQueryDto } from './h11_jszb.dto';
+import {
+  CreateH11JszbDto,
+  UpdateH11JszbDto,
+  H11JszbQueryDto,
+  H11JszbCancelDto,
+} from './h11_jszb.dto';
 import { CreateH11JsxbDto } from '../h11_jsxb/h11_jsxb.dto';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_brxxService } from '../h11_brxx/h11_brxx.service';
@@ -299,7 +304,46 @@ export class H11JszbService {
     return { zfje, qtje, yjje, jsjeSum, ssjeSum, syjeSum, costCategory };
   }
 
-  async cancel(jsdh: string) {
+  async cancel(dto: H11JszbCancelDto) {
+    const userId = dto.czrid;
+    const userName = dto.czrxm;
+    const jszb = await this.findOne(dto.jsdh);
+    if (!jszb) {
+      throw new NotFoundException(`结算单号 ${jszb.jsdh} 不存在`);
+    }
+    if (!jszb.fpzh) {
+      throw new BadRequestException(`该结算单已经作废1！`);
+    }
+    if (jszb.sjzt === 0) {
+      throw new BadRequestException(`该结算单已经作废2！`);
+    }
+    if (jszb.fpbz === 1) {
+      throw new BadRequestException(`该结算单有发票，请先将发票作废！`);
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const jsdhZF = (
+        await this.h11_lshService.getSerialNumber('JSDH', '结算单号码', 10)
+      ).toString(); //获取结算单号
+      if (!jsdhZF) throw new BadRequestException('结算单号获取失败');
+      if (jsdhZF === '-1') throw new BadRequestException('发票号码获取失败');
+
+      await this.cancelJSZB(dto.jsdh, jsdhZF, userId, userName, dto.zyid, queryRunner);
+      //throw new BadRequestException('回滚测试!');
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async cancelOld(jsdh: string) {
     const jszb = await this.findOne(jsdh);
     if (!jszb) {
       throw new NotFoundException(`结算单号 ${jsdh} 不存在`);
@@ -479,5 +523,146 @@ export class H11JszbService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * 作废结算单(新)
+   * @param jsdh 结算单号
+   * @param queryRunner 事务
+   */
+  async cancelJSZB(
+    jsdh: string,
+    jsdhZF: string,
+    userId: string,
+    userName: string,
+    zyid: string,
+    queryRunner: any,
+  ) {
+    // 1.修改医嘱信息
+    const mmjs = (await this.paramService.gfGetPara(11, 'mmjs', '0', '毛毛合并结算')).toString();
+    if (mmjs == '0') {
+      const updateYZZX = await queryRunner.query(
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid = @0 and jsdh = @1`,
+        [zyid, jsdh],
+      );
+      const updateYZZB = await queryRunner.query(`Update h12_yzzb Set jsbz = 0 Where zyid = @0`, [
+        zyid,
+      ]);
+    } else if (mmjs == '1') {
+      const updateYZZX = await queryRunner.query(
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1)) and jsdh = @2`,
+        [zyid, zyid, jsdh],
+      );
+      const updateYZZB = await queryRunner.query(
+        `Update h12_yzzb Set jsbz = 0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1))`,
+        [zyid, zyid],
+      );
+    } else {
+      const updateYZZX = await queryRunner.query(
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601' )) and jsdh = @2`,
+        [zyid, zyid, jsdh],
+      );
+      const updateYZZB = await queryRunner.query(
+        `Update h12_yzzb Set jsbz = 0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601'))`,
+        [zyid, zyid],
+      );
+    }
+
+    // 2.将床位租用表(h13_cwzy)中属于该结算单的内容打上未结算标志
+    const updateCWZY = await queryRunner.query(
+      `Update h13_cwzy Set jsbz = 0, jsdh = '' Where jsdh = @0`,
+      [jsdh],
+    );
+
+    // 3.将预交款(h11_yjk)中属于该结算单的收据打上未结算标志
+    const selectYJK = await queryRunner.query(
+      `SELECT isnull(Sum(rmbje),0) AS rmbje
+       FROM h11_yjk  
+       WHERE jsdh = @0
+       And sjlx = 1 And sjzt = 1`,
+      [jsdh],
+    );
+    const selectJSHZ = await queryRunner.query(
+      `SELECT h11_jshz.zyid,h11_jshz.zybh,h11_jshz.brxm,   
+            h11_jshz.yjhz as yjhz,   
+            h11_jshz.jshz,   
+            h11_jshz.syyj,   
+            h11_jshz.qtje,   
+            h11_jshz.qfbz  
+       FROM h11_jshz  
+       WHERE zyid = @0`,
+      [zyid],
+    );
+    if (selectJSHZ.length > 0) {
+      const updateJSHZ = await queryRunner.query(
+        `Update h11_jshz Set yjhz = yjhz + @0 Where zyid = @1`,
+        [selectYJK[0].rmbje, zyid],
+      );
+    } else {
+      const insertJSHZ = await queryRunner.query(
+        `Insert h11_jshz(zyid,zybh,brxm,yjhz) Values(@0,@1,@2,@3)`,
+        [zyid, '', '', selectYJK[0].rmbje],
+      );
+    }
+    const updateYJK = await queryRunner.query(
+      `Update h13_cwzy Set jsbz = 0, jsdh = '' Where jsdh = @0`,
+      [jsdh],
+    );
+
+    // 处方
+    const updateCF = await queryRunner.query(
+      `Update h12_yzcfxb Set jsbz = 0, jsdh = '' Where jsdh = @0`,
+      [jsdh],
+    );
+
+    // 4.将手术细表(h15_ssxb)中属于该结算单的内容打上未结算标志
+    const selectSSXB = await queryRunner.query(
+      `SELECT isnull(Sum(xmdj*jfyl*zfbl),0) AS yszje
+       FROM h15_ssxb  
+       WHERE jsdh = @0
+       And sfbz = 1`,
+      [jsdh],
+    );
+    const updateSSZB = await queryRunner.query(
+      `Update h15_sszb Set yszje = yszje + @0,jsbz = 0 Where zyid = @1`,
+      [selectSSXB[0].yszje, zyid],
+    );
+    const updateSSXB = await queryRunner.query(
+      `Update h15_ssxb Set jsbz = 0, jsdh = '' Where jsdh = @0`,
+      [jsdh],
+    );
+
+    // 5.插入负数
+    const insertJSZB = await queryRunner.query(
+      `INSERT INTO h11_jszb (jsdh, zybh, brxm, xbid, rysj, zyid, jslx, jsje, zfje, gfje, jmje, qfje, ssje, jmlxid, fpzh, yjje, syje,zzsj, ksid, ksmc, jsyid, jssj, jsyxm, fpbz, czf, sjzt, sfsj, fphm)
+           SELECT @0, zybh, brxm, xbid, rysj, zyid, jslx, jsje * -1, zfje * -1, gfje * -1, jmje * -1, qfje * -1, ssje * -1, jmlxid, @1, yjje * -1, syje * -1,zzsj, ksid, ksmc, @2, @3, @4, fpbz, czf, sjzt, @5, fphm
+           FROM h11_jszb 
+           WHERE jsdh = @6`,
+      [jsdhZF, jsdh, userId, new Date(), userName, new Date(), jsdh],
+    );
+
+    const insertJSXB = await queryRunner.query(
+      `INSERT INTO h11_jsxb (jsdh, fylbid, fylbmc, jsje, zfje, gfje, jmje, qfje, ssje)
+         SELECT @0, fylbid, fylbmc, jsje* -1, zfje* -1, gfje* -1, jmje* -1, qfje* -1, ssje* -1
+         FROM h11_jsxb 
+         WHERE jsdh = @1`,
+      [jsdhZF, jsdh],
+    );
+
+    const insertXNH = await queryRunner.query(
+      `INSERT INTO H11_xnh (fphm, zyid, zyh, brxm, ylzh, fyhj, kbhj, sjhj, bsbl, ljfyhj, ljfykb, ljsjhj, lxdz, jgmc, sfje, dbje, yhje, yhkh, je1, je2, bz1, xnhj, je3,szbz, mzbc, qtje1, qtje2, qtje3, qtje4, bzxx,zfje,qt1,qt2,qt3,qt4,yfje,yfje1,yfje2,yfje3,yfje4)
+           SELECT @0, zyid, zyh, brxm, ylzh, fyhj * -1, kbhj * -1, sjhj * -1, bsbl, ljfyhj * -1, ljfykb * -1, ljsjhj * -1, lxdz, jgmc, sfje * -1, dbje * -1, yhje * -1, yhkh, je1 * -1, je2 * -1, bz1, xnhj * -1, je3 * -1,szbz, mzbc  * -1, qtje1 * -1, qtje2 * -1, qtje3 * -1, qtje4 * -1, bzxx,zfje * -1,qt1 * -1,qt2 * -1,qt3 * -1,qt4 * -1,yfje * -1,yfje1 * -1,yfje2 * -1,yfje3 * -1,yfje4 * -1
+           FROM H11_xnh 
+           WHERE fphm = @1`,
+      [jsdhZF, jsdh],
+    );
+
+    // 6.修改结算主表
+    const updateJSZBOld = await queryRunner.query(`Update h11_jszb Set fpzh = @0 Where jsdh = @1`, [
+      jsdhZF,
+      jsdh,
+    ]);
+
+    return 0;
   }
 }

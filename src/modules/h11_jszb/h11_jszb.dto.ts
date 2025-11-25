@@ -317,3 +317,21 @@ export class H11JszbQueryDto {
   @IsNumber()
   pageSize?: number = 10;
 }
+
+export class H11JszbCancelDto {
+  @IsNotEmpty({ message: '结算单号不能为空!' })
+  @IsString()
+  jsdh?: string;
+
+  @IsNotEmpty({ message: '住院ID不能为空!' })
+  @IsString()
+  zyid?: string;
+
+  @IsNotEmpty({ message: '操作人id不能为空' })
+  @IsString()
+  czrid?: string;
+
+  @IsNotEmpty({ message: '操作人姓名不能为空' })
+  @IsString()
+  czrxm?: string;
+}

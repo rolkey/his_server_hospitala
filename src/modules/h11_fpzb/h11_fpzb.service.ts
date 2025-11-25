@@ -185,7 +185,6 @@ export class H11FpzbService {
     const userId = dto.czrid;
     const userName = dto.czrxm;
     const fpzb = await this.findOne(dto.fphm);
-    log(fpzb);
     if (!fpzb) {
       throw new BadRequestException(`发票 ${dto.fphm} 不存在`);
     }
@@ -305,7 +304,7 @@ export class H11FpzbService {
           [jsdhZF, fpzb.zyid, fpzb.jsdh],
         );
       }
-      throw new BadRequestException('回滚测试!');
+      //throw new BadRequestException('回滚测试!');
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
