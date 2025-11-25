@@ -40,6 +40,8 @@ import { h12_yzzbService } from './h12_yzzb.service';
 import { SfxmService } from '../h12_xmzd/service/sfxm.service';
 import { ypFylbid } from '@/constants/advice.contants';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { CustomException } from '@/common/exceptions/custom.exception';
+import { ERR } from '@/common/exceptions/error-code';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -404,7 +406,8 @@ export class h12_yzxbService {
       yzzh: newGroup ? await this.gyIdentityService.getMax('h12_yzzh') : 0,
       tpbz: 0, //附加标志
       hdbz: 0,
-      zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
+      // zxcs: newZxcs || 1,
+      // zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
     });
 
     return newRecord;
@@ -785,19 +788,28 @@ export class h12_yzxbService {
    * @param h12_yzzb1OpeDto
    */
   async submitAdvices(h12_yzzb1OpeDto: H12_yzzb1OpeDto) {
-    const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
-      h12_yzzb1OpeDto;
-    await this.saveAdvice({ zyid, yzlx, h12_yzxbs, deleteList });
-    // 提交医嘱消息
-    await this.h11Jshztzd1Service.updateOrCreateRecord({
-      zyid,
-      gstr_ainf: { u_ksid: ksid, u_userid: userId },
-      yzlx,
-      ldt_sj: new Date(),
-      cycw,
-      zybh,
-      brxm,
-      qfbz,
+    await this.dataSource.transaction(async (manager) => {
+      try {
+        const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
+          h12_yzzb1OpeDto;
+        await Promise.all([
+          this.saveAdviceManager({ zyid, yzlx, h12_yzxbs, deleteList }, manager),
+          // 提交医嘱消息
+          this.h11Jshztzd1Service.updateOrCreateRecord({
+            zyid,
+            gstr_ainf: { u_ksid: ksid, u_userid: userId },
+            yzlx,
+            ldt_sj: new Date(),
+            cycw,
+            zybh,
+            brxm,
+            qfbz,
+          }, manager)
+        ])
+      } catch (error: any) {
+        console.error('医嘱提交失败', error?.stack ?? error?.message ?? error);
+        throw new CustomException(ERR.ERR_10000, error?.message ?? '医嘱提交失败');
+      }
     });
   }
 
@@ -808,9 +820,27 @@ export class h12_yzxbService {
    * @param xxData 附加信息数据数组
    * @param h12_yzzbOpe 业务参数
    */
-  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto, manager?: EntityManager) {
-    const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
+  async saveAdvice(h12_yzzbOpe: H12_yzzbOpeDto) {
 
+    return await this.dataSource.transaction(async (manager) => {
+      try {
+        return await this.saveAdviceManager(h12_yzzbOpe, manager)
+      } catch (error: any) {
+        console.error('医嘱保存失败', error?.stack ?? error?.message ?? error);
+        throw new CustomException(ERR.ERR_10000, error?.message ?? '医嘱保存失败');
+      }
+    })
+  }
+  /**
+   * 验证并保存医嘱数据
+   * @param h12_yzzbObj 主表数据
+   * @param h12_yzxbList 细表数据数组
+   * @param xxData 附加信息数据数组
+   * @param h12_yzzbOpe 业务参数
+   */
+  async saveAdviceManager(h12_yzzbOpe: H12_yzzbOpeDto, manager?: EntityManager) {
+
+    const h12_yzxbList = h12_yzzbOpe.h12_yzxbs;
     // const h12_yzzb_record = this.h12_yzzbRepo.find({
     //   where: { zyid: h12_yzzbOpe.zyid, yzlx: h12_yzzbOpe.yzlx ?? 0 },
     // });
@@ -853,7 +883,7 @@ export class h12_yzxbService {
     // 处理删除记录
     for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
       const { zyid, yzlx, yzxh, mxxh } = h12_yzzbOpe.deleteList[i];
-      await this.remove(zyid, yzlx, yzxh, mxxh);
+      await this.remove(zyid, yzlx, yzxh, mxxh, manager);
     }
 
     // 初始化变量
@@ -865,7 +895,7 @@ export class h12_yzxbService {
 
     // 验证医嘱
     for (let i = 0; i < h12_yzxbList.length; i++) {
-      const adviceRow = h12_yzxbList[i];
+      let adviceRow = h12_yzxbList[i];
 
       // 特殊医嘱处理
       const specialOrders = ['     术 后 医 嘱', '     重 整 医 嘱', '     产 后 医 嘱'];
@@ -934,7 +964,7 @@ export class h12_yzxbService {
 
       // 病重告知处理
       if (adviceRow.xmid === 'A000000') {
-        await this.updatePatientStatus(adviceRow.zyid, adviceRow.tzbz === 1 ? '3' : '1');
+        await this.updatePatientStatus(adviceRow.zyid, adviceRow.tzbz === 1 ? '3' : '1', manager);
       }
 
       // 验证库存
@@ -942,7 +972,7 @@ export class h12_yzxbService {
         (adviceRow.tjbz === 0 || adviceRow.tzbz === 0) &&
         (adviceRow.xmzl === 2 || adviceRow.xmzl === 3)
       ) {
-        const usageFrequency = await this.getUsageFrequency(adviceRow.syplid);
+        const usageFrequency = await this.getUsageFrequency(adviceRow.syplid, manager);
         const requiredQuantity = adviceRow.jfyl * usageFrequency * adviceRow.kyts;
 
         const stockAvailable = await this.checkStock(
@@ -953,10 +983,10 @@ export class h12_yzxbService {
           requiredQuantity,
           i,
         );
-
         if (!stockAvailable) {
           throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
         }
+        adviceRow.zxcs = i + 1
       }
 
       // TODO: 校验库存
@@ -973,32 +1003,28 @@ export class h12_yzxbService {
     }
 
     // 2. 保存数据
-    await this.dataSource.transaction(async (manager) => {
-      //   try {
-      for (let i = 0; i < h12_yzxbList.length; i++) {
-        const adviceRow = h12_yzxbList[i];
+    // await this.dataSource.transaction(async (manager) => {
+    //   try {
+    // for (let i = 0; i < h12_yzxbList.length; i++) {
+    //   const adviceRow = h12_yzxbList[i];
+    await Promise.all(h12_yzxbList.map((item) => this.saveYzxb(item, manager)))
+    //   附加项目会保存在主记录的附加记录中
+    // if (adviceRow.ysbz === 0) continue;
 
-        // //   附加项目会保存在主记录的附加记录中
-        // if (adviceRow.ysbz === 0) continue;
-
-        await this.saveYzxb(adviceRow, manager);
-        // // 保存明细
-        // if (adviceRow.additional) {
-        //   for (const additionalItem of adviceRow.additional) {
-        //     await this.saveYzxb(additionalItem, manager);
-        //   }
-        // }
-      }
-
-      // 重新处理排序，限制：只有删除才会重排，新增
-      //   if (h12_yzzbOpe.deleteList?.length > 0) {
-      //     await this.resetZxcs(h12_yzzbOpe.zyid, h12_yzzbOpe.yzlx, manager);
-      //   }
-    });
-
+    // 保存明细
+    // if (adviceRow.additional) {
+    //   for (const additionalItem of adviceRow.additional) {
+    //     await this.saveYzxb(additionalItem, manager);
+    //   }
+    // }
+    // }
+    // 重新处理排序，限制：只有删除才会重排，新增
+    //   if (h12_yzzbOpe.deleteList?.length > 0) {
+    //     await this.resetZxcs(h12_yzzbOpe.zyid, h12_yzzbOpe.yzlx, manager);
+    //   }
+    // });
     return '数据保存成功!';
   }
-
   // 获取实体的所有列名
   async saveYzxb(advice: H12_yzxbDto, manager: EntityManager) {
     let h12_yzxbRow = null;
@@ -1138,9 +1164,11 @@ export class h12_yzxbService {
    * @param h12_yzxb 删除的数据，包含主键
    * @returns
    */
-  async remove(zyid: string, yzlx: number, yzxh: number, mxxh: number): Promise<boolean> {
+  async remove(zyid: string, yzlx: number, yzxh: number, mxxh: number, manager?: EntityManager): Promise<boolean> {
     // TODO: 检查同组是否是最后一条ysbz=1的记录，如果是的话，要同时删除附加项目
-    await this.h12_yzxbRepo.delete({
+    const h12_yzxbRepo = manager?.getRepository(h12_yzxb) ||
+      this.h12_yzxbRepo
+    await h12_yzxbRepo.delete({
       zyid,
       yzlx,
       yzxh,
@@ -1177,12 +1205,16 @@ export class h12_yzxbService {
     // 实现停止医嘱明细的逻辑
   }
 
-  private async updatePatientStatus(zyid: string, status: string): Promise<void> {
-    await this.h11_brxxRepo.update({ zyid }, { rybqid: status });
+  private async updatePatientStatus(zyid: string, status: string, manager?: EntityManager): Promise<void> {
+    const h11_brxxRepo = manager?.getRepository(h12_yzxb) ||
+      this.h11_brxxRepo
+    await h11_brxxRepo.update({ zyid }, { rybqid: status });
   }
 
-  private async getUsageFrequency(syplid: string): Promise<number> {
-    const frequency = await this.h00_syplRepo.findOne({
+  private async getUsageFrequency(syplid: string, manager?: EntityManager): Promise<number> {
+    const h00_syplRepo = manager?.getRepository(h00_sypl) ||
+      this.h00_syplRepo
+    const frequency = await h00_syplRepo.findOne({
       where: { syplid },
       select: ['mrcs'],
     });

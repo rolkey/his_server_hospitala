@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between } from 'typeorm';
+import { Repository, Like, Between, EntityManager } from 'typeorm';
 import { H11Jshztzd1 } from './h11-jshztzd1.entity';
 import {
   CreateH11Jshztzd1Dto,
@@ -13,7 +13,7 @@ export class H11Jshztzd1Service {
   constructor(
     @InjectRepository(H11Jshztzd1)
     private readonly h11Jshztzd1Repository: Repository<H11Jshztzd1>,
-  ) {}
+  ) { }
 
   async create(createDto: CreateH11Jshztzd1Dto): Promise<H11Jshztzd1> {
     const entity = this.h11Jshztzd1Repository.create(createDto);
@@ -71,11 +71,13 @@ export class H11Jshztzd1Service {
     zybh: string;
     brxm: string;
     qfbz: number;
-  }): Promise<void> {
+  }, manager?: EntityManager): Promise<void> {
     const { zyid, gstr_ainf, yzlx, ldt_sj, cycw, zybh, brxm, qfbz } = params;
 
+    const h11Jshztzd1Repository = manager?.getRepository(H11Jshztzd1) ||
+      this.h11Jshztzd1Repository
     // 检查记录是否存在
-    const count = await this.h11Jshztzd1Repository.count({
+    const count = await h11Jshztzd1Repository.count({
       where: {
         zyid: zyid,
         ksid: gstr_ainf.u_ksid,
@@ -85,7 +87,7 @@ export class H11Jshztzd1Service {
 
     if (count > 0) {
       // 更新现有记录
-      await this.h11Jshztzd1Repository.update(
+      await h11Jshztzd1Repository.update(
         {
           zyid,
           ksid: gstr_ainf.u_ksid,
@@ -100,7 +102,7 @@ export class H11Jshztzd1Service {
       );
     } else {
       // 创建新记录
-      const newRecord = this.h11Jshztzd1Repository.create({
+      const newRecord = h11Jshztzd1Repository.create({
         zyid,
         ksid: gstr_ainf.u_ksid,
         qfbz: yzlx,
@@ -112,7 +114,7 @@ export class H11Jshztzd1Service {
         tjbz: 1,
         tjry: gstr_ainf.u_userid,
       });
-      await this.h11Jshztzd1Repository.save(newRecord);
+      await h11Jshztzd1Repository.save(newRecord);
     }
   }
 }
