@@ -330,3 +330,17 @@ export class H11FpzbQueryDto {
   @IsNumber()
   pageSize?: number = 10;
 }
+
+export class H11FpzbCancelDto {
+  @IsNotEmpty({ message: '发票号码不能为空!' })
+  @IsString()
+  fphm?: string;
+
+  @IsNotEmpty({ message: '操作人id不能为空' })
+  @IsString()
+  czrid?: string;
+
+  @IsNotEmpty({ message: '操作人姓名不能为空' })
+  @IsString()
+  czrxm?: string;
+}

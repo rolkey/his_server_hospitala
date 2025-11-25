@@ -1,6 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { H11FpzbService } from './h11_fpzb.service';
-import { CreateH11FpzbDto, UpdateH11FpzbDto, H11FpzbQueryDto } from './h11_fpzb.dto';
+import {
+  CreateH11FpzbDto,
+  UpdateH11FpzbDto,
+  H11FpzbQueryDto,
+  H11FpzbCancelDto,
+} from './h11_fpzb.dto';
 
 @Controller('h11_fpzb')
 export class H11FpzbController {
@@ -21,8 +26,8 @@ export class H11FpzbController {
     return this.h11FpzbService.findOne(fphm);
   }
 
-  // @Get('')
-  // cancel(@Param('jsdh') jsdh: string) {
-  //   return this.h11FpzbService.cancel(jsdh);
-  // }
+  @Get('cancel')
+  cancel(@Query() dto: H11FpzbCancelDto) {
+    return this.h11FpzbService.cancel(dto);
+  }
 }

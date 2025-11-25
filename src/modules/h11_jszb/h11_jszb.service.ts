@@ -301,8 +301,6 @@ export class H11JszbService {
 
   async cancel(jsdh: string) {
     const jszb = await this.findOne(jsdh);
-    log(jsdh);
-    log(jszb);
     if (!jszb) {
       throw new NotFoundException(`结算单号 ${jsdh} 不存在`);
     }
@@ -352,7 +350,6 @@ export class H11JszbService {
 
       // 4
       const mmjs = (await this.paramService.gfGetPara(11, 'zybh', '0', '住院号不允许')).toString();
-      log(mmjs);
       if (mmjs != '1') {
         await queryRunner.manager
           .createQueryBuilder()
@@ -406,7 +403,6 @@ export class H11JszbService {
         'SELECT isnull(Sum(xmdj*jfyl*zfbl),0) as yszje FROM h15_ssxb WHERE sfbz = 1 And jsdh = $1',
         [jsdh],
       );
-      log(yszje[0].yszje);
 
       // 1.5.将手术主表(h15_sszb)中属于该结算单的内容打上未结算标志
       await queryRunner.manager
