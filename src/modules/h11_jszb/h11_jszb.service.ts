@@ -48,7 +48,7 @@ export class H11JszbService {
     await queryRunner.startTransaction();
     try {
       // 保存h11_jszb
-      const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh };
+      const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh, sfsj: new Date() };
       const mainEntity = await queryRunner.manager.save(H11Jszb, createDto);
 
       // 保存h11_xnh 结构
@@ -311,13 +311,13 @@ export class H11JszbService {
     if (!jszb) {
       throw new NotFoundException(`结算单号 ${jszb.jsdh} 不存在`);
     }
-    if (!jszb.fpzh) {
+    if (!jszb.fpzh && jszb.fpzh != null) {
       throw new BadRequestException(`该结算单已经作废1！`);
     }
-    if (jszb.sjzt === 0) {
+    if (jszb.sjzt === 0 && jszb.sjzt != null) {
       throw new BadRequestException(`该结算单已经作废2！`);
     }
-    if (jszb.fpbz === 1) {
+    if (jszb.fpbz === 1 && jszb.fpbz != null) {
       throw new BadRequestException(`该结算单有发票，请先将发票作废！`);
     }
 
@@ -548,6 +548,10 @@ export class H11JszbService {
       const updateYZZB = await queryRunner.query(`Update h12_yzzb Set jsbz = 0 Where zyid = @0`, [
         zyid,
       ]);
+      const updateBRXX = await queryRunner.query(
+        `Update h11_brxx Set qfjsje = 0,zyzt = 3,jssj = @0 Where zyid = @1`,
+        ['', zyid],
+      );
     } else if (mmjs == '1') {
       const updateYZZX = await queryRunner.query(
         `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1)) and jsdh = @2`,
@@ -557,6 +561,10 @@ export class H11JszbService {
         `Update h12_yzzb Set jsbz = 0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1))`,
         [zyid, zyid],
       );
+      const updateBRXX = await queryRunner.query(
+        `Update h11_brxx Set qfjsje = 0,zyzt = 3,jssj = @0 Where zyid = @1 or lsh = @2`,
+        ['', zyid, zyid],
+      );
     } else {
       const updateYZZX = await queryRunner.query(
         `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601' )) and jsdh = @2`,
@@ -565,6 +573,10 @@ export class H11JszbService {
       const updateYZZB = await queryRunner.query(
         `Update h12_yzzb Set jsbz = 0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601'))`,
         [zyid, zyid],
+      );
+      const updateBRXX = await queryRunner.query(
+        `Update h11_brxx Set qfjsje = 0,zyzt = 3,jssj = @0 Where zyid = @1 or (lsh = @2 and brlxid = '0601')`,
+        ['', zyid, zyid],
       );
     }
 

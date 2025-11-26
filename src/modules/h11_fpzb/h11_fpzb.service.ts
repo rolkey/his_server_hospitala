@@ -185,13 +185,14 @@ export class H11FpzbService {
     const userId = dto.czrid;
     const userName = dto.czrxm;
     const fpzb = await this.findOne(dto.fphm);
+    log(fpzb);
     if (!fpzb) {
       throw new BadRequestException(`发票 ${dto.fphm} 不存在`);
     }
-    if (fpzb.sjzt == 0) {
+    if (fpzb.sjzt == 0 && fpzb.sjzt != null) {
       throw new BadRequestException(`该发票已经作废1！`);
     }
-    if (fpzb.zfyid) {
+    if (fpzb.zfyid && fpzb.zfyid != null) {
       throw new BadRequestException(`该发票已经作废2！`);
     }
     if (fpzb.sfyid != userId) {
@@ -220,15 +221,14 @@ export class H11FpzbService {
       await this.cancelJSZB(fpzb.jsdh, jsdhZF, userId, userName, fpzb.zyid, queryRunner);
 
       // 3.获取作废发票号码
-      const fphmZF =
-        'ZF' +
-        (
-          await this.h11ZypjService.getCurrentNumber({
-            pjlxid: 'FPHM',
-            usid: userId,
-            fyid: '1',
-          })
-        ).dqhm; //获取发票号码
+      const fphmZFnum = (
+        await this.h11ZypjService.getCurrentNumber({
+          pjlxid: 'FPHM',
+          usid: userId,
+          fyid: '1',
+        })
+      ).dqhm; //获取发票号码
+      const fphmZF = 'ZF' + fphmZFnum;
       if (!fphmZF) {
         throw new BadRequestException('发票号码获取失败');
       } else {
@@ -304,6 +304,11 @@ export class H11FpzbService {
           [jsdhZF, fpzb.zyid, fpzb.jsdh],
         );
       }
+      // 11.修改发票号
+      const updateZYPJ = await queryRunner.query(
+        `Update h11_zypj Set dqhm = dqhm + 1 Where pjlxid = 'FPHM' and usid = @0 and fyid = '1'`,
+        [userId],
+      );
       //throw new BadRequestException('回滚测试!');
       await queryRunner.commitTransaction();
     } catch (err) {

@@ -80,6 +80,27 @@ export class H11ZypjService {
     return { dqhm: paddedString.slice(-found.pjcd) };
   }
 
+  async getCurrentNumberAndNext(h11ZypjPrimaryDto: H11ZypjPrimaryDto): Promise<{ dqhm: string }> {
+    const { pjlxid, usid, fyid } = h11ZypjPrimaryDto;
+    const found = await this.h11ZypjRepository.findOne({
+      where: { pjlxid, usid, fyid },
+    });
+
+    if (!found) {
+      throw new NotFoundException(`票据记录 pjlxid=${pjlxid}, usid=${usid}, fyid=${fyid} 不存在!`);
+    }
+
+    // 累加
+    await this.h11ZypjRepository.update({ pjlxid, usid, fyid }, { dqhm: found.dqhm + 1 });
+
+    // 转换为字符串并去除首尾空格
+    const strNumber = String(found.dqhm).trim();
+    // 前补0到20位长度
+    const paddedString = '0'.repeat(20) + strNumber;
+
+    return { dqhm: paddedString.slice(-found.pjcd) };
+  }
+
   async update(
     pjlxid: string,
     usid: string,
