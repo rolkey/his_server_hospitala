@@ -200,6 +200,8 @@ export class H11JszbService {
       queryBuilder.andWhere('jszb.sfsj <= :end', { end: filters.end });
     }
 
+    queryBuilder.orderBy(`jszb.sfsj`, 'DESC');
+
     const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
 
     return { pageData, total };

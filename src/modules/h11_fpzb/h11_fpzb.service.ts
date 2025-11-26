@@ -168,6 +168,8 @@ export class H11FpzbService {
       queryBuilder.andWhere('fpzb.sfsj <= :end', { end: filters.end });
     }
 
+    queryBuilder.orderBy(`fpzb.sfsj`, 'DESC');
+
     const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
 
     return { pageData, total };
