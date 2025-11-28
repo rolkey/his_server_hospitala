@@ -23,8 +23,6 @@ import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 @Injectable()
 export class h11_brxxService {
-
-
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
@@ -32,8 +30,7 @@ export class h11_brxxService {
     private readonly h11_zybhService: h11_zybhService,
     private readonly h00_fylbService: h00_fylbService,
     private dataSource: DataSource,
-  ) { }
-
+  ) {}
 
   async findAll(queryDto: Queryh11_brxxDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -77,7 +74,10 @@ export class h11_brxxService {
     }
 
     if (queryDto.zkksid) {
-      baseQuery.andWhere(' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )', { zkksid: `%${queryDto.zkksid.trim()}%` });
+      baseQuery.andWhere(
+        ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
+        { zkksid: `%${queryDto.zkksid.trim()}%` },
+      );
     }
 
     if (queryDto.mzys) {
@@ -300,18 +300,17 @@ export class h11_brxxService {
   async bedAllocation(dto: bedAllocationDto) {
     await this.dataSource.transaction(async (manager) => {
       try {
+        const brxxRepository = manager.getRepository(h11_brxx);
 
-        const brxxRepository = manager.getRepository(h11_brxx)
-
-        const cwsyxxRepository = manager.getRepository(h13_cwsyxx)
+        const cwsyxxRepository = manager.getRepository(h13_cwsyxx);
 
         const [brxx, cwsyxx] = await Promise.all([
           brxxRepository.findOne({
             where: { zyid: dto.zyid },
-            select: { rycw: true, cycw: true, zyid: true }
+            select: { rycw: true, cycw: true, zyid: true },
           }),
-          cwsyxxRepository.findOne({ where: { cwid: dto.cwid, ksid: dto.ksid } })
-        ])
+          cwsyxxRepository.findOne({ where: { cwid: dto.cwid, ksid: dto.ksid } }),
+        ]);
 
         if (cwsyxx?.zyid) {
           throw new CustomException(ERR.ERR_10000, '床位已有患者');
@@ -319,18 +318,15 @@ export class h11_brxxService {
         if (!brxx) {
           throw new CustomException(ERR.ERR_10000, '未找到有效住院信息');
         }
-        cwsyxx.zyid = dto.zyid
-        cwsyxx.lrsj = new Date()
-        cwsyxx.cwzt = 4
-        cwsyxx.cwfpxx = `护士"${dto.lryxm}"在${dayjs().format('YYYY.MM.DD HH:mm')}分配`
-        cwsyxx.lryid = dto.lryid
-        brxx.rycw = cwsyxx.cwid
-        brxx.cycw = cwsyxx.cwid
-        brxx.rysj = dto.rysj
-        await Promise.all([
-          cwsyxxRepository.save(cwsyxx),
-          brxxRepository.save(brxx)
-        ])
+        cwsyxx.zyid = dto.zyid;
+        cwsyxx.lrsj = new Date();
+        cwsyxx.cwzt = 4;
+        cwsyxx.cwfpxx = `护士"${dto.lryxm}"在${dayjs().format('YYYY.MM.DD HH:mm')}分配`;
+        cwsyxx.lryid = dto.lryid;
+        brxx.rycw = cwsyxx.cwid;
+        brxx.cycw = cwsyxx.cwid;
+        brxx.rysj = dto.rysj;
+        await Promise.all([cwsyxxRepository.save(cwsyxx), brxxRepository.save(brxx)]);
       } catch (error) {
         console.error(error);
         throw new CustomException(ERR.ERR_10000, error.message ?? '分配床位失败');
@@ -338,17 +334,8 @@ export class h11_brxxService {
     });
   }
 
-
   async findPatientTotal(queryDto: QueryDto) {
-    const {
-      sxys = '',
-      ryksid = '',
-      zkksid = '',
-      rykssj,
-      ryjssj,
-      cykssj,
-      cyjssj,
-    } = queryDto;
+    const { sxys = '', ryksid = '', zkksid = '', rykssj, ryjssj, cykssj, cyjssj } = queryDto;
 
     // 通用日期格式化函数
     const buildDateRange = (start: string, end: string) => ({
@@ -372,9 +359,9 @@ export class h11_brxxService {
     const zkQuery = qb()
       .andWhere(
         `EXISTS (
-        SELECT 1 
-        FROM h13_brzkqk zk 
-        WHERE zk.zyid = h11_brxx.zyid 
+        SELECT 1
+        FROM h13_brzkqk zk
+        WHERE zk.zyid = h11_brxx.zyid
           AND zk.ksid LIKE :zkksid
       )`,
         { zkksid: `%${zkksid.trim()}%` },

@@ -29,7 +29,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) { }
+  ) {}
 
   async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo
@@ -65,7 +65,13 @@ export class h12_yzzbService {
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
           .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
-          .addSelect(['H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
+          .addSelect([
+            'H31Lyjl.djbh',
+            'H31Lyjl.tjbz',
+            'H31Lyjl.ckclbz',
+            'H31Lyjl.ksid',
+            'H31Lyjl.fhksid',
+          ])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx', {
             zyid: data.zyid,
             yzlx: data.yzlx || '',
