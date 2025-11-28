@@ -231,7 +231,7 @@ export class h12_yzxbService {
         const newGroup = (h12_yzxbs.yzzh || 0) === 0;
         const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
 
-        // 2. 处理选中的项目
+        // 2. 处理选中的项目，过滤掉附加项目
         for (const [index, item] of h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).entries()) {
           // 判断是否是组套项目
           let isPackage = item.tcbz === 1;
@@ -277,7 +277,6 @@ export class h12_yzxbService {
                   newZxcs: false,
                   messages,
                 });
-              additionalAdvice.mxxh = index;
               additionalAdvice.yzzh = newAdvice.yzzh;
               additionalAdvice.ysbz = 0;
               additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
