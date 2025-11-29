@@ -21,8 +21,6 @@ export class H12_yzzbOpeDto {
   deleteList: H12_yzxbDto[];
 }
 
-
-
 export class reviewDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid?: string;
@@ -50,8 +48,6 @@ export class reviewDto {
   @IsOptional()
   kssxhs?: string;
 }
-
-
 
 export class executeDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
@@ -82,7 +78,6 @@ export class executeDto {
   mxxh?: number;
 }
 
-
 export class costDto {
   @IsNotEmpty({ message: 'mxxh不能为空' })
   mxxh?: number;
@@ -104,6 +99,4 @@ export class adviceDto {
   @IsNotEmpty({ message: 'mxxhList不能为空' })
   @IsArray()
   mxxhList?: costDto[];
-
 }
-

@@ -1,4 +1,3 @@
-
 /**********************************
  * @Author: Ronnie Zhang
  * @LastEditor: Ronnie Zhang
@@ -59,6 +58,7 @@ import { H11FpxbModule } from './modules/h11_fpxb/h11_fpxb.module';
 import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
 import { syspar_newModule } from './modules/syspar_new/syspar_new.module';
 import { H31LyjlModule } from './modules/h31_lyjl/h31_lyjl.module';
+import { H12CyclModule } from './modules/h12-cycl/h12-cycl.module';
 
 @Module({
   imports: [
@@ -118,7 +118,8 @@ import { H31LyjlModule } from './modules/h31_lyjl/h31_lyjl.module';
     H11FpxbModule,
     H11XnhModule,
     syspar_newModule,
-    H31LyjlModule
+    H31LyjlModule,
+    H12CyclModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
