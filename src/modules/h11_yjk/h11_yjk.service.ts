@@ -5,6 +5,7 @@ import { H11Yjk } from './h11_yjk.entity';
 import { CreateH11YjkDto, UpdateH11YjkDto, H11YjkQueryDto, H11YjkCancelDto } from './h11_yjk.dto';
 import { UpdateH11ZypjDto, H11ZypjPrimaryDto } from '../h11_zypj/h11_zypj.dto';
 import { H11ZypjService } from '../h11_zypj/h11_zypj.service';
+import { log } from 'console';
 
 @Injectable()
 export class H11YjkService {
@@ -250,6 +251,11 @@ export class H11YjkService {
       throw new BadRequestException('该预交款记录已经红冲！');
     }
 
+    const fkfsItem = await this.h11YjkRepository.query(
+      `select bz as fkfsbz from h00_fkfs where fkfsid = @0`,
+      [yjk.fkfsid],
+    );
+
     // 增加一条负数记录
     const zfYjk = this.h11YjkRepository.create(yjk);
     zfYjk.sfsj = new Date();
@@ -258,7 +264,7 @@ export class H11YjkService {
     zfYjk.sfyxm = h11YjkCancelDto.zfyxm;
     zfYjk.sfyid = h11YjkCancelDto.zfyid;
     zfYjk.rmbje = -1 * yjk.rmbje;
-    zfYjk.fkfsid = '1';
+    zfYjk.fkfsid = fkfsItem[0].fkfsbz == '1' ? '1' : fkfsItem[0].fkfsbz;
     if (h11YjkCancelDto.type === '2') {
       zfYjk.sjzt = 2;
     } else {
