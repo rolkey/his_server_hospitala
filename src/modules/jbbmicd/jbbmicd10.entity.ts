@@ -1,7 +1,7 @@
 import { AfterLoad, Column, Entity, Index } from 'typeorm';
 
 @Entity('__jbbmicd10', { schema: 'dbo' })
-export class jbbmicd10 {
+export class Jbbmicd10 {
   @Column('varchar', { primary: true, name: 'jbid', length: 30 })
   jbid: string;
 

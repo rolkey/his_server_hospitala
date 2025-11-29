@@ -6,7 +6,7 @@ import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { h00_brlx } from '../h00_brlx/h00_brlx.entity';
 import { csxz } from '../csxz/csxz.entity';
 import { h00_rybq } from '../h00_rybq/h00_rybq.entity';
-import { jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
+import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 import dayjs = require('dayjs');
 
 @Entity('h11_brxx', { schema: 'dbo' })
@@ -157,9 +157,9 @@ export class h11_brxx {
   @Column('varchar', { name: 'ryzd', nullable: true, length: 120 })
   ryzd: string | null;
 
-  @ManyToOne(() => jbbmicd10)
+  @ManyToOne(() => Jbbmicd10)
   @JoinColumn({ name: 'ryzd', referencedColumnName: 'icd11' })
-  ryzdEntity: jbbmicd10;
+  ryzdEntity: Jbbmicd10;
 
   @Column('datetime', { name: 'ryqzsj', nullable: true })
   @DateTransformer()
@@ -225,9 +225,9 @@ export class h11_brxx {
   @Column('varchar', { name: 'cyzd', nullable: true, length: 60 })
   cyzd: string | null;
 
-  @ManyToOne(() => jbbmicd10)
+  @ManyToOne(() => Jbbmicd10)
   @JoinColumn({ name: 'cyzd', referencedColumnName: 'icd11' })
-  cyzdEntity: jbbmicd10;
+  cyzdEntity: Jbbmicd10;
 
   @Column('varchar', { name: 'hbh', nullable: true, length: 20 })
   hbh: string | null;

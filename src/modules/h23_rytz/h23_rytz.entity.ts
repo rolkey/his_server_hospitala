@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
 import { DateTransformer } from '@/common/transformers/date.transformer';
-import { jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
+import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 
 @Entity('h23_rytz')
 export class H23Rytz {
@@ -191,7 +191,7 @@ export class H23Rytz {
   @Column({ name: 'dwyb', type: 'varchar', length: 8, nullable: true })
   dwyb: string | null;
 
-  @ManyToOne(() => jbbmicd10)
+  @ManyToOne(() => Jbbmicd10)
   @JoinColumn({ name: 'ryqk', referencedColumnName: 'icd11' })
-  ryqkEntity: jbbmicd10;
+  ryqkEntity: Jbbmicd10;
 }

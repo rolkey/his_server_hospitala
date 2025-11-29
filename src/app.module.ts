@@ -30,7 +30,7 @@ import { h00_ypflModule } from './modules/h00_ypfl/h00_ypfl.module';
 import { h11_brxxModule } from './modules/h11_brxx/h11_brxx.module';
 import { h12_yzzbModule } from './modules/h12_yzzb/h12_yzzb.module';
 import { h13_cwsyxxModule } from './modules/h13_cwsyxx/h13_cwsyxx.module';
-import { jbbmicd10Module } from './modules/jbbmicd/jbbmicd10.module';
+import { Jbbmicd10Module } from './modules/jbbmicd/jbbmicd10.module';
 import { ksmcModule } from './modules/ksmc/ksmc.module';
 import { zcmcModule } from './modules/zcmc/zcmc.module';
 import { GyIdentityModule } from './modules/gy_identity/gy-identity.module'; // 导入GyIdentityModule
@@ -91,7 +91,7 @@ import { H12CyclModule } from './modules/h12-cycl/h12-cycl.module';
     h11_brxxModule,
     h12_yzzbModule,
     h13_cwsyxxModule,
-    jbbmicd10Module,
+    Jbbmicd10Module,
     ksmcModule,
     zcmcModule,
     GyIdentityModule,

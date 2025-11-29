@@ -34,15 +34,10 @@ export class QueryDto {
 }
 
 export class Queryjbbmicd10Dto extends QueryDto {
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(1000, { message: 'pageSize必须大于零,最大值1000' })
+  @Allow()
   pageSize?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(1, { message: 'pageNo必须大于零' })
+  @Allow()
   pageNo?: number;
 
   @Allow()

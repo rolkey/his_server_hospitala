@@ -59,7 +59,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
       TempSfxm,
       SysparNew,
       H00_xmzd,
-      H31Lyjl
+      H31Lyjl,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -85,4 +85,4 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
   ],
   exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })
-export class h12_yzzbModule { }
+export class h12_yzzbModule {}

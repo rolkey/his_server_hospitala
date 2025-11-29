@@ -84,7 +84,7 @@ export class H12CyclService {
     });
 
     if (!entity) {
-      throw new NotFoundException(`H12Cycl with zyid ${zyid} not found`);
+      throw new NotFoundException(`"${zyid}"出院记录没有找到`);
     }
 
     return entity;
