@@ -1,7 +1,7 @@
 // src/h12-cycl/h12-cycl.service.ts
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between } from 'typeorm';
+import { Repository, Like, Between, EntityManager } from 'typeorm';
 import { H12Cycl } from './h12-cycl.entity';
 import { CreateH12CyclDto, UpdateH12CyclDto, QueryH12CyclDto } from './dto/h12-cycl.dto';
 
@@ -127,5 +127,50 @@ export class H12CyclService {
       where: { brxm: Like(`%${brxm}%`) },
       order: { lrsj: 'DESC' },
     });
+  }
+
+  async recreateCycl(dto: CreateH12CyclDto, manager: EntityManager): Promise<void> {
+    // const {
+    //   zyid,
+    //   zybh,
+    //   brxm,
+    //   rycw,
+    //   ryqk,
+    //   ksid,
+    //   sjzt,
+    //   xbid,
+    //   rysj,
+    //   cyqk,
+    //   cysj,
+    //   bz2,
+    //   lrsj,
+    //   bz3,
+    //   bzxx,
+    //   bz1,
+    // } = dto;
+    // const entity = this.h12CyclRepository.create({
+    //   zyid,
+    //   zybh,
+    //   brxm,
+    //   rycw,
+    //   ryqk,
+    //   ksid,
+    //   sjzt,
+    //   xbid,
+    //   rysj,
+    //   cyqk,
+    //   cysj,
+    //   bz2,
+    //   lrsj,
+    //   bz3,
+    //   bzxx,
+    //   bz1,
+    // });
+    const cycl = await manager.findOne(H12Cycl, { where: { zyid: dto.zyid } });
+    if (cycl) {
+      await manager.remove(cycl);
+    }
+    const entity = this.h12CyclRepository.create(dto);
+    await manager.save(entity);
   }
 }

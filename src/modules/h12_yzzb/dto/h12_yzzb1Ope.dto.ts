@@ -1,5 +1,6 @@
 import { Allow } from 'class-validator';
 import { UpdateH12_yzxbDto, H12_yzxbDto } from './h12_yzxb.dto';
+import { H12Cycl } from '@/modules/h12-cycl/h12-cycl.entity';
 
 /**
  * 操作参数类，医嘱保存时前端的附加信息通过这个参数来传
@@ -37,4 +38,7 @@ export class H12_yzzb1OpeDto {
 
   @Allow()
   deleteList: H12_yzxbDto[];
+
+  @Allow()
+  cycl?: H12Cycl;
 }

@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
-@Entity('h12_cycl', { schema: 'sunsoft' })
+@Entity('h12_cycl', { schema: 'dbo' })
 export class H12Cycl {
   @PrimaryColumn({
     name: 'zyid',

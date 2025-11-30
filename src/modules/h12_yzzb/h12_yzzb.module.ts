@@ -39,6 +39,9 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { H12CyclModule } from '../h12-cycl/h12-cycl.module';
+import { H12CyclService } from '../h12-cycl/h12-cycl.service';
+import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
 @Global()
 @Module({
   imports: [
@@ -60,6 +63,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
       SysparNew,
       H00_xmzd,
       H31Lyjl,
+      H12Cycl,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -71,6 +75,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
     forwardRef(() => H13YzzxcsTfModule),
     forwardRef(() => SharedModule),
     forwardRef(() => h11_lshModule),
+    forwardRef(() => H12CyclModule),
   ],
   controllers: [h12_yzzbController],
   providers: [
@@ -82,6 +87,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
     BabyAdviceService,
     h11_lshService,
     SfxmService,
+    H12CyclService,
   ],
   exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })

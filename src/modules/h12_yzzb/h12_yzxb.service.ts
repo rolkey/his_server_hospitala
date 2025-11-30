@@ -42,6 +42,7 @@ import { ypFylbid } from '@/constants/advice.contants';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
+import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -83,7 +84,8 @@ export class h12_yzxbService {
     private h11Jshztzd1Service: H11Jshztzd1Service,
     private h13_yzzxcsService: h13_yzzxcsService,
     private contextService: ContextService,
-    private sfxmService: SfxmService,
+    // private sfxmService: SfxmService,
+    private h12CyclService: H12CyclService,
   ) {
     // this.context = new RequestContext();
   }
@@ -789,11 +791,10 @@ export class h12_yzxbService {
   async submitAdvices(h12_yzzb1OpeDto: H12_yzzb1OpeDto) {
     await this.dataSource.transaction(async (manager) => {
       try {
-        const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, h12_yzxbs, deleteList } =
+        const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, cycl, h12_yzxbs, deleteList } =
           h12_yzzb1OpeDto;
-        await Promise.all([
+        const promises = [
           this.saveAdviceManager({ zyid, yzlx, h12_yzxbs, deleteList }, manager),
-          // 提交医嘱消息
           this.h11Jshztzd1Service.updateOrCreateRecord(
             {
               zyid,
@@ -807,10 +808,16 @@ export class h12_yzxbService {
             },
             manager,
           ),
-        ]);
+        ];
+
+        if (cycl) {
+          promises.push(this.h12CyclService.recreateCycl(cycl, manager));
+        }
+
+        await Promise.all(promises);
       } catch (error: any) {
-        console.error('医嘱提交失败', error?.stack ?? error?.message ?? error);
-        throw new CustomException(ERR.ERR_10000, error?.message ?? '医嘱提交失败');
+        console.error('医嘱提交失败', error);
+        throw new CustomException(ERR.ERR_10000, error.message ?? '医嘱提交失败');
       }
     });
   }
