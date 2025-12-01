@@ -10,6 +10,7 @@ import { Syspar } from './entity/syspar.entity';
 // import { Kcxx } from './entity/kcxx.entity';
 // import { Xmzd } from './entity/xmzd.entity';
 import { SysparNew } from './entity/__syspar_new.entity';
+import { h11_lsh } from '../h11_lsh/h11_lsh.entity';
 import { ConfigReaderService } from './service/config-reader.service';
 import { UsrcatModule } from '@/modules/usrcat/usrcat.module';
 import { ksmcModule } from '@/modules/ksmc/ksmc.module';
@@ -18,7 +19,7 @@ import { ksmc as Ksmc } from '@/modules/ksmc/ksmc.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TempSfxm, Syspar, SysparNew, Usrcat, Ksmc]),
+    TypeOrmModule.forFeature([TempSfxm, Syspar, SysparNew, Usrcat, Ksmc, h11_lsh]),
     forwardRef(() => UsrcatModule),
     forwardRef(() => ksmcModule),
   ],

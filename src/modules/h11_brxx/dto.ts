@@ -373,7 +373,6 @@ export class Queryh11_brxxDto extends QueryDto {
 
   @Allow()
   cycw?: string;
-
 }
 
 export class UpdateDto extends CreateDto {
@@ -446,7 +445,6 @@ export class bedAllocationDto {
   @IsNotEmpty({ message: 'rysj不能为空' })
   rysj?: Date;
 
-
   @IsNotEmpty({ message: 'lryid不能为空' })
   lryid?: string;
 
@@ -454,6 +452,20 @@ export class bedAllocationDto {
   lryxm?: string;
 }
 
+export class ForciblyDeleteDto {
+  @IsNotEmpty({ message: 'ZYID不能为空' })
+  @IsString()
+  zyid?: string;
 
+  @IsNotEmpty({ message: '操作人KSID不能为空' })
+  @IsString()
+  czrKsid?: string;
 
+  @IsNotEmpty({ message: '密码不能为空' })
+  @IsString()
+  pwd?: string;
 
+  @IsOptional()
+  @IsString()
+  ghbh?: string;
+}

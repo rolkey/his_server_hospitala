@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { And, DataSource, Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
 import {
   Queryh11_brxxDto,
@@ -10,12 +10,13 @@ import {
   QueryCostCategoryDto,
   bedAllocationDto,
   QueryDto,
+  ForciblyDeleteDto,
 } from './dto';
 import dayjs = require('dayjs');
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
-
+import { ParamService } from '../h12_xmzd/service/param.service';
 import DateFormater from '@/utils/DateFormater';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
@@ -30,6 +31,7 @@ export class h11_brxxService {
     private readonly h11_lshService: h11_lshService,
     private readonly h11_zybhService: h11_zybhService,
     private readonly h00_fylbService: h00_fylbService,
+    private readonly paramService: ParamService,
     private dataSource: DataSource,
   ) {}
 
@@ -399,5 +401,127 @@ export class h11_brxxService {
     ]);
 
     return { my, zk, in: IN, db, out };
+  }
+
+  /**
+   *
+   * @param queryCostCategoryDto 旧His强行删除功能
+   */
+  async forciblyDelete(dto: ForciblyDeleteDto) {
+    const pwd = dto.pwd || '';
+    const czrKsid = dto.czrKsid || '';
+    const zyid = dto.zyid || '';
+    const ghbh = dto.ghbh || ''; // 养老使用
+
+    const sysPwd = await this.paramService.gfGetParaNew(
+      99,
+      'GLYMMMZFP',
+      '1111',
+      '门诊收费作废发票密码',
+    );
+
+    if (sysPwd !== pwd) {
+      return {
+        code: -1,
+        msg: '录入密码不正确!',
+      };
+    }
+
+    // 创建数据库查询运行器，用于管理事务
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const params: any[] = [zyid]; // 1.科室ID 2.药品ID 3.药品批次
+      // 1.检查有无结算
+      const FPZBItem = await queryRunner.query(
+        `SELECT count(*) as count
+         FROM h11_fpzb
+         WHERE zyid = @0 AND sjzt = 1`,
+        params,
+      );
+      const FPZBCount = FPZBItem?.[0]?.count || 0;
+      if (FPZBCount > 0) {
+        return {
+          code: -1,
+          msg: '该病人已结算不能删除!',
+        };
+      }
+
+      // 2.检查有无医保登记
+      const YBDJItem = await queryRunner.query(
+        `SELECT count(*) as count
+         FROM G10_DJXX
+         WHERE lsh = @0 AND jsbz > 0`,
+        params,
+      );
+      const YBDJCount = YBDJItem?.[0]?.count || 0;
+      if (YBDJCount > 0) {
+        return {
+          code: -1,
+          msg: '该病该病人有医保登记,请先将医保！',
+        };
+      }
+
+      // 3.养老处理
+      const ylmbbz = await this.paramService.gfGetParaNew(
+        81,
+        'ylmbbz',
+        '0',
+        '启用养老管理系统(1启用，0未启用)',
+      );
+      const ylybksid = await this.paramService.gfGetParaNew(
+        81,
+        'ylybksid',
+        '',
+        '启用养老医保科室编号',
+      );
+      if (ylmbbz === '1') {
+        const YLItem = await queryRunner.query(
+          `SELECT count(*) as count
+         FROM dict_oldie
+         WHERE id = @0 AND status <> 11`,
+          [ghbh],
+        );
+        const YLCount = YLItem?.[0]?.count || 0;
+        if (YLCount > 0 && ylybksid != czrKsid) {
+          return {
+            code: -1,
+            msg: '请先办理退回，然后才可以删除!',
+          };
+        }
+
+        const DCMXDelete = await queryRunner.query(`DELETE yw_dcmx  Where zyh = @0`, [ghbh]);
+        //更新床位状态
+        const CWSYXXUpdate = await queryRunner.query(
+          `UPDATE h13_cwsyxx Set cwzt = 1,zyid='',id='',cwfpxx='病人信息删除1' Where  zyid = @0`,
+          params,
+        );
+      }
+
+      // 4.删除信息
+      const ssxbDelete = await queryRunner.query(`DELETE h15_ssxb  Where zyid = @0`, params);
+      const sszbDelete = await queryRunner.query(`DELETE h15_sszb  Where zyid = @0`, params);
+      const yzxbDelete = await queryRunner.query(`DELETE h12_yzxb  Where zyid = @0`, params);
+      const yzzbDelete = await queryRunner.query(`DELETE h12_yzzb  Where zyid = @0`, params);
+      const yzzxcsDelete = await queryRunner.query(`DELETE h13_yzzxcs  Where zyid = @0`, params);
+      const yjkDelete = await queryRunner.query(`DELETE h11_yjk  Where zyid = @0`, params);
+      const jshztzd1Delete = await queryRunner.query(`DELETE h11_jshztzd1 Where zyid = @0`, params);
+      const brxxDelete = await queryRunner.query(`DELETE h11_brxx Where zyid = @0`, params);
+
+      // throw new Error(`回滚测试`);
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return {
+      code: 0,
+      msg: '删除成功!',
+    };
   }
 }
