@@ -69,6 +69,7 @@ export class h12_yzxbServiceNew {
             yzlx: dto.yzlx,
             yzxh: In(dto.yzxh || []),
             mxxh: In(dto.mxxh || []),
+            hdbz: 0,
           },
           select: [
             'kshs',
@@ -138,7 +139,7 @@ export class h12_yzxbServiceNew {
       const [yzzb, yzxbList] = await Promise.all([
         this.h12_yzzbRepo.findOne({ where: { zyid, yzlx: In([1, 2, 7]), yzxh: 1 } }),
         this.h12_yzxbRepo.find({
-          where: { zyid, yzlx: In([1, 2, 7]) },
+          where: { zyid, yzlx: In([1, 2, 7]), yzzt: 1 },
           select: [
             'kshs',
             'hdhs',
@@ -395,6 +396,11 @@ export class h12_yzxbServiceNew {
       }
       item.yzzt = 0
       item.tjbz = 0
+      item.kshs = ''
+      item.zxbz = 0
+      item.hdbz = 0
+      item.zxrq = null
+      item.hshd = ''
     }
     await this.h12_yzxbRepo.save(yzxbList)
     return true
