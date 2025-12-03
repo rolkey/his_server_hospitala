@@ -13,6 +13,7 @@ import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 import { SfxmModule } from '../h12_xmzd/sfxm.module';
 // import { SunsoftModule } from '../sunsoft/sunsoft.module';
@@ -64,6 +65,7 @@ import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
       H00_xmzd,
       H31Lyjl,
       H12Cycl,
+      h13_cwsyxx,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
