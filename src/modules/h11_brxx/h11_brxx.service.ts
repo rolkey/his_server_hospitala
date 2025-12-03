@@ -257,7 +257,16 @@ export class h11_brxxService {
     return h11_brxx;
   }
   async create(dto: CreateDto) {
+    const brxxCount = await this.h11_brxxRepo
+      .createQueryBuilder('h11_brxx')
+      .where('h11_brxx.sfzh = :sfzh', { sfzh: dto.sfzh })
+      .andWhere('h11_brxx.zyzt < 3')
+      .getCount();
     const entity = this.h11_brxxRepo.create(dto);
+
+    if (brxxCount > 0) {
+      throw new CustomException(ERR.ERR_10000, '该身份证号的病人已在院，不能重复入院');
+    }
 
     entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
     this.h11_zybhService.addUpZYBH(Number(entity.zybh));
@@ -523,5 +532,10 @@ export class h11_brxxService {
       code: 0,
       msg: '删除成功!',
     };
+  }
+
+  // 入院前校验
+  async createCheck(queryDto: QueryDto) {
+    return 0;
   }
 }
