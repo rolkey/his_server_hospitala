@@ -100,3 +100,32 @@ export class adviceDto {
   @IsArray()
   mxxhList?: costDto[];
 }
+
+export class outDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'cysj不能为空' })
+  cysj?: string;
+
+  @IsNotEmpty({ message: 'cyqk不能为空' })
+  cyqk?: string;
+
+  @IsNotEmpty({ message: 'cyzd不能为空' })
+  cyzd?: string;
+
+  @IsOptional()
+  cyzd1?: string;
+
+  @IsOptional()
+  cyzd2?: string;
+
+  @IsOptional()
+  skipVerify?: boolean = false;
+}
+
+
+export class checkOutDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+}

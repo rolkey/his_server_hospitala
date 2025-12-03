@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { executeDto, H12_yzzbOpeDto, adviceDto, reviewDto } from './dto/h12_yzzbOpe.dto';
+import { executeDto, H12_yzzbOpeDto, adviceDto, reviewDto, outDto, checkOutDto } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -245,6 +245,25 @@ export class h12_yzzbController {
   async refundAdvice(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.refundAdvice(dto);
   }
+
+  /**
+   * 办理出院
+   */
+  @Post('out')
+  async out(@Body() dto: outDto) {
+    return await this.h12_yzxbServiceNew.out(dto);
+  }
+
+  /**
+   * 查询该病人是否有开办理出院的医嘱
+   */
+  @Post('chenkOut')
+  async checkOut(@Body() dto: checkOutDto) {
+    return await this.h12_yzxbServiceNew.checkOut(dto);
+  }
+
+
+
 
   @Post('voidable')
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[] }) {
