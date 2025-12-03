@@ -251,9 +251,12 @@ export class H11JszbService {
       zyid: createH11JszbDto.zyid,
     });
 
-    const zfje = costCategory.reduce((acc, item) => acc + item.jsje, 0);
-    const qtje = costCategory.reduce((acc, item) => acc + item.qthj, 0);
-    const yjje = advancePayment.pageData.reduce((acc, item) => acc + item.yjje, 0);
+    const zfje = costCategory.reduce((acc, item) => parseFloat((acc + item.jsje).toFixed(10)), 0);
+    const qtje = costCategory.reduce((acc, item) => parseFloat((acc + item.qthj).toFixed(10)), 0);
+    const yjje = advancePayment.pageData.reduce(
+      (acc, item) => parseFloat((acc + item.yjje).toFixed(10)),
+      0,
+    );
 
     const jsjeSum = zfje + qtje;
     const ssjeSum = zfje + qtje;

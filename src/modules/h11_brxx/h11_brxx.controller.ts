@@ -8,11 +8,12 @@ import {
   QueryCostCategoryDto,
   bedAllocationDto,
   QueryDto,
+  ForciblyDeleteDto,
 } from './dto';
 
 @Controller('h11_brxx')
 export class h11_brxxController {
-  constructor(private readonly h11_brxxService: h11_brxxService) { }
+  constructor(private readonly h11_brxxService: h11_brxxService) {}
 
   @Get('findAll')
   async findAll(@Query() queryDto: Queryh11_brxxDto) {
@@ -29,7 +30,6 @@ export class h11_brxxController {
   async findPatientTotal(@Query() queryDto: QueryDto) {
     return this.h11_brxxService.findPatientTotal(queryDto);
   }
-
 
   @Post('create')
   async create(@Body() dto: CreateDto) {
@@ -59,5 +59,9 @@ export class h11_brxxController {
     return await this.h11_brxxService.bedAllocation(dto);
   }
 
-
+  // 删除
+  @Get('forciblyDelete')
+  async forciblyDelete(@Query() dto: ForciblyDeleteDto) {
+    return await this.h11_brxxService.forciblyDelete(dto);
+  }
 }
