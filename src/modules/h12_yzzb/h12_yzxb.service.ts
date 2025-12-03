@@ -312,8 +312,8 @@ export class h12_yzxbService {
 
   /**
    * 创建新医嘱记录
-   * @param data { zyid: string, yzlx: number }
-   * @returns 新增的医嘱记录对象
+   * @param data
+   * @returns
    */
   async createAdvice(data: {
     zyid: string;
@@ -408,7 +408,7 @@ export class h12_yzxbService {
       tpbz: 0, //附加标志
       hdbz: 0,
       // zxcs: newZxcs || 1,
-      // zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
+      zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
     });
 
     return newRecord;
@@ -567,7 +567,7 @@ export class h12_yzxbService {
     advice.xmmc = item.xmmc;
     advice.xmdw = item.xmdw?.trim();
     advice.xmdj = item.lsjg;
-    advice.xmgg = item.xmgg;
+    advice.xmgg = item.xmgg ?? item.ypgg;
     advice.syffid = item.syffid || '';
     advice.syffidEntity = item.syffidEntity;
     advice.syplid = item.syplid || 'QD';
@@ -585,7 +585,7 @@ export class h12_yzxbService {
     advice.sjyl = item.sjyl1;
     advice.sjyl1 = item.sjyl1;
     advice.fylbid = item.fylbid?.trim() || '35';
-    advice.fybz = item.fybz;
+    advice.fybz = item.fybz ?? item.bz1;
     advice.gjybbm = item.gjybbm;
     advice.gjybmc = item.gjybmc;
     advice.ltbz = item.ltbz;
