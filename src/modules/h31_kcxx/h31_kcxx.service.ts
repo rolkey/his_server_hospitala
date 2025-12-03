@@ -516,6 +516,7 @@ export class H31_kcxxService {
             .where('kcxx.ksid = :lsKsid', { lsKsid })
             .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
             .andWhere('kcxx.yxbz = 1')
+            .andWhere('kcxx.sxrq > getdate()')
             .andWhere(
               'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= 1',
             )
@@ -537,6 +538,7 @@ export class H31_kcxxService {
           .where('kcxx.ksid = :lsKsid', { lsKsid })
           .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
           .andWhere('kcxx.yxbz = 1')
+          .andWhere('kcxx.sxrq > getdate()')
           .getRawOne();
 
         const kcsl = totalKcsl?.totalKcsl || 0;
