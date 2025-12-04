@@ -12,6 +12,7 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
+import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 
 /**
  * 完整重构版 Service
@@ -53,6 +54,7 @@ export class h12_yzxbServiceNew {
     private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
     private readonly syspar_newService: syspar_newService,
+    private readonly configReaderService: ConfigReaderService,
   ) { }
 
   // 取组套（保留入口，按需实现）
@@ -437,7 +439,7 @@ export class h12_yzxbServiceNew {
       const ldt_rysj = new Date(brxx.rysj);
       ldt_rysj.setHours(0, 0, 0, 0); // 设置时间为00:00:00
       const ls_rq = this.formatDate(ldt_rysj, 'yyyy.mm.dd');
-      
+
       // 校验：医嘱执行时间早于入院日期
       const li_rycount = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
         .select('COUNT(*)', 'count')
@@ -446,11 +448,11 @@ export class h12_yzxbServiceNew {
           rysj: ldt_rysj
         })
         .getRawOne();
-      
+
       if (parseInt(li_rycount.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, `执行时间小于入院日期"${ls_rq}"，请删除多余次数后出院!`);
       }
-      
+
       // 校验：医嘱执行时间晚于出院日期
       const li_yzzxcscount = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
         .select('COUNT(*)', 'count')
@@ -459,11 +461,100 @@ export class h12_yzxbServiceNew {
           zksj: ldt_zksj
         })
         .getRawOne();
-      
+
       if (parseInt(li_yzzxcscount.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '执行时间大于出院时间，请删除多余次数后出院!');
       }
-      
+
+      // 未发药校验 - 获取系统参数
+      const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid }
+        = await this.configReaderService.readYfCxsz(brxx.cyksid);
+      // console.log('--------------', xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid)
+      throw new CustomException(ERR.ERR_10000, '有医嘱未复核，请复核后再出院!');
+      // const ksidList = [
+      //   gs_cxsz.xyksid,
+      //   gs_cxsz.cyksid,
+      //   gs_cxsz.zyksid,
+      //   gs_cxsz.clksid,
+      //   gs_cxsz.qtksid,
+      //   gs_cxsz.zjksid
+      // ].filter(Boolean);
+      // //控制台打印 ksidList
+      // console.log('ksidList: ', ksidList);
+      // 1. 校验h13_yzzxcs和h12_yzxb表中未发药记录
+      const ll_count1 = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
+        .innerJoin('h12_yzxb', 'h12', 'h13.yzxh = h12.yzxh AND h13.yzlx = h12.yzlx AND h13.zyid = h12.zyid AND h13.mxxh = h12.mxxh')
+        .select('COUNT(*)', 'count')
+        .where('h13.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('(ISNULL(h13.fybz, 0) <> 1)')
+        .andWhere('(h12.xmzl = 2 OR h12.xmzl = 3)')
+        .andWhere('(h13.zxcs - h13.bzxcs) > 0')
+        .andWhere('h13.jfyl > 0')
+        .andWhere('h13.zkksid IN (:...ksidList)', {
+          ksidList: [
+            xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid,
+            jpksid, hlksid
+            // gs_cxsz.jpksid,
+            // gs_cxsz.hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+      //控制台输出 校验药品未发药记录的实际sql
+      console.log("校验药品未发药记录的实际sql:", ll_count1);
+
+      if (parseInt(ll_count1.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '有药品未发药，不能办理出院');
+      }
+
+      // 2. 校验h13_yzzxcs_tf和h12_yzxb表中未发药的退费记录
+      const ll_count2 = await this.dataSource.createQueryBuilder()
+        .select('COUNT(*)', 'count')
+        .from('h13_yzzxcs_tf', 'h13tf')
+        .innerJoin('h12_yzxb', 'h12', 'h13tf.yzxh = h12.yzxh AND h13tf.yzlx = h12.yzlx AND h13tf.zyid = h12.zyid AND h13tf.mxxh = h12.mxxh')
+        .where('h13tf.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('(ISNULL(h13tf.fybz, 0) <> 1)')
+        .andWhere('(h12.xmzl = 2 OR h12.xmzl = 3)')
+        .andWhere('ABS(h13tf.zxcs - h13tf.bzxcs) > 0')
+        .andWhere('h13tf.jfyl > 0')
+        .andWhere('h13tf.zkksid IN (:...ksidList)', {
+          ksidList: [
+            xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid,
+            jpksid, hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+      //控制台输出 校验药品退费未发药记录的实际sql
+      console.log("校验药品退费未发药记录的实际sql:", ll_count2);
+
+      if (parseInt(ll_count2.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '有药品退费未发药，不能办理出院');
+      }
+
+      // 3. 校验手术医嘱未发药记录
+      const ll_count3 = await this.dataSource.createQueryBuilder()
+        .select('COUNT(*)', 'count')
+        .from('h15_sszb', 'sszb')
+        .innerJoin('h15_ssxb', 'ssxb', 'ssxb.zyid = sszb.zyid AND ssxb.ssid = sszb.ssid')
+        .innerJoin('h11_brxx', 'brxx', 'sszb.zyid = brxx.zyid')
+        .where('sszb.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('ABS(ssxb.jfyl) > 0')
+        .andWhere('ISNULL(ssxb.tpbz, 0) = 0')
+        .andWhere('ISNULL(ssxb.tjbz, 0) = 1')
+        .andWhere('ssxb.xmzl IN (2, 3)')
+        .andWhere('ssxb.zxksid IN (:...ksidList)', {
+          ksidList: [
+            xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid,
+            jpksid, hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+      //控制台输出 校验手术医嘱未发药记录的实际sql
+      console.log("校验手术医嘱未发药记录的实际sql:", ll_count3);
+
+      if (parseInt(ll_count3.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '手术医嘱未发药不能办出院');
+      }
+
       // 校验：实习医生未签名
       const li_jmcount1 = await this.h12_yzxbRepo.createQueryBuilder('h12')
         .select('COUNT(*)', 'count')
@@ -473,11 +564,11 @@ export class h12_yzxbServiceNew {
           xmid: '0000000'
         })
         .getRawOne();
-      
+
       if (parseInt(li_jmcount1.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '实习医生未签名，请医生签名后再出院!');
       }
-      
+
       // 校验：医嘱未复核
       const li_jmcount2 = await this.h12_yzxbRepo.createQueryBuilder('h12')
         .select('COUNT(*)', 'count')
@@ -487,11 +578,11 @@ export class h12_yzxbServiceNew {
           xmid: '0000000'
         })
         .getRawOne();
-      
+
       if (parseInt(li_jmcount2.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '有医嘱未复核，请复核后再出院!');
       }
-      
+
       // 校验：护士未签名
       const li_jmcount3 = await this.h12_yzxbRepo.createQueryBuilder('h12')
         .select('COUNT(*)', 'count')
@@ -501,18 +592,18 @@ export class h12_yzxbServiceNew {
           xmid: '0000000'
         })
         .getRawOne();
-      
+
       if (parseInt(li_jmcount3.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '开始护士未签名，请护士签名后再出院!');
       }
-      
-      
+
+
       // 校验：未执行项目
       // 从系统参数获取未执行项目分类
       const gsCxsz = await this.syspar_newService.findOne('99', 'yjzxsflb');
       if (gsCxsz && gsCxsz.pval && gsCxsz.pval.trim().length > 0) {
         const fylbidList = gsCxsz.pval.split(',').map(id => id.trim());
-        
+
         const li_yzzxcscount = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
           .select('COUNT(*)', 'count')
           .where('h13.zyid = :zyid AND h13.sfbz = 0 AND h13.xmdj > 0 AND h13.fylbid IN (:...fylbidList)', {
@@ -520,23 +611,23 @@ export class h12_yzxbServiceNew {
             fylbidList
           })
           .getRawOne();
-        
+
         if (parseInt(li_yzzxcscount.count, 10) > 0) {
           throw new CustomException(ERR.ERR_10000, '该病人有项目未执行，请医技科室执行后再出院！');
         }
       }
-      
+
       // 计算住院天数
       const ll_zyts = Math.floor((ldt_zksj.getTime() - ldt_rysj.getTime()) / (1000 * 60 * 60 * 24));
       const final_zyts = ll_zyts === 0 ? 1 : ll_zyts;
-      
+
       // 床位天数核对、诊查天数核对、护理天数核对
       // 这里暂时不实现，需要额外的查询逻辑
-      
+
       // 医嘱停嘱校验/处理
       const gs_xtcs = await this.syspar_newService.findOne('99', 'cyyzbz');
       const cyyzbz = gs_xtcs?.pval || '0';
-      
+
       if (cyyzbz === '1') {
         // 允许出院但提示有未停医嘱
         const ll_count = await this.h12_yzxbRepo.createQueryBuilder('h12')
@@ -547,7 +638,7 @@ export class h12_yzxbServiceNew {
             xmmcList: ['     重 整 医 嘱', '     术 后 医 嘱', '     产 后 医 嘱']
           })
           .getRawOne();
-        
+
         if (parseInt(ll_count.count, 10) > 0) {
           // 在实际应用中，这里应该返回提示信息让前端显示确认对话框
           // 由于是API接口，这里直接返回成功，由前端处理确认逻辑
@@ -565,7 +656,7 @@ export class h12_yzxbServiceNew {
           })
           .execute();
       }
-      
+
       // 更新患者出院信息
       await this.h11BrxxRepo.update(dto.zyid, {
         cysj: ldt_zksj,
@@ -573,7 +664,7 @@ export class h12_yzxbServiceNew {
         cyzd: dto.cyzd, // 出院诊断
         zyzt: 3         // 出院状态
       });
-      
+
       // 释放床位：更新床位使用信息表，将床位状态设置为空闲(1)，并清空患者信息
       await this.h13_cwsyxxRepo.update({ zyid: dto.zyid }, {
         cwzt: 1,       // 床位状态：1-空闲
@@ -581,19 +672,19 @@ export class h12_yzxbServiceNew {
         // cwfpxx: `患者${dto.zyid}于${this.formatDate(ldt_zksj, 'yyyy.mm.dd HH:MM:SS')}出院，床位已释放` // 更新床位分配信息
         cwfpxx: ''   //清空床位废弃信息字段
       });
-      
+
       return { success: true };
     } catch (error: any) {
       this.logger.error('办理出院失败', error?.stack ?? error?.message ?? error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: error instanceof CustomException ? error.message : '办理出院失败'
       };
     }
   }
 
 
-    // -------------------------  
+  // -------------------------  
   // Helper: 日期格式化  
   // -------------------------  
   private formatDate(date: Date, format: string): string {
@@ -603,7 +694,7 @@ export class h12_yzxbServiceNew {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-    
+
     return format
       .replace('yyyy', String(year))
       .replace('mm', month)
@@ -612,14 +703,14 @@ export class h12_yzxbServiceNew {
       .replace('MM', minutes)
       .replace('SS', seconds);
   }
-  
+
   // -------------------------  
   // 查询该病人是否有开办理出院的医嘱  
   // -------------------------  
   async checkOut(dto: checkOutDto): Promise<boolean> {
     try {
       const { zyid } = dto;
-      
+
       // 查询h12_yzxb表是否存在xmid为0000000的医嘱项目
       const exists = await this.h12_yzxbRepo.exist({
         where: {
@@ -627,14 +718,14 @@ export class h12_yzxbServiceNew {
           xmid: '0000000'
         }
       });
-      
+
       return exists;
     } catch (error: any) {
       this.logger.error('该病人出院诊断未写，不能办理出院!', error?.stack ?? error?.message ?? error);
       return false;
     }
   }
-  
+
 
 
 

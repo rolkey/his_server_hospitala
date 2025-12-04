@@ -18,7 +18,7 @@ export class ConfigReaderService {
     @InjectRepository(Ksmc)
     private ksmcRepository: Repository<Ksmc>,
     private readonly paramService: ParamService,
-  ) {}
+  ) { }
 
   async readGsCxsz(): Promise<Gs_cxszDto> {
     const [
@@ -305,6 +305,25 @@ export class ConfigReaderService {
       ylybksid,
     };
   }
+  async readYfCxsz(as_ksid: string) {
+
+    const [xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid] =
+      await Promise.all([
+        this.paramService.gfGetPara(13, 'xy' + as_ksid, '0603', '西药' + as_ksid),
+        this.paramService.gfGetPara(13, 'cy' + as_ksid, '0603', '成药' + as_ksid),
+        this.paramService.gfGetPara(13, 'zy' + as_ksid, '0604', '中药' + as_ksid),
+        this.paramService.gfGetPara(13, 'cl' + as_ksid, '0603', '材料' + as_ksid),
+        this.paramService.gfGetPara(13, 'qt' + as_ksid, '0603', '其他' + as_ksid),
+        this.paramService.gfGetPara(13, 'zj' + as_ksid, '0603', '针剂' + as_ksid),
+        this.paramService.gfGetPara(13, 'sscl' + as_ksid, as_ksid, '手术材料' + as_ksid),
+        this.paramService.gfGetPara(13, 'jp' + as_ksid, '0603', '放射材料' + as_ksid),
+        this.paramService.gfGetPara(13, 'hl' + as_ksid, '0603', '检验材料' + as_ksid),
+      ])
+
+    return {
+      xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid
+    }
+  }
 
   async readGstrAinf({ userId, systemId }): Promise<Gstr_ainfDto> {
     const jcdzbz = await this.paramService.gfGetParaNew(
@@ -382,11 +401,11 @@ export class ConfigReaderService {
       jcdz:
         jcdzbz === '1'
           ? await this.paramService.gfGetParaNew(
-              12,
-              'BLJCURL',
-              'http://134.202.128.4:801/yapacs.aspx?hisid=',
-              '检查接口调用方URL由平台提供参数',
-            )
+            12,
+            'BLJCURL',
+            'http://134.202.128.4:801/yapacs.aspx?hisid=',
+            '检查接口调用方URL由平台提供参数',
+          )
           : '',
       jcdzxd: await this.paramService.gfGetParaNew(
         12,
