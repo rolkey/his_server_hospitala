@@ -12,6 +12,7 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
+import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 
 /**
  * 完整重构版 Service
@@ -53,6 +54,7 @@ export class h12_yzxbServiceNew {
     private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
     private readonly syspar_newService: syspar_newService,
+    private readonly configReaderService: ConfigReaderService,
   ) { }
 
   // 取组套（保留入口，按需实现）
@@ -462,6 +464,111 @@ export class h12_yzxbServiceNew {
       
       if (parseInt(li_yzzxcscount.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '执行时间大于出院时间，请删除多余次数后出院!');
+      }
+      
+      // 未发药校验 - 获取系统参数
+      // const gs_cxsz = await this.configReaderService.readGsCxsz();
+      // const ksidList = [
+      //   gs_cxsz.xyksid,
+      //   gs_cxsz.cyksid,
+      //   gs_cxsz.zyksid,
+      //   gs_cxsz.clksid,
+      //   gs_cxsz.qtksid,
+      //   gs_cxsz.zjksid
+      // ].filter(Boolean);
+      // //控制台打印 ksidList
+      // console.log('ksidList: ', ksidList);
+
+
+      // 1. 校验h13_yzzxcs和h12_yzxb表中未发药记录
+      const ll_count1 = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
+        .innerJoin('h12_yzxb', 'h12', 'h13.yzxh = h12.yzxh AND h13.yzlx = h12.yzlx AND h13.zyid = h12.zyid AND h13.mxxh = h12.mxxh')
+        .select('COUNT(*)', 'count')
+        .where('h13.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('(ISNULL(h13.fybz, 0) <> 1)')
+        .andWhere('(h12.xmzl = 2 OR h12.xmzl = 3)')
+        .andWhere('(h13.zxcs - h13.bzxcs) > 0')
+        .andWhere('h13.jfyl > 0')
+        .andWhere('h13.zkksid IN (:...ksidList)', {
+          ksidList: [
+            dto.gs_cxsz.xyksid,
+            dto.gs_cxsz.cyksid,
+            dto.gs_cxsz.zyksid,
+            dto.gs_cxsz.clksid,
+            dto.gs_cxsz.qtksid,
+            dto.gs_cxsz.zjksid
+            // gs_cxsz.jpksid,
+            // gs_cxsz.hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+        //控制台输出 校验药品未发药记录的实际sql
+        console.log("校验药品未发药记录的实际sql:", ll_count1);
+      
+      if (parseInt(ll_count1.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '有药品未发药，不能办理出院');
+      }
+      
+      // 2. 校验h13_yzzxcs_tf和h12_yzxb表中未发药的退费记录
+      const ll_count2 = await this.dataSource.createQueryBuilder()
+        .select('COUNT(*)', 'count')
+        .from('h13_yzzxcs_tf', 'h13tf')
+        .innerJoin('h12_yzxb', 'h12', 'h13tf.yzxh = h12.yzxh AND h13tf.yzlx = h12.yzlx AND h13tf.zyid = h12.zyid AND h13tf.mxxh = h12.mxxh')
+        .where('h13tf.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('(ISNULL(h13tf.fybz, 0) <> 1)')
+        .andWhere('(h12.xmzl = 2 OR h12.xmzl = 3)')
+        .andWhere('ABS(h13tf.zxcs - h13tf.bzxcs) > 0')
+        .andWhere('h13tf.jfyl > 0')
+        .andWhere('h13tf.zkksid IN (:...ksidList)', {
+          ksidList: [
+            dto.gs_cxsz.xyksid,
+            dto.gs_cxsz.cyksid,
+            dto.gs_cxsz.zyksid,
+            dto.gs_cxsz.clksid,
+            dto.gs_cxsz.qtksid,
+            dto.gs_cxsz.zjksid,
+            dto.gs_cxsz.jpksid,
+            dto.gs_cxsz.hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+        //控制台输出 校验药品退费未发药记录的实际sql
+        console.log("校验药品退费未发药记录的实际sql:", ll_count2);
+      
+      if (parseInt(ll_count2.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '有药品退费未发药，不能办理出院');
+      }
+      
+      // 3. 校验手术医嘱未发药记录
+      const ll_count3 = await this.dataSource.createQueryBuilder()
+        .select('COUNT(*)', 'count')
+        .from('h15_sszb', 'sszb')
+        .innerJoin('h15_ssxb', 'ssxb', 'ssxb.zyid = sszb.zyid AND ssxb.ssid = sszb.ssid')
+        .innerJoin('h11_brxx', 'brxx', 'sszb.zyid = brxx.zyid')
+        .where('sszb.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('ABS(ssxb.jfyl) > 0')
+        .andWhere('ISNULL(ssxb.tpbz, 0) = 0')
+        .andWhere('ISNULL(ssxb.tjbz, 0) = 1')
+        .andWhere('ssxb.xmzl IN (2, 3)')
+        .andWhere('ssxb.zxksid IN (:...ksidList)', {
+          ksidList: [
+            dto.gs_cxsz.xyksid,
+            dto.gs_cxsz.cyksid,
+            dto.gs_cxsz.zyksid,
+            dto.gs_cxsz.clksid,
+            dto.gs_cxsz.qtksid,
+            dto.gs_cxsz.zjksid,
+            dto.gs_cxsz.ssclksid,
+            dto.gs_cxsz.jpksid,
+            dto.gs_cxsz.hlksid
+          ].filter(Boolean)
+        })
+        .getRawOne();
+        //控制台输出 校验手术医嘱未发药记录的实际sql
+        console.log("校验手术医嘱未发药记录的实际sql:", ll_count3);
+      
+      if (parseInt(ll_count3.count, 10) > 0) {
+        throw new CustomException(ERR.ERR_10000, '手术医嘱未发药不能办出院');
       }
       
       // 校验：实习医生未签名

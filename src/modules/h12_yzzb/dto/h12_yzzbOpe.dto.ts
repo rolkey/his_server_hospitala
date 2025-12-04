@@ -102,16 +102,16 @@ export class adviceDto {
 }
 
 export class outDto {
-  @IsNotEmpty({ message: 'zyid不能为空' })
+  @IsNotEmpty({ message: '住院id不能为空' })
   zyid?: string;
 
-  @IsNotEmpty({ message: 'cysj不能为空' })
+  @IsNotEmpty({ message: '出院时间不能为空' })
   cysj?: string;
 
-  @IsNotEmpty({ message: 'cyqk不能为空' })
+  @IsNotEmpty({ message: '出院情况不能为空' })
   cyqk?: string;
 
-  @IsNotEmpty({ message: 'cyzd不能为空' })
+  @IsNotEmpty({ message: '出院诊断不能为空' })
   cyzd?: string;
 
   @IsOptional()
@@ -122,6 +122,27 @@ export class outDto {
 
   @IsOptional()
   skipVerify?: boolean = false;
+
+  @IsNotEmpty({ message: '系统参数对象不能为空' })
+  gs_cxsz: gs_cxsz;
+}
+export class gs_cxsz {
+  @IsOptional()
+  xyksid: string;
+  @IsOptional()
+  cyksid: string;
+  @IsOptional()
+  zyksid: string;
+  @IsOptional()
+  clksid: string;
+  @IsOptional()
+  qtksid: string;
+  @IsOptional()
+  zjksid: string;
+  @IsOptional()
+  jpksid: string;
+  @IsOptional()
+  hlksid: string;
 }
 
 
