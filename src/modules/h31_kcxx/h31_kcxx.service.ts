@@ -491,6 +491,7 @@ export class H31_kcxxService {
           .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
           .andWhere('kcxx.yxbz = 1')
           .andWhere('kcxx.kcsl > 0')
+          //   .andWhere('kcxx.sxrq > getdate()')
           .andWhere(
             'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= 1',
           )
@@ -516,13 +517,17 @@ export class H31_kcxxService {
             .where('kcxx.ksid = :lsKsid', { lsKsid })
             .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
             .andWhere('kcxx.yxbz = 1')
-            .andWhere('kcxx.sxrq > getdate()')
+            // .andWhere('kcxx.sxrq > getdate()')
             .andWhere(
               'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= 1',
             )
             .orderBy('kcxx.scph')
             .limit(1)
             .getRawOne();
+        }
+
+        if (kcxx.sxrq < new Date()) {
+          throw new Error(`药品${ypzd.zwmc}已过期，请重新选择`);
         }
 
         // 处理医保分类
@@ -538,7 +543,7 @@ export class H31_kcxxService {
           .where('kcxx.ksid = :lsKsid', { lsKsid })
           .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
           .andWhere('kcxx.yxbz = 1')
-          .andWhere('kcxx.sxrq > getdate()')
+          //   .andWhere('kcxx.sxrq > getdate()')
           .getRawOne();
 
         const kcsl = totalKcsl?.totalKcsl || 0;
