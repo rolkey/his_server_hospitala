@@ -13,6 +13,8 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
+import { availableParallelism } from 'os';
+import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
 
 /**
  * 完整重构版 Service
@@ -417,10 +419,11 @@ export class h12_yzxbServiceNew {
     return true
   }
 
-  // -------------------------
+  // -------------------------  
   // 办理出院
-  // -------------------------
-  async out(dto: outDto): Promise<{ success: boolean; message?: string }> {
+  // 办理出院
+  // -------------------------  
+  async out(dto: outDto): Promise<OutResponse> {
     try {
       // 接收出院时间并格式化
       const ldt_zksj = new Date(dto.cysj);
@@ -450,7 +453,11 @@ export class h12_yzxbServiceNew {
         .getRawOne();
 
       if (parseInt(li_rycount.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, `执行时间小于入院日期"${ls_rq}"，请删除多余次数后出院!`);
+        return createErrorResponse(
+          `执行时间小于入院日期"${ls_rq}"，请删除多余次数后出院!`,
+          ERR.ERR_10000.code,
+          false // 不需要详细表单
+        );
       }
 
       // 校验：医嘱执行时间晚于出院日期
@@ -463,28 +470,32 @@ export class h12_yzxbServiceNew {
         .getRawOne();
 
       if (parseInt(li_yzzxcscount.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '执行时间大于出院时间，请删除多余次数后出院!');
+        return createErrorResponse(
+          '执行时间大于出院时间，请删除多余次数后出院!',
+          ERR.ERR_10000.code,
+          false // 不需要详细表单
+        );
       }
 
       // 未发药校验 - 获取系统参数
       const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid }
         = await this.configReaderService.readYfCxsz(brxx.cyksid);
-      // console.log('--------------', xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid)
-      throw new CustomException(ERR.ERR_10000, '有医嘱未复核，请复核后再出院!');
-      // const ksidList = [
-      //   gs_cxsz.xyksid,
-      //   gs_cxsz.cyksid,
-      //   gs_cxsz.zyksid,
-      //   gs_cxsz.clksid,
-      //   gs_cxsz.qtksid,
-      //   gs_cxsz.zjksid
-      // ].filter(Boolean);
-      // //控制台打印 ksidList
-      // console.log('ksidList: ', ksidList);
+
       // 1. 校验h13_yzzxcs和h12_yzxb表中未发药记录
-      const ll_count1 = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
+      const wfylist = await this.h13_yzzxcsRepo.createQueryBuilder('h13')
         .innerJoin('h12_yzxb', 'h12', 'h13.yzxh = h12.yzxh AND h13.yzlx = h12.yzlx AND h13.zyid = h12.zyid AND h13.mxxh = h12.mxxh')
-        .select('COUNT(*)', 'count')
+        .select([
+          'h12.yzlx as yzlx',
+          'h12.mxxh as mxxh',
+          'h12.yzrq as yzrq',
+          'h12.xmid as xmid',
+          'h12.xmmc as xmmc',
+          'h13.jfyl as jfyl',
+          'h12.syffid as syffid',
+          'h12.syplid as syplid',
+          'h12.ksys as ksys',
+          'h12.kshs as kshs'
+        ])
         .where('h13.zyid = :zyid', { zyid: dto.zyid })
         .andWhere('(ISNULL(h13.fybz, 0) <> 1)')
         .andWhere('(h12.xmzl = 2 OR h12.xmzl = 3)')
@@ -494,21 +505,39 @@ export class h12_yzxbServiceNew {
           ksidList: [
             xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid,
             jpksid, hlksid
-            // gs_cxsz.jpksid,
-            // gs_cxsz.hlksid
           ].filter(Boolean)
         })
-        .getRawOne();
+        .getRawMany();
       //控制台输出 校验药品未发药记录的实际sql
-      console.log("校验药品未发药记录的实际sql:", ll_count1);
+      // console.log("校验药品未发药记录的实际sql:", wfylist);
 
-      if (parseInt(ll_count1.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '有药品未发药，不能办理出院');
+      if (wfylist.length > 0) {
+        // 格式化未发药明细信息
+        const wfymx = wfylist.map(item => {
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+        }).join('\n');
+        return createErrorResponse(
+          `有药品未发药，不能办理出院：\n${wfymx}`,
+          ERR.ERR_10000.code,
+          true, // 需要详细表单
+          wfylist
+        );
       }
 
       // 2. 校验h13_yzzxcs_tf和h12_yzxb表中未发药的退费记录
-      const ll_count2 = await this.dataSource.createQueryBuilder()
-        .select('COUNT(*)', 'count')
+      const tfwfylist = await this.dataSource.createQueryBuilder()
+        .select([
+          'h12.yzlx as yzlx',
+          'h12.mxxh as mxxh',
+          'h12.yzrq as yzrq',
+          'h12.xmid as xmid',
+          'h12.xmmc as xmmc',
+          'h13tf.jfyl as jfyl',
+          'h12.syffid as syffid',
+          'h12.syplid as syplid',
+          'h12.ksys as ksys',
+          'h12.kshs as kshs'
+        ])
         .from('h13_yzzxcs_tf', 'h13tf')
         .innerJoin('h12_yzxb', 'h12', 'h13tf.yzxh = h12.yzxh AND h13tf.yzlx = h12.yzlx AND h13tf.zyid = h12.zyid AND h13tf.mxxh = h12.mxxh')
         .where('h13tf.zyid = :zyid', { zyid: dto.zyid })
@@ -522,17 +551,37 @@ export class h12_yzxbServiceNew {
             jpksid, hlksid
           ].filter(Boolean)
         })
-        .getRawOne();
+        .getRawMany();
       //控制台输出 校验药品退费未发药记录的实际sql
-      console.log("校验药品退费未发药记录的实际sql:", ll_count2);
+      // console.log("校验药品退费未发药记录的实际sql:", tfwfylist);
 
-      if (parseInt(ll_count2.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '有药品退费未发药，不能办理出院');
+      if (tfwfylist.length > 0) {
+        // 格式化未发药退费明细信息
+        const tfwfymx = tfwfylist.map(item => {
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+        }).join('\n');
+        return createErrorResponse(
+          `有药品退费未发药，不能办理出院：\n${tfwfymx}`,
+          ERR.ERR_10000.code,
+          true, // 需要详细表单
+          tfwfylist
+        );
       }
 
       // 3. 校验手术医嘱未发药记录
-      const ll_count3 = await this.dataSource.createQueryBuilder()
-        .select('COUNT(*)', 'count')
+      const sswfylist = await this.dataSource.createQueryBuilder()
+        .select([
+          'ssxb.yzlx as yzlx',
+          'ssxb.mxxh as mxxh',
+          'sszb.yzrq as yzrq',
+          'ssxb.xmid as xmid',
+          'ssxb.xmmc as xmmc',
+          'ssxb.jfyl as jfyl',
+          'ssxb.syffid as syffid',
+          'ssxb.syplid as syplid',
+          'sszb.ksys as ksys',
+          'ssxb.kshs as kshs'
+        ])
         .from('h15_sszb', 'sszb')
         .innerJoin('h15_ssxb', 'ssxb', 'ssxb.zyid = sszb.zyid AND ssxb.ssid = sszb.ssid')
         .innerJoin('h11_brxx', 'brxx', 'sszb.zyid = brxx.zyid')
@@ -547,12 +596,21 @@ export class h12_yzxbServiceNew {
             jpksid, hlksid
           ].filter(Boolean)
         })
-        .getRawOne();
+        .getRawMany();
       //控制台输出 校验手术医嘱未发药记录的实际sql
-      console.log("校验手术医嘱未发药记录的实际sql:", ll_count3);
+      // console.log("校验手术医嘱未发药记录的实际sql:", sswfylist);
 
-      if (parseInt(ll_count3.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '手术医嘱未发药不能办出院');
+      if (sswfylist.length > 0) {
+        // 格式化手术医嘱未发药明细信息
+        const sswfymx = sswfylist.map(item => {
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+        }).join('\n');
+        return createErrorResponse(
+          `有手术医嘱未发药，不能办理出院：\n${sswfymx}`,
+          ERR.ERR_10000.code,
+          true, // 需要详细表单
+          sswfylist
+        );
       }
 
       // 校验：实习医生未签名
@@ -566,21 +624,49 @@ export class h12_yzxbServiceNew {
         .getRawOne();
 
       if (parseInt(li_jmcount1.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '实习医生未签名，请医生签名后再出院!');
+        // throw new CustomException(ERR.ERR_10000, '实习医生未签名，请医生签名后再出院!');
+        return createErrorResponse(
+          '实习医生未签名，请医生签名后再出院!',
+          ERR.ERR_10000.code,
+          true, // 需要详细表单
+          li_jmcount1
+        );
       }
 
       // 校验：医嘱未复核
-      const li_jmcount2 = await this.h12_yzxbRepo.createQueryBuilder('h12')
-        .select('COUNT(*)', 'count')
+      const weiFuhelist = await this.h12_yzxbRepo.createQueryBuilder('h12')
+        .leftJoin('h13_yzzxcs', 'h13', 'h13.yzxh = h12.yzxh AND h13.yzlx = h12.yzlx AND h13.zyid = h12.zyid AND h13.mxxh = h12.mxxh')
+        .select([
+          'h12.yzlx as yzlx',
+          'h12.mxxh as mxxh',
+          'h12.yzrq as yzrq',
+          'h12.xmid as xmid',
+          'h12.xmmc as xmmc',
+          'h13.jfyl as jfyl',
+          'h12.syffid as syffid',
+          'h12.syplid as syplid',
+          'h12.ksys as ksys',
+          'h12.kshs as kshs'
+        ])
         .where('h12.zyid = :zyid AND h12.ysbz = 1 AND h12.jsbz <> 1 AND h12.sjbz = 1 AND h12.yzlx <> 6 AND (h12.hdbz = 0 OR (h12.yzlx = 1 AND h12.tzbz = 1 AND (h12.jshs = :empty OR h12.jshs IS NULL))) AND h12.xmid <> :xmid', {
           zyid: dto.zyid,
           empty: '',
           xmid: '0000000'
         })
-        .getRawOne();
+        .getRawMany();
 
-      if (parseInt(li_jmcount2.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '有医嘱未复核，请复核后再出院!');
+      if (weiFuhelist.length > 0) {
+        // 格式化未复核医嘱明细信息
+        const weiFuheMx = weiFuhelist.map(item => {
+          return `项目：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl || 0}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+        }).join('\n');
+        // throw new CustomException(ERR.ERR_10000, `有医嘱未复核，请复核后再出院：\n${weiFuheMx}`);
+        return createErrorResponse(
+          `有医嘱未复核，请复核后再出院：\n${weiFuheMx}`,
+          ERR.ERR_10000.code,
+          true, // 需要详细表单
+          weiFuhelist
+        );
       }
 
       // 校验：护士未签名
@@ -594,7 +680,11 @@ export class h12_yzxbServiceNew {
         .getRawOne();
 
       if (parseInt(li_jmcount3.count, 10) > 0) {
-        throw new CustomException(ERR.ERR_10000, '开始护士未签名，请护士签名后再出院!');
+        return createErrorResponse(
+          '开始护士未签名，请护士签名后再出院!',
+          ERR.ERR_10000.code,
+          false // 不需要详细表单
+        );
       }
 
 
@@ -613,7 +703,13 @@ export class h12_yzxbServiceNew {
           .getRawOne();
 
         if (parseInt(li_yzzxcscount.count, 10) > 0) {
-          throw new CustomException(ERR.ERR_10000, '该病人有项目未执行，请医技科室执行后再出院！');
+          // throw new CustomException(ERR.ERR_10000, '该病人有项目未执行，请医技科室执行后再出院！');
+          return createErrorResponse(
+            '该病人有项目未执行，请医技科室执行后再出院！',
+            ERR.ERR_10000.code,
+            true, // 需要详细表单
+            li_yzzxcscount
+          );
         }
       }
 
@@ -673,13 +769,14 @@ export class h12_yzxbServiceNew {
         cwfpxx: ''   //清空床位废弃信息字段
       });
 
-      return { success: true };
+      return createSuccessResponse();
     } catch (error: any) {
       this.logger.error('办理出院失败', error?.stack ?? error?.message ?? error);
-      return {
-        success: false,
-        message: error instanceof CustomException ? error.message : '办理出院失败'
-      };
+      return createErrorResponse(
+        error instanceof CustomException ? error.message : '办理出院失败',
+        error instanceof CustomException ? error.code : ERR.ERR_10000.code,
+        false // 捕获的异常默认不需要详细表单
+      );
     }
   }
 
