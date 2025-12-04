@@ -196,7 +196,7 @@ export class h13_yzzxcs {
     { name: 'yzxh', referencedColumnName: 'yzxh' },
     { name: 'mxxh', referencedColumnName: 'mxxh' },
     { name: 'yzlx', referencedColumnName: 'yzlx' },
-    { name: 'zyid', referencedColumnName: 'zyid' },
+    { name: 'zyid', referencedColumnName: 'zyid' }, 
   ])
   h12_yzxb: h12_yzxb;
 

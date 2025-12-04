@@ -15,6 +15,7 @@ import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 import { availableParallelism } from 'os';
 import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
+import { usrcat } from '../usrcat/usrcat.entity';
 
 /**
  * 完整重构版 Service
@@ -53,6 +54,8 @@ export class h12_yzxbServiceNew {
     private h11BrxxRepo: Repository<h11_brxx>,
     @InjectRepository(h13_cwsyxx)
     private h13_cwsyxxRepo: Repository<h13_cwsyxx>,
+    @InjectRepository(usrcat)
+    private usrcatRepo: Repository<usrcat>,
     private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
     private readonly syspar_newService: syspar_newService,
@@ -512,15 +515,46 @@ export class h12_yzxbServiceNew {
       // console.log("校验药品未发药记录的实际sql:", wfylist);
 
       if (wfylist.length > 0) {
+        // 提取所有需要转换的工号
+        const usids = [...new Set([
+          ...wfylist.map(item => item.ksys).filter(Boolean),
+          ...wfylist.map(item => item.kshs).filter(Boolean)
+        ])];
+        
+        // 批量查询工号对应的名称
+        const usrInfoMap = new Map<string, string>();
+        if (usids.length > 0) {
+          const usrList = await this.usrcatRepo.find({
+            where: { usid: In(usids) },
+            select: ['usid', 'unam']
+          });
+          usrList.forEach(usr => {
+            if (usr.unam) {
+              usrInfoMap.set(usr.usid, usr.unam);
+            }
+          });
+        }
+        
         // 格式化未发药明细信息
         const wfymx = wfylist.map(item => {
-          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+          const ksysName = usrInfoMap.get(item.ksys) || item.ksys;
+          const kshsName = usrInfoMap.get(item.kshs) || item.kshs;
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
+        
+        // 更新返回给前端的明细，将工号转换为名称
+        const formattedWfylist = wfylist.map(item => ({
+          ...item,
+          ksysName: usrInfoMap.get(item.ksys) || item.ksys,
+          kshsName: usrInfoMap.get(item.kshs) || item.kshs
+        }));
+        
         return createErrorResponse(
-          `有药品未发药，不能办理出院：\n${wfymx}`,
+          // `有药品未发药，不能办理出院：\n${wfymx}`,
+          `有药品未发药，不能办理出院`,
           ERR.ERR_10000.code,
           true, // 需要详细表单
-          wfylist
+          formattedWfylist
         );
       }
 
@@ -556,15 +590,45 @@ export class h12_yzxbServiceNew {
       // console.log("校验药品退费未发药记录的实际sql:", tfwfylist);
 
       if (tfwfylist.length > 0) {
+        // 提取所有需要转换的工号
+        const tfUsids = [...new Set([
+          ...tfwfylist.map(item => item.ksys).filter(Boolean),
+          ...tfwfylist.map(item => item.kshs).filter(Boolean)
+        ])];
+        
+        // 批量查询工号对应的名称
+        const tfUsrInfoMap = new Map<string, string>();
+        if (tfUsids.length > 0) {
+          const tfUsrList = await this.usrcatRepo.find({
+            where: { usid: In(tfUsids) },
+            select: ['usid', 'unam']
+          });
+          tfUsrList.forEach(usr => {
+            if (usr.unam) {
+              tfUsrInfoMap.set(usr.usid, usr.unam);
+            }
+          });
+        }
+        
         // 格式化未发药退费明细信息
         const tfwfymx = tfwfylist.map(item => {
-          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+          const ksysName = tfUsrInfoMap.get(item.ksys) || item.ksys;
+          const kshsName = tfUsrInfoMap.get(item.kshs) || item.kshs;
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
+        
+        // 更新返回给前端的明细，将工号转换为名称
+        const formattedTfwfylist = tfwfylist.map(item => ({
+          ...item,
+          ksysName: tfUsrInfoMap.get(item.ksys) || item.ksys,
+          kshsName: tfUsrInfoMap.get(item.kshs) || item.kshs
+        }));
+        
         return createErrorResponse(
-          `有药品退费未发药，不能办理出院：\n${tfwfymx}`,
+          `有药品退费未发药，不能办理出院`,
           ERR.ERR_10000.code,
           true, // 需要详细表单
-          tfwfylist
+          formattedTfwfylist
         );
       }
 
@@ -601,15 +665,44 @@ export class h12_yzxbServiceNew {
       // console.log("校验手术医嘱未发药记录的实际sql:", sswfylist);
 
       if (sswfylist.length > 0) {
+        // 提取所有需要转换的工号
+        const ssUsids = [...new Set([
+          ...sswfylist.map(item => item.ksys).filter(Boolean),
+          ...sswfylist.map(item => item.kshs).filter(Boolean)
+        ])];
+        
+        // 批量查询工号对应的名称
+        const ssUsrInfoMap = new Map<string, string>();
+        if (ssUsids.length > 0) {
+          const ssUsrList = await this.usrcatRepo.find({
+            where: { usid: In(ssUsids) },
+            select: ['usid', 'unam']
+          });
+          ssUsrList.forEach(usr => {
+            if (usr.unam) {
+              ssUsrInfoMap.set(usr.usid, usr.unam);
+            }
+          });
+        }
+        
         // 格式化手术医嘱未发药明细信息
         const sswfymx = sswfylist.map(item => {
-          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+          const ksysName = ssUsrInfoMap.get(item.ksys) || item.ksys;
+          const kshsName = ssUsrInfoMap.get(item.kshs) || item.kshs;
+          return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
+        
+        // 更新返回给前端的明细，将工号转换为名称
+        const formattedSswfylist = sswfylist.map(item => ({
+          ...item,
+          ksysName: ssUsrInfoMap.get(item.ksys) || item.ksys,
+          kshsName: ssUsrInfoMap.get(item.kshs) || item.kshs
+        }));
         return createErrorResponse(
-          `有手术医嘱未发药，不能办理出院：\n${sswfymx}`,
+          `有手术医嘱未发药，不能办理出院`,
           ERR.ERR_10000.code,
           true, // 需要详细表单
-          sswfylist
+          formattedSswfylist
         );
       }
 
@@ -656,16 +749,46 @@ export class h12_yzxbServiceNew {
         .getRawMany();
 
       if (weiFuhelist.length > 0) {
-        // 格式化未复核医嘱明细信息
-        const weiFuheMx = weiFuhelist.map(item => {
-          return `项目：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，费用：${item.jfyl || 0}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksys}，科室护士：${item.kshs}`;
+        // 转换ksys和kshs字段为名称
+        const uniqueUsids = new Set<string>();
+        weiFuhelist.forEach(item => {
+          if (item.ksys) uniqueUsids.add(item.ksys);
+          if (item.kshs) uniqueUsids.add(item.kshs);
+        });
+
+        const usidArray = Array.from(uniqueUsids);
+        const usrInfoList = await this.usrcatRepo.find({
+          where: { usid: In(usidArray) },
+          select: ['usid', 'unam']
+        });
+
+        const usrInfoMap = new Map<string, string>();
+        usrInfoList.forEach(usr => {
+          usrInfoMap.set(usr.usid, usr.unam);
+        });
+
+        // 格式化未复核医嘱明细信息并转换工号为名称
+        const formattedWeiFuhelist = weiFuhelist.map(item => {
+          const ksysName = usrInfoMap.get(item.ksys) || item.ksys;
+          const kshsName = usrInfoMap.get(item.kshs) || item.kshs;
+          return {
+            ...item,
+            ksysName,
+            kshsName
+          };
+        });
+
+        // 格式化错误消息
+        const weiFuheMx = formattedWeiFuhelist.map(item => {
+          return `项目：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl || 0}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksysName}，科室护士：${item.kshsName}`;
         }).join('\n');
+
         // throw new CustomException(ERR.ERR_10000, `有医嘱未复核，请复核后再出院：\n${weiFuheMx}`);
         return createErrorResponse(
-          `有医嘱未复核，请复核后再出院：\n${weiFuheMx}`,
+          `有医嘱未复核，请复核后再出院`,
           ERR.ERR_10000.code,
           true, // 需要详细表单
-          weiFuhelist
+          formattedWeiFuhelist
         );
       }
 
