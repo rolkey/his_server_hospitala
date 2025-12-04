@@ -123,27 +123,27 @@ export class outDto {
   @IsOptional()
   skipVerify?: boolean = false;
 
-  @IsNotEmpty({ message: '系统参数对象不能为空' })
-  gs_cxsz: gs_cxsz;
+  // @IsNotEmpty({ message: '系统参数对象不能为空' })
+  // gs_cxsz: gs_cxsz;
 }
-export class gs_cxsz {
-  @IsOptional()
-  xyksid: string;
-  @IsOptional()
-  cyksid: string;
-  @IsOptional()
-  zyksid: string;
-  @IsOptional()
-  clksid: string;
-  @IsOptional()
-  qtksid: string;
-  @IsOptional()
-  zjksid: string;
-  @IsOptional()
-  jpksid: string;
-  @IsOptional()
-  hlksid: string;
-}
+// export class gs_cxsz {
+//   @IsOptional()
+//   xyksid: string;
+//   @IsOptional()
+//   cyksid: string;
+//   @IsOptional()
+//   zyksid: string;
+//   @IsOptional()
+//   clksid: string;
+//   @IsOptional()
+//   qtksid: string;
+//   @IsOptional()
+//   zjksid: string;
+//   @IsOptional()
+//   jpksid: string;
+//   @IsOptional()
+//   hlksid: string;
+// }
 
 
 export class checkOutDto {
