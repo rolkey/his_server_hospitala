@@ -1,7 +1,14 @@
 import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
-import { executeDto, H12_yzzbOpeDto, adviceDto, reviewDto, outDto, checkOutDto } from './dto/h12_yzzbOpe.dto';
+import {
+  executeDto,
+  H12_yzzbOpeDto,
+  adviceDto,
+  reviewDto,
+  outDto,
+  checkOutDto,
+} from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
 import { H12_yzzb1OpeDto } from './dto/h12_yzzb1Ope.dto';
@@ -199,7 +206,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.4';
+    return '1.0.0.5';
   }
 
   @Post('generateBaby')
@@ -261,9 +268,6 @@ export class h12_yzzbController {
   async checkOut(@Body() dto: checkOutDto) {
     return await this.h12_yzxbServiceNew.checkOut(dto);
   }
-
-
-
 
   @Post('voidable')
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[] }) {
