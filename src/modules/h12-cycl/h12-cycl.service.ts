@@ -4,12 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between, EntityManager } from 'typeorm';
 import { H12Cycl } from './h12-cycl.entity';
 import { CreateH12CyclDto, UpdateH12CyclDto, QueryH12CyclDto } from './dto/h12-cycl.dto';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 
 @Injectable()
 export class H12CyclService {
   constructor(
     @InjectRepository(H12Cycl)
     private readonly h12CyclRepository: Repository<H12Cycl>,
+    // @InjectRepository(h11_brxx)
+    // private readonly h11_brxxRepository: Repository<h11_brxx>,
   ) {}
 
   // 创建记录
@@ -171,6 +174,7 @@ export class H12CyclService {
       await manager.remove(cycl);
     }
     const entity = this.h12CyclRepository.create(dto);
+    await manager.update(h11_brxx, { zyid: dto.zyid }, { bz2: dto.bz2, cyzd: dto.bz3 });
     await manager.save(entity);
   }
 }
