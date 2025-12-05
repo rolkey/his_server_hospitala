@@ -392,33 +392,238 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
+  // 退回医嘱给医生 (旧)
+  // -------------------------
+  // async refundAdvice(dto: adviceDto) {
+  //   const yzxbList = await this.h12_yzxbRepo.find({
+  //     where: {
+  //       zyid: dto.zyid,
+  //       yzlx: dto.yzlx,
+  //       ysbz: 1,
+  //       yzxh: 1,
+  //       mxxh: In(dto.mxxhList || []),
+  //     },
+  //     select: { h13_yzzxcsList: true },
+  //     relations: { h13_yzzxcsList: true }
+  //   })
+  //   for (const item of yzxbList) {
+  //     if (item?.h13_yzzxcsList?.length) {
+  //       throw new CustomException(ERR.ERR_10000, `[${item.xmmc}] 已执行，不能退回`);
+  //     }
+  //     item.yzzt = 0
+  //     item.tjbz = 0
+  //     item.kshs = ''
+  //     item.zxbz = 0
+  //     item.hdbz = 0
+  //     item.zxrq = null
+  //     item.hshd = ''
+  //   }
+  //   await this.h12_yzxbRepo.save(yzxbList)
+  //   return true
+  // }
+
+  // -------------------------
   // 退回医嘱给医生
   // -------------------------
   async refundAdvice(dto: adviceDto) {
+    const { zyid, yzlx, mxxhList, zxhs } = dto;
+    
+    // 检查是否有医嘱
+    if (!mxxhList || mxxhList.length === 0) {
+      throw new CustomException(ERR.ERR_10000, '未有医嘱!');
+    }
+    
+    // 兼容前端传入的两种格式：数字数组或包含mxxh属性的对象数组
+    const mxxhValues = mxxhList.map(item => {
+      if (typeof item === 'object' && item !== null && 'mxxh' in item) {
+        return item.mxxh;
+      }
+      return Number(item);
+    }).filter(mxxh => !isNaN(mxxh));
+    
+    
+    // 检查是否有有效的mxxh
+    if (mxxhValues.length === 0) {
+      throw new CustomException(ERR.ERR_10000, '未有有效的医嘱!');
+    }
+
+    // 获取医嘱主表信息
     const yzxbList = await this.h12_yzxbRepo.find({
       where: {
-        zyid: dto.zyid,
-        yzlx: dto.yzlx,
-        ysbz: 1,
-        yzxh: 1,
-        mxxh: In(dto.mxxhList || []),
+        zyid,
+        yzlx,
+        mxxh: In(mxxhValues),
+        ysbz: 1 // 有效医嘱
       },
-      select: { h13_yzzxcsList: true },
-      relations: { h13_yzzxcsList: true }
-    })
-    for (const item of yzxbList) {
-      if (item?.h13_yzzxcsList?.length) {
-        throw new CustomException(ERR.ERR_10000, `[${item.xmmc}] 已执行，不能退回`);
-      }
-      item.yzzt = 0
-      item.tjbz = 0
-      item.kshs = ''
-      item.zxbz = 0
-      item.hdbz = 0
-      item.zxrq = null
-      item.hshd = ''
+      select: [
+        'zyid', 'mxxh', 'sjbz', 'yzzh', 'xmid', 'xmmc', 'yzlx', 'yzxh', 'tpbz', 'fylbid',
+        'yzzt', 'tjbz', 'tzbz', 'zxbz', 'hdbz', 'clbz', 'kshs', 'jshs', 'kssxhs', 'jssxhs', 'hdhs', 'hshd', 'hshdrq', 'tzrq'
+      ]
+    });
+    
+    // 检查医嘱是否存在
+    if (yzxbList.length === 0) {
+      throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
-    await this.h12_yzxbRepo.save(yzxbList)
+    
+    // 获取系统参数配置
+    const gs_cxsz = await this.configReaderService.readGsCxsz();
+    
+    // 事务处理
+    await this.dataSource.transaction(async (manager) => {
+      for (const item of yzxbList) {
+        // 检查是否为作废医嘱
+        if (item.sjbz === 0) {
+          throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】作废医嘱不能退回!`);
+        }
+        
+        // 中药按单个处理（PB代码中调用了ue_hsth_dgzy事件）
+        if ((item.fylbid === '02' || item.fylbid === '90') && item.yzzh === 0) {
+          // 这里可以添加中药的特殊处理逻辑
+          continue;
+        }
+        
+        // 检查是否有执行记录
+        const queryBuilder = manager.createQueryBuilder(h13_yzzxcs, 'h13')
+          .select('ISNULL(SUM((h13.zxcs - h13.bzxcs) * h13.jfyl), 0)', 'count')
+          .where('h13.zyid = :zyid', { zyid })
+          .andWhere('h13.yzlx = :yzlx', { yzlx: item.yzlx })
+          .andWhere('h13.mxxh = :mxxh', { mxxh: item.mxxh });
+        
+        // 根据tpbz设置不同的条件
+        const fylbids = ['01', '02', '03', '15'];
+        if (item.tpbz === 1) {
+          queryBuilder.andWhere(
+            '((h13.fylbid IN (:...fylbids) AND h13.fybz = 1) OR (h13.fylbid NOT IN (:...fylbids)) OR (ISNULL(h13.fydh, \'\') <> \'\' AND ISNULL(h13.fybz, 0) = 0))',
+            { fylbids }
+          );
+        } else {
+          queryBuilder.andWhere(
+            '((h13.fylbid IN (:...fylbids) AND h13.fybz = 1) OR (h13.fylbid NOT IN (:...fylbids)) OR (ISNULL(h13.fydh, \'\') <> \'\' AND ISNULL(h13.fybz, 0) = 0))',
+            { fylbids }
+          );
+        }
+        //控制台打印queryBuilder的sql语句
+        // console.log("检查是否有执行记录sql:-----"+queryBuilder.getQuery());
+
+        const result = await queryBuilder.getRawOne();
+        const ll_count = parseFloat(result.count) || 0;
+        
+        // 如果有执行记录，提示不能退回
+        if (ll_count > 0) {
+          throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】已执行医嘱或生成领药单，请护士取消执行次数，再退回!`);
+        }
+        
+        // 第3,4,5版，必须退药了，才可以退回
+        if (['3', '4', '5'].includes(gs_cxsz.kssz)) {
+          // 检查退费记录是否有未发药
+          const tfCount = await manager.createQueryBuilder(H13YzzxcsTf, 'h13_tf')
+            .select('COUNT(*)', 'count')
+            .where('h13_tf.zyid = :zyid', { zyid })
+            .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
+            .andWhere('EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE h13.zyid = h13_tf.zyid AND h13.maxid = h13_tf.zxcs2 AND h13.yzzh = :yzzh AND h13.yzlx = :yzlx AND ISNULL(h13.fybz, 0) = 1)', {
+              yzzh: item.yzzh,
+              yzlx: item.yzlx
+            })
+            .andWhere('ISNULL(h13_tf.fybz, 0) = 0')
+            .getRawOne();
+          
+          if (parseInt(tfCount.count, 10) > 0) {
+            throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未发药，不能退回医生，请关联药房先退药!`);
+          }
+          
+          // 第5版，检查退药记录是否未生成发药
+          if (gs_cxsz.kssz === '5') {
+            const tfCount2 = await manager.createQueryBuilder(H13YzzxcsTf, 'h13_tf')
+              .select('COUNT(*)', 'count')
+              .where('h13_tf.zyid = :zyid', { zyid })
+              .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
+              .andWhere('EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE h13.zyid = h13_tf.zyid AND h13.maxid = h13_tf.zxcs2 AND h13.yzzh = :yzzh AND h13.yzlx = :yzlx AND ISNULL(h13.fydh, \'\') <> \'\')', {
+                yzzh: item.yzzh,
+                yzlx: item.yzlx
+              })
+              .andWhere('ISNULL(h13_tf.fydh, \'\') = \'\'')
+              .getRawOne();
+            
+            if (parseInt(tfCount2.count, 10) > 0) {
+              throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未生成发药，不能退回医生，请关联护士生成领药单!`);
+            }
+          }
+        }
+        
+        // 更新医嘱状态
+        item.yzzt = 0;
+        item.tjbz = 0;
+        item.tzbz = 0;
+        item.zxbz = 0;
+        item.hdbz = 0;
+        item.clbz = 0;
+        item.kshs = '';
+        item.jshs = '';
+        item.kssxhs = '';
+        item.jssxhs = '';
+        item.hdhs = '';
+        item.hshd = '';
+        item.hshdrq = null;
+        if (item.yzlx === 2) {
+          item.tzrq = null;
+        }
+        
+        // 保存更新
+        await manager.save(item);
+        
+        // 更新附加项目
+        await manager.update(h12_yzxb, 
+          { zyid, yzxh: item.yzxh, yzlx: item.yzlx, yzzh: item.yzzh, ysbz: 0 },
+          { yzzt: 0, tjbz: 0, tzbz: 0, zxbz: 0, hdbz: 0, clbz: 0, kshs: '', jshs: '' }
+        );
+        
+        // 删除预扣库存
+        await manager.query(
+          `UPDATE h31_kcxx SET dfsl = ISNULL(dfsl, 0) - fy.sl
+           FROM (SELECT SUM((h13.zxcs - h13.bzxcs) * h13.jfyl * h13.kyts) sl,
+                 h13.zyid, h13.scph, h13.zkksid, h13.xmid
+                 FROM h13_yzzxcs h13
+                 WHERE h13.zyid = @0 AND h13.yzzh = @1 AND h13.yzlx = @2
+                 AND ISNULL(h13.fybz, 0) = 0
+                 GROUP BY h13.zyid, h13.scph, h13.zkksid, h13.xmid) fy
+           WHERE h31_kcxx.ypid = fy.xmid AND h31_kcxx.scph = fy.scph AND h31_kcxx.ksid = fy.zkksid`,
+          [zyid, item.yzzh, item.yzlx]
+        );
+        
+        // 删除执行记录
+        await manager.delete(h13_yzzxcs, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
+        
+        // 删除退费记录
+        await manager.delete(H13YzzxcsTf, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
+        
+        // 调用存储过程，当@al=2时存储过程会直接返回
+        // 先声明局部变量接收输出参数，然后执行存储过程
+        await manager.query(
+          `DECLARE @output_xmidn varchar(50);
+           DECLARE @output_scph varchar(10);
+           DECLARE @output_rtn int;
+           DECLARE @output_msg varchar(60);
+           
+           EXEC sp_h13kcxx_check 
+             @as_zyid = @0, 
+             @as_ksid = @1, 
+             @as_xmid = @2, 
+             @as_xmmc = @3, 
+             @as_xmgg = @4, 
+             @ls_scph = @5, 
+             @ld_sl = 0, 
+             @mxxh = @6, 
+             @al = 2, 
+             @as_xmidn = @output_xmidn OUTPUT, 
+             @as_scph = @output_scph OUTPUT, 
+             @ai_rtn = @output_rtn OUTPUT, 
+             @as_msg = @output_msg OUTPUT`,
+          [zyid, zxhs, item.xmid, item.xmmc, item.xmgg || '', item.scph || '', item.mxxh]
+        );
+      }
+    });
+    
     return true
   }
 
@@ -982,3 +1187,8 @@ export class h12_yzxbServiceNew {
     }
   }
 }
+
+
+
+
+
