@@ -427,12 +427,12 @@ export class h12_yzxbServiceNew {
   // -------------------------
   async refundAdvice(dto: adviceDto) {
     const { zyid, yzlx, mxxhList, zxhs } = dto;
-
+    
     // 检查是否有医嘱
     if (!mxxhList || mxxhList.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
-
+    
     // 兼容前端传入的两种格式：数字数组或包含mxxh属性的对象数组
     const mxxhValues = mxxhList.map(item => {
       if (typeof item === 'object' && item !== null && 'mxxh' in item) {
@@ -440,8 +440,8 @@ export class h12_yzxbServiceNew {
       }
       return Number(item);
     }).filter(mxxh => !isNaN(mxxh));
-
-
+    
+    
     // 检查是否有有效的mxxh
     if (mxxhValues.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有有效的医嘱!');
@@ -460,15 +460,15 @@ export class h12_yzxbServiceNew {
         'yzzt', 'tjbz', 'tzbz', 'zxbz', 'hdbz', 'clbz', 'kshs', 'jshs', 'kssxhs', 'jssxhs', 'hdhs', 'hshd', 'hshdrq', 'tzrq'
       ]
     });
-
+    
     // 检查医嘱是否存在
     if (yzxbList.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
-
+    
     // 获取系统参数配置
     const gs_cxsz = await this.configReaderService.readGsCxsz();
-
+    
     // 事务处理
     await this.dataSource.transaction(async (manager) => {
       for (const item of yzxbList) {
@@ -476,20 +476,20 @@ export class h12_yzxbServiceNew {
         if (item.sjbz === 0) {
           throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】作废医嘱不能退回!`);
         }
-
+        
         // 中药按单个处理（PB代码中调用了ue_hsth_dgzy事件）
         if ((item.fylbid === '02' || item.fylbid === '90') && item.yzzh === 0) {
           // 这里可以添加中药的特殊处理逻辑
           continue;
         }
-
+        
         // 检查是否有执行记录
         const queryBuilder = manager.createQueryBuilder(h13_yzzxcs, 'h13')
           .select('ISNULL(SUM((h13.zxcs - h13.bzxcs) * h13.jfyl), 0)', 'count')
           .where('h13.zyid = :zyid', { zyid })
           .andWhere('h13.yzlx = :yzlx', { yzlx: item.yzlx })
           .andWhere('h13.mxxh = :mxxh', { mxxh: item.mxxh });
-
+        
         // 根据tpbz设置不同的条件
         const fylbids = ['01', '02', '03', '15'];
         if (item.tpbz === 1) {
@@ -508,12 +508,12 @@ export class h12_yzxbServiceNew {
 
         const result = await queryBuilder.getRawOne();
         const ll_count = parseFloat(result.count) || 0;
-
+        
         // 如果有执行记录，提示不能退回
         if (ll_count > 0) {
           throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】已执行医嘱或生成领药单，请护士取消执行次数，再退回!`);
         }
-
+        
         // 第3,4,5版，必须退药了，才可以退回
         if (['3', '4', '5'].includes(gs_cxsz.kssz)) {
           // 检查退费记录是否有未发药
@@ -527,11 +527,11 @@ export class h12_yzxbServiceNew {
             })
             .andWhere('ISNULL(h13_tf.fybz, 0) = 0')
             .getRawOne();
-
+          
           if (parseInt(tfCount.count, 10) > 0) {
             throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未发药，不能退回医生，请关联药房先退药!`);
           }
-
+          
           // 第5版，检查退药记录是否未生成发药
           if (gs_cxsz.kssz === '5') {
             const tfCount2 = await manager.createQueryBuilder(H13YzzxcsTf, 'h13_tf')
@@ -544,13 +544,13 @@ export class h12_yzxbServiceNew {
               })
               .andWhere('ISNULL(h13_tf.fydh, \'\') = \'\'')
               .getRawOne();
-
+            
             if (parseInt(tfCount2.count, 10) > 0) {
               throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未生成发药，不能退回医生，请关联护士生成领药单!`);
             }
           }
         }
-
+        
         // 更新医嘱状态
         item.yzzt = 0;
         item.tjbz = 0;
@@ -568,16 +568,16 @@ export class h12_yzxbServiceNew {
         if (item.yzlx === 2) {
           item.tzrq = null;
         }
-
+        
         // 保存更新
         await manager.save(item);
-
+        
         // 更新附加项目
-        await manager.update(h12_yzxb,
+        await manager.update(h12_yzxb, 
           { zyid, yzxh: item.yzxh, yzlx: item.yzlx, yzzh: item.yzzh, ysbz: 0 },
           { yzzt: 0, tjbz: 0, tzbz: 0, zxbz: 0, hdbz: 0, clbz: 0, kshs: '', jshs: '' }
         );
-
+        
         // 删除预扣库存
         await manager.query(
           `UPDATE h31_kcxx SET dfsl = ISNULL(dfsl, 0) - fy.sl
@@ -590,48 +590,205 @@ export class h12_yzxbServiceNew {
            WHERE h31_kcxx.ypid = fy.xmid AND h31_kcxx.scph = fy.scph AND h31_kcxx.ksid = fy.zkksid`,
           [zyid, item.yzzh, item.yzlx]
         );
-
+        
         // 删除执行记录
         await manager.delete(h13_yzzxcs, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
-
+        
         // 删除退费记录
         await manager.delete(H13YzzxcsTf, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
+        
+        // 调用check方法替代存储过程调用
+        const checkResult = await this.check({
+          zyid,
+          ksid: zxhs,
+          xmid: item.xmid,
+          xmmc: item.xmmc,
+          xmgg: item.xmgg || '',
+          scph: item.scph || '',
+          sl: 0,
+          mxxh: item.mxxh,
+          al: 2
+        });
+        
+        // 检查check方法返回结果
+        if (checkResult.rtn !== 1) {
+          throw new CustomException(ERR.ERR_10000, `药品扣库存失败！项目：${checkResult.xmidn} 批次：${checkResult.scph} 错误信息：${checkResult.msg}`);
+        }
 
-        // 调用存储过程，当@al=2时存储过程会直接返回
-        // 先声明局部变量接收输出参数，然后执行存储过程
-        const re = await manager.query(
-          `
-        DECLARE
-        @output_xmidn varchar(50),
-        @output_scph  varchar(10),
-        @output_rtn int,
-        @output_msg varchar(60);
-           
-        EXEC sp_h13kcxx_check 
-             @as_zyid = @0, 
-             @as_ksid = @1, 
-             @as_xmid = @2, 
-             @as_xmmc = @3, 
-             @as_xmgg = @4, 
-             @ls_scph = @5, 
-             @ld_sl = 0, 
-             @mxxh = @6, 
-             @al = 2, 
-             @as_xmidn = @output_xmidn OUTPUT, 
-             @as_scph = @output_scph OUTPUT, 
-             @ai_rtn = @output_rtn OUTPUT, 
-             @as_msg = @output_msg OUTPUT;
-
-            SELECT @output_xmidn AS xmidn, @output_scph AS scph, @output_rtn AS rtn, @output_msg AS msg;
-             `,
-          [zyid, zxhs, item.xmid, item.xmmc, item.xmgg || '', item.scph || '', item.mxxh]
-        );
-        const { xmidn, scph, rtn, msg } = re[0]
-        console.log('----------------', xmidn, scph, rtn, msg)
+        
       }
     });
-
+    
     return true
+  }
+
+  /**
+   * 实现sp_h13kcxx_check存储过程功能
+   * @param params 存储过程参数
+   * @returns 执行结果
+   */
+  private async check(params: {
+    zyid: string;
+    ksid: string;
+    xmid: string;
+    xmmc: string;
+    xmgg: string;
+    scph: string;
+    sl: number;
+    mxxh: number;
+    al: number;
+  }): Promise<{
+    xmidn: string;
+    scph: string;
+    rtn: number;
+    msg: string;
+  }> {
+    const {
+      zyid,
+      ksid,
+      xmid,
+      xmmc,
+      xmgg,
+      scph,
+      sl,
+      mxxh,
+      al
+    } = params;
+
+    let xmidn = xmid;
+    let returnScph = scph;
+    let rtn = 1;
+    let msg = 'OK!';
+
+    // 如果是已执行状态，直接返回
+    if (al === 2) {
+      return { xmidn, scph: returnScph, rtn, msg };
+    }
+
+    // 删除c00_fbxx表中的记录
+    await this.dataSource.query(
+      `DELETE FROM c00_fbxx WHERE zyid = @0 AND xmid = @1 AND mxxh = @2`,
+      [zyid, xmid, mxxh]
+    );
+
+    // 检查药品是否需要库存管理
+    const h30Result = await this.dataSource.query(
+      `SELECT ISNULL(jsl2, 0) as jsl2 FROM h30_ypzd WHERE ypid = @0`,
+      [xmid]
+    );
+
+    const ll_kcgl = h30Result.length > 0 ? h30Result[0].jsl2 : 0;
+    if (ll_kcgl !== 0 || sl === 0) {
+      rtn = 1;
+      msg = 'OK!';
+      return { xmidn, scph: returnScph, rtn, msg };
+    }
+
+    // 检查出库设置（是否允许库存负数）
+    const sysparResult = await this.dataSource.query(
+      `SELECT LTRIM(RTRIM(pval)) as pval FROM __syspar WHERE syid = '30' AND prid = 'cksl'`
+    );
+
+    const ls_ckbz = sysparResult.length > 0 && sysparResult[0].pval ? sysparResult[0].pval : '1';
+
+    // 获取药品的销售系数和药品分类
+    const ypzdResult = await this.dataSource.query(
+      `SELECT ISNULL(esxs, 1) as esxs, ypfl FROM h30_ypzd WHERE ypid = @0 AND jsl2 = 0`,
+      [xmid]
+    );
+
+    if (ypzdResult.length === 0) {
+      rtn = 1;
+      msg = 'OK!';
+      return { xmidn, scph: returnScph, rtn, msg };
+    }
+
+    const ld_xs = ypzdResult[0].esxs;
+    const ypfl = ypzdResult[0].ypfl;
+
+    // 检查库存数量是否足够
+    const ls_ks = ksid.trim();
+    const kcxxResult = await this.dataSource.query(
+      `SELECT TOP 1 ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0) - @0) as kcsl
+       FROM h31_kcxx 
+       WHERE ypid = @1 AND yxbz = 1 AND ksid IN (@2) AND
+       ISNULL(xsl, 0) - (ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @0 >= 0 AND scph = @3
+       ORDER BY sxrq, scph`,
+      [sl, xmid, ls_ks, scph]
+    );
+
+    if (kcxxResult.length === 0) {
+      // 如果是特殊药品分类，返回成功
+      if (ypfl === '17') {
+        returnScph = scph;
+        xmidn = xmid;
+        rtn = 1;
+        msg = 'OK!';
+        return { xmidn, scph: returnScph, rtn, msg };
+      }
+
+      // 如果允许库存负数，返回成功
+      if (ls_ckbz === '2') {
+        rtn = 1;
+        msg = 'OK!';
+        return { xmidn, scph: returnScph, rtn, msg };
+      }
+
+      // 尝试查找其他批次
+      const otherBatchResult = await this.dataSource.query(
+        `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
+                scph, ypid
+         FROM h31_kcxx 
+         WHERE ypid = @0 AND ksid IN (@1) AND yxbz = 1 AND
+         ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @2 >= 0 
+         ORDER BY sxrq, scph`,
+        [xmid, ls_ks, sl]
+      );
+
+      if (otherBatchResult.length > 0) {
+        returnScph = otherBatchResult[0].scph;
+        xmidn = otherBatchResult[0].ypid;
+        rtn = 1;
+        msg = 'OK!';
+        return { xmidn, scph: returnScph, rtn, msg };
+      }
+
+      // 尝试查找同类药品
+      const sameTypeResult = await this.dataSource.query(
+        `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
+                scph, ypid
+         FROM h31_kcxx 
+         WHERE ksid IN (@0) AND yxbz = 1 AND
+         ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @1 >= 0 AND
+         ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = @2 AND 
+                 ((ypgg = @3 AND ypflid NOT IN ('02','90')) OR (ypflid IN ('02','90'))))
+         ORDER BY ypid, scph`,
+        [ls_ks, sl, xmmc, xmgg]
+      );
+
+      if (sameTypeResult.length === 0) {
+        // 尝试查找关联药品
+        const relatedResult = await this.dataSource.query(
+          `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
+                  scph, ypid
+           FROM h31_kcxx 
+           WHERE ksid IN (@0) AND yxbz = 1 AND
+           ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @1 >= 0 AND
+           ypid IN (SELECT glypid FROM h30_ypgl WHERE ypid = @2)
+           ORDER BY ypid, sxrq, scph`,
+          [ls_ks, sl, xmid]
+        );
+
+        if (relatedResult.length === 0) {
+          // 库存不足
+          rtn = -1;
+          msg = `库存量不足`;
+          return { xmidn, scph: returnScph, rtn, msg };
+        }
+      }
+    }
+
+    return { xmidn, scph: returnScph, rtn, msg };
   }
 
   // -------------------------  
@@ -732,7 +889,7 @@ export class h12_yzxbServiceNew {
           ...wfylist.map(item => item.ksys).filter(Boolean),
           ...wfylist.map(item => item.kshs).filter(Boolean)
         ])];
-
+        
         // 批量查询工号对应的名称
         const usrInfoMap = new Map<string, string>();
         if (usids.length > 0) {
@@ -746,21 +903,21 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-
+        
         // 格式化未发药明细信息
         const wfymx = wfylist.map(item => {
           const ksysName = usrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = usrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-
+        
         // 更新返回给前端的明细，将工号转换为名称
         const formattedWfylist = wfylist.map(item => ({
           ...item,
           ksysName: usrInfoMap.get(item.ksys) || item.ksys,
           kshsName: usrInfoMap.get(item.kshs) || item.kshs
         }));
-
+        
         return createErrorResponse(
           // `有药品未发药，不能办理出院：\n${wfymx}`,
           `有药品未发药，不能办理出院`,
@@ -807,7 +964,7 @@ export class h12_yzxbServiceNew {
           ...tfwfylist.map(item => item.ksys).filter(Boolean),
           ...tfwfylist.map(item => item.kshs).filter(Boolean)
         ])];
-
+        
         // 批量查询工号对应的名称
         const tfUsrInfoMap = new Map<string, string>();
         if (tfUsids.length > 0) {
@@ -821,21 +978,21 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-
+        
         // 格式化未发药退费明细信息
         const tfwfymx = tfwfylist.map(item => {
           const ksysName = tfUsrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = tfUsrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-
+        
         // 更新返回给前端的明细，将工号转换为名称
         const formattedTfwfylist = tfwfylist.map(item => ({
           ...item,
           ksysName: tfUsrInfoMap.get(item.ksys) || item.ksys,
           kshsName: tfUsrInfoMap.get(item.kshs) || item.kshs
         }));
-
+        
         return createErrorResponse(
           `有药品退费未发药，不能办理出院`,
           ERR.ERR_10000.code,
@@ -882,7 +1039,7 @@ export class h12_yzxbServiceNew {
           ...sswfylist.map(item => item.ksys).filter(Boolean),
           ...sswfylist.map(item => item.kshs).filter(Boolean)
         ])];
-
+        
         // 批量查询工号对应的名称
         const ssUsrInfoMap = new Map<string, string>();
         if (ssUsids.length > 0) {
@@ -896,14 +1053,14 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-
+        
         // 格式化手术医嘱未发药明细信息
         const sswfymx = sswfylist.map(item => {
           const ksysName = ssUsrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = ssUsrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-
+        
         // 更新返回给前端的明细，将工号转换为名称
         const formattedSswfylist = sswfylist.map(item => ({
           ...item,
