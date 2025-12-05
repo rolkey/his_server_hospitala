@@ -526,7 +526,7 @@ export class H31_kcxxService {
             .getRawOne();
         }
 
-        if (kcxx.sxrq < new Date()) {
+        if (kcxx?.sxrq < new Date()) {
           throw new Error(`药品${ypzd.zwmc}已过期，请重新选择`);
         }
 
@@ -623,6 +623,7 @@ export class H31_kcxxService {
 
       return response;
     } catch (error) {
+      console.error('库存查询错误', error);
       response.success = false;
       response.message = `查询药品库存价格时出错: ${error.message}`;
       return response;
