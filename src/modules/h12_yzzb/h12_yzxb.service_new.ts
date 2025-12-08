@@ -608,6 +608,7 @@ export class h12_yzxbServiceNew {
         item.hdhs = '';
         item.hshd = '';
         item.hshdrq = null;
+        item.zxrq = null;
         if (item.yzlx === 2) {
           item.tzrq = null;
         }
