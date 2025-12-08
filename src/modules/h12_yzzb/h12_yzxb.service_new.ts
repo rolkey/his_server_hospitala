@@ -12,6 +12,7 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
+import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 import { availableParallelism } from 'os';
 import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
@@ -293,6 +294,27 @@ export class h12_yzxbServiceNew {
           yzlx: dto.yzlx,
           mxxh: In(h13_yzzxcsList.map((it) => it.mxxh)),
         });
+        //如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
+        const H31LyjlRepo = manager.getRepository(H31Lyjl);
+        for (const item of h13_yzzxcsList) {
+          if (item?.H31Lyjl) {
+            const lyjlList = await H31LyjlRepo.find({
+              where: {
+                ksid: item.H31Lyjl.ksid,
+                djlb: item.H31Lyjl.djlb,
+                djbh: item.H31Lyjl.djbh
+              }
+            });
+            if (lyjlList.length > 0) {
+              for (const lyjl of lyjlList) {
+                //调整相对应h31_lyjl表里的相应记录的ckclbz为0
+                lyjl.ckclbz = 0;
+              }
+              await H31LyjlRepo.save(lyjlList);
+            }
+          }
+        }
+
       } catch (error: any) {
         this.logger.error('删除费用失败', error?.stack ?? error?.message ?? error);
         throw new CustomException(ERR.ERR_10000, error?.message ?? '删除费用失败');
@@ -372,6 +394,27 @@ export class h12_yzxbServiceNew {
           item.bzxcs = dtoItem.bzxcs;
           item.H31Lyjl = undefined as any;
           item.H13YzzxcsTfList = undefined as any;
+
+          // 如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
+          const H31LyjlRepo = manager.getRepository(H31Lyjl);
+          if (item?.H31Lyjl) {
+            const lyjlList = await H31LyjlRepo.find({
+              where: {
+                ksid: item.H31Lyjl.ksid,
+                djlb: item.H31Lyjl.djlb,
+                djbh: item.H31Lyjl.djbh
+              }
+            });
+            if (lyjlList.length > 0) {
+              for (const lyjl of lyjlList) {
+                //调整相对应h31_lyjl表里的相应记录的ckclbz为0
+                lyjl.ckclbz = 0;
+              }
+              await H31LyjlRepo.save(lyjlList);
+            }
+          }
+          
+
         }
 
         await Promise.all([
@@ -565,6 +608,7 @@ export class h12_yzxbServiceNew {
         item.hdhs = '';
         item.hshd = '';
         item.hshdrq = null;
+        item.zxrq = null;
         if (item.yzlx === 2) {
           item.tzrq = null;
         }
