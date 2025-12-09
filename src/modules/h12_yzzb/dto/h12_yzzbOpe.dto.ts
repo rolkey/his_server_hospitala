@@ -101,6 +101,14 @@ export class adviceDto {
   mxxhList?: costDto[];
 }
 
+export class medicineReceiptDto {
+  @IsNotEmpty({ message: 'zyid不能为空' })
+  zyid?: string;
+
+  @IsNotEmpty({ message: 'zxhs不能为空' })
+  zxhs?: string;
+}
+
 export class outDto {
   @IsNotEmpty({ message: '住院id不能为空' })
   zyid?: string;
