@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsInt, IsNumber, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber, IsDate, IsNotEmpty } from 'class-validator';
 
 export class CreateH22SfjlDto {
   @IsString()
@@ -243,4 +243,16 @@ export class QueryH22SfjlDto {
   @IsInt()
   @Type(() => Number)
   pageSize?: number = 10;
+}
+
+export class QueryCheckoutDateDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: '收费员不能为空' })
+  sfyid?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: '备注类型不能为空' })
+  bz?: string;
 }

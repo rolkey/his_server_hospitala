@@ -5,6 +5,7 @@ import { In, Like, Repository } from 'typeorm';
 import { usrcat } from './usrcat.entity';
 import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 import { Role } from '../role/role.entity';
+import { Ksry } from '../ksry/ksry.entity';
 
 @Injectable()
 export class UsrcatService {
@@ -193,6 +194,26 @@ export class UsrcatService {
       .where('isnull(usrcat.zhjy,0)=0')
       .andWhere("usrcat.usid in (select usid from __ksry where syid='12')")
       .orderBy('usrcat.usid')
+      .getMany();
+  }
+
+  async findTollCollectorMZZY() {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .innerJoin(Ksry, 'ksry', 'usrcat.usid = ksry.usid')
+      .where('usrcat.zhjy <> 1')
+      .andWhere('ksry.syid IN (:...syids) OR usrcat.usid = :sa', { syids: ['11', '22'], sa: 'sa' })
+      .distinct(true)
+      .select([
+        'usrcat.usid',
+        'usrcat.unam',
+        'usrcat.pybm',
+        'usrcat.wbbm',
+        'usrcat.qtbm',
+        'usrcat.zcid',
+        'usrcat.zwid',
+        'usrcat.szbm',
+      ])
+      .orderBy('usrcat.usid', 'ASC')
       .getMany();
   }
 }

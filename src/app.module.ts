@@ -60,6 +60,7 @@ import { syspar_newModule } from './modules/syspar_new/syspar_new.module';
 import { H31LyjlModule } from './modules/h31_lyjl/h31_lyjl.module';
 import { H12CyclModule } from './modules/h12-cycl/h12-cycl.module';
 import { H22SfjlModule } from './modules/h22_sfjl/h22_sfjl.module';
+import { KsryModule } from './modules/ksry/ksry.module';
 
 @Module({
   imports: [
@@ -122,6 +123,7 @@ import { H22SfjlModule } from './modules/h22_sfjl/h22_sfjl.module';
     H31LyjlModule,
     H12CyclModule,
     H22SfjlModule,
+    KsryModule,
   ],
 })
 export class AppModule {}

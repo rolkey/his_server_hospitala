@@ -4,10 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { H22Sfjl } from './h22_sfjl.entity';
 import { H22SfjlService } from './h22_sfjl.service';
 import { H22SfjlController } from './h22_sfjl.controller';
+import { ParamService } from '../h12_xmzd/service/param.service';
+import { Syspar } from '../h12_xmzd/entity/syspar.entity';
+import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([H22Sfjl])],
-  providers: [H22SfjlService],
+  imports: [TypeOrmModule.forFeature([H22Sfjl, Syspar, SysparNew])],
+  providers: [H22SfjlService, ParamService],
   controllers: [H22SfjlController],
   exports: [H22SfjlService],
 })

@@ -19,4 +19,9 @@ export class UsrcatNewController {
   findTollCollector() {
     return this.userService.findTollCollector();
   }
+
+  @Get('findTollCollectorMZZY')
+  findTollCollectorMZZY() {
+    return this.userService.findTollCollectorMZZY();
+  }
 }
