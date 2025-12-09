@@ -103,6 +103,7 @@ export class ConfigReaderService {
       ybjkmode,
       ylmbbz,
       ylybksid,
+      kssz
     ] = await Promise.all([
       this.paramService.gfGetPara(11, 'zybh', '0', '住院号不允许'),
       this.paramService.gfGetPara(60, 'szbahauto', '1', '病案号自动生成'),
@@ -219,6 +220,8 @@ export class ConfigReaderService {
       ),
       this.paramService.gfGetParaNew(81, 'ylmbbz', '0', '启用养老管理系统(1启用，0未启用)'),
       this.paramService.gfGetParaNew(81, 'ylybksid', '', '启用养老医保科室编号'),
+      this.paramService.gfGetPara(30, 'yzkssz', '0', '医嘱科室发药'),
+
     ]);
 
     return {
@@ -303,6 +306,7 @@ export class ConfigReaderService {
       ybjkmode,
       ylmbbz,
       ylybksid,
+      kssz
     };
   }
   async readYfCxsz(as_ksid: string) {
