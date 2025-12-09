@@ -8,6 +8,7 @@ import {
   reviewDto,
   outDto,
   checkOutDto,
+  medicineReceiptDto,
 } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
@@ -251,6 +252,14 @@ export class h12_yzzbController {
   @Post('refundAdvice')
   async refundAdvice(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.refundAdvice(dto);
+  }
+
+  /**
+   * 生成发药单
+   */
+  @Post('medicineReceipt')
+  async medicineReceipt(@Body() dto: medicineReceiptDto) {
+    return await this.h12_yzxbServiceNew.medicineReceipt(dto);
   }
 
   /**
