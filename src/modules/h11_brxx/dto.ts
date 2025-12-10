@@ -375,6 +375,28 @@ export class Queryh11_brxxDto extends QueryDto {
   cycw?: string;
 }
 
+export class receiptDto extends QueryDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000, { message: 'pageSize必须大于零,最大值1000' })
+  pageSize?: number;
+
+  @Type(() => Number)
+  @IsNumber({}, { message: 'pageNo必须是数字' })
+  @Min(1, { message: 'pageNo必须大于零' })
+  pageNo?: number;
+
+  @Allow()
+  value?: string;
+
+  @Allow()
+  cycw?: string;
+
+  @IsNotEmpty({ message: 'dyflid不能为空' })
+  dyflid?: string;
+}
+
 export class UpdateDto extends CreateDto {
   @Allow()
   @IsNotEmpty({ message: 'zyid不能为空' })

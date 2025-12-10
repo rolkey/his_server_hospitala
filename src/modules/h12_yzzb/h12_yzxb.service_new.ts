@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Like, Repository } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -737,17 +737,33 @@ export class h12_yzxbServiceNew {
         item.hdhs = '';
         item.hshd = '';
         item.hshdrq = null;
-        item.zxrq = null;
+        item.zxrq = null;//执行时间
         if (item.yzlx === 2) {
           item.tzrq = null;
         }
+        // //根据item的yzzh字段查询出h12_yzxb表的所有记录 (项目同组:附加项目)
+        // const yzzhyzxbList = await manager.find(h12_yzxb, {
+        //   where: {
+        //     zyid,
+        //     yzxh: item.yzxh,
+        //     yzlx: item.yzlx,
+        //     yzzh: item.yzzh,
+        //   }
+        // });
+        // //判断yzzhyzxbList如不为空且有记录，则把里面的所有记录的zxrq字段设置为null(项目同组:附加项目)
+        // if (yzzhyzxbList.length > 0) {
+        //   yzzhyzxbList.forEach(yzxb => {
+        //     yzxb.zxrq = null;
+        //   });
+        // }
+
         
         // 保存更新
         await manager.save(item);
         
         // 更新附加项目
         await manager.update(h12_yzxb, 
-          { zyid, yzxh: item.yzxh, yzlx: item.yzlx, yzzh: item.yzzh, ysbz: 0 },
+          { zyid, yzxh: item.yzxh, yzlx: item.yzlx, yzzh: item.yzzh, ysbz: 0, zxrq: null },
           { yzzt: 0, tjbz: 0, tzbz: 0, zxbz: 0, hdbz: 0, clbz: 0, kshs: '', jshs: '' }
         );
         
@@ -1497,17 +1513,17 @@ export class h12_yzxbServiceNew {
     try {
       const { zyid } = dto;
 
-      // 查询h12_yzxb表是否存在xmid为0000000的医嘱项目
+      // 查询h12_yzxb表是否存在xmmc包含"出院"这两个字的医嘱项目
       const exists = await this.h12_yzxbRepo.exist({
         where: {
           zyid,
-          xmid: '0000000'
+          xmmc: Like('%出院%')
         }
       });
 
       return exists;
     } catch (error: any) {
-      this.logger.error('该病人出院诊断未写，不能办理出院!', error?.stack ?? error?.message ?? error);
+      this.logger.error('查询出院医嘱失败!', error?.stack ?? error?.message ?? error);
       return false;
     }
   }

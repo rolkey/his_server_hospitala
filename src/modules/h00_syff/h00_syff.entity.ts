@@ -51,8 +51,8 @@ export class h00_syff {
   // })
   // qtbm: string | null;
 
-  // @Column("char", { name: "dyflid", nullable: true, length: 10 })
-  // dyflid: string | null;
+  @Column("char", { name: "dyflid", nullable: true, length: 10 })
+  dyflid: string | null;
 
   @Column('varchar', {
     name: 'xmid',

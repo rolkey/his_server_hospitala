@@ -35,6 +35,17 @@ export class h12_yzzbController {
     return { record };
   }
 
+   /**
+   * 根据zyidList及单据类型获取住院病人医嘱明细
+   */
+  @Post('getPatientListForZyidAndReceipt')
+  async getPatientListForZyidAndReceipt(
+    @Body() data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string },
+  ) {
+    const record = await this.h12_yzzbService.getPatientListForZyidAndReceipt(data);
+    return { record };
+  }
+
   @Get('createAdvice')
   async createAdvice(
     @Query() data: { zyid: string; yzlx: number; newZxcs?: boolean; newGroup?: boolean },

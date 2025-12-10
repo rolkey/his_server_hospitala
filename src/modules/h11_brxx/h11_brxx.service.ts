@@ -11,6 +11,7 @@ import {
   bedAllocationDto,
   QueryDto,
   ForciblyDeleteDto,
+  receiptDto,
 } from './dto';
 import dayjs = require('dayjs');
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
@@ -22,6 +23,7 @@ import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
+import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { log } from 'console';
 @Injectable()
 export class h11_brxxService {
@@ -34,6 +36,214 @@ export class h11_brxxService {
     private readonly paramService: ParamService,
     private dataSource: DataSource,
   ) {}
+
+  async getPatientListForReceipt(queryDto: receiptDto) {
+    const pageSize = queryDto.pageSize || 10;
+    const pageNo = queryDto.pageNo || 1;
+
+    // 1️⃣ 基础查询（不含关联表）
+    const baseQuery = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+
+    // --- 动态查询条件 ---
+    if (queryDto?.value) {
+      baseQuery.andWhere(
+        `(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value
+        OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)`,
+        { value: `%${queryDto?.value}%` },
+      );
+    }
+
+    if (queryDto.brxm) {
+      baseQuery.andWhere('h11_brxx.brxm LIKE :brxm', { brxm: `%${queryDto.brxm.trim()}%` });
+    }
+
+    if (queryDto.jtdh) {
+      baseQuery.andWhere('h11_brxx.jtdh LIKE :jtdh', { jtdh: `%${queryDto.jtdh.trim()}%` });
+    }
+
+    if (queryDto.zybh) {
+      baseQuery.andWhere('h11_brxx.zybh LIKE :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
+    }
+
+    if (queryDto.zyzt) {
+      const zyzt = Number(queryDto.zyzt);
+      if ((zyzt === 1 || zyzt === 2) && queryDto.cycw !== '0') {
+        baseQuery.andWhere('(h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL)');
+      } else {
+        baseQuery.andWhere('h11_brxx.zyzt = :zyzt', { zyzt });
+      }
+    }
+
+    if (queryDto.ryksid) {
+      baseQuery.andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
+    }
+
+    if (queryDto.zkksid) {
+      baseQuery.andWhere(
+        ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
+        { zkksid: `%${queryDto.zkksid.trim()}%` },
+      );
+    }
+
+    if (queryDto.mzys) {
+      baseQuery.andWhere('h11_brxx.mzys LIKE :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
+    }
+
+    if (queryDto.sxys) {
+      baseQuery.andWhere('h11_brxx.sxys LIKE :sxys', { sxys: `%${queryDto.sxys.trim()}%` });
+    }
+
+    if (queryDto.rykssj && queryDto.ryjssj) {
+      baseQuery.andWhere('(h11_brxx.rysj BETWEEN :start AND :end)', {
+        start: dayjs(queryDto.rykssj).format('YYYY-MM-DD 00:00:00'),
+        end: dayjs(queryDto.ryjssj).format('YYYY-MM-DD 23:59:59'),
+      });
+    }
+
+    if (queryDto.cykssj && queryDto.cyjssj) {
+      baseQuery.andWhere('(h11_brxx.cysj BETWEEN :start AND :end)', {
+        start: dayjs(queryDto.cykssj).format('YYYY-MM-DD 00:00:00'),
+        end: dayjs(queryDto.cyjssj).format('YYYY-MM-DD 23:59:59'),
+      });
+    }
+
+    if (queryDto.ylzh) {
+      baseQuery.andWhere('h11_brxx.ylzh = :ylzh', { ylzh: queryDto.ylzh.trim() });
+    }
+
+    if (queryDto.sfzh) {
+      baseQuery.andWhere('h11_brxx.sfzh LIKE :sfzh', { sfzh: `%${queryDto.sfzh.trim()}%` });
+    }
+
+    if (queryDto.rycw) {
+      baseQuery.andWhere('h11_brxx.rycw LIKE :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
+    }
+
+    if (queryDto.cycw && queryDto.cycw === '0') {
+      baseQuery.andWhere(' (h11_brxx.cycw is null or h11_brxx.cycw =:cycw) ', { cycw: '' });
+    } else if (queryDto.cycw) {
+      baseQuery.andWhere(' (h11_brxx.cycw =:cycw) ', { cycw: queryDto.cycw });
+    }
+
+    // 添加djflid(单据类型：1 口服  2 输液  3注射  4处置)字段过滤条件
+    if (queryDto.dyflid) {
+      // 使用TypeORM的QueryBuilder方式实现Exists子查询
+      baseQuery.andWhere((qb) => {
+        // 创建子查询
+        const subQuery = qb.subQuery()
+          .select('1')
+          .from('h12_yzxb', 'h12_yzxb')
+          // 关联h00_syff表
+          .innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
+          // 条件：zyid匹配主查询，syffid不为空，djflid等于传入值
+          .where('h12_yzxb.zyid = h11_brxx.zyid')
+          .andWhere('h12_yzxb.syffid IS NOT NULL')
+          .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid })
+          .limit(1)
+          .getQuery();
+        return `EXISTS (${subQuery})`;
+      });
+    }
+
+    // 排序
+    if (queryDto.ryjssj && queryDto.ryjssj) {
+      baseQuery.orderBy('h11_brxx.rysj', 'ASC');
+    } else if (queryDto.cykssj && queryDto.cyjssj) {
+      baseQuery.orderBy('h11_brxx.cysj', 'ASC');
+    } else {
+      baseQuery.orderBy('h11_brxx.rysj', 'ASC');
+    }
+
+    // 2️⃣ 第一次查询 — 仅分页ID + 总数
+    const { raw } = await baseQuery
+      .select('h11_brxx.zyid', 'zyid')
+      .skip((pageNo - 1) * pageSize)
+      .take(pageSize)
+      .getRawAndEntities();
+
+    const ids = raw.map((row) => row.zyid);
+    if (ids.length === 0) {
+      return { pageData: [], total: 0 };
+    }
+
+    // 3️⃣ 第二次查询 — 详情 + Join + 计算字段
+    const detailQuery = this.h11_brxxRepo
+      .createQueryBuilder('h11_brxx')
+      .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
+      .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
+      .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
+      .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
+      .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
+      .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
+      .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
+      .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
+      .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
+      .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
+      .addSelect([
+        'ryzdEntity.icd11',
+        'ryzdEntity.icd11mc',
+        'ryzdEntity.ybbm',
+        'ryzdEntity.ybmc',
+        'cyzdEntity.icd11',
+        'cyzdEntity.icd11mc',
+        'cyzdEntity.ybbm',
+        'cyzdEntity.ybmc',
+      ])
+      .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
+      .whereInIds(ids)
+      .addSelect(
+        `CASE
+          WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
+          ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
+        END`,
+        'zyts1',
+      )
+      .addSelect('0', 'isfinish')
+      .addSelect(
+        `(SELECT CASE
+            WHEN ISNULL(y.kshs, '0') = '0' THEN 1
+            WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
+            ELSE 0 END
+          FROM (
+            SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
+            ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
+            FROM h12_yzxb
+            WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
+          ) AS y WHERE y.fsp = 1)`,
+        'isexecute',
+      )
+      .addSelect(
+        `CASE
+          WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
+          ELSE 0 END`,
+        'istoday',
+      );
+
+    // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
+    const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
+
+    // 5️⃣ 合并结果
+    const result = pageData.map((entity) => {
+      const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
+      return {
+        ...entity,
+        zyts1: matchedRaw?.zyts1,
+        isexecute: matchedRaw?.isexecute,
+        istoday: matchedRaw?.istoday,
+        ztbz: entity.zyzt === 4 ? 1 : 0,
+        rysj: entity.rysj ? dayjs(entity.rysj).format('YYYY-MM-DD HH:mm:ss') : '',
+        cysj: entity.cysj ? dayjs(entity.cysj).format('YYYY-MM-DD HH:mm:ss') : '',
+        ryqzsj: entity.ryqzsj ? dayjs(entity.ryqzsj).format('YYYY-MM-DD HH:mm:ss') : '',
+        jssj: entity.jssj ? dayjs(entity.jssj).format('YYYY-MM-DD HH:mm:ss') : '',
+        csrq: entity.csrq ? dayjs(entity.csrq).format('YYYY-MM-DD HH:mm:ss') : '',
+      };
+    });
+
+    return { pageData: result, total: raw.length };
+  }
+
+
 
   async findAll(queryDto: Queryh11_brxxDto) {
     const pageSize = queryDto.pageSize || 10;
