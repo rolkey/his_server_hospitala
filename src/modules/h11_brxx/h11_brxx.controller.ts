@@ -9,6 +9,7 @@ import {
   bedAllocationDto,
   QueryDto,
   ForciblyDeleteDto,
+  receiptDto,
 } from './dto';
 
 @Controller('h11_brxx')
@@ -39,6 +40,11 @@ export class h11_brxxController {
   @Put('update')
   async update(@Body() dto: UpdateDto) {
     return await this.h11_brxxService.update(dto);
+  }
+
+  @Get('getPatientListForReceipt')
+  async getPatientListForReceipt(@Query() queryDto: receiptDto) {
+    return await this.h11_brxxService.getPatientListForReceipt(queryDto);
   }
 
   // 费用类别
