@@ -6,6 +6,7 @@ import {
   UpdateH22SfjlDto,
   QueryH22SfjlDto,
   QueryCheckoutDateDto,
+  CheckoutDateDto,
 } from './h22_sfjl.dto';
 
 @Controller('h22_sfjl')
@@ -30,6 +31,11 @@ export class H22SfjlController {
   @Get('findCheckoutDate')
   findCheckoutDate(@Query() dto: QueryCheckoutDateDto) {
     return this.service.findCheckoutDate(dto);
+  }
+
+  @Get('checkout')
+  checkout(@Query() dto: CheckoutDateDto) {
+    return this.service.checkout(dto);
   }
 
   // @Patch(':lsh')
