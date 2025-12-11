@@ -76,12 +76,17 @@ export class h12_yzzbService {
       .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
       .where('h12_yzxb.zyid IN (:...zyidlist)', {
         zyidlist: validZyidList
-      })
+      });
+    
+    // 当dyflid值不为5时，添加dyflid过滤条件
+    if (data.dyflid !== '5') {
       // 添加dyflid过滤条件
-      .andWhere('syffidEntity.dyflid = :dyflid', {
+      h12_yzxbqb.andWhere('syffidEntity.dyflid = :dyflid', {
         dyflid: data.dyflid,
-      })
-      .orderBy('h12_yzxb.yzrq', 'ASC')
+      });
+    }
+    
+    h12_yzxbqb.orderBy('h12_yzxb.yzrq', 'ASC')
       .addOrderBy('h12_yzxb.zxcs', 'ASC')
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');

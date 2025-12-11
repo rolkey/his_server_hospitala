@@ -114,7 +114,7 @@ export class h12_yzxbServiceNew {
           yzxb.jshs = dto.jshs;
         }
         if (dto.yzlx === 1 && yzzb?.tzsj) {
-          if (!yzxb.tzrq) yzxb.tzrq = dto.rq;
+          yzxb.tzrq = dto.rq;
           yzxb.jshs = dto.jshs;
         }
       });

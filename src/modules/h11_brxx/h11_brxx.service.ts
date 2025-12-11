@@ -132,16 +132,22 @@ export class h11_brxxService {
         // 创建子查询
         const subQuery = qb.subQuery()
           .select('1')
-          .from('h12_yzxb', 'h12_yzxb')
+          .from('h12_yzxb', 'h12_yzxb');
+        
+        // 当dyflid值为5时，只需要查询h12_yzxb表中存在该病人的数据即可
+        if (queryDto.dyflid === '5') {
+          // 条件：zyid匹配主查询
+          subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
+        } else {
           // 关联h00_syff表
-          .innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
-          // 条件：zyid匹配主查询，syffid不为空，djflid等于传入值
-          .where('h12_yzxb.zyid = h11_brxx.zyid')
-          .andWhere('h12_yzxb.syffid IS NOT NULL')
-          .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid })
-          .limit(1)
-          .getQuery();
-        return `EXISTS (${subQuery})`;
+          subQuery.innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
+            // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
+            .where('h12_yzxb.zyid = h11_brxx.zyid')
+            .andWhere('h12_yzxb.syffid IS NOT NULL')
+            .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
+        }
+        
+        return `EXISTS (${subQuery.limit(1).getQuery()})`;
       });
     }
 
