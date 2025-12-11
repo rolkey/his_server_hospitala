@@ -40,7 +40,7 @@ export class h12_yzzbController {
    */
   @Post('getPatientListForZyidAndReceipt')
   async getPatientListForZyidAndReceipt(
-    @Body() data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string },
+    @Body() data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string; yzkssj?: Date; yzjssj?: Date },
   ) {
     const record = await this.h12_yzzbService.getPatientListForZyidAndReceipt(data);
     return { record };

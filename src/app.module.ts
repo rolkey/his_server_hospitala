@@ -61,6 +61,7 @@ import { H31LyjlModule } from './modules/h31_lyjl/h31_lyjl.module';
 import { H12CyclModule } from './modules/h12-cycl/h12-cycl.module';
 import { H22SfjlModule } from './modules/h22_sfjl/h22_sfjl.module';
 import { KsryModule } from './modules/ksry/ksry.module';
+import { h13_djdyModule } from './modules/h13_djdy/h13_djdy.module';
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { KsryModule } from './modules/ksry/ksry.module';
     H12CyclModule,
     H22SfjlModule,
     KsryModule,
+    h13_djdyModule
   ],
 })
-export class AppModule {}
+export class AppModule { }

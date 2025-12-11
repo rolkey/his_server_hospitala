@@ -133,16 +133,22 @@ export class h11_brxxService {
         const subQuery = qb
           .subQuery()
           .select('1')
-          .from('h12_yzxb', 'h12_yzxb')
+          .from('h12_yzxb', 'h12_yzxb');
+        
+        // 当dyflid值为5时，只需要查询h12_yzxb表中存在该病人的数据即可
+        if (queryDto.dyflid === '5') {
+          // 条件：zyid匹配主查询
+          subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
+        } else {
           // 关联h00_syff表
-          .innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
-          // 条件：zyid匹配主查询，syffid不为空，djflid等于传入值
-          .where('h12_yzxb.zyid = h11_brxx.zyid')
-          .andWhere('h12_yzxb.syffid IS NOT NULL')
-          .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid })
-          .limit(1)
-          .getQuery();
-        return `EXISTS (${subQuery})`;
+          subQuery.innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
+            // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
+            .where('h12_yzxb.zyid = h11_brxx.zyid')
+            .andWhere('h12_yzxb.syffid IS NOT NULL')
+            .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
+        }
+        
+        return `EXISTS (${subQuery.limit(1).getQuery()})`;
       });
     }
 
@@ -221,6 +227,18 @@ export class h11_brxxService {
         'istoday',
       );
 
+    // 添加打印标识字段查询，仅当dyflid存在时
+    if (queryDto.dyflid) {
+      detailQuery
+        .addSelect(
+          `CASE
+            WHEN EXISTS (SELECT 1 FROM h13_djdy WHERE zyid = h11_brxx.zyid AND pblx = :dyflid) THEN 1
+            ELSE 0 END`,
+          'dybs',
+        )
+        .setParameter('dyflid', queryDto.dyflid);
+    }
+
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
@@ -232,6 +250,7 @@ export class h11_brxxService {
         zyts1: matchedRaw?.zyts1,
         isexecute: matchedRaw?.isexecute,
         istoday: matchedRaw?.istoday,
+        dybs: matchedRaw?.dybs || 0, // 添加打印标识字段，默认为0表示未打印
         ztbz: entity.zyzt === 4 ? 1 : 0,
         rysj: entity.rysj ? dayjs(entity.rysj).format('YYYY-MM-DD HH:mm:ss') : '',
         cysj: entity.cysj ? dayjs(entity.cysj).format('YYYY-MM-DD HH:mm:ss') : '',
