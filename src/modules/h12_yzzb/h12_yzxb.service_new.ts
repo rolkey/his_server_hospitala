@@ -113,8 +113,8 @@ export class h12_yzxbServiceNew {
           if (!yzxb.tzrq) yzxb.tzrq = dto.rq;
           yzxb.jshs = dto.jshs;
         }
-        if (dto.yzlx === 1 && yzzb?.tzsj) {
-          yzxb.tzrq = dto.rq;
+        if (dto.yzlx === 1) {
+          yzxb.tzrq = yzzb?.tzsj || dto.rq;
           yzxb.jshs = dto.jshs;
         }
       });
@@ -413,7 +413,7 @@ export class h12_yzxbServiceNew {
   //             await H31LyjlRepo.save(lyjlList);
   //           }
   //         }
-          
+
 
   //       }
 
@@ -575,19 +575,19 @@ export class h12_yzxbServiceNew {
   }
 
 
-  
+
 
   // -------------------------
   // 退回医嘱给医生
   // -------------------------
   async refundAdvice(dto: adviceDto) {
     const { zyid, yzlx, mxxhList, zxhs } = dto;
-    
+
     // 检查是否有医嘱
     if (!mxxhList || mxxhList.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
-    
+
     // 兼容前端传入的两种格式：数字数组或包含mxxh属性的对象数组
     const mxxhValues = mxxhList.map(item => {
       if (typeof item === 'object' && item !== null && 'mxxh' in item) {
@@ -595,8 +595,8 @@ export class h12_yzxbServiceNew {
       }
       return Number(item);
     }).filter(mxxh => !isNaN(mxxh));
-    
-    
+
+
     // 检查是否有有效的mxxh
     if (mxxhValues.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有有效的医嘱!');
@@ -615,15 +615,15 @@ export class h12_yzxbServiceNew {
         'yzzt', 'tjbz', 'tzbz', 'zxbz', 'hdbz', 'clbz', 'kshs', 'jshs', 'kssxhs', 'jssxhs', 'hdhs', 'hshd', 'hshdrq', 'tzrq'
       ]
     });
-    
+
     // 检查医嘱是否存在
     if (yzxbList.length === 0) {
       throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
-    
+
     // 获取系统参数配置
     const gs_cxsz = await this.configReaderService.readGsCxsz();
-    
+
     // 事务处理
     await this.dataSource.transaction(async (manager) => {
       for (const item of yzxbList) {
@@ -631,20 +631,20 @@ export class h12_yzxbServiceNew {
         if (item.sjbz === 0) {
           throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】作废医嘱不能退回!`);
         }
-        
+
         // 中药按单个处理（PB代码中调用了ue_hsth_dgzy事件）
         if ((item.fylbid === '02' || item.fylbid === '90') && item.yzzh === 0) {
           // 这里可以添加中药的特殊处理逻辑
           continue;
         }
-        
+
         // 检查是否有执行记录
         const queryBuilder = manager.createQueryBuilder(h13_yzzxcs, 'h13')
           .select('ISNULL(SUM((h13.zxcs - h13.bzxcs) * h13.jfyl), 0)', 'count')
           .where('h13.zyid = :zyid', { zyid })
           .andWhere('h13.yzlx = :yzlx', { yzlx: item.yzlx })
           .andWhere('h13.mxxh = :mxxh', { mxxh: item.mxxh });
-        
+
         // 根据tpbz设置不同的条件
         const fylbids = ['01', '02', '03', '15'];
         if (item.tpbz === 1) {
@@ -663,7 +663,7 @@ export class h12_yzxbServiceNew {
 
         const result = await queryBuilder.getRawOne();
         const ll_count = parseFloat(result.count) || 0;
-        
+
         // 如果有执行记录，提示不能退回
         if (ll_count > 0) {
           throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】已执行医嘱或生成领药单，请护士取消执行次数，再退回!`);
@@ -688,22 +688,22 @@ export class h12_yzxbServiceNew {
               yzlx: item.yzlx
             })
             .andWhere('ISNULL(h13_tf.fybz, 0) = 0');
-          
+
           // 输出SQL语句和参数到控制台
           const sql = queryBuilder.getSql();
           const parameters = queryBuilder.getParameters();
           console.log('检查退费记录的SQL语句:', sql);
           console.log('SQL参数:', parameters);
-          
+
           // 执行查询
           const tfCount = await queryBuilder.getRawOne();
-          
-            
-            
+
+
+
           if (parseInt(tfCount.count, 10) > 0) {
             throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未发药，不能退回医生，请关联药房先退药!`);
           }
-          
+
           // 第5版，检查退药记录是否未生成发药
           if (gs_cxsz.kssz === '5') {
             const tfCount2 = await manager.createQueryBuilder(H13YzzxcsTf, 'h13_tf')
@@ -716,13 +716,13 @@ export class h12_yzxbServiceNew {
               })
               .andWhere('ISNULL(h13_tf.fydh, \'\') = \'\'')
               .getRawOne();
-            
+
             if (parseInt(tfCount2.count, 10) > 0) {
               throw new CustomException(ERR.ERR_10000, `【${item.xmmc}】退药记录未生成发药，不能退回医生，请关联护士生成领药单!`);
             }
           }
         }
-        
+
         // 更新医嘱状态
         item.yzzt = 0;
         item.tjbz = 0;
@@ -757,16 +757,16 @@ export class h12_yzxbServiceNew {
         //   });
         // }
 
-        
+
         // 保存更新
         await manager.save(item);
-        
+
         // 更新附加项目
-        await manager.update(h12_yzxb, 
+        await manager.update(h12_yzxb,
           { zyid, yzxh: item.yzxh, yzlx: item.yzlx, yzzh: item.yzzh, ysbz: 0, zxrq: null },
           { yzzt: 0, tjbz: 0, tzbz: 0, zxbz: 0, hdbz: 0, clbz: 0, kshs: '', jshs: '' }
         );
-        
+
         // 删除预扣库存
         await manager.query(
           `UPDATE h31_kcxx SET dfsl = ISNULL(dfsl, 0) - fy.sl
@@ -779,13 +779,13 @@ export class h12_yzxbServiceNew {
            WHERE h31_kcxx.ypid = fy.xmid AND h31_kcxx.scph = fy.scph AND h31_kcxx.ksid = fy.zkksid`,
           [zyid, item.yzzh, item.yzlx]
         );
-        
+
         // 删除执行记录
         await manager.delete(h13_yzzxcs, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
-        
+
         // 删除退费记录
         await manager.delete(H13YzzxcsTf, { zyid, yzlx: item.yzlx, mxxh: item.mxxh });
-        
+
         // 调用check方法替代存储过程调用
         const checkResult = await this.check({
           zyid,
@@ -798,16 +798,16 @@ export class h12_yzxbServiceNew {
           mxxh: item.mxxh,
           al: 2
         });
-        
+
         // 检查check方法返回结果
         if (checkResult.rtn !== 1) {
           throw new CustomException(ERR.ERR_10000, `药品扣库存失败！项目：${checkResult.xmidn} 批次：${checkResult.scph} 错误信息：${checkResult.msg}`);
         }
 
-        
+
       }
     });
-    
+
     return true
   }
 
@@ -1078,7 +1078,7 @@ export class h12_yzxbServiceNew {
           ...wfylist.map(item => item.ksys).filter(Boolean),
           ...wfylist.map(item => item.kshs).filter(Boolean)
         ])];
-        
+
         // 批量查询工号对应的名称
         const usrInfoMap = new Map<string, string>();
         if (usids.length > 0) {
@@ -1092,21 +1092,21 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-        
+
         // 格式化未发药明细信息
         const wfymx = wfylist.map(item => {
           const ksysName = usrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = usrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-        
+
         // 更新返回给前端的明细，将工号转换为名称
         const formattedWfylist = wfylist.map(item => ({
           ...item,
           ksysName: usrInfoMap.get(item.ksys) || item.ksys,
           kshsName: usrInfoMap.get(item.kshs) || item.kshs
         }));
-        
+
         return createErrorResponse(
           // `有药品未发药，不能办理出院：\n${wfymx}`,
           `有药品未发药，不能办理出院`,
@@ -1153,7 +1153,7 @@ export class h12_yzxbServiceNew {
           ...tfwfylist.map(item => item.ksys).filter(Boolean),
           ...tfwfylist.map(item => item.kshs).filter(Boolean)
         ])];
-        
+
         // 批量查询工号对应的名称
         const tfUsrInfoMap = new Map<string, string>();
         if (tfUsids.length > 0) {
@@ -1167,21 +1167,21 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-        
+
         // 格式化未发药退费明细信息
         const tfwfymx = tfwfylist.map(item => {
           const ksysName = tfUsrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = tfUsrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-        
+
         // 更新返回给前端的明细，将工号转换为名称
         const formattedTfwfylist = tfwfylist.map(item => ({
           ...item,
           ksysName: tfUsrInfoMap.get(item.ksys) || item.ksys,
           kshsName: tfUsrInfoMap.get(item.kshs) || item.kshs
         }));
-        
+
         return createErrorResponse(
           `有药品退费未发药，不能办理出院`,
           ERR.ERR_10000.code,
@@ -1252,7 +1252,7 @@ export class h12_yzxbServiceNew {
           ...sswfylist.map(item => item.ksys).filter(Boolean),
           ...sswfylist.map(item => item.kshs).filter(Boolean)
         ])];
-        
+
         // 批量查询工号对应的名称
         const ssUsrInfoMap = new Map<string, string>();
         if (ssUsids.length > 0) {
@@ -1266,14 +1266,14 @@ export class h12_yzxbServiceNew {
             }
           });
         }
-        
+
         // 格式化手术医嘱未发药明细信息
         const sswfymx = sswfylist.map(item => {
           const ksysName = ssUsrInfoMap.get(item.ksys) || item.ksys;
           const kshsName = ssUsrInfoMap.get(item.kshs) || item.kshs;
           return `药品：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${ksysName}，科室护士：${kshsName}`;
         }).join('\n');
-        
+
         // 更新返回给前端的明细，将工号转换为名称
         const formattedSswfylist = sswfylist.map(item => ({
           ...item,
@@ -1529,9 +1529,9 @@ export class h12_yzxbServiceNew {
   }
 
 
-    /**
-   * 生成发药单
-   */
+  /**
+ * 生成发药单
+ */
   async medicineReceipt(dto: adviceDto): Promise<void> {
     try {
       //参数校验
