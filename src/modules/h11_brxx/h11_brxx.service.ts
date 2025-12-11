@@ -130,7 +130,8 @@ export class h11_brxxService {
       // 使用TypeORM的QueryBuilder方式实现Exists子查询
       baseQuery.andWhere((qb) => {
         // 创建子查询
-        const subQuery = qb.subQuery()
+        const subQuery = qb
+          .subQuery()
           .select('1')
           .from('h12_yzxb', 'h12_yzxb')
           // 关联h00_syff表
@@ -243,8 +244,6 @@ export class h11_brxxService {
     return { pageData: result, total: raw.length };
   }
 
-
-
   async findAll(queryDto: Queryh11_brxxDto) {
     const pageSize = queryDto.pageSize || 10;
     const pageNo = queryDto.pageNo || 1;
@@ -325,6 +324,12 @@ export class h11_brxxService {
 
     if (queryDto.rycw) {
       baseQuery.andWhere('h11_brxx.rycw LIKE :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
+    }
+
+    if (queryDto.brlxid) {
+      baseQuery.andWhere(`(h11_brxx.brlxid = :brlxid or :brlxid = 'ALL')`, {
+        brlxid: `${queryDto.brlxid}`,
+      });
     }
 
     if (queryDto.cycw && queryDto.cycw === '0') {
