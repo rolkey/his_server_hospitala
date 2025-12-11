@@ -32,7 +32,7 @@ export class h12_yzzbService {
     private readonly gyIdentityService: GyIdentityService,
   ) {}
 
-  async getPatientListForZyidAndReceipt(data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string }) {
+  async getPatientListForZyidAndReceipt(data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string; yzkssj?: Date; yzjssj?: Date }) {
     // 1. 检查zyidlist是否为空
     if (!data.zyidList || data.zyidList.length === 0) {
       throw new BadRequestException('zyidList不能为空');
@@ -64,6 +64,17 @@ export class h12_yzzbService {
       if (data.yzlxList && data.yzlxList.length > 0) {
         queryBuilder.andWhere('h12_yzzb.yzlx IN (:...yzlxList)', {
           yzlxList: data.yzlxList,
+        });
+      }
+      // 添加医嘱时间过滤条件
+      if (data.yzkssj) {
+        queryBuilder.andWhere('h12_yzzb.yzrq >= :yzkssj', {
+          yzkssj: data.yzkssj
+        });
+      }
+      if (data.yzjssj) {
+        queryBuilder.andWhere('h12_yzzb.yzrq <= :yzjssj', {
+          yzjssj: data.yzjssj
         });
       }
 
