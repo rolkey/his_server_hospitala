@@ -447,6 +447,8 @@ export class h11_brxx {
 
   ztbz: number;
 
+  zyztmc: string | null;
+
   @AfterLoad()
   trim() {
     if (this.ylzh) {
@@ -514,6 +516,28 @@ export class h11_brxx {
           break;
         default:
           this.hljlmc = '';
+      }
+    }
+
+    if (this.zyzt) {
+      switch (this.zyzt) {
+        case 0:
+          this.zyztmc = '在院';
+          break;
+        case 1:
+          this.zyztmc = '在院';
+          break;
+        case 2:
+          this.zyztmc = '在院';
+          break;
+        case 3:
+          this.zyztmc = '待办';
+          break;
+        case 4:
+          this.zyztmc = '出院';
+          break;
+        default:
+          this.zyztmc = '';
       }
     }
   }
