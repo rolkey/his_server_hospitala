@@ -114,8 +114,18 @@ export class h12_yzxbServiceNew {
           yzxb.jshs = dto.jshs;
         }
         if (dto.yzlx === 1) {
-          yzxb.tzrq = yzzb?.tzsj || dto.rq;
-          yzxb.jshs = dto.jshs;
+          // yzxb.tzrq = yzzb?.tzsj || dto.rq;
+          // yzxb.jshs = dto.jshs;
+
+          // yzxb.zxhs = dto.jshs;
+          //如果yzxb的jsys不为空则更新tzrq和jshs
+          if (yzxb.jsys) {
+            yzxb.tzrq = yzzb?.tzsj || dto.rq;
+            yzxb.jshs = dto.jshs;
+          }else{
+            yzxb.zxhs = dto.jshs;
+          }
+          
         }
       });
 
@@ -507,9 +517,18 @@ export class h12_yzxbServiceNew {
 
           const bzxcs = dtoItem && typeof dtoItem === 'object' && 'bzxcs' in dtoItem ? dtoItem.bzxcs : 1;
 
-          if (bzxcs > item.zxcs || bzxcs <= 0) {
-            throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数 且不能小于0!`);
+
+          //控制台输出bzxcs的值
+          console.log('不执行次数bzxcs:', bzxcs);//3
+          console.log('执行次数zxcs:', item.zxcs);//3
+
+          if (bzxcs > item.zxcs && bzxcs>0) {
+            throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数且不能小于0!`);
           }
+
+          // if (bzxcs > item.zxcs) {
+          //   throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数!`);
+          // }
 
           // 创建退费记录
           tfListToInsert.push({
@@ -1191,37 +1210,6 @@ export class h12_yzxbServiceNew {
       }
 
       // 3. 校验手术医嘱未发药记录
-      // const sswfylist = await this.dataSource.createQueryBuilder()
-      //   .select([
-      //     'ssxb.yzlx as yzlx',
-      //     'ssxb.mxxh as mxxh',
-      //     'sszb.ssrq as yzrq',
-      //     'ssxb.xmid as xmid',
-      //     'ssxb.xmmc as xmmc',
-      //     'ssxb.jfyl as jfyl',
-      //     'ssxb.syffid as syffid',
-      //     'ssxb.syplid as syplid',
-      //     'ssxb.ksys as ksys',
-      //     'ssxb.kshs as kshs',
-      //   ])
-      //   .from('h15_sszb', 'sszb')
-      //   .innerJoin('h15_ssxb', 'ssxb', 'ssxb.zyid = sszb.zyid AND ssxb.ssid = sszb.ssid')
-      //   .innerJoin('h11_brxx', 'brxx', 'sszb.zyid = brxx.zyid')
-      //   .where('sszb.zyid = :zyid', { zyid: dto.zyid })
-      //   .andWhere('ABS(ssxb.jfyl) > 0')
-      //   .andWhere('ISNULL(ssxb.tpbz, 0) = 0')
-      //   .andWhere('ISNULL(ssxb.tjbz, 0) = 1')
-      //   .andWhere('ssxb.xmzl IN (2, 3)')
-      //   .andWhere('ssxb.zxksid IN (:...ksidList)', {
-      //     ksidList: [
-      //       xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid,
-      //       jpksid, hlksid
-      //     ].filter(Boolean)
-      //   })
-      //   .getRawMany();
-      // //控制台输出 校验手术医嘱未发药记录的实际sql
-      // console.log("校验手术医嘱未发药记录的实际sql:", sswfylist);
-      // 3. 校验手术医嘱未发药记录
       const sswfylist = await this.dataSource.createQueryBuilder()
         .select('COUNT(*)', 'count')
         .from('h15_sszb', 'sszb')
@@ -1240,7 +1228,7 @@ export class h12_yzxbServiceNew {
         })
         .getRawOne();
       //控制台输出 校验手术医嘱未发药记录的实际sql
-      console.log("校验手术医嘱未发药记录的实际sql:", sswfylist);
+      // console.log("校验手术医嘱未发药记录的实际sql:", sswfylist);
 
       if (parseInt(sswfylist.count, 10) > 0) {
         throw new CustomException(ERR.ERR_10000, '手术医嘱未发药不能办出院');
