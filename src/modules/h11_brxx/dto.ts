@@ -303,6 +303,8 @@ export class CreateDto {
   dqbm?: string;
   @Allow()
   infection_sync?: string;
+  @Allow()
+  tzdh?: string;
 }
 
 export class QueryDto {

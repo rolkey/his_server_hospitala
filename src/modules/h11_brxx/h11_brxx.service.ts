@@ -130,24 +130,22 @@ export class h11_brxxService {
       // 使用TypeORM的QueryBuilder方式实现Exists子查询
       baseQuery.andWhere((qb) => {
         // 创建子查询
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('h12_yzxb', 'h12_yzxb');
-        
+        const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb');
+
         // 当dyflid值为5时，只需要查询h12_yzxb表中存在该病人的数据即可
         if (queryDto.dyflid === '5') {
           // 条件：zyid匹配主查询
           subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
         } else {
           // 关联h00_syff表
-          subQuery.innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
+          subQuery
+            .innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
             // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
             .where('h12_yzxb.zyid = h11_brxx.zyid')
             .andWhere('h12_yzxb.syffid IS NOT NULL')
             .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
         }
-        
+
         return `EXISTS (${subQuery.limit(1).getQuery()})`;
       });
     }
@@ -490,22 +488,74 @@ export class h11_brxxService {
     h11_brxx.yjk = result.yjk;
     return h11_brxx;
   }
+
+  // async create(dto: CreateDto) {
+  //   const brxxCount = await this.h11_brxxRepo
+  //     .createQueryBuilder('h11_brxx')
+  //     .where('h11_brxx.sfzh = :sfzh', { sfzh: dto.sfzh })
+  //     .andWhere('h11_brxx.zyzt < 3')
+  //     .getCount();
+  //   const entity = this.h11_brxxRepo.create(dto);
+
+  //   if (brxxCount > 0) {
+  //     throw new CustomException(ERR.ERR_10000, '该身份证号的病人已在院，不能重复入院');
+  //   }
+
+  //   entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
+  //   this.h11_zybhService.addUpZYBH(Number(entity.zybh));
+
+  //   return await this.h11_brxxRepo.save(entity);
+  // }
+
   async create(dto: CreateDto) {
-    const brxxCount = await this.h11_brxxRepo
-      .createQueryBuilder('h11_brxx')
-      .where('h11_brxx.sfzh = :sfzh', { sfzh: dto.sfzh })
-      .andWhere('h11_brxx.zyzt < 3')
-      .getCount();
-    const entity = this.h11_brxxRepo.create(dto);
+    // 使用数据库事务确保数据一致性
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (brxxCount > 0) {
-      throw new CustomException(ERR.ERR_10000, '该身份证号的病人已在院，不能重复入院');
+    try {
+      // 查询是否有相同身份证号且在院的病人
+      const brxxCount = await queryRunner.manager
+        .createQueryBuilder(h11_brxx, 'h11_brxx')
+        .where('h11_brxx.sfzh = :sfzh', { sfzh: dto.sfzh })
+        .andWhere('h11_brxx.zyzt < 3')
+        .getCount();
+
+      if (brxxCount > 0) {
+        throw new CustomException(ERR.ERR_10000, '该身份证号的病人已在院，不能重复入院');
+      }
+
+      // 创建新实体
+      const entity = queryRunner.manager.create(h11_brxx, dto);
+
+      // 获取住院ID号
+      entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
+      // 更新住院编号
+      await this.h11_zybhService.addUpZYBH(Number(entity.zybh));
+
+      // 保存实体
+      const result = await queryRunner.manager.save(entity);
+
+      // 有通知单号时，更新通知单状态
+      if (dto.tzdh) {
+        const updateRYTZItem = await queryRunner.query(
+          `UPDATE h23_rytz SET rybz = 1 where tzdh = @0`,
+          [dto.tzdh],
+        );
+      }
+
+      // 提交事务
+      await queryRunner.commitTransaction();
+
+      return result;
+    } catch (error) {
+      // 发生错误时回滚事务
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // 释放查询连接
+      await queryRunner.release();
     }
-
-    entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
-    this.h11_zybhService.addUpZYBH(Number(entity.zybh));
-
-    return await this.h11_brxxRepo.save(entity);
   }
 
   async update(dto: UpdateDto) {

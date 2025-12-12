@@ -270,6 +270,11 @@ export class CheckoutDateDto {
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: '收费员名称不能为空' })
+  sfymc?: string;
+
+  @IsOptional()
+  @IsString()
   @IsNotEmpty({ message: '统计时间不能为空' })
   tjrq?: string;
 

@@ -186,7 +186,7 @@ export class H22SfjlService {
   async checkout(dto: CheckoutDateDto) {
     const lsh = dto.lsh;
     const userId = dto.sfyid;
-    const userName = dto.sfyid; // 未配置
+    const userName = dto.sfymc;
     const tjrq = dto.tjrq;
     const startDate = dto.startDate;
     const endDate = dto.endDate;
@@ -196,7 +196,7 @@ export class H22SfjlService {
       '0',
       '门诊住院收费结账标志(0合并,1分开)',
     );
-    let jslx = 0; // 未配置
+    let jslx = 0;
     if (sfjzbz == '0') {
       jslx = 0;
     } else if (sfjzbz == '1' || dto.bz == '1') {
@@ -231,7 +231,7 @@ export class H22SfjlService {
         lsh: lsh,
         usid: userId,
         unam: userName,
-        jsbz: 1,
+        jsbz: 2,
         shbz: 0,
         rq: new Date(tjrq),
         s_date: new Date(startDate),
