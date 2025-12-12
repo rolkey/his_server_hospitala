@@ -132,8 +132,8 @@ export class h11_brxxService {
         // 创建子查询
         const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb');
 
-        // 当dyflid值为5时，只需要查询h12_yzxb表中存在该病人的数据即可
-        if (queryDto.dyflid === '5') {
+        // 当dyflid值为5或6时，只需要查询h12_yzxb表中存在该病人的数据即可
+        if (queryDto.dyflid === '5' || queryDto.dyflid === '6') {
           // 条件：zyid匹配主查询
           subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
         } else {
