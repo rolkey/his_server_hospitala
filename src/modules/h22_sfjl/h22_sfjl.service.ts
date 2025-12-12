@@ -8,12 +8,15 @@ import {
   QueryH22SfjlDto,
   QueryCheckoutDateDto,
   CheckoutDateDto,
+  CancelCheckoutDateDto,
+  ResetCheckoutDateDto,
 } from './h22_sfjl.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { log } from 'console';
 import * as dayjs from 'dayjs';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 @Injectable()
 export class H22SfjlService {
@@ -21,6 +24,7 @@ export class H22SfjlService {
     @InjectRepository(H22Sfjl)
     private readonly repo: Repository<H22Sfjl>,
     private readonly paramService: ParamService,
+    private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
   ) {}
 
@@ -686,8 +690,104 @@ export class H22SfjlService {
   //   return this.findOne(lsh);
   // }
 
-  // async remove(lsh: string) {
-  //   await this.repo.delete({ lsh });
-  //   return { lsh, deleted: true };
-  // }
+  // 取消结账
+  async cancelCheckout(dto: CancelCheckoutDateDto) {
+    const lsh = dto.lsh;
+    const sfyid = dto.sfyid;
+
+    // 使用事务确保数据一致性
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 查询要取消的结账记录
+      const item = await queryRunner.manager.findOne(H22Sfjl, {
+        where: { lsh, usid: sfyid },
+      });
+
+      if (!item) {
+        throw new CustomException(ERR.ERR_10000, '结账记录不存在！');
+      }
+
+      if (item.shbz === 1) {
+        throw new CustomException(ERR.ERR_10000, '已审核的结账记录不能取消结账！');
+      }
+
+      // 获取结账标志参数
+      const sfjzbz = await this.paramService.gfGetParaNew(
+        22,
+        'sfjzbz',
+        '0',
+        '门诊住院收费结账标志(0合并,1分开)',
+      );
+
+      // 查询最大序号记录
+      const queryBuilder = queryRunner.manager.createQueryBuilder(H22Sfjl, 'sfjl');
+      queryBuilder.andWhere('sfjl.usid = :sfyid', { sfyid });
+
+      if (sfjzbz == '0' || sfjzbz == '1') {
+        queryBuilder.andWhere('COALESCE(sfjl.jslx, 0) IN (0, 1)');
+      } else if (sfjzbz == '2') {
+        queryBuilder.andWhere('COALESCE(sfjl.jslx, 0) IN (0, 2)');
+      }
+
+      queryBuilder.orderBy('sfjl.lsh', 'DESC');
+      queryBuilder.take(1);
+      const maxItem = await queryBuilder.getOne();
+
+      if (!maxItem || maxItem.lsh.trim() != lsh) {
+        throw new CustomException(ERR.ERR_10000, '该结账单不是最后一张，不能再取消！');
+      }
+
+      // 执行删除操作
+      const result = await queryRunner.manager.delete(H22Sfjl, { lsh, usid: sfyid });
+
+      // 提交事务
+      await queryRunner.commitTransaction();
+
+      return result;
+    } catch (error) {
+      // 回滚事务
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // 释放连接
+      await queryRunner.release();
+    }
+  }
+
+  // 重新结账
+  async resetCheckout(dto: ResetCheckoutDateDto) {
+    // 验证密码
+    const { pwd } = dto;
+    //let lsh = dto.lsh;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const querySAPwd = await queryRunner.query(
+        `select isnull(pwrd,'') as pwrd from __usrcat where upper(usid)='SA'`,
+        [],
+      );
+      if (querySAPwd[0]?.pwrd !== pwd) {
+        throw new CustomException(ERR.ERR_10000, '密码输入错误！');
+      }
+
+      // 获取流水号
+      // lsh = String(await this.gyIdentityService.getMax('h22_sfjl', 1));
+      // lsh = new Date().getFullYear().toString().substring(2, 4) + lsh.padStart(7, '0');
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return this.checkout({ ...dto });
+  }
 }

@@ -7,6 +7,8 @@ import {
   QueryH22SfjlDto,
   QueryCheckoutDateDto,
   CheckoutDateDto,
+  CancelCheckoutDateDto,
+  ResetCheckoutDateDto,
 } from './h22_sfjl.dto';
 
 @Controller('h22_sfjl')
@@ -36,6 +38,16 @@ export class H22SfjlController {
   @Get('checkout')
   checkout(@Query() dto: CheckoutDateDto) {
     return this.service.checkout(dto);
+  }
+
+  @Get('cancelCheckout')
+  cancelCheckout(@Query() dto: CancelCheckoutDateDto) {
+    return this.service.cancelCheckout(dto);
+  }
+
+  @Get('resetCheckout')
+  resetCheckout(@Query() dto: ResetCheckoutDateDto) {
+    return this.service.resetCheckout(dto);
   }
 
   // @Patch(':lsh')

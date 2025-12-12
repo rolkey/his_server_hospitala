@@ -258,37 +258,76 @@ export class QueryCheckoutDateDto {
 }
 
 export class CheckoutDateDto {
-  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '结账流水号不能为空' })
+  lsh?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '收费员ID不能为空' })
+  sfyid?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '收费员名称不能为空' })
+  sfymc?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '统计时间不能为空' })
+  tjrq?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '开始时间不能为空' })
+  startDate?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '结束时间不能为空' })
+  endDate?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '备注类型不能为空' })
+  bz?: string;
+}
+
+export class CancelCheckoutDateDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: '流水号不能为空' })
   lsh?: string;
 
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '收费员ID不能为空' })
   sfyid?: string;
+}
 
-  @IsOptional()
+export class ResetCheckoutDateDto {
+  @IsString()
+  @IsNotEmpty({ message: '流水号不能为空' })
+  lsh?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '管理员密码不能为空' })
+  pwd?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '收费员ID不能为空' })
+  sfyid?: string;
+
   @IsString()
   @IsNotEmpty({ message: '收费员名称不能为空' })
   sfymc?: string;
 
-  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '统计时间不能为空' })
   tjrq?: string;
 
-  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '开始时间不能为空' })
   startDate?: string;
 
-  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '结束时间不能为空' })
   endDate?: string;
 
-  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: '备注类型不能为空' })
   bz?: string;
