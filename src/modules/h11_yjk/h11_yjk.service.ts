@@ -78,15 +78,15 @@ export class H11YjkService {
 
     // 添加筛选条件
     if (sjhm) {
-      queryBuilder.orWhere('yjk.sjhm LIKE :sjhm', { sjhm: `%${sjhm}%` });
+      queryBuilder.andWhere('yjk.sjhm LIKE :sjhm', { sjhm: `%${sjhm}%` });
     }
 
     if (brxm) {
-      queryBuilder.orWhere('yjk.brxm LIKE :brxm', { brxm: `%${brxm}%` });
+      queryBuilder.andWhere('yjk.brxm LIKE :brxm', { brxm: `%${brxm}%` });
     }
 
     if (zyid) {
-      queryBuilder.orWhere('yjk.zyid = :zyid', { zyid });
+      queryBuilder.andWhere('yjk.zyid = :zyid', { zyid });
     }
 
     if (ksid) {
