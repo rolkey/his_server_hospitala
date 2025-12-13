@@ -449,17 +449,17 @@ export class h12_yzxbServiceNew {
   // 退费医嘱费用
   // -------------------------
   async refundCost(dto: adviceDto): Promise<void> {
-    if (!dto?.mxxhList?.length) return;
+    if (!dto?.maxidList?.length) return;
 
-    // 兼容前端传入的两种格式：数字数组或包含mxxh属性的对象数组
-    const mxxhValues = dto.mxxhList.map(item => {
-      if (typeof item === 'object' && item !== null && 'mxxh' in item) {
-        return item.mxxh;
+    // 兼容前端传入的两种格式：数字数组或包含maxid属性的对象数组
+    const maxidValues = dto.maxidList.map(item => {
+      if (typeof item === 'object' && item !== null && 'maxid' in item) {
+        return item.maxid;
       }
       return Number(item);
-    }).filter(mxxh => !isNaN(mxxh));
+    }).filter(maxid => !isNaN(maxid));
 
-    if (!mxxhValues.length) return;
+    if (!maxidValues.length) return;
 
     await this.dataSource.transaction(async (manager) => {
       try {
@@ -479,10 +479,10 @@ export class h12_yzxbServiceNew {
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
           .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
           .addSelect(['H31Lyjl.zyid', 'H31Lyjl.djbh', 'H31Lyjl.tjbz', 'H31Lyjl.ckclbz', 'H31Lyjl.ksid', 'H31Lyjl.fhksid'])
-          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.mxxh IN (:...mxxhList)', {
+          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.maxid IN (:...maxidList)', {
             zyid: dto.zyid,
             yzlx: dto.yzlx || '',
-            mxxhList: mxxhValues,
+            maxidList: maxidValues,
           }).getMany();
 
         if (!h13_yzzxcsList.length) return;
@@ -508,27 +508,25 @@ export class h12_yzxbServiceNew {
           }
 
           // 检查退费数量是否合理
-          const dtoItem = dto.mxxhList.find((d) => {
-            if (typeof d === 'object' && d !== null && 'mxxh' in d) {
-              return d.mxxh === item.mxxh;
+          const dtoItem = dto.maxidList.find((d) => {
+            if (typeof d === 'object' && d !== null && 'maxid' in d) {
+              return d.maxid === item.maxid;
             }
-            return Number(d) === item.mxxh;
+            return Number(d) === item.maxid;
           });
 
           const bzxcs = dtoItem && typeof dtoItem === 'object' && 'bzxcs' in dtoItem ? dtoItem.bzxcs : 1;
 
-
+          //控制台输出dtoItem的值
+          // console.log('退费数量dtoItem:', dtoItem);
           //控制台输出bzxcs的值
-          console.log('不执行次数bzxcs:', bzxcs);//3
-          console.log('执行次数zxcs:', item.zxcs);//3
+          // console.log('不执行次数bzxcs:', bzxcs);//3
+          // console.log('执行次数zxcs:', item.zxcs);//1
 
           if (bzxcs > item.zxcs && bzxcs>0) {
             throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数且不能小于0!`);
           }
 
-          // if (bzxcs > item.zxcs) {
-          //   throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数!`);
-          // }
 
           // 创建退费记录
           tfListToInsert.push({
@@ -555,22 +553,6 @@ export class h12_yzxbServiceNew {
           // item.H31Lyjl = undefined as any;
           item.H13YzzxcsTfList = undefined as any;
 
-          // 如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
-          // if (item?.H31Lyjl) {
-          //   const lyjlList = await H31LyjlRepo.find({
-          //     where: {
-          //       ksid: item.H31Lyjl.ksid,
-          //       djlb: item.H31Lyjl.djlb,
-          //       djbh: item.H31Lyjl.djbh
-          //     }
-          //   });
-          //   if (lyjlList.length > 0) {
-          //     for (const lyjl of lyjlList) {
-          //       lyjl.ckclbz = 0;
-          //     }
-          //     await H31LyjlRepo.save(lyjlList);
-          //   }
-          // }
 
 
         }
@@ -581,11 +563,6 @@ export class h12_yzxbServiceNew {
           H13YzzxcsTfRepo.save(tfListToInsert),
         ]);
 
-        // 调用发药记录的存储过程生成退费单
-        // await manager.query(
-        //   `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
-        //   ['', dto.zyid, dto.zxhs, 0],
-        // );
       } catch (error: any) {
         this.logger.error('退费失败', error?.stack ?? error?.message ?? error);
         throw new CustomException(ERR.ERR_10000, error?.message ?? '退费失败');

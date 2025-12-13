@@ -79,8 +79,11 @@ export class executeDto {
 }
 
 export class costDto {
-  @IsNotEmpty({ message: 'mxxh不能为空' })
+  @IsOptional()
   mxxh?: number;
+
+  @IsOptional()
+  maxid?: number;
 
   @IsOptional()
   bzxcs?: number;
@@ -96,9 +99,13 @@ export class adviceDto {
   @IsNotEmpty({ message: 'zxhs不能为空' })
   zxhs?: string;
 
-  @IsNotEmpty({ message: 'mxxhList不能为空' })
   @IsArray()
+  @IsOptional()
   mxxhList?: costDto[];
+
+  @IsArray()
+  @IsOptional()
+  maxidList?: costDto[];
 }
 
 export class medicineReceiptDto {

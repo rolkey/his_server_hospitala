@@ -95,14 +95,25 @@ export class h12_yzzbService {
       });
     }
     
-    // 当dyflid值不为5时，添加dyflid过滤条件 
-    if (data.dyflid !== '5') {
+    // 当dyflid值不为5和6时，添加dyflid过滤条件 
+    // if (data.dyflid !== '5' && data.dyflid !== '6') {
+    //   // 添加dyflid过滤条件
+    //   h12_yzxbqb.andWhere('syffidEntity.dyflid = :dyflid', {
+    //     dyflid: data.dyflid,
+    //   });
+    // }
+    
+    // 当dyflid值小于5时，添加dyflid过滤条件
+    // 使用Number()转换为数字进行比较，避免字符串字典序比较的潜在问题
+    const dyflidNum = Number(data.dyflid);
+    if (!isNaN(dyflidNum) && dyflidNum < 5) {
       // 添加dyflid过滤条件
       h12_yzxbqb.andWhere('syffidEntity.dyflid = :dyflid', {
         dyflid: data.dyflid,
       });
     }
-    
+
+
     // 当dyflid值等于5且fylbid不为空且不为0时，添加fylbid过滤条件 (医嘱执行单)
     if (data.dyflid === '5' && data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
       h12_yzxbqb.andWhere('h12_yzxb.fylbid = :fylbid', {
@@ -119,12 +130,9 @@ export class h12_yzzbService {
     
     // 当dyflid为6时，添加h13_yzzxcs表关联及zxrq时间范围过滤
     if (data.dyflid === '6') {
-      // 关联h13_yzzxcs表
-      h12_yzxbqb.innerJoin('h13_yzzxcs', 'h13_yzzxcs', 
-        `h13_yzzxcs.zyid = h12_yzxb.zyid AND 
-         h13_yzzxcs.mxxh = h12_yzxb.mxxh AND 
-         h13_yzzxcs.yzlx = h12_yzxb.yzlx AND 
-         h13_yzzxcs.yzxh = h12_yzxb.yzxh`
+      // 使用TypeORM的方式关联h13_yzzxcs表，指定连接条件
+      h12_yzxbqb.innerJoinAndSelect('h13_yzzxcs', 'h13_yzzxcs', 
+        'h12_yzxb.yzxh = h13_yzzxcs.yzxh AND h12_yzxb.mxxh = h13_yzzxcs.mxxh AND h12_yzxb.yzlx = h13_yzzxcs.yzlx AND h12_yzxb.zyid = h13_yzzxcs.zyid'
       );
       
       // 添加xsdkssj时间过滤
@@ -192,6 +200,12 @@ export class h12_yzzbService {
       return [];
     };
 
+    // 输出SQL语句供调试使用
+    console.log('h12_yzzb查询SQL:', queryBuilder.getSql());
+    console.log('h12_yzxb查询SQL:', h12_yzxbqb.getSql());
+    console.log('h12_yzzb查询参数:', queryBuilder.getParameters());
+    console.log('h12_yzxb查询参数:', h12_yzxbqb.getParameters());
+    
     // 4. 并行执行所有查询
     const [yzzbList, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
       queryBuilder.getMany(),
