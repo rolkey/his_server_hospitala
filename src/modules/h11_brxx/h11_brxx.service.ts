@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -356,7 +356,7 @@ export class h11_brxxService {
     }
 
     // 排序
-    if (queryDto.ryjssj && queryDto.ryjssj) {
+    if (queryDto.rykssj && queryDto.ryjssj) {
       baseQuery.orderBy('h11_brxx.rysj', 'ASC');
     } else if (queryDto.cykssj && queryDto.cyjssj) {
       baseQuery.orderBy('h11_brxx.cysj', 'ASC');
@@ -430,6 +430,14 @@ export class h11_brxxService {
         'istoday',
       );
 
+    // 排序
+    if (queryDto.rykssj && queryDto.ryjssj) {
+      detailQuery.orderBy('h11_brxx.rysj', 'ASC');
+    } else if (queryDto.cykssj && queryDto.cyjssj) {
+      detailQuery.orderBy('h11_brxx.cysj', 'ASC');
+    } else {
+      detailQuery.orderBy('h11_brxx.rysj', 'ASC');
+    }
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
