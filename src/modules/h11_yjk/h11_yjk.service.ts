@@ -72,6 +72,7 @@ export class H11YjkService {
       pageSize = 10,
       jzzt,
       sfyid,
+      value,
     } = queryDto;
 
     const queryBuilder = this.h11YjkRepository.createQueryBuilder('yjk');
@@ -87,6 +88,15 @@ export class H11YjkService {
 
     if (zyid) {
       queryBuilder.andWhere('yjk.zyid = :zyid', { zyid });
+    }
+
+    if (value) {
+      queryBuilder.andWhere(
+        '(yjk.sjhm LIKE :value or yjk.brxm LIKE :value or yjk.zyid LIKE :value)',
+        {
+          value: `%${value}%`,
+        },
+      );
     }
 
     if (ksid) {

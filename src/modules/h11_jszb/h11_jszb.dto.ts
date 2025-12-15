@@ -277,6 +277,10 @@ export class UpdateH11JszbDto {
 export class H11JszbQueryDto {
   @IsOptional()
   @IsString()
+  value?: string;
+
+  @IsOptional()
+  @IsString()
   jsdh?: string;
 
   @IsOptional()

@@ -282,6 +282,10 @@ export class UpdateH11FpzbDto {
 export class H11FpzbQueryDto {
   @IsOptional()
   @IsString()
+  value?: string;
+
+  @IsOptional()
+  @IsString()
   fphm?: string;
 
   @IsOptional()

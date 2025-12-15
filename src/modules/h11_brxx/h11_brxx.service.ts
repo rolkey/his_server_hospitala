@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -364,6 +364,9 @@ export class h11_brxxService {
       baseQuery.orderBy('h11_brxx.rysj', 'ASC');
     }
 
+    // 2️⃣ 查询总数
+    const total = await baseQuery.getCount();
+
     // 2️⃣ 第一次查询 — 仅分页ID + 总数
     const { raw } = await baseQuery
       .select('h11_brxx.zyid', 'zyid')
@@ -458,7 +461,8 @@ export class h11_brxxService {
       };
     });
 
-    return { pageData: result, total: raw.length };
+    //return { pageData: result, total: raw.length };
+    return { pageData: result, total: total };
   }
 
   async findOne(zyid: string) {
@@ -487,8 +491,10 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
+      .leftJoin('h11_brxx.mzzdEntity', 'mzzdEntity')
       .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
       .addSelect(['cyzdEntity.icd11', 'cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
+      .addSelect(['mzzdEntity.icd11', 'mzzdEntity.icd11mc', 'mzzdEntity.ybbm', 'mzzdEntity.ybmc'])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .where('h11_brxx.zyid = :zyid', { zyid })
       .getOne();

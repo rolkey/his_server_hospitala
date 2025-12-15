@@ -154,6 +154,10 @@ export class h11_brxx {
   @Column('varchar', { name: 'mzzd', nullable: true, length: 120 })
   mzzd: string | null;
 
+  @ManyToOne(() => Jbbmicd10)
+  @JoinColumn({ name: 'mzzd', referencedColumnName: 'icd11' })
+  mzzdEntity: Jbbmicd10;
+
   @Column('varchar', { name: 'ryzd', nullable: true, length: 120 })
   ryzd: string | null;
 

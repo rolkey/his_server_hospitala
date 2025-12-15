@@ -211,6 +211,9 @@ export class H11YjkQueryDto {
 
   @Allow()
   sfyid?: string;
+
+  @Allow()
+  value?: string;
 }
 
 export class H11YjkCancelDto {
