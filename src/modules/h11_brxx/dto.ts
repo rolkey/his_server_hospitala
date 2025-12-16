@@ -380,7 +380,7 @@ export class Queryh11_brxxDto extends QueryDto {
   brlxid?: string;
 
   @Allow()
-  ssksid?: string;
+  fyksid?: string;
 }
 
 export class receiptDto extends QueryDto {
