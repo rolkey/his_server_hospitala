@@ -309,6 +309,10 @@ export class h11_brxxService {
       );
     }
 
+    if (queryDto.ssksid) {
+      baseQuery.andWhere('h11_brxx.zkksid LIKE :ssksid', { ssksid: `%${queryDto.ssksid.trim()}%` });
+    }
+
     if (queryDto.mzys) {
       baseQuery.andWhere('h11_brxx.mzys LIKE :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
     }
@@ -431,6 +435,32 @@ export class h11_brxxService {
           WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
           ELSE 0 END`,
         'istoday',
+      )
+      .addSelect(
+        `(select (case when COUNT(*) > 0 then 1 else 0 end) fsbz
+          from BQ_TWMX
+          where BQ_TWMX.ZYH = h11_brxx.zyid
+          and DATEDIFF(DAY, BQ_TWMX.CLRQ,GetDate()) < 4 
+          and tw>37.4)`,
+        'fsbz',
+      )
+      .addSelect(
+        `(select (case when COUNT(*) > 0 then 1 else 0 end) cybz
+          from h12_cycl
+          where h12_cycl.zyid = h11_brxx.zyid)`,
+        'cybz',
+      )
+      .addSelect(
+        `(select (case when COUNT(*) > 0 then 1 else 0 end) tzbz
+          from h12_yzxb
+          where h12_yzxb.zyid = h11_brxx.zyid
+          and h12_yzxb.ysbz = 1
+          and h12_yzxb.yzlx = 1
+          and h12_yzxb.sjbz = 1
+          and h12_yzxb.jsbz <> 1
+          and h12_yzxb.xmid = '0000000'
+          and h12_yzxb.tzbz = 0)`,
+        'tzbz',
       );
 
     // 排序
@@ -453,6 +483,9 @@ export class h11_brxxService {
         isexecute: matchedRaw?.isexecute,
         istoday: matchedRaw?.istoday,
         ztbz: entity.zyzt === 4 ? 1 : 0,
+        fsbz: matchedRaw?.fsbz,
+        cybz: matchedRaw?.cybz,
+        tzbz: matchedRaw?.tzbz,
         rysj: entity.rysj ? dayjs(entity.rysj).format('YYYY-MM-DD HH:mm:ss') : '',
         cysj: entity.cysj ? dayjs(entity.cysj).format('YYYY-MM-DD HH:mm:ss') : '',
         ryqzsj: entity.ryqzsj ? dayjs(entity.ryqzsj).format('YYYY-MM-DD HH:mm:ss') : '',

@@ -378,6 +378,9 @@ export class Queryh11_brxxDto extends QueryDto {
 
   @Allow()
   brlxid?: string;
+
+  @Allow()
+  ssksid?: string;
 }
 
 export class receiptDto extends QueryDto {
