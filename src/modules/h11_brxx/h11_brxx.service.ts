@@ -310,7 +310,7 @@ export class h11_brxxService {
     }
 
     if (queryDto.fyksid) {
-      baseQuery.andWhere('h11_brxx.zkksid LIKE :fyksid', { ssksid: `%${queryDto.fyksid.trim()}%` });
+      baseQuery.andWhere('h11_brxx.zkksid LIKE :fyksid', { fyksid: `%${queryDto.fyksid.trim()}%` });
     }
 
     if (queryDto.mzys) {
