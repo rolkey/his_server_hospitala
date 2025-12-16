@@ -458,7 +458,7 @@ export class h12_yzxbService {
    * @private
    */
   async _setAdviceBaseInfo(advice: h12_yzxb, { isPackage }) {
-    advice.tcbz = isPackage ? 1 : 0;
+    advice.tcbz = isPackage ? 0 : 1;
     advice.sjbz = 1;
     advice.sfbz = isPackage ? 0 : 1;
     advice.jsbz = 0;
@@ -1289,7 +1289,7 @@ export class h12_yzxbService {
       .andWhere('h12_yzxb.yzxh = :yzxh', { yzxh: 1 })
       .andWhere('h12_yzxb.yzlx = :yzlx', { yzlx })
       .andWhere('h12_yzxb.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('h12_yzxb.tjbz = 1')
+      //.andWhere('h12_yzxb.tjbz = 1')
       .andWhere('h12_yzxb.tzbz = 0')
       .getMany();
     // 隐性规则

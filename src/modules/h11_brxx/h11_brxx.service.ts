@@ -461,6 +461,12 @@ export class h11_brxxService {
           and h12_yzxb.xmid = '0000000'
           and h12_yzxb.tzbz = 0)`,
         'tzbz',
+      )
+      .addSelect(
+        `(select (case when COUNT(*) > 0 then 1 else 0 end) xyztjbz
+         from h11_jshztzd1
+         where h11_jshztzd1.zyid = h11_brxx.zyid)`,
+        'xyztjbz',
       );
 
     // 排序
@@ -486,6 +492,7 @@ export class h11_brxxService {
         fsbz: matchedRaw?.fsbz,
         cybz: matchedRaw?.cybz,
         tzbz: matchedRaw?.tzbz,
+        xyztjbz: matchedRaw?.xyztjbz,
         rysj: entity.rysj ? dayjs(entity.rysj).format('YYYY-MM-DD HH:mm:ss') : '',
         cysj: entity.cysj ? dayjs(entity.cysj).format('YYYY-MM-DD HH:mm:ss') : '',
         ryqzsj: entity.ryqzsj ? dayjs(entity.ryqzsj).format('YYYY-MM-DD HH:mm:ss') : '',
