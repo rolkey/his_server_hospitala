@@ -459,6 +459,7 @@ export class h12_yzxbService {
    */
   async _setAdviceBaseInfo(advice: h12_yzxb, { isPackage }) {
     advice.tcbz = isPackage ? 0 : 1;
+    advice.tpbz = isPackage ? 1 : 0;
     advice.sjbz = 1;
     advice.sfbz = isPackage ? 0 : 1;
     advice.jsbz = 0;
