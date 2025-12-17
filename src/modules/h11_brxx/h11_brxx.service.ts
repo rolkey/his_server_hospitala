@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -538,8 +538,10 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .where('h11_brxx.zyid = :zyid', { zyid })
       .getOne();
-    h11_brxx.fyhj = result.yzfy + result.ssfy;
-    h11_brxx.yjk = result.yjk;
+    if (h11_brxx) {
+      h11_brxx.fyhj = result?.yzfy + result?.ssfy;
+      h11_brxx.yjk = result?.yjk;
+    }
     return h11_brxx;
   }
 
