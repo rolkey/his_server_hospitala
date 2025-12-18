@@ -51,7 +51,7 @@ export class h00_syff {
   // })
   // qtbm: string | null;
 
-  @Column("char", { name: "dyflid", nullable: true, length: 10 })
+  @Column('char', { name: 'dyflid', nullable: true, length: 10 })
   dyflid: string | null;
 
   @Column('varchar', {
@@ -80,8 +80,8 @@ export class h00_syff {
   // @Column("varchar", { name: "bzxx2", nullable: true, length: 15 })
   // bzxx2: string | null;
 
-  // @Column("varchar", { name: "ksid", nullable: true, length: 10 })
-  // ksid: string | null;
+  @Column('varchar', { name: 'ksid', nullable: true, length: 10 })
+  ksid: string | null;
 
   @OneToOne(() => H00_xmzd)
   @JoinColumn({ name: 'xmid', referencedColumnName: 'xmid' })

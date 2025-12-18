@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Like, Repository } from 'typeorm';
+import { DataSource, In, Like, Repository, MoreThan, LessThan, EntityManager } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -14,6 +14,8 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
+import { h12_yzxbService } from './h12_yzxb.service';
+import { h00_syffService } from '../h00_syff/h00_syff.service';
 import { availableParallelism } from 'os';
 import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
 import { usrcat } from '../usrcat/usrcat.entity';
@@ -64,6 +66,9 @@ export class h12_yzxbServiceNew {
     private readonly syspar_newService: syspar_newService,
     private readonly configReaderService: ConfigReaderService,
     private readonly paramService: ParamService,
+    private readonly h12_yzxbOldService: h12_yzxbService,
+    private readonly h00syffService: h00_syffService,
+    private readonly entityManager: EntityManager,
   ) {}
 
   // 取组套（保留入口，按需实现）
@@ -76,7 +81,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   async review(dto: reviewDto): Promise<void> {
     try {
-      const [yzzb, yzxbList, yzhshdbz] = await Promise.all([
+      const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
@@ -85,107 +90,144 @@ export class h12_yzxbServiceNew {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
             yzxh: In(dto.yzxh || []),
-            mxxh: In(dto.mxxh || []),
+            ////mxxh: In(dto.mxxh || []),
             hdbz: 0,
             ysbz: 1,
             tjbz: 1,
-            //mxxh: 259780,
+            // mxxh: 259779,
           },
-          select: [
-            'kshs',
-            'hdhs',
-            'hshdrq',
-            'zyid',
-            'yzlx',
-            'yzxh',
-            'mxxh',
-            'hshd',
-            'yzzt',
-            'hdbz',
-            'jshs',
-            'tzrq',
-            'xmmc',
-            'yzrq',
-          ],
         }),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
+        this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), //医嘱自动复核增加附加项目
       ]);
 
       // 转换日期
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
+      // 附加信息
+      const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      yzxbList.forEach((yzxb) => {
-        const ksrq = new Date(yzxb.ksrq);
-        let zzrq = new Date(yzxb.tzrq);
-        const formatKSRQ = ksrq.getFullYear() + '-' + ksrq.getMonth() + '-' + ksrq.getDate();
-        if (!yzxb.kshs) {
-          //日期不在同一天
-          if (formatZXRQ != formatKSRQ || ksrq < dtoZXRQ) {
-            zzrq = dtoZXRQ;
-            zzrq.setSeconds(300);
-          }
-          yzxb.kshs = dto.kshs;
-          yzxb.hshd = dto.kshs;
-          yzxb.hdsj = zzrq.toString();
+      await Promise.all(
+        yzxbList.map(async (yzxb) => {
+          //yzxbList.forEach(async (yzxb) => {
+          const ksrq = new Date(yzxb.ksrq);
+          let zzrq = new Date(yzxb.tzrq);
+          const formatKSRQ = ksrq.getFullYear() + '-' + ksrq.getMonth() + '-' + ksrq.getDate();
+          if (!yzxb.kshs) {
+            //日期不在同一天
+            if (formatZXRQ != formatKSRQ || ksrq < dtoZXRQ) {
+              zzrq = dtoZXRQ;
+              zzrq.setSeconds(300);
+            }
+            yzxb.kshs = dto.kshs;
+            yzxb.hshd = dto.kshs;
+            yzxb.hdsj = zzrq.toString();
 
-          // 复核同时校验
-          if (yzhshdbz == '1') {
-            yzxb.hdhs = dto.kshs;
-            yzxb.hshdrq = zzrq;
+            // 复核同时校验
+            if (yzhshdbz == '1') {
+              yzxb.hdhs = dto.kshs;
+              yzxb.hshdrq = zzrq;
+            }
+
+            // 临时医嘱、临时处置处理
+            if (yzxb.yzlx === 2 || yzxb.yzlx === 7) {
+              yzxb.jshs = dto.jshs;
+              yzxb.tzrq = zzrq;
+            }
+          }
+
+          // 实习护士
+          if (!yzxb.kssxhs && !yzxb.kshs) {
+            yzxb.kssxhs = dto.kssxhs;
           }
 
           // 临时医嘱、临时处置处理
-          if (yzxb.yzlx === 2 || yzxb.yzlx === 7) {
-            yzxb.jshs = dto.jshs;
+          if (!zzrq && (yzxb.yzlx === 2 || yzxb.yzlx === 7)) {
+            // 日期处理
+            if (formatZXRQ != formatKSRQ || ksrq < dtoZXRQ) {
+              zzrq = ksrq;
+              zzrq.setSeconds(300);
+            } else {
+              zzrq = dtoZXRQ;
+            }
             yzxb.tzrq = zzrq;
+
+            // 停嘱护士处理
+            if (!yzxb.jshs) {
+              yzxb.jshs = dto.jshs;
+            }
           }
-        }
 
-        // 实习护士
-        if (!yzxb.kssxhs && !yzxb.kshs) {
-          yzxb.kssxhs = dto.kssxhs;
-        }
+          if (yzxb.jsys && !yzxb.jshs) {
+            yzxb.jshs = dto.kshs;
+          }
 
-        // 临时医嘱、临时处置处理
-        if (!zzrq && (yzxb.yzlx === 2 || yzxb.yzlx === 7)) {
-          // 日期处理
-          if (formatZXRQ != formatKSRQ || ksrq < dtoZXRQ) {
-            zzrq = ksrq;
-            zzrq.setSeconds(300);
+          if (yzxb.jsys || yzxb.jssxys) {
+            if (!yzxb.jshs && !yzxb.jssxhs && dto.kshs && dto.kssxhs) {
+              yzxb.jshs = dto.kshs;
+              yzxb.jssxhs = dto.kssxhs;
+            } else if (!yzxb.jshs && dto.kshs) {
+              yzxb.jshs = dto.kshs;
+            } else if (!yzxb.jshs && dto.kssxhs) {
+              yzxb.jssxhs = dto.kssxhs;
+            }
+          }
+          yzxb.hdbz = 1;
+          yzxb.yzzt = 2; // 已复核
+          if (yzxb.xmdj == 0) {
+            yzxb.zxbz = 1;
+          }
+
+          //查询附加
+          const yzxbFJ = await this.h12_yzxbRepo.find({
+            where: {
+              zyid: dto.zyid,
+              yzlx: dto.yzlx,
+              yzxh: yzxb.yzxh,
+              yzzh: yzxb.yzzh, // 大于0
+              ysbz: 0,
+            },
+          });
+
+          // 复核附加
+          // 复核停嘱附加
+
+          //自动附加项目
+          if (yzxb.tpbz == 1 || yzxb.tpbz == 2 || yzxb.yzzh == 0 || yzauton == '0') {
           } else {
-            zzrq = dtoZXRQ;
+            if (yzxbFJ.length <= 0 && yzxb.syffid) {
+              const syffItem = await this.h00syffService.findOne(yzxb.syffid);
+              let mbid = '';
+              // xmid1 1:全院 2:科室
+              if (syffItem.xmid1 === '2') {
+                mbid = syffItem.xmid || '';
+              } else {
+                mbid = syffItem.xmid || '';
+              }
+
+              if (mbid) {
+                const fjxx = await this.h12_yzxbOldService.getPackageItems({
+                  advice: yzxb,
+                  mbid: mbid,
+                  recursionDepth: 1,
+                });
+                yzxbFJList.push(...fjxx);
+              }
+            }
           }
-          yzxb.tzrq = zzrq;
+        }),
+      );
 
-          // 停嘱护士处理
-          if (!yzxb.jshs) {
-            yzxb.jshs = dto.jshs;
-          }
+      await this.entityManager.transaction(async (transactionalEntityManager) => {
+        if (yzxbList.length > 0) {
+          await transactionalEntityManager.save(yzxbList);
         }
-
-        if (yzxb.jsys && !yzxb.jshs) {
-          yzxb.jshs = dto.kshs;
+        if (yzxbFJList.length > 0) {
+          await transactionalEntityManager.save(yzxbFJList);
         }
-
-        if (yzxb.jsys || yzxb.jssxys) {
-          if (!yzxb.jshs && !yzxb.jssxhs && dto.kshs && dto.kssxhs) {
-            yzxb.jshs = dto.kshs;
-            yzxb.jssxhs = dto.kssxhs;
-          } else if (!yzxb.jshs && dto.kshs) {
-            yzxb.jshs = dto.kshs;
-          } else if (!yzxb.jshs && dto.kssxhs) {
-            yzxb.jssxhs = dto.kssxhs;
-          }
-        }
-        // 核对附加
-
-        yzxb.hdbz = 1;
-        yzxb.yzzt = 1;
       });
-
-      //throw new CustomException(ERR.ERR_10000, '测试测试');
-      if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
+      // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
+      // if (yzxbFJList.length) await this.h12_yzxbRepo.save(yzxbFJList);
     } catch (error: any) {
       this.logger.error('复核医嘱失败', error?.stack ?? error?.message ?? error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '复核医嘱失败');

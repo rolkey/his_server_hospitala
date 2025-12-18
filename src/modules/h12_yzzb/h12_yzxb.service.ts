@@ -43,6 +43,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { H12CyclService } from '../h12-cycl/h12-cycl.service';
+import { log } from 'console';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -741,6 +742,7 @@ export class h12_yzxbService {
     // 复制医生/护士信息
     childAdvice.kssxys = parentAdvice.kssxys;
     childAdvice.kshs = parentAdvice.kshs;
+    childAdvice.ksys = parentAdvice.ksys;
     childAdvice.kssxhs = parentAdvice.kssxhs;
     childAdvice.yzrq = parentAdvice.yzrq;
     childAdvice.srcs = parentAdvice.srcs;

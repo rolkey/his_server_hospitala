@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { h00_syff } from './h00_syff.entity';
 import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
 
@@ -13,6 +13,10 @@ export class h00_syffService {
 
   findAll() {
     return this.h00_syffRepo.find({});
+  }
+
+  async findOne(syffid: string) {
+    return this.h00_syffRepo.findOne({ where: { syffid: syffid } });
   }
 
   async findAllFiltered(as_ksid: string) {
