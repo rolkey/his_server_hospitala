@@ -713,7 +713,7 @@ export class h12_yzxbServiceNew {
           tfListToInsert.push({
             ...item,
             czrq: new Date(),
-            zxrq: new Date(),
+            //zxrq: new Date(),
             fydh: '',
             zxcs2: item.maxid,
             zxhs: dto.zxhs,
@@ -727,13 +727,14 @@ export class h12_yzxbServiceNew {
           } as any);
 
           //控制台输出退费记录tfListToInsert
-          console.log('退费记录tfListToInsert:------', tfListToInsert);
+          //console.log('退费记录tfListToInsert:------', tfListToInsert);
 
           // 修改主记录的已退次数
           item.bzxcs = bzxcs;
           // item.H31Lyjl = undefined as any;
           item.H13YzzxcsTfList = undefined as any;
         }
+        //console.log('退费记录tfListToInsert:------', tfListToInsert);
 
         // 批量保存主记录和退费记录
         await Promise.all([h13Repo.save(h13_yzzxcsList), H13YzzxcsTfRepo.save(tfListToInsert)]);
