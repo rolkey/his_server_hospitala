@@ -190,7 +190,33 @@ export class h12_yzxbServiceNew {
           });
 
           // 复核附加
-          // 复核停嘱附加
+          if (yzxbFJ.length > 0) {
+            yzxbFJ.forEach((yzxbFJItem) => {
+              yzxbFJItem.hdbz = 1;
+              yzxbFJItem.yzzt = 2; // 已复核
+              yzxbFJItem.kshs = dto.kshs;
+              if (yzxbFJItem.yzlx === 2) {
+                yzxbFJItem.tzrq = yzxb.tzrq;
+              }
+              // 复核停嘱附加
+              if (
+                (yzxb.tpbz == 1 && (yzxb.yzlx == 2 || yzxb.yzlx == 5) && yzxb.jsys && !yzxb.jshs) ||
+                yzauton == '1'
+              ) {
+                if (yzxbFJItem.tzbz == 1) {
+                } else {
+                  yzxbFJItem.tzbz = yzxb.tzbz;
+                  yzxbFJItem.jsnf = yzxb.jsnf;
+                  yzxbFJItem.mrcs = yzxb.mrcs;
+                  yzxbFJItem.tzrq = yzxb.tzrq;
+                }
+                yzxbFJItem.jsys = yzxb.jsys;
+                yzxbFJItem.jshs = yzxb.jshs;
+              }
+
+              yzxbFJList.push(yzxbFJItem);
+            });
+          }
 
           //自动附加项目
           if (yzxb.tpbz == 1 || yzxb.tpbz == 2 || yzxb.yzzh == 0 || yzauton == '0') {

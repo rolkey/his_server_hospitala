@@ -405,11 +405,11 @@ export class h12_yzxbService {
       srcs: 1,
       kyts: 1,
       kyfs: 1,
-      yzzh: newGroup ? await this.gyIdentityService.getMax('h12_yzzh') : 0,
+      yzzh: String(newGroup) == 'true' ? await this.gyIdentityService.getMax('h12_yzzh') : 0,
       tpbz: 0, //附加标志
       hdbz: 0,
       // zxcs: newZxcs || 1,
-      zxcs: newZxcs ? await this.getZxcs(zyid, yzlx) : 0,
+      zxcs: String(newZxcs) == 'true' ? await this.getZxcs(zyid, yzlx) : 0,
     });
 
     return newRecord;
