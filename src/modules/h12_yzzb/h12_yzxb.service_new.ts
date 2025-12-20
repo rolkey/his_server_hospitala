@@ -4,7 +4,14 @@ import { DataSource, In, Like, Repository, MoreThan, LessThan, EntityManager } f
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
-import { executeDto, adviceDto, reviewDto, outDto, checkOutDto } from './dto/h12_yzzbOpe.dto';
+import {
+  executeDto,
+  adviceDto,
+  reviewDto,
+  outDto,
+  checkOutDto,
+  CopyAdviceDto,
+} from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { syspar_newService } from '../syspar_new/syspar_new.service';
@@ -1817,5 +1824,80 @@ export class h12_yzxbServiceNew {
     } catch (error) {
       this.logger.warn('releaseSysparLock failed', (error as any)?.message ?? error);
     }
+  }
+
+  async copyAdvice(dto: CopyAdviceDto) {
+    const brxxNew = await this.h11BrxxRepo.findOne({
+      where: {
+        zyid: dto.zyidNew,
+      },
+    });
+
+    if (!brxxNew) {
+      throw new CustomException(ERR.ERR_10000, '未找到新医嘱病人信息,请检查!');
+    }
+
+    const yzxb = await this.h12_yzxbRepo.find({
+      where: {
+        mxxh: In(dto.mxxh),
+      },
+    });
+
+    if (yzxb.length <= 0) {
+      throw new CustomException(ERR.ERR_10000, '未找到医嘱信息,请检查!');
+    }
+
+    const yzxbGroup = await this.h12_yzxbRepo
+      .createQueryBuilder('yzxb')
+      .select('yzxb.yzzh', 'yzzh')
+      .where('yzxb.mxxh IN (:...mxxh)', { mxxh: dto.mxxh })
+      .groupBy('yzxb.yzzh')
+      .getRawMany();
+
+    for (let i = 0; i < yzxbGroup.length; i++) {
+      const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
+      await Promise.all(
+        yzxb.map(async (item) => {
+          if (item.yzzh === yzxbGroup[i].yzzh) {
+            item.yzzh = yzzh;
+          }
+          item.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
+          item.zybh = brxxNew.zybh;
+          item.zycs = brxxNew.zycs;
+          item.ksys = '';
+          item.kshs = '';
+          item.ksnf = '';
+          item.ksrq = '';
+          item.kssj = '';
+          item.jsys = '';
+          item.jshs = '';
+          item.jsrq = '';
+          item.jsnf = '';
+          item.jsrq = '';
+          item.jssj = '';
+          item.jsbz = 0;
+          item.hdhs = '';
+          item.hshd = '';
+          item.hshdrq = null;
+          item.hdbz = 0;
+          item.lryid = '';
+          item.tzbz = 0;
+          item.tzrq = null;
+          item.zxrq = null;
+          item.ysbz = 0;
+          item.yzzt = 0;
+          item.zxcs = 0;
+          item.yzrq = new Date();
+          item.kssxys = '';
+          item.kssxhs = '';
+          item.jssxys = '';
+          item.jssxhs = '';
+          item.zxhs = '';
+          item.zxsj = null;
+        }),
+      );
+    }
+
+    return yzxb;
   }
 }

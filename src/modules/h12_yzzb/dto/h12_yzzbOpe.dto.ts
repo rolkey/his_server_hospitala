@@ -160,8 +160,15 @@ export class outDto {
 //   hlksid: string;
 // }
 
-
 export class checkOutDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid?: string;
+}
+
+export class CopyAdviceDto {
+  @IsNotEmpty({ message: 'mxxh不能为空' })
+  mxxh?: string[];
+
+  @IsNotEmpty({ message: '新医嘱的zyid不能为空' })
+  zyidNew?: string;
 }

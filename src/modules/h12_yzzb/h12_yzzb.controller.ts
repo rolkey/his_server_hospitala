@@ -8,6 +8,7 @@ import {
   reviewDto,
   outDto,
   checkOutDto,
+  CopyAdviceDto,
   medicineReceiptDto,
 } from './dto/h12_yzzbOpe.dto';
 import { UpdateH12_yzxbDto, H12_yzxbSyffTcDto } from './dto/h12_yzxb.dto';
@@ -302,5 +303,13 @@ export class h12_yzzbController {
   async voidable(@Body() data: { zyid: string; yzlx: number; yzzh: number[] }) {
     const { zyid, yzlx, yzzh } = data;
     return this.h12_yzxbService.voidable(zyid, yzlx, yzzh);
+  }
+
+  /**
+   * 复制医嘱
+   */
+  @Post('copyAdvice')
+  async copyAdvice(@Body() dto: CopyAdviceDto) {
+    return await this.h12_yzxbServiceNew.copyAdvice(dto);
   }
 }
