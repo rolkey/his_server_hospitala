@@ -32,7 +32,21 @@ export class h12_yzzbService {
     private readonly gyIdentityService: GyIdentityService,
   ) {}
 
-  async getPatientListForZyidAndReceipt(data: { zyidList: string[]; yzlxList: string[]; yzzt?: number; yzzxcs?: string; dyflid: string; yzkssj?: Date; yzjssj?: Date; tzbz?: number; xmmc?: string; fylbid?: string; lx?: string; xsdkssj?: Date; xsdjssj?: Date }) {
+  async getPatientListForZyidAndReceipt(data: {
+    zyidList: string[];
+    yzlxList: string[];
+    yzzt?: number;
+    yzzxcs?: string;
+    dyflid: string;
+    yzkssj?: Date;
+    yzjssj?: Date;
+    tzbz?: number;
+    xmmc?: string;
+    fylbid?: string;
+    lx?: string;
+    xsdkssj?: Date;
+    xsdjssj?: Date;
+  }) {
     // 1. 检查zyidlist是否为空
     if (!data.zyidList || data.zyidList.length === 0) {
       throw new BadRequestException('zyidList不能为空');
@@ -43,32 +57,32 @@ export class h12_yzzbService {
     }
 
     // 过滤掉空的zyid
-    const validZyidList = data.zyidList.filter(zyid => zyid && zyid.trim());
+    const validZyidList = data.zyidList.filter((zyid) => zyid && zyid.trim());
     if (validZyidList.length === 0) return [];
 
-      const queryBuilder = this.h12_yzzbRepo
+    const queryBuilder = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
       .where('h12_yzzb.zyid IN (:...zyidlist)', {
-        zyidlist: validZyidList
+        zyidlist: validZyidList,
       });
-      //如果yzlxlist不为空，添加yzlx过滤条件
-      if (data.yzlxList && data.yzlxList.length > 0) {
-        queryBuilder.andWhere('h12_yzzb.yzlx IN (:...yzlxList)', {
-          yzlxList: data.yzlxList,
-        });
-      }
-      // 添加医嘱时间过滤条件
-      if (data.yzkssj) {
-        queryBuilder.andWhere('h12_yzzb.yzrq >= :yzkssj', {
-          yzkssj: data.yzkssj
-        });
-      }
-      if (data.yzjssj) {
-        queryBuilder.andWhere('h12_yzzb.yzrq <= :yzjssj', {
-          yzjssj: data.yzjssj
-        });
-      }
+    //如果yzlxlist不为空，添加yzlx过滤条件
+    if (data.yzlxList && data.yzlxList.length > 0) {
+      queryBuilder.andWhere('h12_yzzb.yzlx IN (:...yzlxList)', {
+        yzlxList: data.yzlxList,
+      });
+    }
+    // 添加医嘱时间过滤条件
+    if (data.yzkssj) {
+      queryBuilder.andWhere('h12_yzzb.yzrq >= :yzkssj', {
+        yzkssj: data.yzkssj,
+      });
+    }
+    if (data.yzjssj) {
+      queryBuilder.andWhere('h12_yzzb.yzrq <= :yzjssj', {
+        yzjssj: data.yzjssj,
+      });
+    }
 
     // 2. 查询符合条件的yzxb列表（带dyflid过滤）
     const h12_yzxbqb = this.h12_yzxbRepo
@@ -78,31 +92,31 @@ export class h12_yzzbService {
       .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
       .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
       .where('h12_yzxb.zyid IN (:...zyidlist)', {
-        zyidlist: validZyidList
+        zyidlist: validZyidList,
       });
-    
+
     // 添加tzbz（停嘱标志）过滤条件
     if (data.tzbz !== undefined && data.tzbz !== null) {
       h12_yzxbqb.andWhere('h12_yzxb.tzbz = :tzbz', {
-        tzbz: data.tzbz
+        tzbz: data.tzbz,
       });
     }
-    
+
     // 添加xmmc（项目名称）过滤条件（包含匹配）
     if (data.xmmc && data.xmmc.trim() !== '') {
       h12_yzxbqb.andWhere('h12_yzxb.xmmc LIKE :xmmc', {
-        xmmc: `%${data.xmmc.trim()}%`
+        xmmc: `%${data.xmmc.trim()}%`,
       });
     }
-    
-    // 当dyflid值不为5和6时，添加dyflid过滤条件 
+
+    // 当dyflid值不为5和6时，添加dyflid过滤条件
     // if (data.dyflid !== '5' && data.dyflid !== '6') {
     //   // 添加dyflid过滤条件
     //   h12_yzxbqb.andWhere('syffidEntity.dyflid = :dyflid', {
     //     dyflid: data.dyflid,
     //   });
     // }
-    
+
     // 当dyflid值小于5时，添加dyflid过滤条件
     // 使用Number()转换为数字进行比较，避免字符串字典序比较的潜在问题
     const dyflidNum = Number(data.dyflid);
@@ -113,54 +127,56 @@ export class h12_yzzbService {
       });
     }
 
-
     // 当dyflid值等于5且fylbid不为空且不为0时，添加fylbid过滤条件 (医嘱执行单)
     if (data.dyflid === '5' && data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
       h12_yzxbqb.andWhere('h12_yzxb.fylbid = :fylbid', {
         fylbid: data.fylbid.trim(),
       });
     }
-    
+
     // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid
     if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
       h12_yzxbqb.andWhere('syffidEntity.dyflid = :lx', {
         lx: data.lx.trim(),
       });
     }
-    
+
     // 当dyflid为6时，添加h13_yzzxcs表关联及zxrq时间范围过滤
     if (data.dyflid === '6') {
       // 使用TypeORM的方式关联h13_yzzxcs表，指定连接条件
-      h12_yzxbqb.innerJoinAndSelect('h13_yzzxcs', 'h13_yzzxcs', 
-        'h12_yzxb.yzxh = h13_yzzxcs.yzxh AND h12_yzxb.mxxh = h13_yzzxcs.mxxh AND h12_yzxb.yzlx = h13_yzzxcs.yzlx AND h12_yzxb.zyid = h13_yzzxcs.zyid'
+      h12_yzxbqb.innerJoinAndSelect(
+        'h13_yzzxcs',
+        'h13_yzzxcs',
+        'h12_yzxb.yzxh = h13_yzzxcs.yzxh AND h12_yzxb.mxxh = h13_yzzxcs.mxxh AND h12_yzxb.yzlx = h13_yzzxcs.yzlx AND h12_yzxb.zyid = h13_yzzxcs.zyid',
       );
-      
+
       // 添加xsdkssj时间过滤
       if (data.xsdkssj) {
         h12_yzxbqb.andWhere('h13_yzzxcs.zxrq >= :xsdkssj', {
-          xsdkssj: data.xsdkssj
+          xsdkssj: data.xsdkssj,
         });
       }
-      
+
       // 添加xsdjssj时间过滤
       if (data.xsdjssj) {
         h12_yzxbqb.andWhere('h13_yzzxcs.zxrq <= :xsdjssj', {
-          xsdjssj: data.xsdjssj
+          xsdjssj: data.xsdjssj,
         });
       }
     }
-    
-    h12_yzxbqb.orderBy('h12_yzxb.yzrq', 'ASC')
+
+    h12_yzxbqb
+      .orderBy('h12_yzxb.yzrq', 'ASC')
       .addOrderBy('h12_yzxb.zxcs', 'ASC')
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
-      //如果yzlxList不为空，添加yzlx过滤条件
-      if (data.yzlxList && data.yzlxList.length > 0) {
-        h12_yzxbqb.andWhere('h12_yzxb.yzlx IN (:...yzlxList)', {
-          yzlxList: data.yzlxList,
-        });
-      }
+    //如果yzlxList不为空，添加yzlx过滤条件
+    if (data.yzlxList && data.yzlxList.length > 0) {
+      h12_yzxbqb.andWhere('h12_yzxb.yzlx IN (:...yzlxList)', {
+        yzlxList: data.yzlxList,
+      });
+    }
 
     if (data.yzzt == 1) {
       h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt });
@@ -183,17 +199,17 @@ export class h12_yzzbService {
             'H31Lyjl.fhksid',
           ])
           .where('h13_yzzxcs.zyid IN (:...zyidlist)', {
-            zyidlist: validZyidList
+            zyidlist: validZyidList,
           })
           .orderBy('h13_yzzxcs.yzxh', 'ASC')
           .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
 
-          //如果yzlxList不为空，添加yzlx过滤条件
-          if (data.yzlxList && data.yzlxList.length > 0) {
-            h13_yzzxcsqb.andWhere('h13_yzzxcs.yzlx IN (:...yzlxList)', {
-              yzlxList: data.yzlxList,
-            });
-          }
+        //如果yzlxList不为空，添加yzlx过滤条件
+        if (data.yzlxList && data.yzlxList.length > 0) {
+          h13_yzzxcsqb.andWhere('h13_yzzxcs.yzlx IN (:...yzlxList)', {
+            yzlxList: data.yzlxList,
+          });
+        }
 
         return await h13_yzzxcsqb.getMany();
       }
@@ -205,7 +221,7 @@ export class h12_yzzbService {
     console.log('h12_yzxb查询SQL:', h12_yzxbqb.getSql());
     console.log('h12_yzzb查询参数:', queryBuilder.getParameters());
     console.log('h12_yzxb查询参数:', h12_yzxbqb.getParameters());
-    
+
     // 4. 并行执行所有查询
     const [yzzbList, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
       queryBuilder.getMany(),
@@ -235,13 +251,13 @@ export class h12_yzzbService {
       if (!yzxbByZyid[item.zyid]) {
         yzxbByZyid[item.zyid] = [];
       }
-      
+
       // 找到所有匹配的 h13_yzzxcs
       const matchedH13 = h13_yzzxcsList.filter(
         (h13) => h13.zyid === item.zyid && h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
       );
       item.h13_yzzxcsList = matchedH13;
-      
+
       // 赋值所有关联的字典
       item.ksysEntity = usrcatDict[item.ksys] || null;
       item.kshsEntity = usrcatDict[item.kshs] || null;
@@ -255,28 +271,26 @@ export class h12_yzzbService {
       item.jssxhsEntity = usrcatDict[item.jssxhs] || null;
       item.ksidEntity = ksmcDict[item.ksid] || null;
       item.jshsEntity = usrcatDict[item.jshs] || null;
-      
+
       yzxbByZyid[item.zyid].push(item);
     });
 
     // 8. 组装最终结果
-    const result = yzzbList.map(yzzb => {
+    const result = yzzbList.map((yzzb) => {
       // 为每个yzzb分配对应的yzxb列表
       const patientYzxbList = yzxbByZyid[yzzb.zyid] || [];
-      
+
       // 完善yzzb的关联信息
       yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
       yzzb.zkksidEntity = ksmcDict[yzzb?.zkksid] || null;
       yzzb.tzridEntity = usrcatDict[yzzb?.tzrid] || null;
       yzzb.h12_yzxbList = patientYzxbList;
-      
+
       return yzzb;
     });
 
     return result;
   }
-
-
 
   async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo

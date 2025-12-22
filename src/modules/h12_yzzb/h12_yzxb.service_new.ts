@@ -1837,11 +1837,18 @@ export class h12_yzxbServiceNew {
       throw new CustomException(ERR.ERR_10000, '未找到新医嘱病人信息,请检查!');
     }
 
-    const yzxb = await this.h12_yzxbRepo.find({
-      where: {
-        mxxh: In(dto.mxxh),
-      },
-    });
+    // const yzxb = await this.h12_yzxbRepo.find({
+    //   where: {
+    //     mxxh: In(dto.mxxh),
+    //   },
+    // });
+    const h12_yzxbqb = this.h12_yzxbRepo
+      .createQueryBuilder('h12_yzxb')
+      .leftJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
+      .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
+      .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
+      .where('h12_yzxb.mxxh IN (:...mxxh)', { mxxh: dto.mxxh });
+    const yzxb = await h12_yzxbqb.getMany();
 
     if (yzxb.length <= 0) {
       throw new CustomException(ERR.ERR_10000, '未找到医嘱信息,请检查!');
@@ -1884,7 +1891,7 @@ export class h12_yzxbServiceNew {
           item.tzbz = 0;
           item.tzrq = null;
           item.zxrq = null;
-          item.ysbz = 0;
+          //item.ysbz = 0;
           item.yzzt = 0;
           item.zxcs = 0;
           item.yzrq = new Date();

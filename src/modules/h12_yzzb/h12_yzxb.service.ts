@@ -1038,6 +1038,10 @@ export class h12_yzxbService {
   // 获取实体的所有列名
   async saveYzxb(advice: H12_yzxbDto, manager: EntityManager) {
     let h12_yzxbRow = null;
+    h12_yzxbRow = manager.create(h12_yzxb, advice);
+    return manager.save(h12_yzxbRow);
+
+    //return updateResult;
     if (advice.isNew) {
       h12_yzxbRow = manager.create(h12_yzxb, advice);
       return manager.save(h12_yzxbRow);
