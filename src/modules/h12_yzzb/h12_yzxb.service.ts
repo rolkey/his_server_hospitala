@@ -264,11 +264,12 @@ export class h12_yzxbService {
             });
             adviceList.push(newAdvice);
             newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
-            if (h12_yzxbs.yzzh > 0) {
-              newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
-            } else if (h12_yzxbs.yzzh === -1) {
-              newAdvice.yzzh = yzzh; // 组套合并为同组
-            }
+            // if (h12_yzxbs.yzzh > 0) {
+            //   newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
+            // } else if (h12_yzxbs.yzzh === -1) {
+            //   newAdvice.yzzh = yzzh; // 组套合并为同组
+            // }
+            newAdvice.yzzh = yzzh;
 
             // 处理附加项目
             const additionals = h12_yzxbs.h12_mbxbs.filter(
