@@ -230,77 +230,83 @@ export class h12_yzxbService {
         };
         const groupControl = {};
 
-        // 同组规则：加到同一组时，需要生成yzzh
-        const newGroup = (h12_yzxbs.yzzh || 0) === 0;
-        const yzzh = h12_yzxbs.yzzh === -1 ? await this.gyIdentityService.getMax('h12_yzzh') : 0;
-
-        // 2. 处理选中的项目，过滤掉附加项目
-        for (const [index, item] of h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).entries()) {
-          // 判断是否是组套项目
-          let isPackage = item.tcbz === 1;
-          if (
-            item.xmid.includes('T') ||
-            (isPackage && (item.fylbid === '02' || item.fylbid === '90'))
-          ) {
-            isPackage = true;
-          } else {
-            isPackage = false;
-          }
-
-          // 3. 处理选中的项目
-
-          // 创建医嘱项
-          const { newAdvice, mergedItem } = await this._createAdviceItem({
-            isPackage,
-            item,
-            newGroup: newGroup,
-            newZxcs: h12_yzxbs.isAdditional ?? true,
-            messages,
-          });
-          adviceList.push(newAdvice);
-          newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
-          if (h12_yzxbs.yzzh > 0) {
-            newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
-          } else if (h12_yzxbs.yzzh === -1) {
-            newAdvice.yzzh = yzzh; // 组套合并为同组
-          }
-
-          // 处理附加项目
-          const additionals = h12_yzxbs.h12_mbxbs.filter(
-            (mbxb) => mbxb.bz2 && mbxb.yzzh === item.yzzh,
-          );
-          if (!groupControl[item.yzzh] && additionals?.length > 0) {
-            // 取明细
-            for (const [index, additional] of additionals.entries()) {
-              const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
-                await this._createAdviceItem({
-                  isPackage: false,
-                  item: additional,
-                  newGroup: false,
-                  newZxcs: false,
-                  messages,
-                });
-              additionalAdvice.yzzh = newAdvice.yzzh;
-              additionalAdvice.ysbz = 0;
-              additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
-              adviceList.push(additionalAdvice);
-
-              newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+        const mxzbItem = new Set(
+          h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).map((mbxb) => mbxb.yzzh),
+        );
+        for (const mxzb of mxzbItem) {
+          // 同组规则：加到同一组时，需要生成yzzh
+          const newGroup = true;
+          const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
+          // 2. 处理选中的项目，过滤掉附加项目
+          for (const [index, item] of h12_yzxbs.h12_mbxbs
+            .filter((mbxb) => !mbxb.bz2 && mbxb.yzzh === mxzb)
+            .entries()) {
+            // 判断是否是组套项目
+            let isPackage = item.tcbz === 1;
+            if (
+              item.xmid.includes('T') ||
+              (isPackage && (item.fylbid === '02' || item.fylbid === '90'))
+            ) {
+              isPackage = true;
+            } else {
+              isPackage = false;
             }
-            groupControl[item.yzzh] = 1; // 避免注射组套子项重复取同组子项
-          }
 
-          const mbid =
-            item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
-          // 处理套餐项目
-          if (isPackage) {
-            const pachageAdvice = await this.getPackageItems({
-              advice: newAdvice,
-              // item: mergedItem,
-              mbid,
-              recursionDepth: controlData.recursionDepth + 1,
+            // 3. 处理选中的项目
+
+            // 创建医嘱项
+            const { newAdvice, mergedItem } = await this._createAdviceItem({
+              isPackage,
+              item,
+              newGroup: newGroup,
+              newZxcs: h12_yzxbs.isAdditional ?? true,
+              messages,
             });
-            adviceList.push(...pachageAdvice);
+            adviceList.push(newAdvice);
+            newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
+            if (h12_yzxbs.yzzh > 0) {
+              newAdvice.yzzh = h12_yzxbs.yzzh; // 继承主医嘱的医嘱组号
+            } else if (h12_yzxbs.yzzh === -1) {
+              newAdvice.yzzh = yzzh; // 组套合并为同组
+            }
+
+            // 处理附加项目
+            const additionals = h12_yzxbs.h12_mbxbs.filter(
+              (mbxb) => mbxb.bz2 && mbxb.yzzh === item.yzzh,
+            );
+            if (!groupControl[item.yzzh] && additionals?.length > 0) {
+              // 取明细
+              for (const [index, additional] of additionals.entries()) {
+                const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
+                  await this._createAdviceItem({
+                    isPackage: false,
+                    item: additional,
+                    newGroup: false,
+                    newZxcs: false,
+                    messages,
+                  });
+                additionalAdvice.yzzh = newAdvice.yzzh;
+                additionalAdvice.ysbz = 0;
+                additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+                adviceList.push(additionalAdvice);
+
+                newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+              }
+              groupControl[item.yzzh] = 1; // 避免注射组套子项重复取同组子项
+            }
+
+            const mbid =
+              item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
+            // 处理套餐项目
+            if (isPackage) {
+              const pachageAdvice = await this.getPackageItems({
+                advice: newAdvice,
+                // item: mergedItem,
+                mbid,
+                recursionDepth: controlData.recursionDepth + 1,
+              });
+              adviceList.push(...pachageAdvice);
+            }
           }
         }
       } catch (error) {
