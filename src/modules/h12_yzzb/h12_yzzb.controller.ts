@@ -142,9 +142,10 @@ export class h12_yzzbController {
       u_zcid: string;
       jsys: string;
       ysstopbz: string;
+      qfbz: number;
     },
   ): Promise<void> {
-    const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
+    const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz, qfbz } = body;
 
     try {
       await this.h12_yzxbService.stopAdvice(
@@ -158,6 +159,7 @@ export class h12_yzzbController {
         u_zcid,
         jsys,
         ysstopbz,
+        qfbz,
       );
     } catch (error) {
       // 输出完整的错误信息

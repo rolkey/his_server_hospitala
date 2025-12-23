@@ -69,7 +69,7 @@ export class h13_yzzxcsService {
       .andWhere('tf.yzxh = :yzxh', { yzxh })
       .andWhere('tf.yzlx = :yzlx', { yzlx })
       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('CONVERT(date, tf.zxrq) > :zxrq', { zxrq: targetDate });
+      .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
     // console.log('existingRecordsQuery: ', getSqlWithParameters(existingRecordsQuery));
 
     const h13YzzxcsListQuery = this.h13_yzzxcsRepository
@@ -89,7 +89,7 @@ export class h13_yzzxcsService {
       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
       .andWhere('h13.fybz = 1')
       .andWhere('h13.clbz = 1')
-      .andWhere('CONVERT(date, h13.zxrq) > :zxrq', { zxrq: targetDate })
+      .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
     // console.log(
     //   'h13YzzxcsListQuery 1: --------------------------------------',
@@ -217,7 +217,7 @@ export class h13_yzzxcsService {
       .andWhere('tf.yzxh = :yzxh', { yzxh })
       .andWhere('tf.yzlx = :yzlx', { yzlx })
       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('CONVERT(date, tf.zxrq) = :zxrq', { zxrq: targetDate });
+      .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
     // console.log('existingRecordsQuery: ', getSqlWithParameters(existingRecordsQuery));
 
     const h13YzzxcsListQuery = this.h13_yzzxcsRepository
@@ -237,7 +237,7 @@ export class h13_yzzxcsService {
       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
       .andWhere('h13.fybz = 1')
       .andWhere('h13.clbz = 1')
-      .andWhere('CONVERT(date, h13.zxrq) = :zxrq', { zxrq: targetDate })
+      .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
     // console.log(
     //   'h13YzzxcsListQuery 2: --------------------------------------',

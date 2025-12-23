@@ -1282,14 +1282,25 @@ export class h12_yzxbService {
     u_zcid: string, // 职称ID
     jsys: string,
     ysstopbz: string, // 医德停嘱自动退费
+    qfbz: number, // 紧急程度
   ) {
+    // 查询病人信息
+    const brxx = await this.h11_brxxRepo.findOne({ where: { zyid } });
+    if (!brxx) {
+      throw new BadRequestException('病人信息未找到，不能停嘱!');
+    }
+
+    const zybh = brxx.zybh;
+    const brxm = brxx.brxm;
+    const cycw = brxx.cycw + '(停)';
+
     // 检查是否有费用已经执行
     const tzsjDate = new Date(tzsj);
     tzsjDate.setHours(0, 0, 0, 0);
 
     const h13_yzzxcses = await this.checkExecute(zyid, yzlx, yzzh, tzsjDate);
     if (h13_yzzxcses.length > 0 && ysstopbz === '0') {
-      throw new BadRequestException('费用已经执行，不能停嘱');
+      throw new BadRequestException('费用已经执行，不能停嘱!');
     }
 
     const h12_yzxbs = await this.h12_yzxbRepo
@@ -1325,6 +1336,19 @@ export class h12_yzxbService {
       await manager.save(h12_yzxb, h12_yzxbs);
       const zxrq = DateFormater.formatDate1(tzsj);
       await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
+      await this.h11Jshztzd1Service.updateOrCreateRecord(
+        {
+          zyid,
+          gstr_ainf: { u_ksid: h12_yzxbs[0].ksid, u_userid: userId },
+          yzlx,
+          ldt_sj: new Date(),
+          cycw,
+          zybh,
+          brxm,
+          qfbz,
+        },
+        manager,
+      );
     });
     return true;
   }
@@ -1455,7 +1479,7 @@ export class h12_yzxbService {
     const h12_yzxbs = await h12_yzxbsQuery.getMany();
     const yzzh = [...new Set(h12_yzxbs.map((item) => item.yzzh))];
     try {
-      await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz);
+      await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz, 1);
 
       // 拷贝医嘱
       const newH12_yzxb = [];

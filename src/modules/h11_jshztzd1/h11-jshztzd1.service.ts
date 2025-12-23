@@ -13,7 +13,7 @@ export class H11Jshztzd1Service {
   constructor(
     @InjectRepository(H11Jshztzd1)
     private readonly h11Jshztzd1Repository: Repository<H11Jshztzd1>,
-  ) { }
+  ) {}
 
   async create(createDto: CreateH11Jshztzd1Dto): Promise<H11Jshztzd1> {
     const entity = this.h11Jshztzd1Repository.create(createDto);
@@ -62,20 +62,23 @@ export class H11Jshztzd1Service {
     await this.h11Jshztzd1Repository.delete({ zyid, ksid, qfbz });
   }
 
-  async updateOrCreateRecord(params: {
-    zyid: string;
-    gstr_ainf: { u_ksid: string; u_userid: string };
-    yzlx: number;
-    ldt_sj: Date;
-    cycw: string;
-    zybh: string;
-    brxm: string;
-    qfbz: number;
-  }, manager?: EntityManager): Promise<void> {
+  async updateOrCreateRecord(
+    params: {
+      zyid: string;
+      gstr_ainf: { u_ksid: string; u_userid: string };
+      yzlx: number;
+      ldt_sj: Date;
+      cycw: string;
+      zybh: string;
+      brxm: string;
+      qfbz: number;
+    },
+    manager?: EntityManager,
+  ): Promise<void> {
     const { zyid, gstr_ainf, yzlx, ldt_sj, cycw, zybh, brxm, qfbz } = params;
 
-    const h11Jshztzd1Repository = manager?.getRepository(H11Jshztzd1) ||
-      this.h11Jshztzd1Repository
+    // 保存旧系统护士站提示临时表
+    const h11Jshztzd1Repository = manager?.getRepository(H11Jshztzd1) || this.h11Jshztzd1Repository;
     // 检查记录是否存在
     const count = await h11Jshztzd1Repository.count({
       where: {
