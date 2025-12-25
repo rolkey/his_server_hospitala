@@ -257,10 +257,10 @@ export class h12_yzxb {
   clbz: number | null;
 
   @Column('smallint', { name: 'dw_grade', nullable: true })
-  dwGrade: number | null;
+  dw_grade: number | null;
 
   @Column('int', { name: 'dw_xs', nullable: true })
-  dwXs: number | null;
+  dw_xs: number | '';
 
   @Column('varchar', { name: 'ypid', nullable: true, length: 12 })
   ypid: string | null;
