@@ -27,6 +27,7 @@ import { availableParallelism } from 'os';
 import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
 import { usrcat } from '../usrcat/usrcat.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
+import DateFormater from '@/utils/DateFormater';
 
 import { log } from 'console';
 
@@ -128,7 +129,7 @@ export class h12_yzxbServiceNew {
             }
             yzxb.kshs = dto.kshs;
             yzxb.hshd = dto.kshs;
-            yzxb.hdsj = zzrq.toString();
+            yzxb.hshdrq = zzrq;
 
             // 复核同时校验
             if (yzhshdbz == '1') {
