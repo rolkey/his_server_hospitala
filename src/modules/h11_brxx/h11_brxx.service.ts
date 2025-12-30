@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -731,7 +731,7 @@ export class h11_brxxService {
 
     // 4. dbQuery (待办)
     const dbQuery = qb()
-      .andWhere('h11_brxx.zyzt <= 3')
+      .andWhere('h11_brxx.zyzt = 3')
       .andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${ryksid.trim()}%` })
       .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
 
