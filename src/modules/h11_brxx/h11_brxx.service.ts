@@ -626,7 +626,6 @@ export class h11_brxxService {
       const detail = await this.h11_brxxRepo.query(
         `EXEC dbo.h11_yrqmx_yb @zyid='${queryCostDetailDto.zyid}', @date1='${queryCostDetailDto.start}', @date2='${queryCostDetailDto.end}', @ksid='${queryCostDetailDto.ksid}'`,
       );
-      log(detail);
       return detail;
     } catch (error) {
       throw new Error(`存储过程执行失败: ${error.message}`);
@@ -645,7 +644,6 @@ export class h11_brxxService {
           return { ...item, fylbmc: fylb?.fylbmc ?? '' };
         }),
       );
-      log(resultNew);
       return resultNew;
     } catch (error) {
       throw new Error(`存储过程执行失败: ${error.message}`);
