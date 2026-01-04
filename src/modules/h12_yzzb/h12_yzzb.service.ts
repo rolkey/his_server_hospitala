@@ -292,7 +292,7 @@ export class h12_yzzbService {
     return result;
   }
 
-  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: string[]; yzzxcs?: string }) {
+  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: string; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
@@ -315,10 +315,10 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
-    if (data.yzzt && data.yzzt.length > 0) {
-      h12_yzxbqb.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt });
+    if (data.yzzt) {
+      h12_yzxbqb.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt.split(',') });
     }
-    const getYzzxcs = async () => {
+    const getYzzxcs = (): Promise<h13_yzzxcs[]> => {
       if (data.yzzxcs === '1') {
         const h13_yzzxcsqb = this.h13_yzzxcsRepo
           .createQueryBuilder('h13_yzzxcs')
@@ -339,10 +339,17 @@ export class h12_yzzbService {
           })
           .orderBy('h13_yzzxcs.yzxh', 'ASC')
           .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
-        return await h13_yzzxcsqb.getMany();
-      }
-      return [];
+        return h13_yzzxcsqb.getMany();
+      } else return Promise.resolve([]); // 明确指定返回类型
     };
+
+    // 测试
+    // const yzzb = await queryBuilder.getOne();
+    // const h12_yzxbList = await h12_yzxbqb.getMany();
+    // const ksidList = await this.ksmcRepo.find({ select: ['ksid', 'ksmc'] });
+    // const usidList = await this.usrcatRepo.find({ select: ['usid', 'unam'] });
+    // // const h13_yzzxcsList = new Array<h13_yzzxcs>();
+    // const h13_yzzxcsList = await getYzzxcs();
 
     const [yzzb, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
       queryBuilder.getOne(),
