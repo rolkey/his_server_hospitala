@@ -30,7 +30,7 @@ export class h12_yzzbController {
 
   @Get('findAllByPatient')
   async findAllByPatient(
-    @Query() data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string },
+    @Query() data: { zyid: string; yzlx: string; yzzt?: string[]; yzzxcs?: string },
   ) {
     const record = await this.h12_yzzbService.findAllByPatient(data);
     return { record };

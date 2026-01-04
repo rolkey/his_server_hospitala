@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import { Repository, DataSource, EntityManager, In } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { ksmc } from '../ksmc/ksmc.entity';
@@ -292,7 +292,7 @@ export class h12_yzzbService {
     return result;
   }
 
-  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: number; yzzxcs?: string }) {
+  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: string[]; yzzxcs?: string }) {
     const queryBuilder = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
@@ -306,7 +306,7 @@ export class h12_yzzbService {
       .leftJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
       .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
       .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
-      .where('h12_yzxb.zyid = :zyid and h12_yzxb.yzlx=:yzlx', {
+      .where('h12_yzxb.zyid = :zyid and h12_yzxb.yzlx = :yzlx', {
         zyid: data.zyid,
         yzlx: data.yzlx || '',
       })
@@ -315,8 +315,8 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
-    if (data.yzzt == 1) {
-      h12_yzxbqb.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt });
+    if (data.yzzt && data.yzzt.length > 0) {
+      h12_yzxbqb.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt });
     }
     const getYzzxcs = async () => {
       if (data.yzzxcs === '1') {
