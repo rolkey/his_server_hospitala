@@ -23,15 +23,15 @@ export class H12_yzzbOpeDto {
 
 export class reviewDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
-  zyid?: string;
+  zyid: string;
 
   @IsNotEmpty({ message: 'yzxh不能为空' })
   @IsArray()
-  yzxh?: number[];
+  yzxh: number[];
 
   @IsNotEmpty({ message: 'mxxh不能为空' })
   @IsArray()
-  mxxh?: number[];
+  mxxh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
@@ -51,22 +51,22 @@ export class reviewDto {
 
 export class executeDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
-  zyid?: string;
+  zyid: string;
 
   @IsNotEmpty({ message: 'beginDate不能为空' })
-  beginDate?: Date;
+  beginDate: Date;
 
   @IsNotEmpty({ message: 'endDate不能为空' })
-  endDate?: Date;
+  endDate: Date;
 
   @IsNotEmpty({ message: 'zxhs不能为空' })
-  zxhs?: string;
+  zxhs: string;
 
   @IsNotEmpty({ message: 'zxks不能为空' })
-  zxks?: string;
+  zxks: string;
 
   @IsNotEmpty({ message: 'executeType不能为空' })
-  executeType?: string;
+  executeType: string;
 
   @IsOptional()
   newYear?: string;

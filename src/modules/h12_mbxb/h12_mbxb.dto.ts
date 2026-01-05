@@ -2,6 +2,7 @@
 import { All } from '@nestjs/common';
 import { PartialType } from '@nestjs/mapped-types';
 import { Allow } from 'class-validator';
+import { h00_syff } from '../h00_syff/h00_syff.entity';
 
 export class H12_mbxbBaseDto {
   @Allow()
@@ -82,6 +83,8 @@ export class H12_mbxbBaseDto {
   qt1?: string;
   @Allow()
   ltbz?: string;
+  @Allow()
+  syffidEntity?: h00_syff;
 }
 
 export class CreateH12_mbxbDto extends H12_mbxbBaseDto {

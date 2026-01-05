@@ -189,13 +189,14 @@ export class h12_yzxbService {
    * @param h12_yzxbSyffTcDto 使用方法
    */
   async syffTc(h12_yzxbSyffTcDto: H12_yzxbSyffTcDto) {
-    const h00Tcxbs = await this.h00TcxbService.findBySyffid(h12_yzxbSyffTcDto.syffid);
-    if (h00Tcxbs.length > 0) {
-    }
+    return this.h00TcxbService.findBySyffid(h12_yzxbSyffTcDto.syffid);
   }
 
   /**
-   * 取组套
+   * 取组套：
+   *    1. 根据用法重新获取附加项目
+   *    2. 一个组第一个项目要取附加项目
+   *    3. 多个组时，每个组只为第一条记录添加附加项目
    * @param h12_yzxbs
    * @returns
    */
@@ -230,22 +231,23 @@ export class h12_yzxbService {
         };
         const groupControl = {};
 
-        const mxzbItem = new Set(
+        const yzzhs = new Set(
           h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).map((mbxb) => mbxb.yzzh),
         );
-        for (const mxzb of mxzbItem) {
+        for (const mbYzzh of yzzhs) {
           // 同组规则：加到同一组时，需要生成yzzh
-          const newGroup = true;
           const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
+          const packageAdvices = [];
+
           // 2. 处理选中的项目，过滤掉附加项目
-          for (const [index, item] of h12_yzxbs.h12_mbxbs
-            .filter((mbxb) => !mbxb.bz2 && mbxb.yzzh === mxzb)
+          for (const [index, mbxb] of h12_yzxbs.h12_mbxbs
+            .filter((mbxb) => !mbxb.bz2 && mbxb.yzzh === mbYzzh)
             .entries()) {
             // 判断是否是组套项目
-            let isPackage = item.tcbz === 1;
+            let isPackage = mbxb.tcbz === 1;
             if (
-              item.xmid.includes('T') ||
-              (isPackage && (item.fylbid === '02' || item.fylbid === '90'))
+              mbxb.xmid.startsWith('T') ||
+              (isPackage && ['02', '90', '05'].includes(mbxb.fylbid))
             ) {
               isPackage = true;
             } else {
@@ -257,8 +259,8 @@ export class h12_yzxbService {
             // 创建医嘱项
             const { newAdvice, mergedItem } = await this._createAdviceItem({
               isPackage,
-              item,
-              newGroup: newGroup,
+              mbxb,
+              newGroup: false,
               newZxcs: h12_yzxbs.isAdditional ?? true,
               messages,
             });
@@ -273,15 +275,15 @@ export class h12_yzxbService {
 
             // 处理附加项目
             const additionals = h12_yzxbs.h12_mbxbs.filter(
-              (mbxb) => mbxb.bz2 && mbxb.yzzh === item.yzzh,
+              (mbxb) => mbxb.bz2 && mbxb.yzzh === mbxb.yzzh,
             );
-            if (!groupControl[item.yzzh] && additionals?.length > 0) {
+            if (!groupControl[mbxb.yzzh] && additionals?.length > 0) {
               // 取明细
               for (const [index, additional] of additionals.entries()) {
                 const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
                   await this._createAdviceItem({
                     isPackage: false,
-                    item: additional,
+                    mbxb: additional,
                     newGroup: false,
                     newZxcs: false,
                     messages,
@@ -293,21 +295,40 @@ export class h12_yzxbService {
 
                 newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
               }
-              groupControl[item.yzzh] = 1; // 避免注射组套子项重复取同组子项
+              groupControl[mbxb.yzzh] = 1; // 避免注射组套子项重复取同组子项
+            }
+
+            // 4. 根据用法取组套
+            if (index === 0) {
+              // 取用法
+              if (
+                mbxb.syffidEntity &&
+                mbxb.syffidEntity.xmid &&
+                mbxb.syffidEntity.xmid.startsWith('T')
+              ) {
+                await this._processPackageItems(newAdvice, mbxb.syffidEntity.xmid, packageAdvices);
+                if (packageAdvices.length > 0) {
+                  newAdvice.tpbz = 1;
+                }
+              }
             }
 
             const mbid =
-              item.fylbid === '02' || item.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
+              mbxb.fylbid === '02' || mbxb.fylbid === '90' ? mergedItem.mbid : mergedItem.xmid;
             // 处理套餐项目
             if (isPackage) {
               const pachageAdvice = await this.getPackageItems({
                 advice: newAdvice,
-                // item: mergedItem,
+                // mbxb: mergedItem,
                 mbid,
                 recursionDepth: controlData.recursionDepth + 1,
               });
               adviceList.push(...pachageAdvice);
             }
+          }
+          if (packageAdvices.length > 0) {
+            packageAdvices.forEach((addi) => (addi.yzzh = yzzh));
+            adviceList.push(...packageAdvices);
           }
         }
       } catch (error) {
@@ -424,12 +445,12 @@ export class h12_yzxbService {
 
   /**
    * 创建医嘱项
-   * @param param0 { isPackage, item, newGroup, newZxcs, messages }
+   * @param param0 { isPackage, mbxb, newGroup, newZxcs, messages }
    * @returns { newAdvice: h12_yzxb; mergedItem: any }
    */
   async _createAdviceItem({
     isPackage,
-    item,
+    mbxb,
     newGroup,
     newZxcs,
     messages,
@@ -450,7 +471,7 @@ export class h12_yzxbService {
     });
 
     // 获取项目详情
-    const mergedItem = await this._getItemDetail(item);
+    const mergedItem = await this._getItemDetail(mbxb);
 
     // 设置项目信息
     await this._setItemInfo(newAdvice, mergedItem);
@@ -504,12 +525,12 @@ export class h12_yzxbService {
 
   /**
    * 通过字典列表取库存的办法，服务间远程调用
-   * @param item
+   * @param mbxb
    * @returns
    */
-  // private async _getKcjg(item: any): Promise<{ data: any }> {
+  // private async _getKcjg(mbxb: any): Promise<{ data: any }> {
   //   const query = {
-  //     ...item,
+  //     ...mbxb,
   //     pageNo: 1,
   //     pageSize: 10,
   //   };
@@ -519,7 +540,7 @@ export class h12_yzxbService {
   //   });
   //   if (pageData.length === 0) {
   //     throw new BadRequestException(
-  //       `字典中没有项目：${item.ypid} -- ${item.ypmc} ${JSON.stringify(query)}`,
+  //       `字典中没有项目：${mbxb.ypid} -- ${mbxb.ypmc} ${JSON.stringify(query)}`,
   //     );
   //   }
   //   return pageData;
@@ -538,12 +559,12 @@ export class h12_yzxbService {
    * 获取项目详情
    * @private
    */
-  async _getItemDetail(item: any) {
+  async _getItemDetail(mbxb: any) {
     const kcjgxx = await this._getKcjgA({
       lx: 1, // 是否跟item.mblx模板类型有关？
-      ypid: item.xmid,
-      ypmc: item.xmmc,
-      xmzl: item.xmzl,
+      ypid: mbxb.xmid,
+      ypmc: mbxb.xmmc,
+      xmzl: mbxb.xmzl,
       ksid1: this.g_ksid.xyksid,
       ksid2: this.g_ksid.cyksid,
       ksid3: this.g_ksid.zyksid,
@@ -553,10 +574,10 @@ export class h12_yzxbService {
 
     return mergeObjects(
       {
-        ksid: item.zxks || this.departmentId,
+        ksid: mbxb.zxks || this.departmentId,
       },
       kcjgxx,
-      item,
+      mbxb,
     );
   }
 
@@ -564,40 +585,40 @@ export class h12_yzxbService {
    * 设置项目信息
    * @private
    */
-  async _setItemInfo(advice: h12_yzxb, item: any) {
+  async _setItemInfo(advice: h12_yzxb, mbxb: any) {
     // If dw_xb_new.GetItemString(i - 1 ,"typbz") <> '' And left(dw_xb_new.GetItemString(i - 1 ,"typbz"),1) = ls_typbz And ls_typbz <> '' Then
-    if (!item.typbz) {
+    if (!mbxb.typbz) {
       advice.yzzh = await this.gyIdentityService.getMax('h12_yzzh');
     }
-    advice.ksid = item.ksid ?? advice.ksid;
-    advice.xmzl = item.xmzl;
-    advice.xmid = item.xmid;
-    advice.ypid = item.ypid ?? item.xmid;
-    advice.xmmc = item.xmmc;
-    advice.xmdw = item.xmdw?.trim();
-    advice.xmdj = item.lsjg;
-    advice.xmgg = item.xmgg ?? item.ypgg;
-    advice.syffid = item.syffid || '';
-    advice.syffidEntity = item.syffidEntity;
-    advice.syplid = item.syplid || 'QD';
-    advice.syplidEntity = item.syplidEntity;
-    advice.pfjg = item.pfjg;
-    advice.jldw = item.jldw;
-    advice.bzxx = item.bzxx;
-    advice.typbz = item.typbz || '';
-    // advice.zflx = item.ybfl?.trim();
-    advice.zflx = item.fyfs?.trim();
-    advice.jssj = item.ybfl?.trim();
-    advice.cjid = item.cjid;
-    advice.scph = item.scph?.trim();
-    advice.jfyl = item.jfyl;
-    advice.sjyl = item.sjyl1;
-    advice.sjyl1 = item.sjyl1;
-    advice.fylbid = item.fylbid?.trim() || '35';
-    advice.fybz = item.fybz ?? item.bz1;
-    advice.gjybbm = item.gjybbm;
-    advice.gjybmc = item.gjybmc;
-    advice.ltbz = item.ltbz;
+    advice.ksid = mbxb.ksid ?? advice.ksid;
+    advice.xmzl = mbxb.xmzl;
+    advice.xmid = mbxb.xmid;
+    advice.ypid = mbxb.ypid ?? mbxb.xmid;
+    advice.xmmc = mbxb.xmmc;
+    advice.xmdw = mbxb.xmdw?.trim();
+    advice.xmdj = mbxb.lsjg;
+    advice.xmgg = mbxb.xmgg ?? mbxb.ypgg;
+    advice.syffid = mbxb.syffid || '';
+    advice.syffidEntity = mbxb.syffidEntity;
+    advice.syplid = mbxb.syplid || 'QD';
+    advice.syplidEntity = mbxb.syplidEntity;
+    advice.pfjg = mbxb.pfjg;
+    advice.jldw = mbxb.jldw;
+    advice.bzxx = mbxb.bzxx;
+    advice.typbz = mbxb.typbz || '';
+    // advice.zflx = mbxb.ybfl?.trim();
+    advice.zflx = mbxb.fyfs?.trim();
+    advice.jssj = mbxb.ybfl?.trim();
+    advice.cjid = mbxb.cjid;
+    advice.scph = mbxb.scph?.trim();
+    advice.jfyl = mbxb.jfyl;
+    advice.sjyl = mbxb.sjyl1;
+    advice.sjyl1 = mbxb.sjyl1;
+    advice.fylbid = mbxb.fylbid?.trim() || '35';
+    advice.fybz = mbxb.fybz ?? mbxb.bz1;
+    advice.gjybbm = mbxb.gjybbm;
+    advice.gjybmc = mbxb.gjybmc;
+    advice.ltbz = mbxb.ltbz;
   }
 
   /**
@@ -606,29 +627,29 @@ export class h12_yzxbService {
    */
   async _handleSpecialItems(
     advice: h12_yzxb,
-    item: any,
+    mbxb: any,
     messages: { xmid: string; message: string }[],
   ) {
     // 处理皮试提示
-    if (item.psbz === 1) {
-      if (confirm(`该药品名称：[${item.xmmc}]，是否皮试?`)) {
+    if (mbxb.psbz === 1) {
+      if (confirm(`该药品名称：[${mbxb.xmmc}]，是否皮试?`)) {
         // advice.dw_grade = 1;
         advice.bzxx = 'AST( )';
       }
     }
 
     // 处理抗生素权限
-    if (item.cfqj === '2' && this.gstr_ainf.u_zcid > '0103') {
+    if (mbxb.cfqj === '2' && this.gstr_ainf.u_zcid > '0103') {
       messages.push({
         xmid: advice.xmid,
-        message: `该药品名称是抗生素药：[${item.xmmc}]，请主治医师以上盖冒?`,
+        message: `该药品名称是抗生素药：[${mbxb.xmmc}]，请主治医师以上盖冒?`,
       });
       advice.ksys = '';
       advice.kssxys = this.userId;
-    } else if (item.cfqj === '3' && this.gstr_ainf.u_zcid > '0102') {
+    } else if (mbxb.cfqj === '3' && this.gstr_ainf.u_zcid > '0102') {
       messages.push({
         xmid: advice.xmid,
-        message: `该药品名称是抗生素药：[${item.xmmc}]，请副主任医师以上盖冒?`,
+        message: `该药品名称是抗生素药：[${mbxb.xmmc}]，请副主任医师以上盖冒?`,
       });
       advice.ksys = '';
       advice.kssxys = this.userId;
@@ -890,7 +911,7 @@ export class h12_yzxbService {
 
     //   // 删除附加信息
     //   if (xxData && xxData.length > 0) {
-    //     xxData = xxData.filter((item) => item.yzzh !== lastOrder.yzzh);
+    //     xxData = xxData.filter((mbxb) => mbxb.yzzh !== lastOrder.yzzh);
     //   }
 
     //   // 删除最后一条
@@ -1012,9 +1033,9 @@ export class h12_yzxbService {
       //   for (let i = 0; i < adviceRow.additional?.length; i++) {
       //     adviceRow.zxcs = i + 1;
 
-      //     adviceRow.additional.forEach((item) => {
-      //       item.zxcs = i + 1;
-      //       item.ksys = adviceRow.ksys;
+      //     adviceRow.additional.forEach((mbxb) => {
+      //       mbxb.zxcs = i + 1;
+      //       mbxb.ksys = adviceRow.ksys;
       //     });
       //   }
     }
@@ -1024,7 +1045,7 @@ export class h12_yzxbService {
     //   try {
     // for (let i = 0; i < h12_yzxbList.length; i++) {
     //   const adviceRow = h12_yzxbList[i];
-    await Promise.all(h12_yzxbList.map((item) => this.saveYzxb(item, manager)));
+    await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
     //   附加项目会保存在主记录的附加记录中
     // if (adviceRow.ysbz === 0) continue;
 
@@ -1119,12 +1140,12 @@ export class h12_yzxbService {
       order: { mxxh: 'ASC' },
     });
     const adviceAdditionalList: any[] = [];
-    for (const item of adviceAll) {
-      if (item.ysbz === 0) {
-        adviceAdditionalList.push(item);
+    for (const mbxb of adviceAll) {
+      if (mbxb.ysbz === 0) {
+        adviceAdditionalList.push(mbxb);
       }
     }
-    const adviceList = adviceAll.filter((item) => item.ysbz === 1);
+    const adviceList = adviceAll.filter((mbxb) => mbxb.ysbz === 1);
     adviceList.forEach((advice, index) => {
       advice.zxcs = index + 1;
       // 重排附加项目序号
@@ -1156,7 +1177,7 @@ export class h12_yzxbService {
     const yzzh = h12_yzxbs[0].yzzh;
     const { zyid } = h12_yzxbs[0];
     const otherYzzh = [
-      ...new Set(h12_yzxbs.filter((item) => item.yzzh !== yzzh).map((item) => item.yzzh)),
+      ...new Set(h12_yzxbs.filter((mbxb) => mbxb.yzzh !== yzzh).map((mbxb) => mbxb.yzzh)),
     ];
     // 删除其他组的附加项目
     if (otherYzzh.length > 0) {
@@ -1206,8 +1227,8 @@ export class h12_yzxbService {
   async removeYzzh(data: Array<{ zyid: string; yzlx: number; yzzh: number }>): Promise<boolean> {
     // 注意，这里的附加项目已经被删除掉了
     const results = await Promise.all(
-      data.map((item) => {
-        const { zyid, yzlx, yzzh } = item;
+      data.map((mbxb) => {
+        const { zyid, yzlx, yzzh } = mbxb;
         return this.h12_yzxbRepo.delete({
           zyid,
           yzlx,
@@ -1477,7 +1498,7 @@ export class h12_yzxbService {
       .addOrderBy('h12_yzxb.mxxh', 'ASC')
       .addOrderBy('h12_yzxb.typbz', 'ASC');
     const h12_yzxbs = await h12_yzxbsQuery.getMany();
-    const yzzh = [...new Set(h12_yzxbs.map((item) => item.yzzh))];
+    const yzzh = [...new Set(h12_yzxbs.map((mbxb) => mbxb.yzzh))];
     try {
       await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz, 1);
 
