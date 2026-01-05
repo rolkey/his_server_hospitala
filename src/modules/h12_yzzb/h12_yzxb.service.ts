@@ -273,6 +273,18 @@ export class h12_yzxbService {
             // }
             newAdvice.yzzh = yzzh;
 
+            // 中药处方主项
+            if (index === 0 && (mbxb.xmid.startsWith('T') || mbxb.xmid === '0000000')) {
+              newAdvice.tpbz = 1;
+              newAdvice.ysbz = 1;
+            }
+
+            // 中药处方细项
+            if (index > 0 && mbxb.fylbid === '02') {
+              newAdvice.tpbz = 0;
+              newAdvice.ysbz = 0;
+            }
+
             // 处理附加项目
             const additionals = h12_yzxbs.h12_mbxbs.filter(
               (mbxb) => mbxb.bz2 && mbxb.yzzh === mbxb.yzzh,
@@ -327,7 +339,9 @@ export class h12_yzxbService {
             }
           }
           if (packageAdvices.length > 0) {
-            packageAdvices.forEach((addi) => (addi.yzzh = yzzh));
+            packageAdvices.forEach((addi) => {
+              addi.yzzh = yzzh;
+            });
             adviceList.push(...packageAdvices);
           }
         }
@@ -619,6 +633,7 @@ export class h12_yzxbService {
     advice.gjybbm = mbxb.gjybbm;
     advice.gjybmc = mbxb.gjybmc;
     advice.ltbz = mbxb.ltbz;
+    advice.kyfs = mbxb.kyfs;
   }
 
   /**
