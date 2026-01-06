@@ -75,7 +75,7 @@ export class executeDto {
   medicine?: string;
 
   @IsOptional()
-  mxxh?: number;
+  yzzh: number;
 }
 
 export class costDto {

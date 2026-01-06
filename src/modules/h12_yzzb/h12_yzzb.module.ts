@@ -43,6 +43,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { H12CyclModule } from '../h12-cycl/h12-cycl.module';
 import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
+import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 @Global()
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
       H31Lyjl,
       H12Cycl,
       h13_cwsyxx,
+      C00Fbxx,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),

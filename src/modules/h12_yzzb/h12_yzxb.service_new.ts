@@ -30,6 +30,7 @@ import { ParamService } from '../h12_xmzd/service/param.service';
 import DateFormater from '@/utils/DateFormater';
 
 import { log } from 'console';
+import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 
 /**
  * 完整重构版 Service
@@ -45,10 +46,10 @@ const DEFAULT_ZXBZ = '10';
 const EXECUTE_TYPE_WILDCARD = '%';
 
 enum Zxbz {
-  DEFAULT = '10',
-  MXXH = '9',
-  PARTIAL = '5',
-  SPECIAL = '3',
+  DEFAULT = '10', // 默认情况
+  WITH_GROUP = '9', //同组
+  PARTIAL = '5', //中药执行
+  SPECIAL = '3', //自动项目
 }
 
 @Injectable()
@@ -67,6 +68,8 @@ export class h12_yzxbServiceNew {
     private h11BrxxRepo: Repository<h11_brxx>,
     @InjectRepository(h13_cwsyxx)
     private h13_cwsyxxRepo: Repository<h13_cwsyxx>,
+    @InjectRepository(C00Fbxx)
+    private c00FbxxRepo: Repository<C00Fbxx>,
     @InjectRepository(usrcat)
     private usrcatRepo: Repository<usrcat>,
     private readonly gyIdentityService: GyIdentityService,
@@ -272,24 +275,24 @@ export class h12_yzxbServiceNew {
    *
    * @param dto 执行参数
    *    executeType： 0.全部
-   *                  2.临时
-   *                  5.长期
-   *                  7.处置
-   *                  100.单个医嘱
-   *                  101.同组项目
+   *                  2.临时医嘱
+   *                  5.长期处置
+   *                  7.临时处置
    *                  102.中药医嘱
    *                  103.自动项目
+   *                  104 已选择的组
    */
   async execute(dto: executeDto): Promise<void> {
     let lockAcquired = false;
     try {
       // 参数解构与校验
-      const { zxhs, zxks, zyid, beginDate, endDate, newYear = '', medicine = '', mxxh } = dto;
+      const { zxhs, zxks, zyid, beginDate, endDate, newYear = '', medicine = '', yzzh } = dto;
 
       if (!zyid) throw new CustomException(ERR.ERR_10000, '缺少住院ID');
 
-      let executeType: string | number = dto.executeType;
-      let zxbz = DEFAULT_ZXBZ;
+      const executeType: string | number | [] = dto.executeType;
+      let zxbz = Zxbz.DEFAULT;
+      let yzlx: number | string;
 
       // 加载必要的数据用于校验
       // const [yzzb, yzxbList] = await Promise.all([
@@ -324,25 +327,34 @@ export class h12_yzxbServiceNew {
       //   }
       // }
 
-      if (executeType === '101') {
-        executeType = String(mxxh);
-        zxbz = Zxbz.MXXH;
+      if (executeType === '0') {
+        yzlx = '%';
+      } else if (executeType === '2') {
+        yzlx = '2';
+      } else if (executeType === '5') {
+        yzlx = '5';
+      } else if (executeType === '7') {
+        yzlx = '7';
+        //   } else if (executeType === '7') {
+        //     yzlx = '7';
       }
-      if (executeType === '102') {
-        executeType = EXECUTE_TYPE_WILDCARD;
-        zxbz = Zxbz.PARTIAL;
-      }
-      if (executeType === '103') {
-        executeType = EXECUTE_TYPE_WILDCARD;
-        zxbz = Zxbz.SPECIAL;
-      }
-
-      // 执行存储过程
-      await this.dataSource.query(
-        `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+      if (executeType === '104') {
+        zxbz = Zxbz.WITH_GROUP;
+        yzlx = dto.yzzh;
+        // 执行存储过程
+        await this.dataSource.query(
+          `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
           @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
-        [zxbz, zyid, zxks, beginDate, endDate, zxhs, executeType],
-      );
+          [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzlx],
+        );
+      } else {
+        // 执行存储过程
+        await this.dataSource.query(
+          `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+          @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
+          [zxbz, zyid, zxks, beginDate, endDate, zxhs, executeType],
+        );
+      }
 
       // 如果需要生成发药记录，检查并设置并发标志（示例）
       if (medicine === '1') {
@@ -369,6 +381,13 @@ export class h12_yzxbServiceNew {
             await this.releaseSysparLock().catch((e) => this.logger.warn('释放syspar锁失败', e));
         }
       }
+
+      //    throw new CustomException(ERR.ERR_10000, '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！');
+      //   const c00FbxxList = await c00FbxxRepo.find({
+      //     where: {
+
+      //     }
+      //   });
     } catch (error: any) {
       this.logger.error('执行医嘱失败', error?.stack ?? error?.message ?? error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '执行医嘱失败');
