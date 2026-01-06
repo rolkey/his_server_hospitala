@@ -267,9 +267,19 @@ export class h12_yzxbServiceNew {
     }
   }
 
-  // -------------------------
-  // 护士执行医嘱
-  // -------------------------
+  /**
+   * 护士执行医嘱
+   *
+   * @param dto 执行参数
+   *    executeType： 0.全部
+   *                  2.临时
+   *                  5.长期
+   *                  7.处置
+   *                  100.单个医嘱
+   *                  101.同组项目
+   *                  102.中药医嘱
+   *                  103.自动项目
+   */
   async execute(dto: executeDto): Promise<void> {
     let lockAcquired = false;
     try {
