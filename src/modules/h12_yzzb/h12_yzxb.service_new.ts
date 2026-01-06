@@ -97,12 +97,11 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            yzxh: In(dto.yzxh || []),
-            ////mxxh: In(dto.mxxh || []),
-            hdbz: 0,
+            ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
+            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
-            // mxxh: 259779,
           },
         }),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
@@ -1105,7 +1104,7 @@ export class h12_yzxbServiceNew {
     const ls_ks = ksid.trim();
     const kcxxResult = await this.dataSource.query(
       `SELECT TOP 1 ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0) - @0) as kcsl
-       FROM h31_kcxx 
+       FROM h31_kcxx
        WHERE ypid = @1 AND yxbz = 1 AND ksid IN (@2) AND
        ISNULL(xsl, 0) - (ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @0 >= 0 AND scph = @3
        ORDER BY sxrq, scph`,
@@ -1133,9 +1132,9 @@ export class h12_yzxbServiceNew {
       const otherBatchResult = await this.dataSource.query(
         `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
                 scph, ypid
-         FROM h31_kcxx 
+         FROM h31_kcxx
          WHERE ypid = @0 AND ksid IN (@1) AND yxbz = 1 AND
-         ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @2 >= 0 
+         ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @2 >= 0
          ORDER BY sxrq, scph`,
         [xmid, ls_ks, sl],
       );
@@ -1152,10 +1151,10 @@ export class h12_yzxbServiceNew {
       const sameTypeResult = await this.dataSource.query(
         `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
                 scph, ypid
-         FROM h31_kcxx 
+         FROM h31_kcxx
          WHERE ksid IN (@0) AND yxbz = 1 AND
          ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @1 >= 0 AND
-         ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = @2 AND 
+         ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = @2 AND
                  ((ypgg = @3 AND ypflid NOT IN ('02','90')) OR (ypflid IN ('02','90'))))
          ORDER BY ypid, scph`,
         [ls_ks, sl, xmmc, xmgg],
@@ -1166,7 +1165,7 @@ export class h12_yzxbServiceNew {
         const relatedResult = await this.dataSource.query(
           `SELECT TOP 1 ISNULL(xsl, 0) - ISNULL(mzdfsl, 0) - ISNULL(dfsl, 0) - ISNULL(ssdfsl, 0) as kcsl,
                   scph, ypid
-           FROM h31_kcxx 
+           FROM h31_kcxx
            WHERE ksid IN (@0) AND yxbz = 1 AND
            ISNULL(xsl, 0) - ABS(ISNULL(mzdfsl, 0) + ISNULL(dfsl, 0) + ISNULL(ssdfsl, 0)) - @1 >= 0 AND
            ypid IN (SELECT glypid FROM h30_ypgl WHERE ypid = @2)
