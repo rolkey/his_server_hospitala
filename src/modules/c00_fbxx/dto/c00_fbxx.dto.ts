@@ -83,3 +83,11 @@ export class UpdateC00FbxxDto extends PartialType(BaseC00FbxxDto) {
   @Allow()
   jlxh: number;
 }
+
+export class QueryC00FbxxDto extends PartialType(BaseC00FbxxDto) {
+  @Allow()
+  page: number;
+
+  @Allow()
+  limit: number;
+}
