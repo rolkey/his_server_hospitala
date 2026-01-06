@@ -44,7 +44,16 @@ import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 
 const DEFAULT_ZXBZ = '10';
 const EXECUTE_TYPE_WILDCARD = '%';
-
+/**
+ * 护士执行医嘱
+ * 0.全部
+ * 2.临时医嘱
+ * 5.长期处置
+ * 7.临时处置
+ * 102.中药医嘱
+ * 103.自动项目
+ * 104 已选择的组
+ */
 enum Zxbz {
   DEFAULT = '10', // 默认情况
   WITH_GROUP = '9', //同组
@@ -335,8 +344,12 @@ export class h12_yzxbServiceNew {
         yzlx = '5';
       } else if (executeType === '7') {
         yzlx = '7';
-        //   } else if (executeType === '7') {
-        //     yzlx = '7';
+      } else if (executeType === '102') {
+        yzlx = '7';
+        zxbz = Zxbz.PARTIAL;
+      } else if (executeType === '103') {
+        zxbz = Zxbz.SPECIAL;
+        yzlx = '%';
       }
       if (executeType === '104') {
         zxbz = Zxbz.WITH_GROUP;
