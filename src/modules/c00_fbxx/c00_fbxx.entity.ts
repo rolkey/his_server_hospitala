@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'c00_fbxx', schema: 'sunsoft' })
+@Entity({ name: 'c00_fbxx', schema: 'dbo' })
 export class C00Fbxx {
   @PrimaryColumn('integer', {
     name: 'jlxh',

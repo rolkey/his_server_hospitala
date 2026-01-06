@@ -399,7 +399,7 @@ export class h12_yzxbServiceNew {
       const c00FbxxList = await this.c00FbxxRepo.find({
         where: {
           fksid: zxks,
-          sksid: '%',
+          //   sksid: Like('%'),
           zyid,
         },
       });
