@@ -365,7 +365,7 @@ export class h12_yzxbServiceNew {
         await this.dataSource.query(
           `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
           @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
-          [zxbz, zyid, zxks, beginDate, endDate, zxhs, executeType],
+          [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzlx],
         );
       }
 
@@ -396,14 +396,24 @@ export class h12_yzxbServiceNew {
       }
 
       //    throw new CustomException(ERR.ERR_10000, '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！');
-      //   const c00FbxxList = await c00FbxxRepo.find({
-      //     where: {
-
-      //     }
-      //   });
+      const c00FbxxList = await this.c00FbxxRepo.find({
+        where: {
+          fksid: zxks,
+          sksid: '%',
+          zyid,
+        },
+      });
+      if (c00FbxxList && c00FbxxList.length > 0) {
+        throw new CustomException(
+          ERR.ERR_10000,
+          '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！',
+          undefined,
+          c00FbxxList,
+        );
+      }
     } catch (error: any) {
       this.logger.error('执行医嘱失败', error?.stack ?? error?.message ?? error);
-      throw new CustomException(ERR.ERR_10000, error?.message ?? '执行医嘱失败');
+      throw new CustomException(ERR.ERR_10000, error?.message ?? '执行医嘱失败', null, error.data);
     }
   }
 

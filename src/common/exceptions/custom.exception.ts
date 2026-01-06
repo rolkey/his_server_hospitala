@@ -15,10 +15,12 @@ import { ErrInfo } from './error-code';
  */
 export class CustomException extends HttpException {
   public code: number;
-  constructor(err: ErrInfo, message?: string, status?: HttpStatus) {
+  public data: any;
+  constructor(err: ErrInfo, message?: string, status?: HttpStatus, data?: any) {
     message = message ?? err.message ?? String(err.code);
     super(message, status ?? HttpStatus.BAD_REQUEST);
     this.code = err.code;
+    this.data = data;
   }
 }
 
