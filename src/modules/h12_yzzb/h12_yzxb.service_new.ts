@@ -57,8 +57,8 @@ const EXECUTE_TYPE_WILDCARD = '%';
 enum Zxbz {
   DEFAULT = '10', // 默认情况
   WITH_GROUP = '9', //同组
-  PARTIAL = '5', //中药执行
-  SPECIAL = '3', //自动项目
+  CHINESE_MEDICINE = '5', //中药执行
+  AUTO_ITEMS = '3', //自动项目
 }
 
 @Injectable()
@@ -345,11 +345,11 @@ export class h12_yzxbServiceNew {
       } else if (executeType === '7') {
         yzlx = '7';
       } else if (executeType === '102') {
-        yzlx = '7';
-        zxbz = Zxbz.PARTIAL;
-      } else if (executeType === '103') {
-        zxbz = Zxbz.SPECIAL;
         yzlx = '%';
+        zxbz = Zxbz.CHINESE_MEDICINE;
+      } else if (executeType === '103') {
+        yzlx = '%';
+        zxbz = Zxbz.AUTO_ITEMS;
       }
       if (executeType === '104') {
         zxbz = Zxbz.WITH_GROUP;
