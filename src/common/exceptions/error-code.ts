@@ -30,6 +30,8 @@ export const ERR = {
   ERR_20003: { code: 20003, message: '已超出支持的最大处理数量' },
   // 环境相关
   ERR_30001: { code: 30001, message: '预览环境不支持此操作' },
+  // 缺药提醒
+  ERR_40001: { code: 40001, message: '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;

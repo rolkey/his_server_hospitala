@@ -405,15 +405,15 @@ export class h12_yzxbServiceNew {
       });
       if (c00FbxxList && c00FbxxList.length > 0) {
         throw new CustomException(
-          ERR.ERR_10000,
+          ERR.ERR_40001,
           '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！',
           undefined,
           c00FbxxList,
         );
       }
     } catch (error: any) {
-      this.logger.error('执行医嘱失败', error?.stack ?? error?.message ?? error);
-      throw new CustomException(ERR.ERR_10000, error?.message ?? '执行医嘱失败', null, error.data);
+      this.logger.error('执行医嘱失败', error);
+      throw new CustomException(error.code, error?.message ?? '执行医嘱失败', null, error.data);
     }
   }
 
