@@ -264,6 +264,9 @@ export class h12_yzxbService {
               newZxcs: h12_yzxbs.isAdditional ?? true,
               messages,
             });
+            if (mbxb.yzrq) {
+              newAdvice.yzrq = mbxb.yzrq;
+            }
             adviceList.push(newAdvice);
             newAdvice.ysbz = h12_yzxbs.isAdditional ? 0 : 1; // 0:附加项目 1:主项目
             // if (h12_yzxbs.yzzh > 0) {
@@ -300,6 +303,7 @@ export class h12_yzxbService {
                     newZxcs: false,
                     messages,
                   });
+                additionalAdvice.yzrq = newAdvice.yzrq;
                 additionalAdvice.yzzh = newAdvice.yzzh;
                 additionalAdvice.ysbz = 0;
                 additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;

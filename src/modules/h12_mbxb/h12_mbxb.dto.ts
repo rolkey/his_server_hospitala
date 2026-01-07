@@ -6,6 +6,8 @@ import { h00_syff } from '../h00_syff/h00_syff.entity';
 
 export class H12_mbxbBaseDto {
   @Allow()
+  yzrq?: Date;
+  @Allow()
   mblx: number;
   @Allow()
   mbid: string;
