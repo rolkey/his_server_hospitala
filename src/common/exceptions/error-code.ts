@@ -31,7 +31,8 @@ export const ERR = {
   // 环境相关
   ERR_30001: { code: 30001, message: '预览环境不支持此操作' },
   // 缺药提醒
-  ERR_40001: { code: 40001, message: '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！' },
+  ERR_40001: { code: 40001, message: '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开' },
+  ERR_40002: { code: 40002, message: '执行医嘱失败' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;
