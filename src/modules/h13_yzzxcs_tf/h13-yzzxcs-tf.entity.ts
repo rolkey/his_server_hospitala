@@ -121,8 +121,11 @@ export class H13YzzxcsTf {
   ybfl: string | null;
 
   @Column({
-    name: 'maxid', type: 'int', nullable: true, insert: false,
-    update: false
+    name: 'maxid',
+    type: 'int',
+    nullable: true,
+    insert: false,
+    update: false,
   })
   maxid: number;
 
