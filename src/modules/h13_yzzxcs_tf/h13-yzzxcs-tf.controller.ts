@@ -7,6 +7,7 @@ import {
   H13YzzxcsTfResponseDto,
 } from './h13-yzzxcs-tf.dto';
 import { plainToInstance } from 'class-transformer';
+import { QueryYzzxcsDto } from './dto/h13-yzzxcs-tf.dto';
 
 @Controller('h13-yzzxcs-tf')
 export class H13YzzxcsTfController {
@@ -32,6 +33,12 @@ export class H13YzzxcsTfController {
         totalPages: result.totalPages,
       },
     };
+  }
+
+  // 新增的查询接口
+  @Get('query-yzzxcs')
+  async queryYzzxcs(@Query() params: QueryYzzxcsDto) {
+    return await this.h13YzzxcsTfService.queryYzzxcs(params);
   }
 
   @Get(':yzlx/:yzxh/:mxxh/:zyid/:zxrq')

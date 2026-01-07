@@ -7,6 +7,7 @@ import {
   UpdateH13YzzxcsTfDto,
   QueryH13YzzxcsTfDto,
 } from './h13-yzzxcs-tf.dto';
+import { QueryYzzxcsDto } from './dto/h13-yzzxcs-tf.dto';
 
 @Injectable()
 export class H13YzzxcsTfService {
@@ -49,6 +50,23 @@ export class H13YzzxcsTfService {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
+  }
+
+  /**
+   * 医嘱费用查询
+   * @param params 医嘱信息
+   * @returns
+   */
+  async queryYzzxcs(params: QueryYzzxcsDto): Promise<H13YzzxcsTf[]> {
+    const { zyid, yzxh, yzlx, yzzh } = params;
+    return await this.h13YzzxcsTfRepository.find({
+      where: {
+        zyid,
+        yzxh,
+        yzlx,
+        yzzh,
+      },
+    });
   }
 
   async update(
