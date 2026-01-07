@@ -23,4 +23,10 @@ export class C00FbxxController {
   async findAll(@Query() conditions: QueryC00FbxxDto) {
     return await this.c00FbxxService.findAll(conditions);
   }
+
+  // 根据 zyid 删除记录
+  @Delete('zyid/:zyid')
+  async deleteByZyid(@Param('zyid') zyid: string): Promise<void> {
+    return await this.c00FbxxService.deleteByZyid(zyid);
+  }
 }

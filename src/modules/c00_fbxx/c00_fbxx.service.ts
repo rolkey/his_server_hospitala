@@ -53,6 +53,11 @@ export class C00FbxxService {
     return { data, total };
   }
 
+  // 根据 zyid 删除记录
+  async deleteByZyid(zyid: string): Promise<void> {
+    await this.c00FbxxRepository.delete({ zyid });
+  }
+
   // 其他方法保持不变...
   async findOne(jlxh: number): Promise<C00Fbxx> {
     const entity = await this.c00FbxxRepository.findOne({ where: { jlxh } });
