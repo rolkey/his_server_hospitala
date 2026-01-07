@@ -414,7 +414,7 @@ export class h12_yzxbServiceNew {
     } catch (error: any) {
       this.logger.error('执行医嘱失败', error);
       throw new CustomException(
-        error.code ?? ERR.ERR_40002.code,
+        error ?? ERR.ERR_40002,
         error?.message ?? ERR.ERR_40002.message,
         null,
         error.data,
