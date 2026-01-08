@@ -63,6 +63,9 @@ import { H22SfjlModule } from './modules/h22_sfjl/h22_sfjl.module';
 import { KsryModule } from './modules/ksry/ksry.module';
 import { h13_djdyModule } from './modules/h13_djdy/h13_djdy.module';
 import { C00FbxxModule } from './modules/c00_fbxx/c00_fbxx.module';
+import { N0422Module } from './modules/n04_22/n04_22.module';
+import { H15SszbModule } from './modules/h15_sszb/h15-sszb.module';
+import { H15SsxbModule } from './modules/h15_ssxb/h15-ssxb.module';
 
 @Module({
   imports: [
@@ -128,6 +131,9 @@ import { C00FbxxModule } from './modules/c00_fbxx/c00_fbxx.module';
     KsryModule,
     h13_djdyModule,
     C00FbxxModule,
+    N0422Module,
+    H15SszbModule,
+    H15SsxbModule,
   ],
 })
 export class AppModule {}
