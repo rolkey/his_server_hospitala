@@ -34,7 +34,7 @@ export class H15SszbController {
     return this.h15SszbService.findAll(queryDto);
   }
 
-  @Get(':ssid/:zyid/:xh/:ksid')
+  @Get('findOne/:ssid/:zyid/:xh/:ksid')
   findOne(
     @Param('ssid') ssid: string,
     @Param('zyid') zyid: string,
@@ -61,7 +61,7 @@ export class H15SszbController {
     return this.h15SszbService.remove(ssid, zyid, xh, ksid);
   }
 
-  @Get('hospitalization/:zyid')
+  @Get('findByZyid/:zyid')
   findByZyid(@Param('zyid') zyid: string): Promise<H15Sszb[]> {
     return this.h15SszbService.findByZyid(zyid);
   }

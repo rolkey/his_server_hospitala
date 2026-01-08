@@ -229,7 +229,7 @@ export class h12_yzxbService {
           packageGroupId: 0,
           recursionDepth: 0,
         };
-        const groupControl = {};
+        // const groupControl = {};
 
         const yzzhs = new Set(
           h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).map((mbxb) => mbxb.yzzh),
@@ -292,9 +292,9 @@ export class h12_yzxbService {
             const additionals = h12_yzxbs.h12_mbxbs.filter(
               (mbxb) => mbxb.bz2 && mbxb.yzzh === mbxb.yzzh,
             );
-            if (!groupControl[mbxb.yzzh] && additionals?.length > 0) {
+            if (index === 0 && additionals?.length > 0) {
               // 取明细
-              for (const [index, additional] of additionals.entries()) {
+              for (const additional of additionals) {
                 const { newAdvice: additionalAdvice, mergedItem: additionalMergedItem } =
                   await this._createAdviceItem({
                     isPackage: false,
@@ -311,7 +311,6 @@ export class h12_yzxbService {
 
                 newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
               }
-              groupControl[mbxb.yzzh] = 1; // 避免注射组套子项重复取同组子项
             }
 
             // 4. 根据用法取组套
