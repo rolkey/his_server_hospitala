@@ -229,11 +229,17 @@ export class h12_yzxbService {
           packageGroupId: 0,
           recursionDepth: 0,
         };
-        // const groupControl = {};
 
-        const yzzhs = new Set(
-          h12_yzxbs.h12_mbxbs.filter((mbxb) => !mbxb.bz2).map((mbxb) => mbxb.yzzh),
-        );
+        const yzzhs = h12_yzxbs.h12_mbxbs
+          .filter((mbxb) => !mbxb.bz2)
+          .reduce((acc: number[], mbxb) => {
+            const yzzh = mbxb.yzzh;
+            if (!acc.includes(yzzh)) {
+              acc.push(yzzh);
+            }
+            return acc;
+          }, []);
+
         for (const mbYzzh of yzzhs) {
           // 同组规则：加到同一组时，需要生成yzzh
           const yzzh = await this.gyIdentityService.getMax('h12_yzzh');
