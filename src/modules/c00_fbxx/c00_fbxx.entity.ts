@@ -1,5 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn } from 'typeorm';
 
+/**
+ * c00_fbxx: 发药信息实体类
+ */
 @Entity({ name: 'c00_fbxx', schema: 'dbo' })
 export class C00Fbxx {
   @PrimaryColumn('integer', {
