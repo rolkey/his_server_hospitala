@@ -66,6 +66,7 @@ export class H13YzzxcsTfService {
         yzlx,
         yzzh,
       },
+      relations: ['h00XmzdEntiry'],
     });
   }
 
