@@ -1048,7 +1048,6 @@ export class h12_yzxbService {
         if (!stockAvailable) {
           throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
         }
-        adviceRow.zxcs = i + 1;
       }
 
       // TODO: 校验库存
