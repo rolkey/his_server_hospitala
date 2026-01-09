@@ -31,3 +31,9 @@
 ```bash
 git log --author="用户名" --pretty=tformat: --numstat | awk '{ add += $1; subtract += $2 } END { printf "Added lines: %s\nRemoved lines: %s\n", add, subtract }'
 ```
+
+## 代码生成
+
+```bash
+npx typeorm-model-generator -h localhost -d database -u root -x password -e mysql -o ./src/entity
+```

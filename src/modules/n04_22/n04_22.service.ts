@@ -10,73 +10,39 @@ export class N0422Service {
     private readonly n0422Repository: Repository<N0422>,
   ) {}
 
-  // 创建记录
+  // 创建记录 - Controller中 @Post() 使用
   async create(n0422: Partial<N0422>): Promise<N0422> {
     const newN0422 = this.n0422Repository.create(n0422);
     return await this.n0422Repository.save(newN0422);
   }
 
-  // 查询所有记录
-  async findAll(): Promise<N0422[]> {
-    return await this.n0422Repository.find();
-  }
-
-  // 根据主键查询
-  async findOne(zyid: string, zdxh: number): Promise<N0422> {
-    return await this.n0422Repository.findOne({
-      where: { zyid, zdxh },
-    });
-  }
-
-  // 更新记录
-  async update(zyid: string, zdxh: number, n0422: Partial<N0422>): Promise<N0422> {
-    await this.n0422Repository.update({ zyid, zdxh }, n0422);
-    return await this.findOne(zyid, zdxh);
-  }
-
-  // 删除记录
-  async remove(zyid: string, zdxh: number): Promise<void> {
-    await this.n0422Repository.delete({ zyid, zdxh });
-  }
-
-  // 根据条件查询
+  // 根据条件查询 - Controller中 @Get() 使用
   async findByCondition(condition: Partial<N0422>): Promise<N0422[]> {
     return await this.n0422Repository.find({
       where: condition,
     });
   }
 
-  // 根据zyid查询所有相关诊断
-  async findByZyid(zyid: string): Promise<N0422[]> {
-    return await this.n0422Repository.find({
-      where: { zyid },
-      order: {
-        zdxh: 'ASC',
-      },
-    });
-  }
-
-  // 根据诊断编码查询
-  async findByZdbm(zdbm: string): Promise<N0422[]> {
-    return await this.n0422Repository.find({
-      where: { zdbm },
-    });
-  }
-
-  // 根据ICD10编码查询
-  async findByIcd10(icd10: string): Promise<N0422[]> {
-    return await this.n0422Repository.find({
-      where: { icd10 },
-    });
-  }
-
-  // 获取主要诊断
-  async getMainDiagnosis(zyid: string): Promise<N0422> {
+  // 更新记录 - Controller中 @Put() 使用
+  async update(n0422: Partial<N0422>): Promise<N0422> {
+    const { zyid, zdxh, ...n0422Update } = n0422;
+    await this.n0422Repository.update({ zyid, zdxh }, n0422Update);
     return await this.n0422Repository.findOne({
-      where: {
-        zyid,
-        maindiagFlag: '1',
-      },
+      where: { zyid, zdxh },
     });
+  }
+
+  // 删除记录 - Controller中 @Delete() 使用
+  async remove(zyid: string, zdxh: number): Promise<void> {
+    await this.n0422Repository.delete({ zyid, zdxh });
+  }
+
+  async save(zyid: string, n0422s: Partial<N0422>[]): Promise<void> {
+    await this.n0422Repository.delete({ zyid });
+    for (const [index, n0422] of n0422s.entries()) {
+      n0422.zyid = zyid;
+      n0422.zdxh = index;
+    }
+    await this.n0422Repository.insert(n0422s);
   }
 }
