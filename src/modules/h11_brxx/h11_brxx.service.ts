@@ -354,7 +354,7 @@ export class h11_brxxService {
     }
 
     if (queryDto.cycw && queryDto.cycw === '0') {
-      baseQuery.andWhere(' (h11_brxx.cycw is null or h11_brxx.cycw =:cycw) ', { cycw: '' });
+      baseQuery.andWhere(' (h11_brxx.cycw is null or h11_brxx.cycw = :cycw) ', { cycw: '' });
     } else if (queryDto.cycw) {
       baseQuery.andWhere(' (h11_brxx.cycw =:cycw) ', { cycw: queryDto.cycw });
     }
@@ -440,7 +440,7 @@ export class h11_brxxService {
         `(select (case when COUNT(*) > 0 then 1 else 0 end) fsbz
           from BQ_TWMX
           where BQ_TWMX.ZYH = h11_brxx.zyid
-          and DATEDIFF(DAY, BQ_TWMX.CLRQ,GetDate()) < 4 
+          and DATEDIFF(DAY, BQ_TWMX.CLRQ,GetDate()) < 4
           and tw>37.4)`,
         'fsbz',
       )
@@ -666,10 +666,10 @@ export class h11_brxxService {
         ]);
 
         if (cwsyxx?.zyid) {
-          throw new CustomException(ERR.ERR_10000, '床位已有患者');
+          throw new CustomException(ERR.ERR_40101);
         }
         if (!brxx) {
-          throw new CustomException(ERR.ERR_10000, '未找到有效住院信息');
+          throw new CustomException(ERR.ERR_40102);
         }
         cwsyxx.zyid = dto.zyid;
         cwsyxx.lrsj = new Date();
@@ -682,7 +682,9 @@ export class h11_brxxService {
         await Promise.all([cwsyxxRepository.save(cwsyxx), brxxRepository.save(brxx)]);
       } catch (error) {
         console.error(error);
-        throw new CustomException(ERR.ERR_10000, error.message ?? '分配床位失败');
+        if (error instanceof CustomException) {
+          throw error; // 如果已经是 CustomException 类型，直接抛出
+        } else throw new CustomException(ERR.ERR_40103);
       }
     });
   }

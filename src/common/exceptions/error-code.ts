@@ -33,6 +33,10 @@ export const ERR = {
   // 缺药提醒
   ERR_40001: { code: 40001, message: '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开' },
   ERR_40002: { code: 40002, message: '执行医嘱失败' },
+  // 分配床位错误
+  ERR_40101: { code: 40101, message: '床位已有患者' },
+  ERR_40102: { code: 40102, message: '未找到有效住院信息' },
+  ERR_40103: { code: 40102, message: '分配床位失败' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;
