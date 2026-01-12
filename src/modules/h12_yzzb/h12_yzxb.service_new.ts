@@ -305,38 +305,6 @@ export class h12_yzxbServiceNew {
       let yzlx: number | string;
 
       // 加载必要的数据用于校验
-      // const [yzzb, yzxbList] = await Promise.all([
-      //   this.h12_yzzbRepo.findOne({ where: { zyid, yzlx: In([1, 2, 7]), yzxh: 1 } }),
-      //   this.h12_yzxbRepo.find({
-      //     where: { zyid, yzlx: In([1, 2, 7]), yzzt: 1 },
-      //     select: [
-      //       'kshs',
-      //       'hdhs',
-      //       'hshdrq',
-      //       'zyid',
-      //       'yzlx',
-      //       'yzxh',
-      //       'mxxh',
-      //       'hshd',
-      //       'hdbz',
-      //       'jshs',
-      //       'tzrq',
-      //       'xmmc',
-      //     ],
-      //   }),
-      // ]);
-
-      // 执行类型处理
-      // update by qfx 2025年12月17日: 注释复核检查逻辑
-      // if (executeType === '0') {
-      //   executeType = EXECUTE_TYPE_WILDCARD;
-      //   const notReviewedIndex = yzxbList.findIndex((item) => !item.kshs);
-      //   if (notReviewedIndex !== -1) {
-      //     const xmmc = yzxbList[notReviewedIndex].xmmc;
-      //     throw new CustomException(ERR.ERR_10000, `[${xmmc}] 未复核,请先复核医嘱`);
-      //   }
-      // }
-
       if (executeType === '0') {
         yzlx = '%';
       } else if (executeType === '2') {
@@ -396,7 +364,6 @@ export class h12_yzxbServiceNew {
         }
       }
 
-      //    throw new CustomException(ERR.ERR_10000, '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！');
       const c00FbxxList = await this.c00FbxxRepo.find({
         where: {
           fksid: zxks,
