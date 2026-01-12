@@ -1361,6 +1361,9 @@ export class h12_yzxbService {
       //.andWhere('h12_yzxb.tjbz = 1')
       .andWhere('h12_yzxb.tzbz = 0')
       .getMany();
+    if (h12_yzxbs.length === 0) {
+      throw new BadRequestException('医嘱信息未找到，不能停嘱!');
+    }
     // 隐性规则
     // 如果开嘱日期等于停嘱日期，末日次数取首日次数与末日次数大的那个
     // 如果频次是Q1H,则取停止时间对应的小时数作为末日次数，大于30分钟就多加一次
@@ -1368,6 +1371,7 @@ export class h12_yzxbService {
     h12_yzxbs.forEach((h12_yzxb) => {
       h12_yzxb.mrcs = mrcs > h12_yzxb.syplidEntity.mrcs ? h12_yzxb.syplidEntity.mrcs : mrcs;
       h12_yzxb.tzrq = tzsj;
+      h12_yzxb.yzzt = 5;
       h12_yzxb.tzbz = 1;
       if (u_zcid === '0106') {
         h12_yzxb.jsys = jsys;
@@ -1378,6 +1382,7 @@ export class h12_yzxbService {
     });
     await this.dataSource.transaction(async (manager) => {
       await manager.save(h12_yzxb, h12_yzxbs);
+      // 医生站停嘱时，相当于发出停嘱申请
       const zxrq = DateFormater.formatDate1(tzsj);
       await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
       await this.h11Jshztzd1Service.updateOrCreateRecord(

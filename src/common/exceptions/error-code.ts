@@ -37,6 +37,10 @@ export const ERR = {
   ERR_40101: { code: 40101, message: '床位已有患者' },
   ERR_40102: { code: 40102, message: '未找到有效住院信息' },
   ERR_40103: { code: 40102, message: '分配床位失败' },
+  // 停嘱相关
+  ERR_40201: { code: 40201, message: '复核退回失败！！' },
+  ERR_40202: { code: 40202, message: '停嘱退回失败！！' },
+  ERR_40203: { code: 40203, message: '撤回停嘱失败！！' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;

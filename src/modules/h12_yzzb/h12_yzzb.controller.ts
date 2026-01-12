@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Delete, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Query, Delete, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { h12_yzzbService } from './h12_yzzb.service';
 import { h12_yzxbService } from './h12_yzxb.service';
 import {
@@ -18,6 +18,7 @@ import { UsrcatService } from '../usrcat/usrcat.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BabyAdviceService } from './baby-advice.service';
 import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
+import { JwtGuard } from '@/common/guards';
 @Controller('h12_yzzb')
 export class h12_yzzbController {
   constructor(
@@ -313,5 +314,29 @@ export class h12_yzzbController {
   @Post('copyAdvice')
   async copyAdvice(@Body() dto: CopyAdviceDto) {
     return await this.h12_yzxbServiceNew.copyAdvice(dto);
+  }
+
+  /**
+   * 复核退回
+   */
+  @Post('reviewBack')
+  @UseGuards(JwtGuard)
+  async reviewBack(
+    @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
+    @Req() request: any,
+  ) {
+    return await this.h12_yzxbServiceNew.reviewBack(dto, request.user);
+  }
+
+  /**
+   * 复核退回
+   */
+  @Post('stopBack')
+  @UseGuards(JwtGuard)
+  async stopBack(
+    @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
+    @Req() request: any,
+  ) {
+    return await this.h12_yzxbServiceNew.stopBack(dto, request.user);
   }
 }

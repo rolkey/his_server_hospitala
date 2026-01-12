@@ -192,7 +192,8 @@ export class h12_yzxbServiceNew {
             }
           }
           yzxb.hdbz = 1;
-          yzxb.yzzt = 2; // 已复核
+          // 状态：1提交-->2复核，5待核停嘱-->6停嘱
+          yzxb.yzzt = yzxb.yzzt === 1 ? 2 : 6;
           if (yzxb.xmdj == 0) {
             yzxb.zxbz = 1;
           }
@@ -1963,5 +1964,42 @@ export class h12_yzxbServiceNew {
     }
 
     return yzxb;
+  }
+
+  /**
+   * 复核退回
+   * @param dto
+   * @param user
+   * @param info
+   */
+  async reviewBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
+    console.log('复核退回操作员：', user);
+    try {
+      // TODO: 检查是否执行有费用，有费用不允许退回
+      await this.h12_yzxbRepo.update(
+        { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh) },
+        { yzzt: 7, tjbz: 0, hdbz: 0, kssxhs: null, kshs: null },
+      );
+    } catch (error) {
+      throw new CustomException(ERR.ERR_40201, error?.message ?? ERR.ERR_40201.message);
+    }
+  }
+
+  /**
+   * 停嘱退回
+   * @param dto
+   * @param user
+   * @param info
+   */
+  async stopBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
+    console.log('停嘱退回操作员：', user);
+    try {
+      await this.h12_yzxbRepo.update(
+        { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh) },
+        { yzzt: 7, tjbz: 0, hdbz: 0, jssxhs: null, jshs: null },
+      );
+    } catch (error) {
+      throw new CustomException(ERR.ERR_40202, error?.message ?? ERR.ERR_40202.message);
+    }
   }
 }
