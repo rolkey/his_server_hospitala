@@ -320,7 +320,7 @@ export class h12_yzzbController {
    * 复核退回
    */
   @Post('reviewBack')
-  @UseGuards(JwtGuard)
+  //   @UseGuards(JwtGuard)
   async reviewBack(
     @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
     @Req() request: any,
@@ -332,7 +332,7 @@ export class h12_yzzbController {
    * 复核退回
    */
   @Post('stopBack')
-  @UseGuards(JwtGuard)
+  //   @UseGuards(JwtGuard)
   async stopBack(
     @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
     @Req() request: any,

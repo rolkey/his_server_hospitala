@@ -1463,19 +1463,23 @@ export class h12_yzxbService {
 
   // 取消停嘱
   async unStop(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
-    // TODO: 实现未提交医嘱逻辑
-    // dw_1.setitem(i, 'tzbz', 0)
-    // dw_1.setitem(i, 'tzrq', ldt_sj)
-    // dw_1.setitem(i, 'jsys', '')
-    // dw_1.setitem(i, 'jshs', '')
-    // dw_1.setitem(i, 'jssxys', '')
-    // dw_1.setitem(i, 'jssxhs', '')
-    // dw_1.setitem(i, 'mrcs', ll_mrcs)
-    await this.h12_yzxbRepo.update(
-      { yzlx, yzxh, zyid, yzzh: In(yzzh) },
-      { tzbz: 0, tzrq: null, jsys: null, jshs: null, jssxys: null, jssxhs: null, mrcs: null },
-    );
-    return true;
+    const defaultValue = {
+      tzbz: 0,
+      tzrq: null,
+      jsys: null,
+      jshs: null,
+      jssxys: null,
+      jssxhs: null,
+      mrcs: null,
+    };
+    const yzxbs = await this.h12_yzxbRepo.find({
+      where: { yzlx, yzxh, zyid, yzzh: In(yzzh) },
+    });
+    for (const yzxb of yzxbs) {
+      Object.assign(yzxb, defaultValue);
+      yzxb.yzzt = yzxb.zxbz === 1 ? 3 : yzxb.hdbz === 1 ? 2 : 1;
+    }
+    return await this.h12_yzxbRepo.save(yzxbs);
   }
 
   // 签名
