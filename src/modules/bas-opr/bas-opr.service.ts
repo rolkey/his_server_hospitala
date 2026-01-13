@@ -17,19 +17,14 @@ export class BasOprService {
   }
 
   async findAll(queryDto: QueryBasOprDto): Promise<{ total: number; data: BasOpr[] }> {
-    const { pageSize = 10, pageNo = 1, ...conditions } = queryDto;
-    const where = {};
-
-    // 构建查询条件
-    Object.keys(conditions).forEach((key) => {
-      if (conditions[key]) {
-        if (typeof conditions[key] === 'string') {
-          where[key] = Like(`%${conditions[key]}%`);
-        } else {
-          where[key] = conditions[key];
-        }
-      }
-    });
+    const { pageSize = 10, pageNo = 1, value } = queryDto;
+    const params = value ?? '';
+    const where = [
+      { icdcm: Like(`%${params}%`) },
+      { opr: Like(`%${params}%`) },
+      { pybm: Like(`%${params?.toUpperCase()}%`) },
+      { wbbm: Like(`%${params?.toUpperCase()}%`) },
+    ];
 
     const [data, total] = await this.basOprRepository.findAndCount({
       where,

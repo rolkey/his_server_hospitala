@@ -150,52 +150,7 @@ export class QueryBasOprDto {
 
   @IsOptional()
   @IsString()
-  icdcm?: string;
-
-  @IsOptional()
-  @IsString()
-  opr?: string;
-
-  @IsOptional()
-  @IsString()
-  gbId?: string;
-
-  @IsOptional()
-  @IsString()
-  helpCode?: string;
-
-  @IsOptional()
-  @IsString()
-  parentId?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  grade?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  leafFlag?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  oprDegreeId?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  stopFlag?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  sysFlag?: number;
-
-  @IsOptional()
-  @IsString()
-  keyWord?: string;
+  value?: string;
 }
 
 export class UpdateBasOprDto extends CreateBasOprDto {

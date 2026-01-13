@@ -21,10 +21,14 @@ export class N0423Service {
   /**
    * 创建手术记录
    */
-  async create(createDto: CreateN0423Dto): Promise<N0423ResponseDto> {
-    const newRecord = this.n0423Repository.create(createDto);
-    const saved = await this.n0423Repository.save(newRecord);
-    return this.formatResponse(saved);
+  async save(createDto: CreateN0423Dto): Promise<void> {
+    const { zyid, n0423s } = createDto;
+    await this.n0423Repository.delete({ zyid });
+    for (const [index, n0423] of n0423s.entries()) {
+      n0423.zyid = zyid;
+      n0423.ssxh = index;
+    }
+    await this.n0423Repository.insert(n0423s);
   }
 
   /**
@@ -32,8 +36,8 @@ export class N0423Service {
    */
   async findAll(queryDto: QueryN0423Dto): Promise<{ total: number; data: N0423ResponseDto[] }> {
     const {
-      page = 1,
-      limit = 10,
+      pageNo = 1,
+      pageSize = 10,
       sortBy = 'ssxh',
       sortOrder = 'ASC',
       keyword,
@@ -47,8 +51,8 @@ export class N0423Service {
     const [data, total] = await this.n0423Repository.findAndCount({
       where,
       order: { [sortBy]: sortOrder },
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (pageNo - 1) * pageSize,
+      take: pageSize,
     });
 
     return {
@@ -66,67 +70,12 @@ export class N0423Service {
   }
 
   /**
-   * 更新手术记录
-   */
-  async update(zyid: string, ssxh: number, updateDto: UpdateN0423Dto): Promise<N0423ResponseDto> {
-    await this.n0423Repository.update({ zyid, ssxh }, updateDto);
-    return this.findOne(zyid, ssxh);
-  }
-
-  /**
-   * 删除手术记录
-   */
-  async remove(zyid: string, ssxh: number): Promise<void> {
-    await this.n0423Repository.delete({ zyid, ssxh });
-  }
-
-  /**
-   * 批量操作
-   */
-  async batchOperation(operationDto: N0423BatchOperationDto): Promise<any> {
-    const { operationType, createItems, updateItems, deleteItems } = operationDto;
-
-    switch (operationType) {
-      case 'create':
-        return this.batchCreate(createItems);
-      case 'update':
-        return this.batchUpdate(updateItems);
-      case 'delete':
-        return this.batchDelete(deleteItems);
-      default:
-        throw new Error('Invalid operation type');
-    }
-  }
-
-  /**
    * 批量创建
    */
   private async batchCreate(items: CreateN0423Dto[]): Promise<N0423ResponseDto[]> {
     const entities = items.map((item) => this.n0423Repository.create(item));
     const saved = await this.n0423Repository.save(entities);
     return saved.map((item) => this.formatResponse(item));
-  }
-
-  /**
-   * 批量更新
-   */
-  private async batchUpdate(
-    items: Array<{ zyid: string; ssxh: number; data: UpdateN0423Dto }>,
-  ): Promise<void> {
-    await Promise.all(
-      items.map((item) =>
-        this.n0423Repository.update({ zyid: item.zyid, ssxh: item.ssxh }, item.data),
-      ),
-    );
-  }
-
-  /**
-   * 批量删除
-   */
-  private async batchDelete(items: Array<{ zyid: string; ssxh: number }>): Promise<void> {
-    await Promise.all(
-      items.map((item) => this.n0423Repository.delete({ zyid: item.zyid, ssxh: item.ssxh })),
-    );
   }
 
   /**

@@ -263,16 +263,16 @@ export class BaseN0423Dto {
  * 创建 DTO
  * 继承基础 DTO，可以添加创建特有的验证或字段
  */
-export class CreateN0423Dto extends BaseN0423Dto {
+export class CreateN0423Dto {
   @Allow()
   @IsOptional()
   @IsString()
-  creatorId?: string;
+  zyid?: string;
 
   @Allow()
   @IsOptional()
   @IsString()
-  creatorName?: string;
+  n0423s: BaseN0423Dto[];
 }
 
 /**
@@ -293,13 +293,13 @@ export class QueryN0423Dto extends PartialType(BaseN0423Dto) {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  page?: number = 1;
+  pageNo?: number = 1;
 
   @Allow()
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  limit?: number = 10;
+  pageSize?: number = 10;
 
   @Allow()
   @IsOptional()

@@ -1935,6 +1935,7 @@ export class h12_yzxbServiceNew {
 
   /**
    * 复核退回
+   *
    * @param dto
    * @param user
    * @param info
@@ -1953,6 +1954,11 @@ export class h12_yzxbServiceNew {
       throw new CustomException(ERR.ERR_40203);
     }
 
+    // 如果新提交医嘱，则直接退回不提单状态，让医生可以修改
+    await this.h12_yzxbRepo.update(
+      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: 1 },
+      { yzzt: 7, tjbz: 0, hdbz: 0, kssxhs: null, kshs: null },
+    );
     await this.h12_yzxbRepo.update(
       { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([2, 5, 6]) },
       { yzzt: 7, hdbz: 0, kssxhs: null, kshs: null },
@@ -1966,6 +1972,7 @@ export class h12_yzxbServiceNew {
    * @param info
    */
   async stopBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
+    // 只更新停嘱提交数据，其他数据不更新
     await this.h12_yzxbRepo.update(
       { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([5, 6]) },
       { yzzt: 7, jssxhs: null, jshs: null },

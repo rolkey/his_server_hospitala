@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { csxz } from './csxz.entity';
-import { CsxzQueryDto } from './dto/csxz-query-dto';
+import { CsxzQueryDto, QueryBaseCsxzDto } from './dto/csxz-query-dto';
 
 @Injectable()
 export class csxzService {
@@ -44,9 +44,17 @@ export class csxzService {
   findAllPersonnelCategory() {
     return this.csxzRepo.find({ where: { yxbz: 1, lx: '病人所属' } });
   }
-  async findAll(csxzQueryDto: CsxzQueryDto) {
+  async findAll(queryDto: QueryBaseCsxzDto) {
+    const { pageSize = 10, pageNo = 1, ...csxzQueryDto } = queryDto;
     const where = { yxbz: 1, lx: csxzQueryDto.lx };
     if (csxzQueryDto.bz2) where['bz2'] = csxzQueryDto.bz2;
-    return this.csxzRepo.find({ where });
+
+    const [data, total] = await this.csxzRepo.findAndCount({
+      where,
+      skip: (pageNo - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return { total, data };
   }
 }

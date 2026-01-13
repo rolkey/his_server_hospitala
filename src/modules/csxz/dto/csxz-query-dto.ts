@@ -1,4 +1,5 @@
-import { Allow } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Allow, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CsxzQueryDto {
   @Allow()
@@ -19,4 +20,19 @@ export class CsxzQueryDto {
   pybm?: string | null;
   @Allow()
   wbbm?: string | null;
+}
+
+export class QueryBaseCsxzDto extends CsxzQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  pageSize?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  pageNo?: number;
 }

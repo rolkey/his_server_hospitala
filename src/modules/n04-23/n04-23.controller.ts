@@ -28,8 +28,8 @@ export class N0423Controller {
   @Post()
   @ApiOperation({ summary: '创建手术记录' })
   @ApiResponse({ status: HttpStatus.CREATED, description: '创建成功', type: N0423ResponseDto })
-  create(@Body() createDto: CreateN0423Dto) {
-    return this.n0423Service.create(createDto);
+  save(@Body() createDto: CreateN0423Dto) {
+    return this.n0423Service.save(createDto);
   }
 
   @Get()
@@ -37,38 +37,5 @@ export class N0423Controller {
   @ApiResponse({ status: HttpStatus.OK, description: '获取成功' })
   findAll(@Query() queryDto: QueryN0423Dto) {
     return this.n0423Service.findAll(queryDto);
-  }
-
-  @Get(':zyid/:ssxh')
-  @ApiOperation({ summary: '获取单个手术记录' })
-  @ApiResponse({ status: HttpStatus.OK, description: '获取成功', type: N0423ResponseDto })
-  findOne(@Param('zyid') zyid: string, @Param('ssxh') ssxh: number) {
-    return this.n0423Service.findOne(zyid, ssxh);
-  }
-
-  @Patch(':zyid/:ssxh')
-  @ApiOperation({ summary: '更新手术记录' })
-  @ApiResponse({ status: HttpStatus.OK, description: '更新成功', type: N0423ResponseDto })
-  update(
-    @Param('zyid') zyid: string,
-    @Param('ssxh') ssxh: number,
-    @Body() updateDto: UpdateN0423Dto,
-  ) {
-    return this.n0423Service.update(zyid, ssxh, updateDto);
-  }
-
-  @Delete(':zyid/:ssxh')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: '删除手术记录' })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: '删除成功' })
-  remove(@Param('zyid') zyid: string, @Param('ssxh') ssxh: number) {
-    return this.n0423Service.remove(zyid, ssxh);
-  }
-
-  @Post('batch')
-  @ApiOperation({ summary: '批量操作手术记录' })
-  @ApiResponse({ status: HttpStatus.OK, description: '操作成功' })
-  batchOperation(@Body() operationDto: N0423BatchOperationDto) {
-    return this.n0423Service.batchOperation(operationDto);
   }
 }
