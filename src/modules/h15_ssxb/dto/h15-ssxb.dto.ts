@@ -362,16 +362,16 @@ export class BaseH15SsxbDto {
 /**
  * 创建 DTO
  */
-export class CreateH15SsxbDto extends BaseH15SsxbDto {
+export class CreateH15SsxbDto {
   @Allow()
   @IsOptional()
   @IsString()
-  creatorId?: string;
+  zyid?: string;
 
   @Allow()
   @IsOptional()
   @IsString()
-  creatorName?: string;
+  h15ssxb: BaseH15SsxbDto[];
 }
 
 /**

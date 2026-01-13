@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Like, Repository, MoreThan, LessThan, EntityManager } from 'typeorm';
+import { DataSource, In, Like, Repository, MoreThan, LessThan, EntityManager, Raw } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -1940,16 +1940,23 @@ export class h12_yzxbServiceNew {
    * @param info
    */
   async reviewBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
-    console.log('复核退回操作员：', user);
-    try {
-      // TODO: 检查是否执行有费用，有费用不允许退回
-      await this.h12_yzxbRepo.update(
-        { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh) },
-        { yzzt: 7, tjbz: 0, hdbz: 0, kssxhs: null, kshs: null },
-      );
-    } catch (error) {
-      throw new CustomException(ERR.ERR_40201, error?.message ?? ERR.ERR_40201.message);
+    // 检查是否执行有费用，有费用不允许退回，另外状态也必须在2, 5, 6中
+    const yzzxcs = await this.h13_yzzxcsRepo.find({
+      where: {
+        zyid: dto.zyid,
+        yzlx: dto.yzlx,
+        mxxh: In(dto.mxxh),
+        zxcs: Raw((zxcs) => `${zxcs} > bzxcs`),
+      },
+    });
+    if (yzzxcs.length > 0) {
+      throw new CustomException(ERR.ERR_40203);
     }
+
+    await this.h12_yzxbRepo.update(
+      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([2, 5, 6]) },
+      { yzzt: 7, hdbz: 0, kssxhs: null, kshs: null },
+    );
   }
 
   /**
@@ -1959,14 +1966,9 @@ export class h12_yzxbServiceNew {
    * @param info
    */
   async stopBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
-    console.log('停嘱退回操作员：', user);
-    try {
-      await this.h12_yzxbRepo.update(
-        { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh) },
-        { yzzt: 7, tjbz: 0, hdbz: 0, jssxhs: null, jshs: null },
-      );
-    } catch (error) {
-      throw new CustomException(ERR.ERR_40202, error?.message ?? ERR.ERR_40202.message);
-    }
+    await this.h12_yzxbRepo.update(
+      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([5, 6]) },
+      { yzzt: 7, jssxhs: null, jshs: null },
+    );
   }
 }

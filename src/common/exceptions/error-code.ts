@@ -40,7 +40,8 @@ export const ERR = {
   // 停嘱相关
   ERR_40201: { code: 40201, message: '复核退回失败！！' },
   ERR_40202: { code: 40202, message: '停嘱退回失败！！' },
-  ERR_40203: { code: 40203, message: '撤回停嘱失败！！' },
+  // 退回医嘱相关
+  ERR_40203: { code: 40203, message: '仍有未退费医嘱！！' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;
