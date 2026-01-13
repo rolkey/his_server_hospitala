@@ -67,6 +67,7 @@ import { N0422Module } from './modules/n04_22/n04_22.module';
 import { H15SszbModule } from './modules/h15_sszb/h15-sszb.module';
 import { H15SsxbModule } from './modules/h15_ssxb/h15-ssxb.module';
 import { BasOprModule } from './modules/bas-opr/bas-opr.module';
+import { N0423Module } from './modules/n04-23/n04-23.module';
 
 @Module({
   imports: [
@@ -136,6 +137,7 @@ import { BasOprModule } from './modules/bas-opr/bas-opr.module';
     H15SszbModule,
     H15SsxbModule,
     BasOprModule,
+    N0423Module,
   ],
 })
 export class AppModule {}
