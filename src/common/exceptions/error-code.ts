@@ -50,6 +50,8 @@ export const ERR = {
   ERR_40804: { code: 40804, message: '退药单未执行退药！' },
   ERR_40805: { code: 40805, message: '单号未退完全部执行次数！！' },
   ERR_40806: { code: 40806, message: '已执行，不能删除！！' },
+  ERR_40807: { code: 40807, message: '删除费用参数不全！！' },
+  ERR_40808: { code: 40808, message: '删除费用参数缺少maxid！！' },
   ERR_40810: { code: 40810, message: '费用删除失败！！' },
 } as const;
 

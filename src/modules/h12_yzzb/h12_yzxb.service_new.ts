@@ -395,10 +395,10 @@ export class h12_yzxbServiceNew {
   // 删除医嘱费用
   // -------------------------
   async deleteCost(dto: adviceDto): Promise<void> {
-    if (!dto?.mxxhList?.length) return;
+    if (!dto?.mxxhList?.length) throw new CustomException(ERR.ERR_40807);
 
     const maxidList = dto.mxxhList.map((it) => it.maxid).filter(Boolean);
-    if (!maxidList.length) return;
+    if (!maxidList.length) throw new CustomException(ERR.ERR_40808);
 
     await this.dataSource.transaction(async (manager) => {
       try {
@@ -546,18 +546,13 @@ export class h12_yzxbServiceNew {
         );
         if (yzxbUpdate.length > 0) {
           for (const yzxbup of yzxbUpdate) {
-            if (dto.yzlx === 1) {
-              if (yzxbup.yzzt === 3) yzxbup.yzzt = 2;
-            } else if (dto.yzlx === 2) {
-              if ([3, 4].includes(yzxbup.yzzt)) yzxbup.yzzt = 2;
-            }
+            if ([3, 4].includes(yzxbup.yzzt)) yzxbup.yzzt = 2;
             if (yzxbup.zxbz) {
               yzxbup.zxbz = 0;
             }
           }
           await h12Repo.save(yzxbUpdate);
         }
-        // await h12Repo.update(yzxbUpdate);
       } catch (error: any) {
         console.log('删除费用出错：', error);
         if (error instanceof CustomException) {
