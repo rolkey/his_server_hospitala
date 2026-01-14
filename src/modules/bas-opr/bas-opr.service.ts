@@ -16,7 +16,7 @@ export class BasOprService {
     return await this.basOprRepository.save(newOpr);
   }
 
-  async findAll(queryDto: QueryBasOprDto): Promise<{ total: number; data: BasOpr[] }> {
+  async findAll(queryDto: QueryBasOprDto): Promise<{ total: number; pageData: BasOpr[] }> {
     const { pageSize = 10, pageNo = 1, value } = queryDto;
     const params = value ?? '';
     const where = [
@@ -26,13 +26,13 @@ export class BasOprService {
       { wbbm: Like(`%${params?.toUpperCase()}%`) },
     ];
 
-    const [data, total] = await this.basOprRepository.findAndCount({
+    const [pageData, total] = await this.basOprRepository.findAndCount({
       where,
       skip: (pageNo - 1) * pageSize,
       take: pageSize,
     });
 
-    return { total, data };
+    return { total, pageData };
   }
 
   async findOne(oprId: number): Promise<BasOpr> {

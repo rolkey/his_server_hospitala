@@ -397,8 +397,8 @@ export class h12_yzxbServiceNew {
   async deleteCost(dto: adviceDto): Promise<void> {
     if (!dto?.mxxhList?.length) return;
 
-    const mxxhArray = dto.mxxhList.map((it) => it.mxxh).filter(Boolean);
-    if (!mxxhArray.length) return;
+    const maxidList = dto.mxxhList.map((it) => it.maxid).filter(Boolean);
+    if (!maxidList.length) return;
 
     await this.dataSource.transaction(async (manager) => {
       try {
@@ -409,7 +409,7 @@ export class h12_yzxbServiceNew {
           manager,
         );
         if (syspar_new?.pval === '1') {
-          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
+          throw new CustomException(ERR.ERR_40801);
         }
 
         const h13Repo = manager.getRepository(h13_yzzxcs);
@@ -439,11 +439,11 @@ export class h12_yzxbServiceNew {
             'H13YzzxcsTfList.zxcs2',
           ])
           .where(
-            'h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.mxxh IN (:...mxxhList)',
+            'h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.maxid IN (:...maxidList)',
             {
               zyid: dto.zyid,
               yzlx: dto.yzlx || '',
-              mxxhList: mxxhArray,
+              maxidList: maxidList,
             },
           )
           .getMany();
@@ -458,13 +458,13 @@ export class h12_yzxbServiceNew {
             item?.H31Lyjl?.ckclbz === 1
           ) {
             throw new CustomException(
-              ERR.ERR_10000,
+              ERR.ERR_40802,
               `[${item.xmidEntity.xmmc}] 已发药，请走退费流程!`,
             );
           }
           if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl !== 1 && item.fydh) {
             throw new CustomException(
-              ERR.ERR_10000,
+              ERR.ERR_40803,
               `[${item.xmidEntity.xmmc}] 已生成领药单，请发药科室退回单号【${item.fydh}】才可以删除!`,
             );
           }
@@ -473,18 +473,18 @@ export class h12_yzxbServiceNew {
           const index = H13YzzxcsTfList.findIndex((tf) => tf.fybz === 0);
           if (index !== -1 && item.fydh) {
             throw new CustomException(
-              ERR.ERR_10000,
+              ERR.ERR_40804,
               `退药单 [${H13YzzxcsTfList[index].fydh}] 未执行退药`,
             );
           }
 
           const bzxcs = H13YzzxcsTfList.reduce((val, tf) => val + (tf.zxcs ?? 0), 0);
           if (item.zxcs + bzxcs !== 0 && item.fydh) {
-            throw new CustomException(ERR.ERR_10000, `单号 [${item.fydh}] 未退完全部执行次数`);
+            throw new CustomException(ERR.ERR_40805, `单号 [${item.fydh}] 未退完全部执行次数`);
           }
 
           if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl === 1 && item.clbz === 1) {
-            throw new CustomException(ERR.ERR_10000, `[${item.xmidEntity.xmmc}] 已执行，不能删除`);
+            throw new CustomException(ERR.ERR_40806, `[${item.xmidEntity.xmmc}] 已执行，不能删除`);
           }
         }
 
@@ -492,7 +492,7 @@ export class h12_yzxbServiceNew {
         await h13Repo.delete({
           zyid: dto.zyid,
           yzlx: dto.yzlx,
-          mxxh: In(h13_yzzxcsList.map((it) => it.mxxh)),
+          maxid: In(maxidList),
         });
         //如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
         const H31LyjlRepo = manager.getRepository(H31Lyjl);
@@ -514,6 +514,7 @@ export class h12_yzxbServiceNew {
             }
           }
         }
+        // 检查如果同组费用已经全部清除，则修改医嘱状态
       } catch (error: any) {
         this.logger.error('删除费用失败', error?.stack ?? error?.message ?? error);
         throw new CustomException(ERR.ERR_10000, error?.message ?? '删除费用失败');

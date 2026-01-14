@@ -28,13 +28,13 @@ export class MzffService {
       { wbbm: Like(`%${params?.toUpperCase()}%`) },
     ];
 
-    const [data, total] = await this.mzffRepository.findAndCount({
+    const [pageData, total] = await this.mzffRepository.findAndCount({
       where,
       skip: (pageNo - 1) * pageSize,
       take: pageSize,
     });
 
-    return { total, data };
+    return { total, pageData };
   }
 
   // 更新记录 - Controller中 @Put() 使用

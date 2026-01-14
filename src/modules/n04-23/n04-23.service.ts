@@ -34,7 +34,7 @@ export class N0423Service {
   /**
    * 分页查询手术记录
    */
-  async findAll(queryDto: QueryN0423Dto): Promise<{ total: number; data: N0423ResponseDto[] }> {
+  async findAll(queryDto: QueryN0423Dto): Promise<{ total: number; pageData: N0423ResponseDto[] }> {
     const {
       pageNo = 1,
       pageSize = 10,
@@ -57,7 +57,7 @@ export class N0423Service {
 
     return {
       total,
-      data: data.map((item) => this.formatResponse(item)),
+      pageData: data.map((item) => this.formatResponse(item)),
     };
   }
 

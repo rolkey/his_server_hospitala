@@ -42,6 +42,14 @@ export const ERR = {
   ERR_40202: { code: 40202, message: '停嘱退回失败！！' },
   // 退回医嘱相关
   ERR_40203: { code: 40203, message: '仍有未退费医嘱！！' },
+
+  // 医嘱退费与退药发药限制
+  ERR_40801: { code: 40801, message: '正在执行生成发药，请稍等！!' },
+  ERR_40802: { code: 40802, message: '已发药，请走退费流程!' },
+  ERR_40803: { code: 40803, message: '已生成领药单!' },
+  ERR_40804: { code: 40804, message: '退药单未执行退药！' },
+  ERR_40805: { code: 40805, message: '单号未退完全部执行次数！！' },
+  ERR_40806: { code: 40806, message: '已执行，不能删除！！' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;

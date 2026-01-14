@@ -44,17 +44,19 @@ export class csxzService {
   findAllPersonnelCategory() {
     return this.csxzRepo.find({ where: { yxbz: 1, lx: '病人所属' } });
   }
-  async findAll(queryDto: QueryBaseCsxzDto) {
-    const { pageSize = 10, pageNo = 1, ...csxzQueryDto } = queryDto;
-    const where = { yxbz: 1, lx: csxzQueryDto.lx };
-    if (csxzQueryDto.bz2) where['bz2'] = csxzQueryDto.bz2;
 
-    const [data, total] = await this.csxzRepo.findAndCount({
+  async findAll(queryDto: QueryBaseCsxzDto) {
+    const { pageSize = 10, pageNo = 1, lx, bz2, value } = queryDto;
+    const where = { yxbz: 1, lx };
+    if (bz2) where['bz2'] = bz2;
+    if (value) where['name'] = Like('%' + value + '%');
+
+    const [pageData, total] = await this.csxzRepo.findAndCount({
       where,
       skip: (pageNo - 1) * pageSize,
       take: pageSize,
     });
 
-    return { total, data };
+    return { total, pageData };
   }
 }

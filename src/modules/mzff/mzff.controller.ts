@@ -1,5 +1,5 @@
 // mzff.controller.ts
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { MzffService } from './mzff.service';
 import { CreateMzffDto, UpdateMzffDto, QueryMzffDto } from './dto/mzff.dto';
 
@@ -13,7 +13,7 @@ export class MzffController {
   }
 
   @Get()
-  async findAll(@Body() queryMzffDto: QueryMzffDto) {
+  async findAll(@Query() queryMzffDto: QueryMzffDto) {
     return await this.mzffService.findByCondition(queryMzffDto);
   }
 

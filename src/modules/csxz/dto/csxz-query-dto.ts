@@ -35,4 +35,7 @@ export class QueryBaseCsxzDto extends CsxzQueryDto {
   @IsNumber()
   @Min(1)
   pageNo?: number;
+
+  @IsOptional()
+  value?: string;
 }
