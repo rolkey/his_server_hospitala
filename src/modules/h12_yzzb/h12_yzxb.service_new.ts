@@ -526,7 +526,38 @@ export class h12_yzxbServiceNew {
           relations: {
             h13_yzzxcsList: true, // 显式加载关联数据
           },
+          select: {
+            // 选择 h12 表中的字段
+            zyid: true,
+            yzlx: true,
+            yzxh: true,
+            mxxh: true,
+            yzzt: true,
+            // 添加其他你需要的字段
+            h13_yzzxcsList: {
+              // 选择关联表 h13_yzzxcs 中的字段
+              mxxh: true,
+              // 添加其他你需要的字段
+            },
+          },
         });
+        const yzxbUpdate = yzxbs.filter(
+          (yzxb) => yzxb.h13_yzzxcsList && yzxb.h13_yzzxcsList.length === 0,
+        );
+        if (yzxbUpdate.length > 0) {
+          for (const yzxbup of yzxbUpdate) {
+            if (dto.yzlx === 1) {
+              if (yzxbup.yzzt === 3) yzxbup.yzzt = 2;
+            } else if (dto.yzlx === 2) {
+              if ([3, 4].includes(yzxbup.yzzt)) yzxbup.yzzt = 2;
+            }
+            if (yzxbup.zxbz) {
+              yzxbup.zxbz = 0;
+            }
+          }
+          await h12Repo.save(yzxbUpdate);
+        }
+        // await h12Repo.update(yzxbUpdate);
       } catch (error: any) {
         console.log('删除费用出错：', error);
         if (error instanceof CustomException) {
