@@ -34,7 +34,7 @@ export class N0423Service {
   /**
    * 分页查询手术记录
    */
-  async findAll(queryDto: QueryN0423Dto): Promise<{ total: number; pageData: N0423ResponseDto[] }> {
+  async findAll(queryDto: QueryN0423Dto): Promise<{ total: number; pageData: any[] }> {
     const {
       pageNo = 1,
       pageSize = 10,
@@ -46,19 +46,17 @@ export class N0423Service {
       ...conditions
     } = queryDto;
 
-    const where = this.buildWhereConditions(conditions, keyword, startDate, endDate);
+    // const where = this.buildWhereConditions(conditions, keyword, startDate, endDate);
+    const where = { zyid: conditions.zyid };
 
-    const [data, total] = await this.n0423Repository.findAndCount({
+    const [pageData, total] = await this.n0423Repository.findAndCount({
       where,
       order: { [sortBy]: sortOrder },
       skip: (pageNo - 1) * pageSize,
       take: pageSize,
     });
 
-    return {
-      total,
-      pageData: data.map((item) => this.formatResponse(item)),
-    };
+    return { total, pageData };
   }
 
   /**

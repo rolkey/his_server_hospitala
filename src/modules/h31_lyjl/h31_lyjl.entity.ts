@@ -95,6 +95,4 @@ export class H31Lyjl {
 
   @OneToMany(() => H31Lymx, (lymx) => lymx.H31Lyjl)
   H31LymxList: H31Lymx[];
-
-
 }

@@ -514,10 +514,24 @@ export class h12_yzxbServiceNew {
             }
           }
         }
+
         // 检查如果同组费用已经全部清除，则修改医嘱状态
+        const h12Repo = manager.getRepository(h12_yzxb);
+        const yzxbs = await h12Repo.find({
+          where: {
+            zyid: dto.zyid,
+            yzlx: dto.yzlx,
+            mxxh: In(h13_yzzxcsList.map((it) => it.mxxh)),
+          },
+          relations: {
+            h13_yzzxcsList: true, // 显式加载关联数据
+          },
+        });
       } catch (error: any) {
-        this.logger.error('删除费用失败', error?.stack ?? error?.message ?? error);
-        throw new CustomException(ERR.ERR_10000, error?.message ?? '删除费用失败');
+        console.log('删除费用出错：', error);
+        if (error instanceof CustomException) {
+          throw error;
+        } else throw new CustomException(ERR.ERR_40810);
       }
     });
   }

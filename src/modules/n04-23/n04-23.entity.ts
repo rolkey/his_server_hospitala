@@ -17,7 +17,7 @@ export class N04_23 {
   })
   ssjczbm: string;
 
-  @Column({ type: 'datetime', name: 'ssjczrq', nullable: true })
+  @Column({ type: 'datetime', name: 'ssjczrq', nullable: true, precision: 3 })
   ssjczrq: Date;
 
   @Column({
@@ -203,10 +203,10 @@ export class N04_23 {
   })
   unt: string;
 
-  @Column({ type: 'datetime', name: 'anst_begntime', nullable: true })
+  @Column({ type: 'datetime', name: 'anst_begntime', nullable: true, precision: 3 })
   anstBegntime: Date;
 
-  @Column({ type: 'datetime', name: 'anst_endtime', nullable: true })
+  @Column({ type: 'datetime', name: 'anst_endtime', nullable: true, precision: 3 })
   anstEndtime: Date;
 
   @Column({
@@ -227,10 +227,10 @@ export class N04_23 {
   })
   anstCopnDscr: string;
 
-  @Column({ type: 'datetime', name: 'pacu_begntime', nullable: true })
+  @Column({ type: 'datetime', name: 'pacu_begntime', nullable: true, precision: 3 })
   pacuBegntime: Date;
 
-  @Column({ type: 'datetime', name: 'pacu_endtime', nullable: true })
+  @Column({ type: 'datetime', name: 'pacu_endtime', nullable: true, precision: 3 })
   pacuEndtime: Date;
 
   @Column({
@@ -305,9 +305,9 @@ export class N04_23 {
   })
   zwmc: string;
 
-  @Column({ type: 'datetime', name: 'sskssj', nullable: true })
+  @Column({ type: 'datetime', name: 'sskssj', nullable: true, precision: 3 })
   sskssj: Date;
 
-  @Column({ type: 'datetime', name: 'ssjssj', nullable: true })
+  @Column({ type: 'datetime', name: 'ssjssj', nullable: true, precision: 3 })
   ssjssj: Date;
 }
