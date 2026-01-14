@@ -17,245 +17,126 @@ import { Type } from 'class-transformer';
  */
 export class BaseN0423Dto {
   @Allow()
-  @IsString()
-  @Length(1, 12)
   zyid: string;
 
   @Allow()
-  @IsDecimal({ decimal_digits: '0' })
   ssxh: number;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   ssjczbm?: string;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   ssjczrq?: Date;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   shjb?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(60)
   ssjczmc?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   sz?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   yz?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   ez?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   qkdj?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   qkylb?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   mzfs?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   mzys?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx1?: string;
 
   @Allow()
-  @IsOptional()
-  @IsInt()
   sjbz?: number;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   oprnOperPartCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   oprnConTime?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   anstLvCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   oprnOptnPartCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   mainOprnFlag?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   anstAsaLvCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
   anstMednCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
   anstMednDos?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
   unt?: string;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   anstBegntime?: Date;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   anstEndtime?: Date;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   anstCopnCode?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
   anstCopnDscr?: string;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   pacuBegntime?: Date;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   pacuEndtime?: Date;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(3)
   cancOprnFlag?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(3)
   valiFlag?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx2?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx3?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx4?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   bzxx5?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
   icd10?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
   zwmc?: string;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   sskssj?: Date;
 
   @Allow()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
   ssjssj?: Date;
 }
 
@@ -265,14 +146,10 @@ export class BaseN0423Dto {
  */
 export class CreateN0423Dto {
   @Allow()
-  @IsOptional()
-  @IsString()
   zyid?: string;
 
   @Allow()
-  @IsOptional()
-  @IsString()
-  n0423s: BaseN0423Dto[];
+  list: BaseN0423Dto[];
 }
 
 /**

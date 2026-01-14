@@ -22,13 +22,13 @@ export class N0423Service {
    * 创建手术记录
    */
   async save(createDto: CreateN0423Dto): Promise<void> {
-    const { zyid, n0423s } = createDto;
+    const { zyid, list } = createDto;
     await this.n0423Repository.delete({ zyid });
-    for (const [index, n0423] of n0423s.entries()) {
+    for (const [index, n0423] of list.entries()) {
       n0423.zyid = zyid;
       n0423.ssxh = index;
     }
-    await this.n0423Repository.insert(n0423s);
+    await this.n0423Repository.insert(list);
   }
 
   /**
