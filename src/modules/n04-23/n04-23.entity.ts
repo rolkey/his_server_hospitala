@@ -129,7 +129,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  oprnOperPartCode: string;
+  oprn_oper_part_code: string;
 
   @Column({
     type: 'varchar',
@@ -138,7 +138,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  oprnConTime: string;
+  oprn_con_time: string;
 
   @Column({
     type: 'varchar',
@@ -147,7 +147,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstLvCode: string;
+  anst_lv_code: string;
 
   @Column({
     type: 'varchar',
@@ -156,7 +156,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  oprnOptnPartCode: string;
+  oprn_optn_part_code: string;
 
   @Column({
     type: 'varchar',
@@ -165,7 +165,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  mainOprnFlag: string;
+  main_oprn_flag: string;
 
   @Column({
     type: 'varchar',
@@ -174,7 +174,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstAsaLvCode: string;
+  anst_asa_lv_code: string;
 
   @Column({
     type: 'varchar',
@@ -183,7 +183,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstMednCode: string;
+  anst_medn_code: string;
 
   @Column({
     type: 'varchar',
@@ -192,7 +192,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstMednDos: string;
+  anst_medn_dos: string;
 
   @Column({
     type: 'varchar',
@@ -204,10 +204,10 @@ export class N04_23 {
   unt: string;
 
   @Column({ type: 'datetime', name: 'anst_begntime', nullable: true, precision: 3 })
-  anstBegntime: Date;
+  anst_begntime: Date;
 
   @Column({ type: 'datetime', name: 'anst_endtime', nullable: true, precision: 3 })
-  anstEndtime: Date;
+  anst_endtime: Date;
 
   @Column({
     type: 'varchar',
@@ -216,7 +216,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstCopnCode: string;
+  anst_copn_code: string;
 
   @Column({
     type: 'varchar',
@@ -225,13 +225,13 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  anstCopnDscr: string;
+  anst_copn_dscr: string;
 
   @Column({ type: 'datetime', name: 'pacu_begntime', nullable: true, precision: 3 })
-  pacuBegntime: Date;
+  pacu_begntime: Date;
 
   @Column({ type: 'datetime', name: 'pacu_endtime', nullable: true, precision: 3 })
-  pacuEndtime: Date;
+  pacu_endtime: Date;
 
   @Column({
     type: 'varchar',
@@ -240,7 +240,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  cancOprnFlag: string;
+  canc_oprn_flag: string;
 
   @Column({
     type: 'varchar',
@@ -249,7 +249,7 @@ export class N04_23 {
     nullable: true,
     collation: 'Chinese_PRC_CI_AS',
   })
-  valiFlag: string;
+  vali_flag: string;
 
   @Column({
     type: 'varchar',

@@ -65,55 +65,55 @@ export class BaseN0423Dto {
   sjbz?: number;
 
   @Allow()
-  oprnOperPartCode?: string;
+  oprn_oper_part_code?: string;
 
   @Allow()
-  oprnConTime?: string;
+  oprn_con_time?: string;
 
   @Allow()
-  anstLvCode?: string;
+  anst_lv_code?: string;
 
   @Allow()
-  oprnOptnPartCode?: string;
+  oprn_optn_part_code?: string;
 
   @Allow()
-  mainOprnFlag?: string;
+  main_oprn_flag?: string;
 
   @Allow()
-  anstAsaLvCode?: string;
+  anst_asa_lv_code?: string;
 
   @Allow()
-  anstMednCode?: string;
+  anst_medn_code?: string;
 
   @Allow()
-  anstMednDos?: string;
+  anst_medn_dos?: string;
 
   @Allow()
   unt?: string;
 
   @Allow()
-  anstBegntime?: Date;
+  anst_begntime?: Date;
 
   @Allow()
-  anstEndtime?: Date;
+  anst_endtime?: Date;
 
   @Allow()
-  anstCopnCode?: string;
+  anst_copn_code?: string;
 
   @Allow()
-  anstCopnDscr?: string;
+  anst_copn_dscr?: string;
 
   @Allow()
-  pacuBegntime?: Date;
+  pacu_begntime?: Date;
 
   @Allow()
-  pacuEndtime?: Date;
+  pacu_endtime?: Date;
 
   @Allow()
-  cancOprnFlag?: string;
+  canc_oprn_flag?: string;
 
   @Allow()
-  valiFlag?: string;
+  vali_flag?: string;
 
   @Allow()
   bzxx2?: string;
