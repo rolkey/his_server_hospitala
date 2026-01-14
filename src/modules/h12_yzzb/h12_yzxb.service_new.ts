@@ -114,6 +114,7 @@ export class h12_yzxbServiceNew {
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
+            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
           },
         }),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
@@ -193,7 +194,7 @@ export class h12_yzxbServiceNew {
           }
           yzxb.hdbz = 1;
           // 状态：1提交-->2复核，5待核停嘱-->6停嘱
-          yzxb.yzzt = yzxb.yzzt === 1 ? 2 : 6;
+          yzxb.yzzt = yzxb.yzzt === 1 ? 2 : yzxb.yzzt === 5 ? 6 : yzxb.yzzt;
           if (yzxb.xmdj == 0) {
             yzxb.zxbz = 1;
           }
