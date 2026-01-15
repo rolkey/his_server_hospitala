@@ -13,7 +13,6 @@ export class N04_23 {
     name: 'ssjczbm',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   ssjczbm: string;
 
@@ -25,7 +24,6 @@ export class N04_23 {
     name: 'shjb',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   shjb: string;
 
@@ -34,7 +32,6 @@ export class N04_23 {
     name: 'ssjczmc',
     length: 60,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   ssjczmc: string;
 
@@ -43,7 +40,6 @@ export class N04_23 {
     name: 'sz',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   sz: string;
 
@@ -52,7 +48,6 @@ export class N04_23 {
     name: 'yz',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   yz: string;
 
@@ -61,7 +56,6 @@ export class N04_23 {
     name: 'ez',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   ez: string;
 
@@ -70,7 +64,6 @@ export class N04_23 {
     name: 'qkdj',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   qkdj: string;
 
@@ -79,7 +72,6 @@ export class N04_23 {
     name: 'qkylb',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   qkylb: string;
 
@@ -88,7 +80,6 @@ export class N04_23 {
     name: 'mzfs',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   mzfs: string;
 
@@ -97,7 +88,6 @@ export class N04_23 {
     name: 'mzys',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   mzys: string;
 
@@ -106,7 +96,6 @@ export class N04_23 {
     name: 'bzxx',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx: string;
 
@@ -115,7 +104,6 @@ export class N04_23 {
     name: 'bzxx1',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx1: string;
 
@@ -127,7 +115,6 @@ export class N04_23 {
     name: 'oprn_oper_part_code',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   oprn_oper_part_code: string;
 
@@ -136,7 +123,6 @@ export class N04_23 {
     name: 'oprn_con_time',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   oprn_con_time: string;
 
@@ -145,7 +131,6 @@ export class N04_23 {
     name: 'anst_lv_code',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_lv_code: string;
 
@@ -154,7 +139,6 @@ export class N04_23 {
     name: 'oprn_optn_part_code',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   oprn_optn_part_code: string;
 
@@ -163,7 +147,6 @@ export class N04_23 {
     name: 'main_oprn_flag',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   main_oprn_flag: string;
 
@@ -172,7 +155,6 @@ export class N04_23 {
     name: 'anst_asa_lv_code',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_asa_lv_code: string;
 
@@ -181,7 +163,6 @@ export class N04_23 {
     name: 'anst_medn_code',
     length: 50,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_medn_code: string;
 
@@ -190,7 +171,6 @@ export class N04_23 {
     name: 'anst_medn_dos',
     length: 20,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_medn_dos: string;
 
@@ -199,7 +179,6 @@ export class N04_23 {
     name: 'unt',
     length: 10,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   unt: string;
 
@@ -214,7 +193,6 @@ export class N04_23 {
     name: 'anst_copn_code',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_copn_code: string;
 
@@ -223,7 +201,6 @@ export class N04_23 {
     name: 'anst_copn_dscr',
     length: 200,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   anst_copn_dscr: string;
 
@@ -238,7 +215,6 @@ export class N04_23 {
     name: 'canc_oprn_flag',
     length: 3,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   canc_oprn_flag: string;
 
@@ -247,7 +223,6 @@ export class N04_23 {
     name: 'vali_flag',
     length: 3,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   vali_flag: string;
 
@@ -256,7 +231,6 @@ export class N04_23 {
     name: 'bzxx2',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx2: string;
 
@@ -265,7 +239,6 @@ export class N04_23 {
     name: 'bzxx3',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx3: string;
 
@@ -274,7 +247,6 @@ export class N04_23 {
     name: 'bzxx4',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx4: string;
 
@@ -283,7 +255,6 @@ export class N04_23 {
     name: 'bzxx5',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   bzxx5: string;
 
@@ -292,7 +263,6 @@ export class N04_23 {
     name: 'icd10',
     length: 30,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   icd10: string;
 
@@ -301,7 +271,6 @@ export class N04_23 {
     name: 'zwmc',
     length: 100,
     nullable: true,
-    collation: 'Chinese_PRC_CI_AS',
   })
   zwmc: string;
 
