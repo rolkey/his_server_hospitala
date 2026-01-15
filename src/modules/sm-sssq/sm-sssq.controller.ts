@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  Put,
 } from '@nestjs/common';
 import { SmSssqService } from './sm-sssq.service';
 import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto } from './dto/sm-sssq.dto';
@@ -41,11 +42,10 @@ export class SmSssqController {
     return await this.smSssqService.findOne(sqdh);
   }
 
-  @Patch(':sqdh')
+  @Put()
   @ApiOperation({ summary: '更新手术申请' })
-  @ApiParam({ name: 'sqdh', description: '手术申请单号' })
-  async update(@Param('sqdh', ParseIntPipe) sqdh: number, @Body() updateDto: UpdateSmSssqDto) {
-    return await this.smSssqService.update({ ...updateDto, sqdh });
+  async update(@Body() updateDto: UpdateSmSssqDto) {
+    return await this.smSssqService.update(updateDto);
   }
 
   @Delete(':sqdh')

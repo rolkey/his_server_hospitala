@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 
 @Entity({ name: 'SM_SSSQ', schema: 'dbo' })
 export class SmSssq {
@@ -46,7 +48,7 @@ export class SmSssq {
   sqys: string;
 
   @Column({ type: 'datetime', name: 'SQRQ', nullable: true })
-  sgrq: Date;
+  sqrq: Date;
 
   @Column({ type: 'datetime', name: 'SSRQ', nullable: true })
   ssrq: Date;
@@ -231,4 +233,12 @@ export class SmSssq {
     nullable: true,
   })
   bzxx5: string;
+
+  @ManyToOne(() => h11_brxx)
+  @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
+  h11BrxxEntity: h11_brxx;
+
+  @ManyToOne(() => Jbbmicd10)
+  @JoinColumn({ name: 'zdbm', referencedColumnName: 'icd10' })
+  jbbmicd10Entity: Jbbmicd10;
 }
