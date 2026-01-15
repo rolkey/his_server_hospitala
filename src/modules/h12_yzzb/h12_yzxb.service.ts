@@ -619,7 +619,7 @@ export class h12_yzxbService {
     advice.ypid = mbxb.ypid ?? mbxb.xmid;
     advice.xmmc = mbxb.xmmc;
     advice.xmdw = mbxb.xmdw?.trim();
-    advice.xmdj = mbxb.lsjg ?? mbxb.xmdj;
+    advice.xmdj = advice.xmdj ?? mbxb.lsjg ?? mbxb.xmdj;
     advice.xmgg = mbxb.xmgg ?? mbxb.ypgg;
     advice.syffid = mbxb.syffid || '';
     advice.syffidEntity = mbxb.syffidEntity;
