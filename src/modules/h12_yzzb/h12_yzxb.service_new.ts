@@ -521,7 +521,7 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            mxxh: In(h13_yzzxcsList.map((it) => it.mxxh)),
+            yzzh: In(h13_yzzxcsList.map((it) => it.yzzh)),
           },
           relations: {
             h13_yzzxcsList: true, // 显式加载关联数据
@@ -541,16 +541,38 @@ export class h12_yzxbServiceNew {
             },
           },
         });
-        const yzxbUpdate = yzxbs.filter(
-          (yzxb) => yzxb.h13_yzzxcsList && yzxb.h13_yzzxcsList.length === 0,
+
+        // 2. 按yzzh分组
+        const groupedByYzzh = yzxbs.reduce(
+          (acc, yzxb) => {
+            if (!acc[yzxb.yzzh]) {
+              acc[yzxb.yzzh] = [];
+            }
+            acc[yzxb.yzzh].push(yzxb);
+            return acc;
+          },
+          {} as Record<string, typeof yzxbs>,
         );
+
+        // 3. 找出所有h13_yzzxcsList都为空的yzzh组
+        const emptyGroups = Object.entries(groupedByYzzh).filter(([, group]) =>
+          group.every((yzxb) => !yzxb.h13_yzzxcsList?.length),
+        );
+
+        // 4. 准备需要更新的记录
+        const yzxbUpdate = emptyGroups.flatMap(([, group]) => group);
+
+        // 5. 如果有需要更新的记录，进行更新
         if (yzxbUpdate.length > 0) {
-          for (const yzxbup of yzxbUpdate) {
-            if ([3, 4].includes(yzxbup.yzzt)) yzxbup.yzzt = 2;
+          yzxbUpdate.forEach((yzxbup) => {
+            if ([3, 4].includes(yzxbup.yzzt)) {
+              yzxbup.yzzt = 2;
+            }
             if (yzxbup.zxbz) {
               yzxbup.zxbz = 0;
             }
-          }
+          });
+
           await h12Repo.save(yzxbUpdate);
         }
       } catch (error: any) {
