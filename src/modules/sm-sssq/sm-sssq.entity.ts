@@ -29,7 +29,7 @@ export class SmSssq {
     length: 30,
     nullable: true,
   })
-  ssk: string;
+  ssks: string;
 
   @Column({
     type: 'varchar',

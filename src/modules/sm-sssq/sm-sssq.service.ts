@@ -7,14 +7,17 @@ import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 import { h12_yzxbService } from '../h12_yzzb/h12_yzxb.service';
+import { Mzff } from '../mzff/mzff.entity';
 
 @Injectable()
 export class SmSssqService {
   constructor(
     @InjectRepository(h11_brxx)
     private readonly h11BrxxRepository: Repository<h11_brxx>,
-    @InjectRepository(h12_yzxb)
-    private readonly h12YzxbRepository: Repository<h12_yzxb>,
+    // @InjectRepository(h12_yzxb)
+    // private readonly h12YzxbRepository: Repository<h12_yzxb>,
+    @InjectRepository(Mzff)
+    private readonly mzffRepository: Repository<Mzff>,
     @InjectRepository(SmSssq)
     private readonly smSssqRepository: Repository<SmSssq>,
     private readonly gyIdentityService: GyIdentityService,
@@ -24,7 +27,12 @@ export class SmSssqService {
 
   async create(createDto: CreateSmSssqDto): Promise<SmSssq> {
     const smSssq = this.smSssqRepository.create(createDto);
-    return await this.createSmSssq(smSssq);
+    try {
+      return await this.createSmSssq(smSssq);
+    } catch (error) {
+      console.error('保存手术出错：', error);
+      throw error;
+    }
   }
 
   async createSmSssq(smSssq: SmSssq): Promise<SmSssq> {
@@ -38,7 +46,6 @@ export class SmSssqService {
     }
 
     // 设置病人基本信息
-    smSssq.sqdh = await this.gyIdentityService.getMax('SM_SSSQ');
     smSssq.zyh = patientInfo.zybh;
 
     // 验证必填字段
@@ -47,7 +54,8 @@ export class SmSssqService {
       { field: 'ssys', name: '手术医师' },
       { field: 'ssdm', name: '手术名称' },
       { field: 'sqks', name: '申请科室' },
-      { field: 'mzdm', name: '麻醉方式' },
+      { field: 'mzdm', name: '麻醉方法' },
+      { field: 'mzys', name: '麻醉医生' },
     ];
 
     for (const { field, name } of requiredFields) {
@@ -61,6 +69,7 @@ export class SmSssqService {
       throw new Error('申请日期不能大于申请手术日期!');
     }
 
+    smSssq.sqdh = await this.gyIdentityService.getMax('SM_SSSQ');
     // 设置手术室信息
     smSssq.txks = patientInfo.cyksid;
     const h12Yzxb = await this.createMedicalOrders(smSssq);
@@ -76,6 +85,8 @@ export class SmSssqService {
     const maxMxxh = await this.gyIdentityService.getMax('h12_yzxbn');
     const maxYzzh = await this.gyIdentityService.getMax('h12_yzzh');
 
+    const mzff = await this.mzffRepository.findOne({ where: { mzid: smSssq.mzdm } });
+
     const h12Yzxb = await this.h12YzxbService.createAdvice({
       zyid: smSssq.zyid,
       yzlx: 2,
@@ -87,7 +98,7 @@ export class SmSssqService {
     Object.assign(h12Yzxb, {
       zybh: smSssq.zyh,
       xmid: '0000000',
-      xmmc: `拟于${this.formatDateTime(smSssq.ssrq)}在${smSssq.mzdm}下行${smSssq.ssnm}`,
+      xmmc: `拟于${this.formatDateTime(smSssq.ssrq)}在${mzff?.mzffmc}下行${smSssq.ssnm}`,
       jfyl: 1,
       sjyl: 1,
       syffid: '',
@@ -105,10 +116,11 @@ export class SmSssqService {
       jsbz: 1,
       zxbz: 0,
       tzbz: 0,
-      fybz: 0,
+      fybz: '0',
       lryid: smSssq.czgh,
       hdbz: 1,
       tpbz: 0,
+      scdh: smSssq.sqdh,
       zflx: '0',
       xmzl: 1,
       tybz: 0,

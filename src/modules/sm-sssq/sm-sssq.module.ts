@@ -32,6 +32,7 @@ import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
+import { Mzff } from '../mzff/mzff.entity';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
       H12Cycl,
       Syspar,
       SysparNew,
+      Mzff,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => h12_yzzbModule),

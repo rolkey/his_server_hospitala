@@ -1,4 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { Transform } from 'class-transformer';
 import { Allow } from 'class-validator';
 
 export class SmSssqBaseDto {
@@ -12,7 +13,7 @@ export class SmSssqBaseDto {
   zyh?: string;
 
   @Allow()
-  ssk?: string;
+  ssks?: string;
 
   @Allow()
   sqks?: string;
@@ -21,9 +22,11 @@ export class SmSssqBaseDto {
   sqys?: string;
 
   @Allow()
+  @Transform(({ value }) => (value ? new Date(value) : null))
   sgrq?: Date;
 
   @Allow()
+  @Transform(({ value }) => (value ? new Date(value) : null))
   ssrq?: Date;
 
   @Allow()
