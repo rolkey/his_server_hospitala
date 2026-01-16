@@ -45,7 +45,7 @@ export class SmSssqController {
   @Put()
   @ApiOperation({ summary: '更新手术申请' })
   async update(@Body() updateDto: UpdateSmSssqDto) {
-    return await this.smSssqService.update(updateDto);
+    return await this.smSssqService.updateSmSssq(updateDto);
   }
 
   @Delete(':sqdh')
