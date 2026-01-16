@@ -216,9 +216,10 @@ export class SmSssqService {
       order,
       relations: [
         'h11BrxxEntity',
-        'h11BrxxEntity.brlxidEntity', // 直接指定子关系
-        'h11BrxxEntity.mzysEntity', // 直接指定子关系
+        'h11BrxxEntity.brlxidEntity',
+        'h11BrxxEntity.mzysEntity',
         'jbbmicd10Entity', // 疾病编码
+        'mzdmEntity', // 麻醉方法
       ],
     });
   }
