@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, EntityManager, Transaction } from 'typeorm';
+import { Repository, Like, Between, EntityManager, Transaction, In } from 'typeorm';
 import { SmSssq } from './sm-sssq.entity';
 import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto } from './dto/sm-sssq.dto';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
@@ -230,7 +230,17 @@ export class SmSssqService {
     });
   }
 
-  async remove(sqdh: number): Promise<void> {
-    await this.smSssqRepository.delete({ sqdh });
+  async remove(data: { zyid: string; sqdh: string }): Promise<void> {
+    const { zyid, sqdh } = data;
+    return await this.entityManager.transaction(async (transactionalEntityManager) => {
+      await Promise.all([
+        transactionalEntityManager.delete(h12_yzxb, {
+          scdh: In(sqdh.split(',')),
+          zyid,
+          xmid: '0000000',
+        }),
+        transactionalEntityManager.delete(SmSssq, { sqdh: In(sqdh.split(',')), zyid }),
+      ]);
+    });
   }
 }

@@ -41,10 +41,10 @@ export class SmSssqController {
     return await this.smSssqService.updateSmSssq(updateDto);
   }
 
-  @Delete(':sqdh')
+  @Delete()
   @ApiOperation({ summary: '删除手术申请' })
   @ApiParam({ name: 'sqdh', description: '手术申请单号' })
-  async remove(@Param('sqdh', ParseIntPipe) sqdh: number) {
-    return await this.smSssqService.remove(sqdh);
+  async remove(@Query() data: { zyid: string; sqdh: string }) {
+    return await this.smSssqService.remove(data);
   }
 }
