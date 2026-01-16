@@ -27,7 +27,9 @@ export class SmSssqService {
   ) {}
 
   async create(createDto: CreateSmSssqDto): Promise<SmSssq> {
+    console.log('createDto smSsrq', createDto);
     const smSssq = this.smSssqRepository.create(createDto);
+    console.log('createDto smSsrq', smSssq);
     try {
       return await this.createSmSssq(smSssq);
     } catch (error) {
@@ -196,7 +198,7 @@ export class SmSssqService {
     return await this.entityManager.save(h12_yzxb, h12Yzxb);
   }
 
-  async findAll(queryDto: QuerySmSssqDto): Promise<[SmSssq[], number]> {
+  async findAll(queryDto: QuerySmSssqDto): Promise<SmSssq[]> {
     const { pageNo = 1, pageSize = 10, sortBy, sortOrder = 'ASC', ...rest } = queryDto;
     const where = {};
 
@@ -207,17 +209,17 @@ export class SmSssqService {
       }
     });
 
-    const order = sortBy ? { [sortBy]: sortOrder } : undefined;
+    const order = { sqrq: 'DESC' as const };
 
-    return await this.smSssqRepository.findAndCount({
+    return await this.smSssqRepository.find({
       where,
-      skip: (pageNo - 1) * pageSize,
-      take: pageSize,
       order,
-      relations: {
-        h11BrxxEntity: true, // 病人信息
-        jbbmicd10Entity: true, // 疾病编码
-      },
+      relations: [
+        'h11BrxxEntity',
+        'h11BrxxEntity.brlxidEntity', // 直接指定子关系
+        'h11BrxxEntity.mzzdEntity', // 直接指定子关系
+        'jbbmicd10Entity', // 疾病编码
+      ],
     });
   }
 

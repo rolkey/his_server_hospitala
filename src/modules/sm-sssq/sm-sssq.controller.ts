@@ -35,13 +35,6 @@ export class SmSssqController {
     return await this.smSssqService.findAll(queryDto);
   }
 
-  @Get(':sqdh')
-  @ApiOperation({ summary: '获取单个手术申请' })
-  @ApiParam({ name: 'sqdh', description: '手术申请单号' })
-  async findOne(@Param('sqdh', ParseIntPipe) sqdh: number) {
-    return await this.smSssqService.findOne(sqdh);
-  }
-
   @Put()
   @ApiOperation({ summary: '更新手术申请' })
   async update(@Body() updateDto: UpdateSmSssqDto) {
