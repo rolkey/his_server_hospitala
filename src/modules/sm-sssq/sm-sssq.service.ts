@@ -217,7 +217,7 @@ export class SmSssqService {
       relations: [
         'h11BrxxEntity',
         'h11BrxxEntity.brlxidEntity', // 直接指定子关系
-        'h11BrxxEntity.mzzdEntity', // 直接指定子关系
+        'h11BrxxEntity.mzysEntity', // 直接指定子关系
         'jbbmicd10Entity', // 疾病编码
       ],
     });
