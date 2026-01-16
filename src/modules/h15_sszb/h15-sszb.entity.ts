@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'h15_sszb', schema: 'sunsoft.dbo' })
+@Entity({ name: 'h15_sszb', schema: 'dbo' })
 export class H15Sszb {
   @PrimaryColumn({
     name: 'ssid',

@@ -362,17 +362,7 @@ export class BaseH15SsxbDto {
 /**
  * 创建 DTO
  */
-export class CreateH15SsxbDto {
-  @Allow()
-  @IsOptional()
-  @IsString()
-  zyid?: string;
-
-  @Allow()
-  @IsOptional()
-  @IsString()
-  h15ssxb: BaseH15SsxbDto[];
-}
+export class CreateH15SsxbDto extends PartialType(BaseH15SsxbDto) {}
 
 /**
  * 更新 DTO
@@ -439,37 +429,18 @@ export class QueryH15SsxbDto extends PartialType(BaseH15SsxbDto) {
 /**
  * 批量操作 DTO
  */
-export class H15SsxbBatchOperationDto {
+export class H15SsxbBatchDto {
   @Allow()
   @IsString()
   userId: string;
 
   @Allow()
   @IsString()
-  systemId: string;
+  sqdh: string;
 
   @Allow()
   @IsOptional()
-  @IsString()
-  operationType?: 'create' | 'update' | 'delete';
-
-  @Allow()
-  @IsOptional()
-  @Type(() => CreateH15SsxbDto)
-  createItems?: CreateH15SsxbDto[];
-
-  @Allow()
-  @IsOptional()
-  @Type(() => UpdateH15SsxbDto)
-  updateItems?: Array<{
-    ssid: string;
-    zyid: string;
-    ssmxid: number;
-    czid: string;
-    xh: number;
-    ksid: string;
-    data: UpdateH15SsxbDto;
-  }>;
+  items?: BaseH15SsxbDto[];
 
   @Allow()
   @IsOptional()
@@ -477,20 +448,7 @@ export class H15SsxbBatchOperationDto {
     ssid: string;
     zyid: string;
     ssmxid: number;
-    czid: string;
-    xh: number;
-    ksid: string;
   }>;
-
-  @Allow()
-  @IsOptional()
-  @IsString()
-  remark?: string;
-
-  @Allow()
-  @IsOptional()
-  @IsInt()
-  batchNo?: number;
 }
 
 /**

@@ -50,15 +50,10 @@ export class H15SszbController {
     return this.h15SszbService.update(updateDto);
   }
 
-  @Delete(':ssid/:zyid/:xh/:ksid')
+  @Delete(':ssid')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @Param('ssid') ssid: string,
-    @Param('zyid') zyid: string,
-    @Param('xh') xh: number,
-    @Param('ksid') ksid: string,
-  ): Promise<void> {
-    return this.h15SszbService.remove(ssid, zyid, xh, ksid);
+  remove(@Param('ssid') ssid: string): Promise<void> {
+    return this.h15SszbService.remove(ssid);
   }
 
   @Get('findByZyid/:zyid')

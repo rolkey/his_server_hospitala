@@ -18,7 +18,7 @@ export class H15SszbService {
 
   // CRUD 方法
   async create(createDto: CreateH15SszbDto): Promise<H15Sszb> {
-    // 实现创建逻辑
+    // 检查h5-sszb是否存在匹配记录
     return await this.repository.save(createDto);
   }
 
@@ -82,8 +82,9 @@ export class H15SszbService {
     return await this.repository.save({ ...entity, ...updateValue });
   }
 
-  async remove(ssid: string, zyid: string, xh: number, ksid: string): Promise<void> {
+  async remove(ssid: string): Promise<void> {
     // 实现删除逻辑
+    this.repository.delete(ssid);
   }
 
   // 业务方法

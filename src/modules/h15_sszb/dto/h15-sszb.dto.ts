@@ -30,11 +30,11 @@ export class BaseH15SszbDto {
   @Allow()
   @IsString()
   @Length(1, 12)
-  zybh: string;
+  zybh?: string;
 
   @Allow()
   @IsInt()
-  xh: number;
+  xh?: number;
 
   @Allow()
   @IsOptional()

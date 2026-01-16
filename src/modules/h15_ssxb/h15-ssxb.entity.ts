@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'h15_ssxb', schema: 'sunsoft.dbo' })
 export class H15Ssxb {
-  @PrimaryColumn({
+  @Column({
     name: 'ssid',
     type: 'varchar',
     length: 12,
@@ -11,7 +11,7 @@ export class H15Ssxb {
   })
   ssid: string;
 
-  @PrimaryColumn({
+  @Column({
     name: 'zyid',
     type: 'varchar',
     length: 12,
@@ -20,14 +20,14 @@ export class H15Ssxb {
   })
   zyid: string;
 
-  @PrimaryColumn({
+  @Column({
     name: 'ssmxid',
     type: 'int',
     nullable: false,
   })
   ssmxid: number;
 
-  @PrimaryColumn({
+  @Column({
     name: 'czid',
     type: 'varchar',
     length: 12,
@@ -36,14 +36,14 @@ export class H15Ssxb {
   })
   czid: string;
 
-  @PrimaryColumn({
+  @Column({
     name: 'xh',
     type: 'int',
     nullable: false,
   })
   xh: number;
 
-  @PrimaryColumn({
+  @Column({
     name: 'ksid',
     type: 'varchar',
     length: 8,
@@ -243,7 +243,7 @@ export class H15Ssxb {
   })
   jzry: string;
 
-  @Column({
+  @PrimaryColumn({
     name: 'maxid',
     type: 'int',
     nullable: false,

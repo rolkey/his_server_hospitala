@@ -1,69 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Like, DeleteResult } from 'typeorm';
+import { Repository, Between, Like, DeleteResult, EntityManager } from 'typeorm';
 import { H15Ssxb } from './h15-ssxb.entity';
 import {
   CreateH15SsxbDto,
+  H15SsxbBatchDto,
   QueryH15SsxbDto,
   UpdateH15SsxbDto,
-  H15SsxbBatchOperationDto,
-  FeeStatisticsDto,
-  UpdateFeeStatusDto,
 } from './dto/h15-ssxb.dto';
+import { H15Sszb } from '../h15_sszb/h15-sszb.entity';
+import { SmSssq } from '../sm-sssq/sm-sssq.entity';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 @Injectable()
 export class H15SsxbService {
   constructor(
+    @InjectRepository(H15Sszb)
+    private readonly h15SszbRepository: Repository<H15Sszb>,
+
+    @InjectRepository(SmSssq)
+    private readonly smSssqRepository: Repository<SmSssq>,
+
     @InjectRepository(H15Ssxb)
     private readonly h15SsxbRepository: Repository<H15Ssxb>,
+
+    private readonly gyIdentityService: GyIdentityService,
+    private readonly entityManager: EntityManager,
   ) {}
 
   /**
    * 创建收费明细
    */
-  async create(createDto: CreateH15SsxbDto): Promise<H15Ssxb> {
+  async create(createDto: UpdateH15SsxbDto, manager: EntityManager): Promise<H15Ssxb> {
     const entity = this.h15SsxbRepository.create(createDto);
-    return await this.h15SsxbRepository.save(entity);
+    entity.ypdh = (await this.gyIdentityService.getMax('h15_ssxb_ypdh')).toString();
+    return await manager.save(H15Ssxb, entity);
   }
 
   /**
    * 批量创建收费明细
    */
-  async batchCreate(createDtos: CreateH15SsxbDto[]): Promise<H15Ssxb[]> {
-    const entities = createDtos.map((dto) => this.h15SsxbRepository.create(dto));
-    return await this.h15SsxbRepository.save(entities);
+  async batchSave(ssxb: H15SsxbBatchDto): Promise<void> {
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      // 检查主表是否存在，不存在则创建主表记录
+      const smSssq = await this.smSssqRepository.findOne({
+        where: { sqdh: parseInt(ssxb.sqdh) },
+      });
+      const { zyid, ssrq, ssnm, mzys, ssys } = smSssq;
+      const h15Sszb = await this.h15SszbRepository.findOne({ where: { ssid: ssxb.sqdh } });
+      if (!h15Sszb) {
+        const newH15Sszb = this.h15SszbRepository.create({
+          ssid: ssxb.sqdh,
+          zyid,
+          ssrq,
+          ssmc: ssnm,
+          ssysid: ssys,
+          ysid: mzys,
+        });
+        await transactionalEntityManager.save(H15Sszb, newH15Sszb);
+      }
+      for (const [index, item] of ssxb.items.entries()) {
+        item.ssmxid = index + 1;
+        if (!item.ypdh) await this.create(item, transactionalEntityManager);
+        else await this.update(item, transactionalEntityManager);
+      }
+    });
   }
 
   /**
    * 更新收费明细
    */
-  async update(
-    ssid: string,
-    zyid: string,
-    ssmxid: number,
-    czid: string,
-    xh: number,
-    ksid: string,
-    updateDto: UpdateH15SsxbDto,
-  ): Promise<H15Ssxb> {
-    await this.h15SsxbRepository.update({ ssid, zyid, ssmxid, czid, xh, ksid }, updateDto);
-    return await this.findOne(ssid, zyid, ssmxid, czid, xh, ksid);
-  }
-
-  /**
-   * 查询单个收费明细
-   */
-  async findOne(
-    ssid: string,
-    zyid: string,
-    ssmxid: number,
-    czid: string,
-    xh: number,
-    ksid: string,
-  ): Promise<H15Ssxb> {
-    return await this.h15SsxbRepository.findOne({
-      where: { ssid, zyid, ssmxid, czid, xh, ksid },
-    });
+  async update(updateDto: UpdateH15SsxbDto, manager: EntityManager): Promise<void> {
+    const { maxid, ...updateData } = updateDto;
+    await manager.update(H15Ssxb, { maxid }, updateDto);
   }
 
   /**
@@ -140,22 +149,8 @@ export class H15SsxbService {
   /**
    * 删除收费明细
    */
-  async remove(
-    ssid: string,
-    zyid: string,
-    ssmxid: number,
-    czid: string,
-    xh: number,
-    ksid: string,
-  ): Promise<DeleteResult> {
-    return await this.h15SsxbRepository.delete({
-      ssid,
-      zyid,
-      ssmxid,
-      czid,
-      xh,
-      ksid,
-    });
+  async remove(maxid: number): Promise<DeleteResult> {
+    return await this.h15SsxbRepository.delete({ maxid });
   }
 
   /**
