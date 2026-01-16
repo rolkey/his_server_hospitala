@@ -23,7 +23,7 @@ export class SmSssqBaseDto {
 
   @Allow()
   @Transform(({ value }) => (value ? new Date(value) : null))
-  sgrq?: Date;
+  sqrq?: Date;
 
   @Allow()
   @Transform(({ value }) => (value ? new Date(value) : null))

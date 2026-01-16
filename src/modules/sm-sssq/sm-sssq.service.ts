@@ -26,10 +26,10 @@ export class SmSssqService {
     private readonly h12YzxbService: h12_yzxbService,
   ) {}
 
-  async create(createDto: CreateSmSssqDto): Promise<SmSssq> {
-    console.log('createDto smSsrq', createDto);
+  async create(createDto: CreateSmSssqDto): Promise<void> {
+    console.log('createDto smSsrq', JSON.stringify(createDto));
     const smSssq = this.smSssqRepository.create(createDto);
-    console.log('createDto smSsrq', smSssq);
+    console.log('createDto smSsrq', JSON.stringify(smSssq));
     try {
       return await this.createSmSssq(smSssq);
     } catch (error) {
@@ -38,7 +38,7 @@ export class SmSssqService {
     }
   }
 
-  async createSmSssq(smSssq: SmSssq): Promise<SmSssq> {
+  async createSmSssq(smSssq: SmSssq): Promise<void> {
     // 验证病人信息
     const patientInfo = await this.validatePatient(smSssq.zyid || '');
 
@@ -54,11 +54,13 @@ export class SmSssqService {
     smSssq.sqdh = await this.gyIdentityService.getMax('SM_SSSQ');
 
     // 设置手术室信息
-    smSssq.txks = patientInfo.cyksid;
-    const h12Yzxb = await this.createMedicalOrders(smSssq);
-    smSssq.bzxx5 = h12Yzxb.mxxh?.toString();
+    return await this.entityManager.transaction(async (transactionalEntityManager) => {
+      smSssq.txks = patientInfo.cyksid;
+      const h12Yzxb = await this.createMedicalOrders(smSssq, transactionalEntityManager);
+      smSssq.bzxx5 = h12Yzxb.mxxh?.toString();
 
-    return await this.smSssqRepository.save(smSssq);
+      await transactionalEntityManager.save(smSssq);
+    });
   }
 
   async updateSmSssq(updateData: UpdateSmSssqDto): Promise<void> {
@@ -137,7 +139,7 @@ export class SmSssqService {
     }
   }
 
-  private async createMedicalOrders(smSssq: SmSssq): Promise<h12_yzxb> {
+  private async createMedicalOrders(smSssq: SmSssq, manager: EntityManager): Promise<h12_yzxb> {
     const currentTime = new Date();
 
     // 获取最大序号
@@ -179,7 +181,7 @@ export class SmSssqService {
       lryid: smSssq.czgh,
       hdbz: 1,
       tpbz: 0,
-      scdh: smSssq.sqdh,
+      scdh: smSssq.sqdh.toString(),
       zflx: '0',
       xmzl: 1,
       tybz: 0,
@@ -195,7 +197,7 @@ export class SmSssqService {
       yzzt: 0,
     });
 
-    return await this.entityManager.save(h12_yzxb, h12Yzxb);
+    return await manager.save(h12_yzxb, h12Yzxb);
   }
 
   async findAll(queryDto: QuerySmSssqDto): Promise<SmSssq[]> {
