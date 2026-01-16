@@ -27,9 +27,7 @@ export class SmSssqService {
   ) {}
 
   async create(createDto: CreateSmSssqDto): Promise<void> {
-    console.log('createDto smSsrq', JSON.stringify(createDto));
     const smSssq = this.smSssqRepository.create(createDto);
-    console.log('createDto smSsrq', JSON.stringify(smSssq));
     try {
       return await this.createSmSssq(smSssq);
     } catch (error) {
