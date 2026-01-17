@@ -11,6 +11,7 @@ import {
 import { H15Sszb } from '../h15_sszb/h15-sszb.entity';
 import { SmSssq } from '../sm-sssq/sm-sssq.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 
 @Injectable()
 export class H15SsxbService {
@@ -24,6 +25,9 @@ export class H15SsxbService {
     @InjectRepository(H15Ssxb)
     private readonly h15SsxbRepository: Repository<H15Ssxb>,
 
+    @InjectRepository(h11_brxx)
+    private readonly h11BrxxRepository: Repository<h11_brxx>,
+
     private readonly gyIdentityService: GyIdentityService,
     private readonly entityManager: EntityManager,
   ) {}
@@ -32,9 +36,8 @@ export class H15SsxbService {
    * 创建收费明细
    */
   async create(createDto: UpdateH15SsxbDto, manager: EntityManager): Promise<H15Ssxb> {
-    const entity = this.h15SsxbRepository.create(createDto);
-    entity.ypdh = (await this.gyIdentityService.getMax('h15_ssxb_ypdh')).toString();
-    return await manager.save(H15Ssxb, entity);
+    createDto.ypdh = (await this.gyIdentityService.getMax('h15_ssxb_ypdh')).toString();
+    return await manager.save(H15Ssxb, createDto);
   }
 
   /**
@@ -42,27 +45,45 @@ export class H15SsxbService {
    */
   async batchSave(ssxb: H15SsxbBatchDto): Promise<void> {
     await this.entityManager.transaction(async (transactionalEntityManager) => {
-      // 检查主表是否存在，不存在则创建主表记录
-      const smSssq = await this.smSssqRepository.findOne({
-        where: { sqdh: parseInt(ssxb.sqdh) },
-      });
-      const { zyid, ssrq, ssnm, mzys, ssys } = smSssq;
-      const h15Sszb = await this.h15SszbRepository.findOne({ where: { ssid: ssxb.sqdh } });
-      if (!h15Sszb) {
-        const newH15Sszb = this.h15SszbRepository.create({
-          ssid: ssxb.sqdh,
-          zyid,
-          ssrq,
-          ssmc: ssnm,
-          ssysid: ssys,
-          ysid: mzys,
+      try {
+        // 检查主表是否存在，不存在则创建主表记录
+        const smSssq = await this.smSssqRepository.findOne({
+          where: { sqdh: parseInt(ssxb.sqdh) },
         });
-        await transactionalEntityManager.save(H15Sszb, newH15Sszb);
-      }
-      for (const [index, item] of ssxb.items.entries()) {
-        item.ssmxid = index + 1;
-        if (!item.ypdh) await this.create(item, transactionalEntityManager);
-        else await this.update(item, transactionalEntityManager);
+        const { zyid, ssrq, ssnm, mzys, ssys } = smSssq;
+        const h11Brxx = await this.h11BrxxRepository.findOne({
+          where: { zyid },
+        });
+
+        const h15Sszb = await transactionalEntityManager.findOne(H15Sszb, {
+          where: { sqdh: parseInt(ssxb.sqdh) },
+        });
+        let ssid = '0';
+        if (!h15Sszb) {
+          ssid = (await this.gyIdentityService.getMax('h15_sszb')).toString();
+          const newH15Sszb = this.h15SszbRepository.create({
+            ssid,
+            zyid,
+            xh: 1,
+            zybh: h11Brxx.zybh,
+            sqdh: parseInt(ssxb.sqdh),
+            ssrq,
+            ssmc: ssnm,
+            ssysid: ssys,
+            ysid: mzys,
+          });
+          await transactionalEntityManager.save(H15Sszb, newH15Sszb);
+        } else ssid = h15Sszb.ssid;
+        for (const [index, item] of ssxb.items.entries()) {
+          item.ssmxid = index + 1;
+          item.xh = index + 1;
+          item.ssid = ssid;
+          if (!item.ypdh) await this.create(item, transactionalEntityManager);
+          else await this.update(item, transactionalEntityManager);
+        }
+      } catch (error) {
+        console.error('错误', error);
+        throw error;
       }
     });
   }
@@ -80,8 +101,8 @@ export class H15SsxbService {
    */
   async findAll(queryDto: QueryH15SsxbDto) {
     const {
-      page = 1,
-      limit = 10,
+      pageNo = 1,
+      pageSize = 10,
       sortBy = 'xh',
       sortOrder = 'ASC',
       keyword,
@@ -89,14 +110,17 @@ export class H15SsxbService {
       endSsrq,
       xmmcLike,
       zflx,
+      sqdh,
       ...conditions
     } = queryDto;
 
-    const queryBuilder = this.h15SsxbRepository.createQueryBuilder('entity');
+    const queryBuilder = this.h15SsxbRepository
+      .createQueryBuilder('entity')
+      .leftJoinAndSelect('entity.h15SszbEntity', 'h15Sszb');
 
     // 基础条件查询
     Object.entries(conditions).forEach(([key, value]) => {
-      if (value !== undefined) {
+      if (value !== undefined && key !== 'sqdh') {
         queryBuilder.andWhere(`entity.${key} = :${key}`, { [key]: value });
       }
     });
@@ -128,22 +152,27 @@ export class H15SsxbService {
       queryBuilder.andWhere('entity.zflx = :zflx', { zflx });
     }
 
+    if (sqdh) {
+      queryBuilder.andWhere('h15Sszb.sqdh = :sqdh', { sqdh });
+    }
+
     // 排序
     queryBuilder.orderBy(`entity.${sortBy}`, sortOrder);
 
     // 分页
-    const offset = (page - 1) * limit;
-    queryBuilder.skip(offset).take(limit);
+    const offset = (pageNo - 1) * pageSize;
+    queryBuilder.skip(offset).take(pageSize);
 
-    const [items, total] = await queryBuilder.getManyAndCount();
+    return await queryBuilder.getMany();
+    // const [items, total] = await queryBuilder.getManyAndCount();
 
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    // return {
+    //   items,
+    //   total,
+    //   pageNo,
+    //   pageSize,
+    //   totalPages: Math.ceil(total / pageSize),
+    // };
   }
 
   /**

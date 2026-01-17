@@ -11,6 +11,16 @@ export class H15Sszb {
   })
   ssid: string;
 
+  @Column({
+    name: 'sqdh',
+    type: 'decimal',
+    precision: 16,
+    scale: 4,
+    nullable: false,
+    default: '',
+  })
+  sqdh: number;
+
   @PrimaryColumn({
     name: 'zyid',
     type: 'varchar',

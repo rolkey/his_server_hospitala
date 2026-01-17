@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { H15Sszb } from '../h15_sszb/h15-sszb.entity';
 
 @Entity({ name: 'h15_ssxb', schema: 'sunsoft.dbo' })
 export class H15Ssxb {
@@ -243,11 +251,7 @@ export class H15Ssxb {
   })
   jzry: string;
 
-  @PrimaryColumn({
-    name: 'maxid',
-    type: 'int',
-    nullable: false,
-  })
+  @PrimaryColumn('integer', { name: 'maxid', insert: false, update: false })
   maxid: number;
 
   @Column({
@@ -508,4 +512,10 @@ export class H15Ssxb {
     default: '',
   })
   tcmc: string;
+
+  @ManyToOne(() => H15Sszb, {
+    cascade: false, // 禁用级联操作
+  })
+  @JoinColumn({ name: 'ssid', referencedColumnName: 'ssid' })
+  h15SszbEntity: H15Sszb;
 }
