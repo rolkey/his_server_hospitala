@@ -104,7 +104,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'MZDM',
+    name: 'mzdm',
     length: 30,
     nullable: true,
   })
@@ -151,7 +151,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'BZXX',
+    name: 'bzxx',
     length: 255,
     nullable: true,
   })
@@ -235,15 +235,21 @@ export class SmSssq {
   })
   bzxx5: string;
 
-  @ManyToOne(() => h11_brxx)
+  @ManyToOne(() => h11_brxx, {
+    cascade: false, // 禁用级联操作
+  })
   @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
   h11BrxxEntity: h11_brxx;
 
-  @ManyToOne(() => Jbbmicd10)
+  @ManyToOne(() => Jbbmicd10, {
+    cascade: false, // 禁用级联操作
+  })
   @JoinColumn({ name: 'zdbm', referencedColumnName: 'icd10' })
   jbbmicd10Entity: Jbbmicd10;
 
-  @ManyToOne(() => Mzff)
+  @ManyToOne(() => Mzff, {
+    cascade: false, // 禁用级联操作
+  })
   @JoinColumn({ name: 'mzdm', referencedColumnName: 'mzid' })
   mzdmEntity: Mzff;
 }
