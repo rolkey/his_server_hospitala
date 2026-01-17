@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, EntityManager, Transaction, In } from 'typeorm';
+import { Repository, Like, Between, EntityManager, Transaction, In, Not } from 'typeorm';
 import { SmSssq } from './sm-sssq.entity';
 import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto } from './dto/sm-sssq.dto';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
@@ -233,6 +233,13 @@ export class SmSssqService {
   async remove(data: { zyid: string; sqdh: string }): Promise<void> {
     const { zyid, sqdh } = data;
     return await this.entityManager.transaction(async (transactionalEntityManager) => {
+      // 检查 h12_yzxb中yzzt是否有不为0的，不为0要抛出异常禁止删除
+      const yzxb = await transactionalEntityManager.findOne(h12_yzxb, {
+        where: { zyid, scdh: In(sqdh.split(',')), yzzt: Not(0) },
+      });
+      if (yzxb) {
+        throw new Error('该手术申请已提交，无法删除！！');
+      }
       await Promise.all([
         transactionalEntityManager.delete(h12_yzxb, {
           scdh: In(sqdh.split(',')),
