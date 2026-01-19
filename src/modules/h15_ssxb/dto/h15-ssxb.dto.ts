@@ -268,11 +268,7 @@ export class H15SsxbBatchDto {
   items?: BaseH15SsxbDto[];
 
   @Allow()
-  deleteItems?: Array<{
-    ssid: string;
-    zyid: string;
-    ssmxid: number;
-  }>;
+  deleteItems?: Array<number>;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Like, DeleteResult, EntityManager } from 'typeorm';
+import { Repository, Between, Like, DeleteResult, EntityManager, In } from 'typeorm';
 import { H15Ssxb } from './h15-ssxb.entity';
 import {
   CreateH15SsxbDto,
@@ -81,6 +81,7 @@ export class H15SsxbService {
           if (!item.ypdh) await this.create(item, transactionalEntityManager);
           else await this.update(item, transactionalEntityManager);
         }
+        await transactionalEntityManager.delete(H15Ssxb, { maxid: In(ssxb.deleteItems) });
       } catch (error) {
         console.error('错误', error);
         throw error;
