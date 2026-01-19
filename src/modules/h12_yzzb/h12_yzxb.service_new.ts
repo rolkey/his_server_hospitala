@@ -748,7 +748,7 @@ export class h12_yzxbServiceNew {
     if (!dto?.maxidList?.length) return;
 
     // 兼容前端传入的两种格式：数字数组或包含maxid属性的对象数组
-    const maxidValues = dto.maxidList
+    const maxidList = dto.maxidList
       .map((item) => {
         if (typeof item === 'object' && item !== null && 'maxid' in item) {
           return item.maxid;
@@ -757,7 +757,7 @@ export class h12_yzxbServiceNew {
       })
       .filter((maxid) => !isNaN(maxid));
 
-    if (!maxidValues.length) return;
+    if (!maxidList.length) return;
 
     await this.dataSource.transaction(async (manager) => {
       try {
@@ -790,7 +790,7 @@ export class h12_yzxbServiceNew {
             {
               zyid: dto.zyid,
               yzlx: dto.yzlx || '',
-              maxidList: maxidValues,
+              maxidList: maxidList,
             },
           )
           .getMany();
