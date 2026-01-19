@@ -268,7 +268,7 @@ export class H15SsxbBatchDto {
   items?: BaseH15SsxbDto[];
 
   @Allow()
-  deleteItems?: Array<number>;
+  deleteItems?: number[];
 }
 
 /**
