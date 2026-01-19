@@ -259,14 +259,14 @@ export class h12_yzzbController {
    * 删除医嘱费用
    */
   @Post('deleteCost')
-  async delete(@Body() dto: adviceDto) {
+  async deleteCost(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.deleteCost(dto);
   }
   /**
    * 医嘱退费
    */
   @Post('refundCost')
-  async refund(@Body() dto: adviceDto) {
+  async refundCost(@Body() dto: adviceDto) {
     return await this.h12_yzxbServiceNew.refundCost(dto);
   }
 

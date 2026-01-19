@@ -19,4 +19,4 @@ import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
   controllers: [h13_yzzxcsController],
   exports: [h13_yzzxcsService],
 })
-export class h13_yzzxcsModule { }
+export class h13_yzzxcsModule {}

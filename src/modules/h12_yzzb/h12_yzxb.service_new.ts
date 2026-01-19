@@ -31,6 +31,7 @@ import DateFormater from '@/utils/DateFormater';
 
 import { log } from 'console';
 import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
+import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 
 /**
  * 完整重构版 Service
@@ -418,6 +419,8 @@ export class h12_yzxbServiceNew {
           .createQueryBuilder('h13_yzzxcs')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
+          .leftJoin('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
+          .addSelect(['h12_yzxb.xmzl', 'h12_yzxb.xmmc'])
           .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
           .addSelect([
             'H31Lyjl.djbh',
@@ -452,17 +455,15 @@ export class h12_yzxbServiceNew {
 
         // 校验业务规则
         for (const item of h13_yzzxcsList) {
-          if (
-            item.bzxcs !== item.zxcs &&
-            item.xmidEntity.xmzl !== 1 &&
-            item?.H31Lyjl?.ckclbz === 1
-          ) {
+          const xmzl = item.xmidEntity?.xmzl || item.h12_yzxb.xmzl;
+          const xmmc = item.xmidEntity?.xmmc || item.h12_yzxb.xmmc;
+          if (item.bzxcs !== item.zxcs && xmzl !== 1 && item?.H31Lyjl?.ckclbz === 1) {
             throw new CustomException(
               ERR.ERR_40802,
               `[${item.xmidEntity.xmmc}] 已发药，请走退费流程!`,
             );
           }
-          if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl !== 1 && item.fydh) {
+          if (item.bzxcs !== item.zxcs && xmzl !== 1 && item.fydh) {
             throw new CustomException(
               ERR.ERR_40803,
               `[${item.xmidEntity.xmmc}] 已生成领药单，请发药科室退回单号【${item.fydh}】才可以删除!`,
@@ -483,13 +484,22 @@ export class h12_yzxbServiceNew {
             throw new CustomException(ERR.ERR_40805, `单号 [${item.fydh}] 未退完全部执行次数`);
           }
 
-          if (item.bzxcs !== item.zxcs && item.xmidEntity.xmzl === 1 && item.clbz === 1) {
-            throw new CustomException(ERR.ERR_40806, `[${item.xmidEntity.xmmc}] 已执行，不能删除`);
+          if (item.bzxcs !== item.zxcs && xmzl === 1 && item.clbz === 1) {
+            throw new CustomException(ERR.ERR_40806, `[${xmmc}] 已执行，不能删除`);
           }
         }
 
+        // 把退费表保存到h13_yzzxcs_delete表中，并删除退费记录
+        const h13_yzzxcs_tfs = await manager.find(H13YzzxcsTf, {
+          where: {
+            zyid: dto.zyid,
+            maxid: In(maxidList),
+          },
+        });
+        await manager.save(H13YzzxcsDelete, h13_yzzxcs_tfs);
+
         // 删除费用
-        await h13Repo.delete({
+        await manager.delete(h13_yzzxcs, {
           zyid: dto.zyid,
           yzlx: dto.yzlx,
           maxid: In(maxidList),
@@ -576,7 +586,7 @@ export class h12_yzxbServiceNew {
           await h12Repo.save(yzxbUpdate);
         }
       } catch (error: any) {
-        console.log('删除费用出错：', error);
+        console.error('删除费用出错：', error);
         if (error instanceof CustomException) {
           throw error;
         } else throw new CustomException(ERR.ERR_40810);
