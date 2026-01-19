@@ -1,6 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Like, Repository, MoreThan, LessThan, EntityManager, Raw } from 'typeorm';
+import {
+  DataSource,
+  In,
+  Like,
+  Repository,
+  MoreThan,
+  LessThan,
+  EntityManager,
+  Raw,
+  Not,
+  IsNull,
+} from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -704,6 +715,31 @@ export class h12_yzxbServiceNew {
   //     }
   //   });
   // }
+
+  /**
+   * 取消领药单
+   * @param dto 取消领药
+   */
+  async refundMedicineReceipt(dto: adviceDto): Promise<void> {
+    try {
+      const maxidList = dto.mxxhList.map((it) => it.maxid).filter(Boolean);
+      await this.h13_yzzxcsRepo.update(
+        {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          maxid: In(maxidList),
+          fydh: Not(IsNull()),
+          clbz: 0,
+        },
+        {
+          fydh: null,
+        },
+      );
+    } catch (error: any) {
+      this.logger.error('取消领药失败！！', error);
+      throw new CustomException(ERR.ERR_10000, error?.message ?? '生成发药单失败');
+    }
+  }
 
   // -------------------------
   // 退费医嘱费用
