@@ -121,10 +121,10 @@ export class H13YzzxcsDelete {
   @Column({ name: 'ybfl', type: 'varchar', length: 8, nullable: true })
   ybfl: string | null;
 
-  @Column({
+  @PrimaryColumn({
     name: 'maxid',
     type: 'int',
-    nullable: true,
+    nullable: false,
     insert: false,
     update: false,
   })

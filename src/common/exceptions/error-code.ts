@@ -47,7 +47,7 @@ export const ERR = {
   ERR_40801: { code: 40801, message: '正在执行生成发药，请稍等！!' },
   ERR_40802: { code: 40802, message: '已发药，请走退费流程!' },
   ERR_40803: { code: 40803, message: '已生成领药单!' },
-  ERR_40804: { code: 40804, message: '退药单未执行退药！' },
+  ERR_40804: { code: 40804, message: '退药单未执行发药！' },
   ERR_40805: { code: 40805, message: '单号未退完全部执行次数！！' },
   ERR_40806: { code: 40806, message: '已执行，不能删除！！' },
   ERR_40807: { code: 40807, message: '删除费用参数不全！！' },

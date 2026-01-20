@@ -44,6 +44,7 @@ import { H12CyclModule } from '../h12-cycl/h12-cycl.module';
 import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
 import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
+import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 @Global()
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
       H12Cycl,
       h13_cwsyxx,
       C00Fbxx,
+      H13YzzxcsDelete,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
