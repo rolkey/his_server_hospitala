@@ -722,7 +722,7 @@ export class h12_yzxbServiceNew {
    */
   async refundMedicineReceipt(dto: adviceDto): Promise<void> {
     try {
-      const maxidList = dto.mxxhList.map((it) => it.maxid).filter(Boolean);
+      const maxidList = dto.maxidList.map((it) => it.maxid).filter(Boolean);
       await this.h13_yzzxcsRepo.update(
         {
           zyid: dto.zyid,
@@ -789,7 +789,7 @@ export class h12_yzxbServiceNew {
             'h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.maxid IN (:...maxidList)',
             {
               zyid: dto.zyid,
-              yzlx: dto.yzlx || '',
+              yzlx: dto.yzlx,
               maxidList: maxidList,
             },
           )
@@ -798,7 +798,7 @@ export class h12_yzxbServiceNew {
         if (!h13_yzzxcsList.length) return;
 
         const tfListToInsert: H13YzzxcsTf[] = [];
-        const gs_cxsz = await this.configReaderService.readGsCxsz();
+        // const gs_cxsz = await this.configReaderService.readGsCxsz();
 
         for (const item of h13_yzzxcsList) {
           // 检查项目是否已执行
@@ -817,12 +817,12 @@ export class h12_yzxbServiceNew {
           }
 
           // 检查记录是否已被其他护士退费
-          const countslResult = await manager.query(
+          const [countslResult] = await manager.query(
             `SELECT ISNULL(SUM((zxcs - bzxcs) * jfyl), 0) as countsl FROM h13_yzzxcs WHERE zyid = @0 AND mxxh = @1 AND maxid = @2`,
             [dto.zyid, item.mxxh, item.maxid],
           );
 
-          const ll_countsl = parseFloat(countslResult[0]?.countsl || '0');
+          const ll_countsl = parseFloat(countslResult?.countsl || '0');
           if (ll_countsl === 0) {
             throw new CustomException(ERR.ERR_10000, '该记录已有护士退费，请咨询同事！');
           }
@@ -862,7 +862,7 @@ export class h12_yzxbServiceNew {
             zxcs: -1 * bzxcs,
             bzxcs: 0,
             tyrid: dto.zxhs,
-            tysj: new Date(),
+            tysj: new Date(), // 退药时间为当前时间？
             sysj: null,
             clbz: 0,
             fybz: 0,

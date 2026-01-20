@@ -290,8 +290,8 @@ export class h12_yzzbController {
    * 取消领药单
    */
   @Post('refundMedicineReceipt')
-  async refundMedicineReceipt(@Body() dto: medicineReceiptDto) {
-    return await this.h12_yzxbServiceNew.medicineReceipt(dto);
+  async refundMedicineReceipt(@Body() dto: adviceDto) {
+    return await this.h12_yzxbServiceNew.refundMedicineReceipt(dto);
   }
 
   /**

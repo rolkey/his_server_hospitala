@@ -96,7 +96,7 @@ export class adviceDto {
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
 
-  @IsNotEmpty({ message: 'zxhs不能为空' })
+  @Allow()
   zxhs?: string;
 
   @IsArray()
