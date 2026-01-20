@@ -13,6 +13,7 @@ import { SmSssq } from '../sm-sssq/sm-sssq.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
+import { parse } from 'path';
 
 @Injectable()
 export class H15SsxbService {
@@ -65,7 +66,13 @@ export class H15SsxbService {
           zybh: h11Brxx.zybh,
           sqdh: parseInt(ssxb.sqdh),
           ssrq,
+          ksid: h11Brxx.cyksid,
+          nl: parseInt(h11Brxx.brnl),
+          cwid: h11Brxx.cycw,
+          xbid: h11Brxx.xbid,
           ssmc: ssnm,
+          lryid: ssxb.userId,
+          sslb: 0,
           ssysid: ssys,
           ysid: mzys,
         });
