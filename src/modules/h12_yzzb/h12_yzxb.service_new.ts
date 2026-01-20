@@ -456,6 +456,7 @@ export class h12_yzxbServiceNew {
             'H13YzzxcsTfList.fydh',
             'H13YzzxcsTfList.yzlx',
             'H13YzzxcsTfList.zyid',
+            'H13YzzxcsTfList.maxid',
             'H13YzzxcsTfList.zxcs2',
           ])
           .where(
@@ -477,6 +478,8 @@ export class h12_yzxbServiceNew {
         for (const item of h13_yzzxcsList) {
           const xmzl = item.xmidEntity?.xmzl || item.h12_yzxb.xmzl;
           const xmmc = item.xmidEntity?.xmmc || item.h12_yzxb.xmmc;
+          const H13YzzxcsTfList = item.H13YzzxcsTfList ?? [];
+
           if (item.bzxcs !== item.zxcs && xmzl !== 1 && item?.H31Lyjl?.ckclbz === 1) {
             throw new CustomException(
               ERR.ERR_40802,
@@ -490,7 +493,6 @@ export class h12_yzxbServiceNew {
             );
           }
 
-          const H13YzzxcsTfList = item.H13YzzxcsTfList ?? [];
           const index = H13YzzxcsTfList.findIndex((tf) => tf.fybz === 0);
           if (index !== -1 && item.fydh) {
             throw new CustomException(
@@ -510,6 +512,7 @@ export class h12_yzxbServiceNew {
             delete yzzxcsTf.maxid;
           }
           h13_yzzxcs_tfs.push(...item.H13YzzxcsTfList);
+          item.zxcs2 = item.maxid;
           delete item.maxid;
 
           if (item.bzxcs !== item.zxcs && xmzl === 1 && item.clbz === 1) {
