@@ -262,7 +262,10 @@ export class H15SsxbBatchDto {
   userId: string;
 
   @Allow()
-  sqdh: string;
+  zyid: string;
+
+  @Allow()
+  sqdh?: string;
 
   @Allow()
   items?: BaseH15SsxbDto[];

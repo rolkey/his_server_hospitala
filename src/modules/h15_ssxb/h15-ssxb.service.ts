@@ -40,50 +40,150 @@ export class H15SsxbService {
     return await manager.save(H15Ssxb, createDto);
   }
 
+  async saveYzxb(ssxb: H15SsxbBatchDto, manager: EntityManager): Promise<void> {
+    try {
+      // 检查主表是否存在，不存在则创建主表记录
+      const smSssq = await this.smSssqRepository.findOne({
+        where: { sqdh: parseInt(ssxb.sqdh) },
+      });
+      const { zyid, ssrq, ssnm, mzys, ssys } = smSssq;
+      const h11Brxx = await this.h11BrxxRepository.findOne({
+        where: { zyid },
+      });
+
+      const h15Sszb = await manager.findOne(H15Sszb, {
+        where: { sqdh: parseInt(ssxb.sqdh) },
+      });
+      let ssid = '0';
+      if (!h15Sszb) {
+        ssid = (await this.gyIdentityService.getMax('h15_sszb')).toString();
+        const newH15Sszb = this.h15SszbRepository.create({
+          ssid,
+          zyid,
+          xh: 1,
+          zybh: h11Brxx.zybh,
+          sqdh: parseInt(ssxb.sqdh),
+          ssrq,
+          ssmc: ssnm,
+          ssysid: ssys,
+          ysid: mzys,
+        });
+        await manager.save(H15Sszb, newH15Sszb);
+      } else ssid = h15Sszb.ssid;
+      for (const [index, item] of ssxb.items.entries()) {
+        item.ssmxid = index + 1;
+        item.xh = index + 1;
+        item.ssid = ssid;
+        if (!item.ypdh) await this.create(item, manager);
+        else await this.update(item, manager);
+      }
+      await manager.delete(H15Ssxb, { maxid: In(ssxb.deleteItems) });
+    } catch (error) {
+      console.error('错误', error);
+      throw error;
+    }
+  }
+
   /**
    * 批量创建收费明细
    */
   async batchSave(ssxb: H15SsxbBatchDto): Promise<void> {
     await this.entityManager.transaction(async (transactionalEntityManager) => {
-      try {
-        // 检查主表是否存在，不存在则创建主表记录
-        const smSssq = await this.smSssqRepository.findOne({
-          where: { sqdh: parseInt(ssxb.sqdh) },
-        });
-        const { zyid, ssrq, ssnm, mzys, ssys } = smSssq;
-        const h11Brxx = await this.h11BrxxRepository.findOne({
-          where: { zyid },
-        });
+      await this.saveYzxb(ssxb, transactionalEntityManager);
+    });
+  }
 
-        const h15Sszb = await transactionalEntityManager.findOne(H15Sszb, {
-          where: { sqdh: parseInt(ssxb.sqdh) },
-        });
-        let ssid = '0';
-        if (!h15Sszb) {
-          ssid = (await this.gyIdentityService.getMax('h15_sszb')).toString();
-          const newH15Sszb = this.h15SszbRepository.create({
-            ssid,
-            zyid,
-            xh: 1,
-            zybh: h11Brxx.zybh,
-            sqdh: parseInt(ssxb.sqdh),
-            ssrq,
-            ssmc: ssnm,
-            ssysid: ssys,
-            ysid: mzys,
-          });
-          await transactionalEntityManager.save(H15Sszb, newH15Sszb);
-        } else ssid = h15Sszb.ssid;
-        for (const [index, item] of ssxb.items.entries()) {
-          item.ssmxid = index + 1;
-          item.xh = index + 1;
-          item.ssid = ssid;
-          if (!item.ypdh) await this.create(item, transactionalEntityManager);
-          else await this.update(item, transactionalEntityManager);
+  /**
+   * 提交手术细表并处理库存
+   */
+  async submitSurgeryDetail(ssxb: H15SsxbBatchDto): Promise<void> {
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      try {
+        // 获取细表记录
+        const details = ssxb.items;
+
+        for (const detail of details) {
+          // 跳过已提交或已退票的记录
+          if (detail.tjbz === 1 || detail.tpbz === 1) {
+            continue;
+          }
+
+          // 检查护士签名
+          if (!detail.kshs) {
+            throw new Error('护士未签名医嘱，不能提交！');
+          }
+
+          // 如果是治疗类项目，直接标记为已提交
+          if (detail.xmzl === 1) {
+            detail.tjbz = 1;
+            continue;
+          }
+
+          // 查询药品信息
+          const medicine = await transactionalEntityManager.query(
+            `SELECT isnull(jsl2,0) as jsl2, ysxs FROM h30_ypzd WHERE ypid = ?`,
+            [detail.xmid],
+          );
+
+          if (!medicine || medicine.length === 0) {
+            continue;
+          }
+
+          // 如果需要管理库存
+          if (medicine[0].jsl2 === 0) {
+            // 检查库存
+            const stock = await transactionalEntityManager.query(
+              `SELECT isnull((xsl),0) - isnull(dfsl,0) - isnull(mzdfsl,0) - isnull(ssdfsl,0) as kcsl
+             FROM h31_kcxx
+             WHERE ksid = ? AND ypid = ? AND scph = ?`,
+              [detail.zxksid, detail.xmid, detail.scph],
+            );
+
+            if (stock[0].kcsl <= 0 || stock[0].kcsl < detail.jfyl) {
+              // 查找其他批次的库存
+              const otherStock = await transactionalEntityManager.query(
+                `SELECT TOP 1 scph, scpc, lsjg, pfjg
+               FROM h31_kcxx
+               WHERE ksid = ? AND ypid = ?
+               AND isnull(xsl,0) - isnull(dfsl,0) - isnull(mzdfsl,0) - isnull(ssdfsl,0) - ? >= 0`,
+                [detail.zxksid, detail.xmid, detail.jfyl],
+              );
+
+              if (!otherStock || otherStock.length === 0) {
+                throw new Error(`${detail.xmmc}库存为零，不能开此药品，请核查！`);
+              }
+
+              // 更新药品信息
+              detail.scph = otherStock[0].scph;
+              detail.scpc = otherStock[0].scpc;
+              detail.xmdj = Math.round((otherStock[0].lsjg / medicine[0].ysxs) * 10000) / 10000;
+              detail.pfjg = Math.round((otherStock[0].pfjg / medicine[0].ysxs) * 10000) / 10000;
+            }
+
+            // 更新库存
+            const dfsl = detail.jfyl;
+            await transactionalEntityManager.query(
+              `UPDATE h31_kcxx
+             SET ssdfsl = isnull(ssdfsl,0) + ?
+             WHERE ypid = ? AND scph = ? AND ksid = ?`,
+              [dfsl, detail.xmid, detail.scph, detail.zxksid],
+            );
+          }
+
+          // 标记为已提交
+          detail.tjbz = 1;
         }
-        await transactionalEntityManager.delete(H15Ssxb, { maxid: In(ssxb.deleteItems) });
+        await this.saveYzxb(ssxb, transactionalEntityManager);
+
+        // 如果是发药模式5，执行发药记录
+        if (process.env.KSSZ === '5') {
+          await transactionalEntityManager.query(
+            `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = ?, @ls_usid = ?, @yzlx = 3`,
+            [ssxb.zyid, ssxb.userId],
+          );
+        }
       } catch (error) {
-        console.error('错误', error);
+        console.error('提交手术明细失败:', error);
         throw error;
       }
     });

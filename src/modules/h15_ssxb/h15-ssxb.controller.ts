@@ -29,4 +29,9 @@ export class H15SsxbController {
   getPatientFeeSummary(@Param('zyid') zyid: string) {
     return this.h15SsxbService.getPatientFeeSummary(zyid);
   }
+
+  @Post('submitSurgeryDetail')
+  submitSurgeryDetail(ssxb: H15SsxbBatchDto) {
+    return this.h15SsxbService.submitSurgeryDetail(ssxb);
+  }
 }
