@@ -42,7 +42,7 @@ export class H15SsxbService {
     return await manager.save(H15Ssxb, createDto);
   }
 
-  async saveYzxb(ssxb: H15SsxbBatchDto, manager: EntityManager): Promise<void> {
+  async saveSsxb(ssxb: H15SsxbBatchDto, manager: EntityManager): Promise<void> {
     try {
       // 检查主表是否存在，不存在则创建主表记录
       const smSssq = await this.smSssqRepository.findOne({
@@ -98,7 +98,7 @@ export class H15SsxbService {
    */
   async batchSave(ssxb: H15SsxbBatchDto): Promise<void> {
     await this.entityManager.transaction(async (transactionalEntityManager) => {
-      await this.saveYzxb(ssxb, transactionalEntityManager);
+      await this.saveSsxb(ssxb, transactionalEntityManager);
     });
   }
 
@@ -182,7 +182,7 @@ export class H15SsxbService {
           // 标记为已提交
           detail.tjbz = 1;
         }
-        await this.saveYzxb(ssxb, transactionalEntityManager);
+        await this.saveSsxb(ssxb, transactionalEntityManager);
 
         // 如果是发药模式5，执行发药记录
         if (process.env.KSSZ === '5') {
@@ -251,7 +251,7 @@ export class H15SsxbService {
         }
 
         // 保存更改
-        await this.saveYzxb(ssxb, transactionalEntityManager);
+        await this.saveSsxb(ssxb, transactionalEntityManager);
       } catch (error) {
         console.error('取消提交失败:', error);
         throw new CustomException(ErrorCode.ERR_40902);
