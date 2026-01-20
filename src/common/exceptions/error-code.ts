@@ -53,6 +53,11 @@ export const ERR = {
   ERR_40807: { code: 40807, message: '删除费用参数不全！！' },
   ERR_40808: { code: 40808, message: '删除费用参数缺少maxid！！' },
   ERR_40810: { code: 40810, message: '费用删除失败！！' },
+
+  // 手术费用相关
+  ERR_40900: { code: 40901, message: '手术明细保存失败！！' },
+  ERR_40901: { code: 40901, message: '提交手术明细失败！！' },
+  ERR_40902: { code: 40902, message: '手术费用撤回失败！！' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;

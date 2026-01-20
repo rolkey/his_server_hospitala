@@ -31,7 +31,7 @@ export class H15SsxbController {
   }
 
   @Post('submitSurgeryDetail')
-  submitSurgeryDetail(ssxb: H15SsxbBatchDto) {
+  submitSurgeryDetail(@Body() ssxb: H15SsxbBatchDto) {
     return this.h15SsxbService.submitSurgeryDetail(ssxb);
   }
 }

@@ -12,6 +12,7 @@ import { H15Sszb } from '../h15_sszb/h15-sszb.entity';
 import { SmSssq } from '../sm-sssq/sm-sssq.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 
 @Injectable()
 export class H15SsxbService {
@@ -79,8 +80,8 @@ export class H15SsxbService {
       }
       await manager.delete(H15Ssxb, { maxid: In(ssxb.deleteItems) });
     } catch (error) {
-      console.error('错误', error);
-      throw error;
+      console.error('提交手术明细失败:', error);
+      throw new CustomException(ErrorCode.ERR_40900);
     }
   }
 
@@ -184,7 +185,68 @@ export class H15SsxbService {
         }
       } catch (error) {
         console.error('提交手术明细失败:', error);
-        throw error;
+        throw new CustomException(ErrorCode.ERR_40901);
+      }
+    });
+  }
+
+  /**
+   * 取消提交手术收费明细
+   */
+  async cancelSubmit(ssxb: H15SsxbBatchDto): Promise<void> {
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      try {
+        // 获取细表记录
+        const details = ssxb.items;
+
+        for (const detail of details) {
+          // 检查是否已发药
+          if (detail.tpbz === 1) {
+            throw new Error('该病人已发药不能删除，只能录入负数冲红！');
+          }
+
+          // 检查是否已提交
+          if (detail.tjbz === 0) {
+            continue;
+          }
+
+          // 如果是治疗类项目，直接取消提交
+          if (detail.xmzl !== 2) {
+            detail.tjbz = 0;
+            continue;
+          }
+
+          // 查询药品信息
+          const medicine = await transactionalEntityManager.query(
+            `SELECT ysxs FROM h30_ypzd WHERE ypid = ?`,
+            [detail.xmid],
+          );
+
+          if (!medicine || medicine.length === 0) {
+            continue;
+          }
+
+          // 如果需要管理库存
+          if (medicine[0].ysxs > 0) {
+            // 更新库存
+            const dfsl = detail.jfyl;
+            await transactionalEntityManager.query(
+              `UPDATE h31_kcxx
+             SET ssdfsl = isnull(ssdfsl,0) - ?
+             WHERE ypid = ? AND scph = ? AND ksid = ?`,
+              [dfsl, detail.xmid, detail.scph, detail.zxksid],
+            );
+          }
+
+          // 标记为未提交
+          detail.tjbz = 0;
+        }
+
+        // 保存更改
+        await this.saveYzxb(ssxb, transactionalEntityManager);
+      } catch (error) {
+        console.error('取消提交失败:', error);
+        throw new CustomException(ErrorCode.ERR_40902);
       }
     });
   }
