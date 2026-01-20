@@ -82,6 +82,7 @@ export class H15SsxbService {
         item.ssmxid = index + 1;
         item.xh = index + 1;
         item.ssid = ssid;
+        item.zyid = h11Brxx.zyid;
         if (!item.ypdh) await this.create(item, manager);
         else await this.update(item, manager);
       }
