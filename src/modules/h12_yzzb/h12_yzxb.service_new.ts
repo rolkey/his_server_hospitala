@@ -23,6 +23,7 @@ import {
   outDto,
   checkOutDto,
   CopyAdviceDto,
+  medicineReceiptDto,
 } from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
@@ -94,6 +95,8 @@ export class h12_yzxbServiceNew {
     private c00FbxxRepo: Repository<C00Fbxx>,
     @InjectRepository(usrcat)
     private usrcatRepo: Repository<usrcat>,
+    // @InjectRepository(H31Lyjl)
+    // private h31LyjlRepo: Repository<H31Lyjl>,
     private readonly gyIdentityService: GyIdentityService,
     private dataSource: DataSource,
     private readonly syspar_newService: syspar_newService,
@@ -438,7 +441,7 @@ export class h12_yzxbServiceNew {
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
           .leftJoin('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
           .addSelect(['h12_yzxb.xmzl', 'h12_yzxb.xmmc'])
-          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
+          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
           .addSelect([
             'H31Lyjl.djbh',
             'H31Lyjl.tjbz',
@@ -447,7 +450,7 @@ export class h12_yzxbServiceNew {
             'H31Lyjl.ksid',
             'H31Lyjl.fhksid',
           ])
-          .leftJoin('h13_yzzxcs.H13YzzxcsTfList', 'H13YzzxcsTfList')
+          .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'H13YzzxcsTfList')
           .addSelect([
             'H13YzzxcsTfList.zxcs',
             'H13YzzxcsTfList.yzxh',
@@ -478,9 +481,9 @@ export class h12_yzxbServiceNew {
         for (const item of h13_yzzxcsList) {
           const xmzl = item.xmidEntity?.xmzl || item.h12_yzxb.xmzl;
           const xmmc = item.xmidEntity?.xmmc || item.h12_yzxb.xmmc;
-          const H13YzzxcsTfList = item.H13YzzxcsTfList ?? [];
+          const H13YzzxcsTfList = item.h13YzzxcsTfList ?? [];
 
-          if (item.bzxcs !== item.zxcs && xmzl !== 1 && item?.H31Lyjl?.ckclbz === 1) {
+          if (item.bzxcs !== item.zxcs && xmzl !== 1 && item?.h31Lyjl?.ckclbz === 1) {
             throw new CustomException(
               ERR.ERR_40802,
               `[${item.xmidEntity.xmmc}] 已发药，请走退费流程!`,
@@ -505,13 +508,13 @@ export class h12_yzxbServiceNew {
           if (item.zxcs + bzxcs !== 0 && item.fydh) {
             throw new CustomException(ERR.ERR_40805, `单号 [${item.fydh}] 未退完全部执行次数`);
           }
-          for (const yzzxcsTf of item.H13YzzxcsTfList) {
+          for (const yzzxcsTf of item.h13YzzxcsTfList) {
             yzzxcsTf.yzxh = item.yzxh;
             yzzxcsTf.zxrq = item.zxrq;
             h13_yzzxcs_tf_maxids.push(yzzxcsTf.maxid);
             delete yzzxcsTf.maxid;
           }
-          h13_yzzxcs_tfs.push(...item.H13YzzxcsTfList);
+          h13_yzzxcs_tfs.push(...item.h13YzzxcsTfList);
           item.zxcs2 = item.maxid;
           delete item.maxid;
 
@@ -540,12 +543,12 @@ export class h12_yzxbServiceNew {
         //如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
         const H31LyjlRepo = manager.getRepository(H31Lyjl);
         for (const item of h13_yzzxcsList) {
-          if (item?.H31Lyjl) {
+          if (item?.h31Lyjl) {
             const lyjlList = await H31LyjlRepo.find({
               where: {
-                ksid: item.H31Lyjl.ksid,
-                djlb: item.H31Lyjl.djlb,
-                djbh: item.H31Lyjl.djbh,
+                ksid: item.h31Lyjl.ksid,
+                djlb: item.h31Lyjl.djlb,
+                djbh: item.h31Lyjl.djbh,
               },
             });
             if (lyjlList.length > 0) {
@@ -745,18 +748,67 @@ export class h12_yzxbServiceNew {
   async refundMedicineReceipt(dto: adviceDto): Promise<void> {
     try {
       const maxidList = dto.maxidList.map((it) => it.maxid).filter(Boolean);
-      await this.h13_yzzxcsRepo.update(
-        {
+      const h13_yzzxcsList = await this.h13_yzzxcsRepo.find({
+        where: {
           zyid: dto.zyid,
           yzlx: dto.yzlx,
           maxid: In(maxidList),
           fydh: Not(IsNull()),
-          clbz: 0,
         },
-        {
-          fydh: null,
-        },
-      );
+      });
+
+      // 分组原则：同一个病人/领药单/执行科室(ksid)相同
+      const fydhList = [];
+      for (const h13_yzzxcs of h13_yzzxcsList) {
+        if (h13_yzzxcs.clbz === 1) {
+          throw new CustomException(ERR.ERR_40809);
+        }
+        if (
+          !fydhList.find(
+            (item) =>
+              item.djbh === h13_yzzxcs.fydh &&
+              item.ksid === h13_yzzxcs.ksid &&
+              item.zyid === h13_yzzxcs.zyid,
+          )
+        ) {
+          fydhList.push({ djbh: h13_yzzxcs.fydh, zyid: h13_yzzxcs.zyid, ksid: h13_yzzxcs.ksid });
+        }
+      }
+
+      await this.dataSource.transaction(async (manager) => {
+        const promisses = [];
+        for (const fydh of fydhList) {
+          promisses.push(
+            manager.update(
+              h13_yzzxcs,
+              {
+                zyid: fydh.zyid,
+                ksid: fydh.ksid,
+                fydh: fydh.djbh,
+              },
+              {
+                fydh: null,
+              },
+            ),
+          );
+          promisses.push(
+            manager.update(
+              H31Lyjl,
+              {
+                zyid: fydh.zyid,
+                ksid: fydh.ksid,
+                djbh: fydh.djbh,
+              },
+              {
+                tjbz: 0,
+                bz1: dto.userId,
+                ckclbz: 1,
+              },
+            ),
+          );
+        }
+        await Promise.all(promisses);
+      });
     } catch (error: any) {
       this.logger.error('取消领药失败！！', error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '生成发药单失败');
@@ -896,7 +948,7 @@ export class h12_yzxbServiceNew {
           // 修改主记录的已退次数
           item.bzxcs = bzxcs;
           // item.H31Lyjl = undefined as any;
-          item.H13YzzxcsTfList = undefined as any;
+          item.h13YzzxcsTfList = undefined as any;
         }
         //console.log('退费记录tfListToInsert:------', tfListToInsert);
 
@@ -1939,7 +1991,7 @@ export class h12_yzxbServiceNew {
   /**
    * 生成发药单
    */
-  async medicineReceipt(dto: adviceDto): Promise<void> {
+  async medicineReceipt(dto: medicineReceiptDto): Promise<void> {
     try {
       //参数校验
       if (!dto.zyid || !dto.zxhs) {
