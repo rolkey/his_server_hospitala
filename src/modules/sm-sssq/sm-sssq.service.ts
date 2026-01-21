@@ -170,7 +170,7 @@ export class SmSssqService {
       kshs: '',
       fylbid: '35',
       sfje: 0,
-      sjbz: 1,
+      sjbz: 0,
       sfbz: 1,
       jsbz: 1,
       zxbz: 0,
