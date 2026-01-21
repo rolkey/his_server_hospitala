@@ -70,6 +70,11 @@ import { BasOprModule } from './modules/bas-opr/bas-opr.module';
 import { N0423Module } from './modules/n04-23/n04-23.module';
 import { MzffModule } from './modules/mzff/mzff.module';
 import { SmSssqModule } from './modules/sm-sssq/sm-sssq.module';
+import { emr_jcbwModule } from './modules/emr_jcbw/emr_jcbw.module';
+import { emr_jcffModule } from './modules/emr_jcff/emr_jcff.module';
+import { emr_jcsqModule } from './modules/emr_jcsq/emr_jcsq.module';
+import { emr_jcxmModule } from './modules/emr_jcxm/emr_jcxm.module';
+import { emr_xmflModule } from './modules/emr_xmfl/emr_xmfl.module';
 
 @Module({
   imports: [
@@ -142,6 +147,11 @@ import { SmSssqModule } from './modules/sm-sssq/sm-sssq.module';
     N0423Module,
     MzffModule,
     SmSssqModule,
+    emr_jcsqModule,
+    emr_jcbwModule,
+    emr_jcffModule,
+    emr_jcxmModule,
+    emr_xmflModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
