@@ -52,6 +52,7 @@ export const ERR = {
   ERR_40806: { code: 40806, message: '已执行，不能删除！！' },
   ERR_40807: { code: 40807, message: '删除费用参数不全！！' },
   ERR_40808: { code: 40808, message: '删除费用参数缺少maxid！！' },
+  ERR_40809: { code: 40809, message: '该患者领药单已经执行！！' },
   ERR_40810: { code: 40810, message: '费用删除失败！！' },
 
   // 手术费用相关
