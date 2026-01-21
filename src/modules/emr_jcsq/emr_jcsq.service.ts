@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { emr_jcsq } from './emr_jcsq.entity';
 import { Jcbw, Jcff, QueryDto, SaveDto, } from './dto';
 import { ERR } from '@/common/exceptions/error-code';
@@ -141,5 +141,18 @@ export class emr_jcsqService {
     queryBuilder.andWhere('jcsq.sqdh = :sqdh', { sqdh: queryDto.sqdh });
 
     return queryBuilder.getOne()
+  }
+
+  async deleteJcsq(zyid: string, sqdhs: string[], manager: EntityManager) {
+    if (!sqdhs.length) return
+    const jcsq = await manager.find(emr_jcsq, {
+      where: { mzid: zyid, sqdh: In([...sqdhs]), },
+      select: (['sqdh'])
+    })
+    if (!jcsq.length) return
+
+    await manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) })
+    await manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) })
+
   }
 }
