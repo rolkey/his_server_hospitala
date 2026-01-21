@@ -255,17 +255,12 @@ export class QueryH13YzzxcsDto extends PartialType(H13YzzxcsBaseDto) {
 }
 
 export class H13YzzxcsResponseDto extends H13YzzxcsBaseDto {
-  // 继承所有基础字段
-  // 可以添加响应特有的字段或转换
   @Allow()
-  @IsOptional()
-  xmmc?: string;
+  xmmc: string;
 
   @Allow()
-  @IsOptional()
-  fylbmc?: string;
+  fylbmc: string;
 
   @Allow()
-  @IsOptional()
-  syplmc?: string;
+  syplmc: string;
 }

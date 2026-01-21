@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
-import { CreateH13YzzxcsDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
+import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 import { plainToInstance } from 'class-transformer';
@@ -57,7 +57,7 @@ export class h13_yzzxcsService {
     yzzh: number[],
     zxrq: string,
     gstr_ainf: { u_userid: string },
-  ): Promise<H13YzzxcsTfResponseDto[]> {
+  ): Promise<H13YzzxcsResponseDto[]> {
     const tzrq = new Date(); // 对应PB9中的ldt_sj
     const targetDate = new Date(zxrq);
     targetDate.setHours(0, 0, 0, 0);
@@ -195,7 +195,7 @@ export class h13_yzzxcsService {
     //   .andWhere('CONVERT(date, zxrq) > :zxrq', { zxrq: targetDate })
     //   .execute();
 
-    return transformedData.map((item) => plainToInstance(H13YzzxcsTfResponseDto, item));
+    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }
 
   async generateTempDataForCurrentDate(
@@ -206,7 +206,7 @@ export class h13_yzzxcsService {
     zxrq: string,
     mrcs: number,
     gstr_ainf: { u_userid: string },
-  ): Promise<H13YzzxcsTfResponseDto[]> {
+  ): Promise<H13YzzxcsResponseDto[]> {
     const tzrq = new Date();
     const targetDate = new Date(zxrq);
     targetDate.setHours(0, 0, 0, 0);
@@ -348,7 +348,7 @@ export class h13_yzzxcsService {
     //   .andWhere('CONVERT(date, zxrq) = :zxrq', { zxrq: targetDate })
     //   .execute();
 
-    return transformedData.map((item) => plainToInstance(H13YzzxcsTfResponseDto, item));
+    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }
 
   async wfStopFymx(

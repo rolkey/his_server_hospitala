@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { h13_yzzxcsService } from './h13_yzzxcs.service';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
-import { CreateH13YzzxcsDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
+import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 // import { h12_yzxbService } from '../h12_yzzb/h12_yzxb.service';
@@ -95,7 +95,7 @@ export class h13_yzzxcsController {
     @Query('zxrq') zxrq: string,
     @Query('mrcs') mrcs: number,
     @Query('u_userid') u_userid: string,
-  ): Promise<H13YzzxcsTfResponseDto[]> {
+  ): Promise<H13YzzxcsResponseDto[]> {
     // 将逗号分隔的字符串转换为数字数组
     const yzzhArray = yzzh.split(',').map(Number);
 
