@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { h13_yzzxcsService } from './h13_yzzxcs.service';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
-import { Createh13_yzzxcsDto, Updateh13_yzzxcsDto } from './dto/h13_yzzxcs.dto';
+import { CreateH13YzzxcsDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 // import { h12_yzxbService } from '../h12_yzzb/h12_yzxb.service';
@@ -55,7 +55,7 @@ export class h13_yzzxcsController {
     description: '记录已创建',
     type: h13_yzzxcs,
   })
-  async create(@Body() createDto: Createh13_yzzxcsDto): Promise<h13_yzzxcs> {
+  async create(@Body() createDto: CreateH13YzzxcsDto): Promise<h13_yzzxcs> {
     return this.h13_yzzxcsService.create(createDto);
   }
 
@@ -68,7 +68,7 @@ export class h13_yzzxcsController {
     @Query('yzlx') yzlx: number,
     @Query('zyid') zyid: string,
     @Query('zxrq') zxrq: Date,
-    @Body() updateDto: Updateh13_yzzxcsDto,
+    @Body() updateDto: UpdateH13YzzxcsDto,
   ): Promise<h13_yzzxcs> {
     return this.h13_yzzxcsService.update({ yzxh, mxxh, yzlx, zyid, zxrq }, updateDto);
   }

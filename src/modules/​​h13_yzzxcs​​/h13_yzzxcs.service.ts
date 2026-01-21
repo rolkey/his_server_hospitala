@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
-import { Createh13_yzzxcsDto, Updateh13_yzzxcsDto } from './dto/h13_yzzxcs.dto';
+import { CreateH13YzzxcsDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
 import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 import { plainToInstance } from 'class-transformer';
@@ -28,12 +28,12 @@ export class h13_yzzxcsService {
     return this.h13_yzzxcsRepository.findOne({ where: conditions });
   }
 
-  async create(createDto: Createh13_yzzxcsDto): Promise<h13_yzzxcs> {
+  async create(createDto: CreateH13YzzxcsDto): Promise<h13_yzzxcs> {
     const record = this.h13_yzzxcsRepository.create(createDto);
     return this.h13_yzzxcsRepository.save(record);
   }
 
-  async update(conditions: any, updateDto: Updateh13_yzzxcsDto): Promise<h13_yzzxcs> {
+  async update(conditions: any, updateDto: UpdateH13YzzxcsDto): Promise<h13_yzzxcs> {
     await this.h13_yzzxcsRepository.update(conditions, updateDto);
     return this.h13_yzzxcsRepository.findOne({ where: conditions });
   }
@@ -63,14 +63,14 @@ export class h13_yzzxcsService {
     targetDate.setHours(0, 0, 0, 0);
 
     // 使用QueryBuilder进行精确的日期比较
-    const existingRecordsQuery = this.h13YzzxcsTfRepository
+    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
       .createQueryBuilder('tf')
       .where('tf.zyid = :zyid', { zyid })
       .andWhere('tf.yzxh = :yzxh', { yzxh })
       .andWhere('tf.yzlx = :yzlx', { yzlx })
       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
-    // console.log('existingRecordsQuery: ', getSqlWithParameters(existingRecordsQuery));
+    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
     const h13YzzxcsListQuery = this.h13_yzzxcsRepository
       .createQueryBuilder('h13')
@@ -87,8 +87,8 @@ export class h13_yzzxcsService {
       .andWhere('h13.yzxh = :yzxh', { yzxh })
       .andWhere('h13.yzlx = :yzlx', { yzlx })
       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('h13.fybz = 1')
-      .andWhere('h13.clbz = 1')
+      //   .andWhere('h13.fybz = 1')
+      //   .andWhere('h13.clbz = 1')
       .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
     // console.log(
@@ -97,13 +97,13 @@ export class h13_yzzxcsService {
     //   getSqlWithParameters(h13YzzxcsListQuery),
     // );
 
-    const [existingRecords, h13YzzxcsList] = await Promise.all([
-      existingRecordsQuery.getMany(),
+    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+      h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
     ]);
 
     const newRecords = h13YzzxcsList.filter((h13) => {
-      return !existingRecords.some(
+      return !h13YzzxcsTfList.some(
         (tf) =>
           tf.zyid === h13.zyid &&
           tf.yzxh === h13.yzxh &&
@@ -211,14 +211,14 @@ export class h13_yzzxcsService {
     const targetDate = new Date(zxrq);
     targetDate.setHours(0, 0, 0, 0);
 
-    const existingRecordsQuery = this.h13YzzxcsTfRepository
+    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
       .createQueryBuilder('tf')
       .where('tf.zyid = :zyid', { zyid })
       .andWhere('tf.yzxh = :yzxh', { yzxh })
       .andWhere('tf.yzlx = :yzlx', { yzlx })
       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
-    // console.log('existingRecordsQuery: ', getSqlWithParameters(existingRecordsQuery));
+    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
     const h13YzzxcsListQuery = this.h13_yzzxcsRepository
       .createQueryBuilder('h13')
@@ -235,8 +235,8 @@ export class h13_yzzxcsService {
       .andWhere('h13.yzxh = :yzxh', { yzxh })
       .andWhere('h13.yzlx = :yzlx', { yzlx })
       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('h13.fybz = 1')
-      .andWhere('h13.clbz = 1')
+      //   .andWhere('h13.fybz = 1')
+      //   .andWhere('h13.clbz = 1')
       .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
     // console.log(
@@ -245,12 +245,12 @@ export class h13_yzzxcsService {
     //   getSqlWithParameters(h13YzzxcsListQuery),
     // );
 
-    const [existingRecords, h13YzzxcsList] = await Promise.all([
-      existingRecordsQuery.getMany(),
+    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+      h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
     ]);
     const newRecords = h13YzzxcsList.filter((h13) => {
-      return !existingRecords.some(
+      return !h13YzzxcsTfList.some(
         (tf) =>
           tf.zyid === h13.zyid &&
           tf.yzxh === h13.yzxh &&
