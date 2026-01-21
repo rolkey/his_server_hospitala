@@ -216,10 +216,10 @@ export class h13_yzzxcs {
     { name: 'ksid', referencedColumnName: 'ksid' },
     { name: 'zyid', referencedColumnName: 'zyid' },
   ])
-  H31Lyjl?: H31Lyjl;
+  h31Lyjl?: H31Lyjl;
 
   @OneToMany(() => H13YzzxcsTf, (H13YzzxcsTf) => H13YzzxcsTf.h13_yzzxcs, {
     cascade: false, // 禁用级联操作
   })
-  H13YzzxcsTfList: H13YzzxcsTf[];
+  h13YzzxcsTfList: H13YzzxcsTf[];
 }

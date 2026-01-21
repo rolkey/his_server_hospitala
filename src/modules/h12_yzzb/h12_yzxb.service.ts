@@ -1092,34 +1092,25 @@ export class h12_yzxbService {
     h12_yzxbRow = manager.create(h12_yzxb, advice);
     return manager.save(h12_yzxbRow);
 
-    //return updateResult;
-    if (advice.isNew) {
-      h12_yzxbRow = manager.create(h12_yzxb, advice);
-      return manager.save(h12_yzxbRow);
-    } else {
-      // 这样会产生级联操作
-      //   h12_yzxbRow = await manager.findOneBy(h12_yzxb, {
-      //     mxxh: advice.mxxh,
-      //     yzlx: advice.yzlx,
-      //     yzxh: advice.yzxh,
-      //     zyid: advice.zyid,
-      //   });
-      //   Object.assign(h12_yzxbRow, advice);
-      //   h12_yzxbRow = manager.merge(h12_yzxb, h12_yzxbRow); // 显式合并变更
-      const { mxxh, yzlx, yzxh, zyid, ...updateFields } = advice;
-      const filteredUpdateFields = filterEntityFields(h12_yzxb, updateFields, manager);
-      const updateResult = await manager.update(
-        h12_yzxb,
-        {
-          mxxh,
-          yzlx,
-          yzxh,
-          zyid,
-        },
-        filteredUpdateFields,
-      );
-      return updateResult;
-    }
+    // if (advice.isNew) {
+    //   h12_yzxbRow = manager.create(h12_yzxb, advice);
+    //   return manager.save(h12_yzxbRow);
+    // } else {
+    //   const { mxxh, yzlx, yzxh, zyid, ...updateFields } = advice;
+    //   const filteredUpdateFields = filterEntityFields(h12_yzxb, updateFields, manager);
+    //   const updateResult = await manager.update(
+    //     h12_yzxb,
+    //     {
+    //       mxxh,
+    //       yzlx,
+    //       yzxh,
+    //       zyid,
+    //     },
+    //     filteredUpdateFields,
+    //   );
+    //   return updateResult;
+    // }
+
     // if (advice.isNew) {
     //   const h12_yzxbRow = manager.create(h12_yzxb, advice);
     //   return manager.save(h12_yzxbRow);
@@ -1382,9 +1373,8 @@ export class h12_yzxbService {
     });
     await this.dataSource.transaction(async (manager) => {
       await manager.save(h12_yzxb, h12_yzxbs);
-      // 医生站停嘱时，相当于发出停嘱申请
-      const zxrq = DateFormater.formatDate1(tzsj);
-      await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
+      //   const zxrq = DateFormater.formatDate1(tzsj);
+      //   await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
       await this.h11Jshztzd1Service.updateOrCreateRecord(
         {
           zyid,

@@ -91,13 +91,18 @@ export class costDto {
 
 export class adviceDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
-  zyid?: string;
+  zyid: string;
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
-  yzlx?: number;
+  yzlx: number;
 
   @Allow()
+  @IsOptional()
   zxhs?: string;
+
+  @Allow()
+  @IsOptional()
+  userId?: string;
 
   @IsArray()
   @IsOptional()
