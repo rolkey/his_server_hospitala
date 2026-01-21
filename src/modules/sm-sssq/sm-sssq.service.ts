@@ -193,6 +193,8 @@ export class SmSssqService {
       yzrq: currentTime,
       tjbz: 1,
       yzzt: 0,
+      apbz: 0,
+      zfbz: 0,
     });
 
     return await manager.save(h12_yzxb, h12Yzxb);
