@@ -195,6 +195,7 @@ export class SmSssqService {
       yzzt: 0,
       apbz: 0,
       zfbz: 0,
+      ksnf: '08',
     });
 
     return await manager.save(h12_yzxb, h12Yzxb);
