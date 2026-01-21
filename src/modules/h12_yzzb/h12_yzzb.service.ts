@@ -190,7 +190,7 @@ export class h12_yzzbService {
           .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
-          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
+          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
           .addSelect([
             'H31Lyjl.djbh',
             'H31Lyjl.tjbz',
