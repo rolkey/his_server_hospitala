@@ -283,7 +283,7 @@ export class H15SsxbService {
     const {
       pageNo = 1,
       pageSize = 10,
-      sortBy = 'xh',
+      sortBy = 'maxid',
       sortOrder = 'ASC',
       keyword,
       startSsrq,
