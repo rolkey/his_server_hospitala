@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { H15SsxbTf } from './h15-ssxb-tf.entity';
-import { CreateH15SsxbTfDto } from './dto/h15-ssxb-tf.dto';
+import { CreateH15SsxbTfDto, H15SsxbTfDto } from './dto/h15-ssxb-tf.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
 
 // readGsCxsz
@@ -127,10 +127,15 @@ export class H15SsxbTfService {
   //     await this.h15SsxbTfRepository.save(returnRecords);
   //   }
 
-  async commitTf(sourceDtos: CreateH15SsxbTfDto[]): Promise<void> {
+  async commitTf(sourceDtos: H15SsxbTfDto): Promise<void> {
     await this.entityManager.transaction(async (manager) => {
       try {
-        await this.add(sourceDtos, manager);
+        await this.add(sourceDtos.tfList, manager);
+
+        await manager.query(
+          `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
+          [sourceDtos.zyid, sourceDtos.userId],
+        );
       } catch (error) {
         console.error('手术退费错误！！', error);
       }

@@ -318,6 +318,21 @@ export class CreateH15SsxbTfDto extends PartialType(BaseH15SsxbDto) {
 }
 
 /**
+ * 创建 DTO
+ */
+export class H15SsxbTfDto {
+  @IsOptional()
+  zyid: string;
+
+  @IsOptional()
+  userId: string;
+
+  // 逻辑字段
+  @IsOptional()
+  tfList: CreateH15SsxbTfDto[];
+}
+
+/**
  * 更新 DTO
  */
 export class UpdateH15SsxbTfDto extends PartialType(BaseH15SsxbTfDto) {
