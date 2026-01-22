@@ -5,14 +5,18 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
   ValueTransformer,
 } from 'typeorm';
 import { H15Sszb } from '../h15_sszb/h15-sszb.entity';
-import { H15SsxbTf } from '../h15_ssxb_tf/h15-ssxb-tf.entity';
+import { H15Ssxb } from '../h15_ssxb/h15-ssxb.entity';
 
-@Entity({ name: 'h15_ssxb', schema: 'dbo' })
-export class H15Ssxb {
+const strToNumberrTrans: ValueTransformer = {
+  to: (value: number | null) => (value == null ? null : String(value)),
+  from: (value: string | null) => (value == null ? null : parseInt(value, 10)),
+};
+
+@Entity({ name: 'h15_ssxb_tf', schema: 'dbo' })
+export class H15SsxbTf {
   @Column({
     name: 'ssid',
     type: 'varchar',
@@ -254,31 +258,11 @@ export class H15Ssxb {
   })
   jzry: string;
 
-  @PrimaryColumn('integer', {
+  @PrimaryGeneratedColumn('identity', {
     name: 'maxid',
-    insert: false,
-    update: false,
-    // transformer: numberToStringTransformer,
+    type: 'int',
   })
   maxid: number;
-
-  @Column({
-    name: 'scph',
-    type: 'varchar',
-    length: 12,
-    nullable: true,
-  })
-  scph: string;
-
-  @Column({
-    name: 'pfjg',
-    type: 'decimal',
-    precision: 12,
-    scale: 4,
-    nullable: true,
-    default: 0,
-  })
-  pfjg: number;
 
   @Column({
     name: 'ypdh',
@@ -309,8 +293,9 @@ export class H15Ssxb {
     type: 'varchar',
     length: 20,
     nullable: true,
+    transformer: strToNumberrTrans,
   })
-  bz1: string;
+  bz1: number | null;
 
   @Column({
     name: 'bz2',
@@ -319,6 +304,24 @@ export class H15Ssxb {
     nullable: true,
   })
   bz2: string;
+
+  @Column({
+    name: 'scph',
+    type: 'varchar',
+    length: 12,
+    nullable: true,
+  })
+  scph: string;
+
+  @Column({
+    name: 'pfjg',
+    type: 'decimal',
+    precision: 12,
+    scale: 4,
+    nullable: true,
+    default: 0,
+  })
+  pfjg: number;
 
   @Column({
     name: 'xmzl',
@@ -371,21 +374,6 @@ export class H15Ssxb {
   sjtysl: number;
 
   @Column({
-    name: 'fysj',
-    type: 'datetime',
-    nullable: true,
-  })
-  fysj: Date;
-
-  @Column({
-    name: 'ybbz',
-    type: 'tinyint',
-    nullable: true,
-    default: 1,
-  })
-  ybbz: number;
-
-  @Column({
     name: 'gjybbm',
     type: 'varchar',
     length: 50,
@@ -402,6 +390,36 @@ export class H15Ssxb {
     default: '',
   })
   gjybmc: string;
+
+  @Column({
+    name: 'fysj',
+    type: 'datetime',
+    nullable: true,
+  })
+  fysj: Date;
+
+  @Column({
+    name: 'ybbz',
+    type: 'tinyint',
+    nullable: true,
+    default: 1,
+  })
+  ybbz: number;
+
+  @Column({
+    name: 'hdrq',
+    type: 'datetime',
+    nullable: true,
+  })
+  hdrq: Date;
+
+  @Column({
+    name: 'hdbz',
+    type: 'smallint',
+    nullable: true,
+    default: 0,
+  })
+  hdbz: number;
 
   @Column({
     name: 'syplid',
@@ -467,21 +485,6 @@ export class H15Ssxb {
   hdhs: string;
 
   @Column({
-    name: 'hdrq',
-    type: 'datetime',
-    nullable: true,
-  })
-  hdrq: Date;
-
-  @Column({
-    name: 'hdbz',
-    type: 'smallint',
-    nullable: true,
-    default: 0,
-  })
-  hdbz: number;
-
-  @Column({
     name: 'sxrq',
     type: 'datetime',
     nullable: true,
@@ -503,30 +506,15 @@ export class H15Ssxb {
   })
   fyrid: string;
 
-  @Column({
-    name: 'tcid',
-    type: 'varchar',
-    length: 15,
-    nullable: true,
-    default: '',
-  })
-  tcid: string;
-
-  @Column({
-    name: 'tcmc',
-    type: 'varchar',
-    length: 60,
-    nullable: true,
-    default: '',
-  })
-  tcmc: string;
-
   @ManyToOne(() => H15Sszb, {
     cascade: false, // 禁用级联操作
   })
   @JoinColumn({ name: 'ssid', referencedColumnName: 'ssid' })
   h15SszbEntity: H15Sszb;
 
-  @OneToMany(() => H15SsxbTf, (h15SsxbTf) => h15SsxbTf.h15SszbEntity)
-  h15SsxbTfs: H15SsxbTf[];
+  @ManyToOne(() => H15Ssxb, {
+    cascade: false, // 禁用级联操作
+  })
+  @JoinColumn({ name: 'xnhbz', referencedColumnName: 'maxid' })
+  h15SsxbEntity: H15Ssxb;
 }

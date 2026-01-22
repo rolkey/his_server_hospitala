@@ -14,6 +14,7 @@ import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 import { parse } from 'path';
+import { ParamService } from '../h12_xmzd/service/param.service';
 
 @Injectable()
 export class H15SsxbService {
@@ -32,6 +33,7 @@ export class H15SsxbService {
 
     private readonly gyIdentityService: GyIdentityService,
     private readonly entityManager: EntityManager,
+    private readonly paramService: ParamService,
   ) {}
 
   /**
@@ -63,7 +65,11 @@ export class H15SsxbService {
           ssid,
           zyid,
           xh: 1,
+          brxm: h11Brxx.brxm,
           zybh: h11Brxx.zybh,
+          //   brlx: h11Brxx.brlxid,
+          brlx: '0',
+          fyksid: h11Brxx.cyksid ?? h11Brxx.ryksid,
           sqdh: parseInt(ssxb.sqdh),
           ssrq,
           ksid: h11Brxx.cyksid,
@@ -73,6 +79,8 @@ export class H15SsxbService {
           ssmc: ssnm,
           lryid: ssxb.userId,
           sslb: 0,
+          ssxz: 0,
+          jsbz: 0,
           ssysid: ssys,
           ysid: mzys,
         });
@@ -110,6 +118,7 @@ export class H15SsxbService {
       try {
         // 获取细表记录
         const details = ssxb.items;
+        const kssz = await this.paramService.gfGetPara(30, 'yzkssz', '0', '医嘱科室发药');
 
         for (const detail of details) {
           // 跳过已提交或已退票的记录
@@ -130,7 +139,7 @@ export class H15SsxbService {
 
           // 查询药品信息
           const medicine = await transactionalEntityManager.query(
-            `SELECT isnull(jsl2,0) as jsl2, ysxs FROM h30_ypzd WHERE ypid = ?`,
+            `SELECT isnull(jsl2,0) as jsl2, ysxs FROM h30_ypzd WHERE ypid = @0`,
             [detail.xmid],
           );
 
@@ -144,7 +153,7 @@ export class H15SsxbService {
             const stock = await transactionalEntityManager.query(
               `SELECT isnull((xsl),0) - isnull(dfsl,0) - isnull(mzdfsl,0) - isnull(ssdfsl,0) as kcsl
              FROM h31_kcxx
-             WHERE ksid = ? AND ypid = ? AND scph = ?`,
+             WHERE ksid = @0 AND ypid = @1 AND scph = @2`,
               [detail.zxksid, detail.xmid, detail.scph],
             );
 
@@ -153,8 +162,8 @@ export class H15SsxbService {
               const otherStock = await transactionalEntityManager.query(
                 `SELECT TOP 1 scph, scpc, lsjg, pfjg
                FROM h31_kcxx
-               WHERE ksid = ? AND ypid = ?
-               AND isnull(xsl,0) - isnull(dfsl,0) - isnull(mzdfsl,0) - isnull(ssdfsl,0) - ? >= 0`,
+               WHERE ksid = @0 AND ypid = @1
+               AND isnull(xsl,0) - isnull(dfsl,0) - isnull(mzdfsl,0) - isnull(ssdfsl,0) - @2 >= 0`,
                 [detail.zxksid, detail.xmid, detail.jfyl],
               );
 
@@ -173,8 +182,8 @@ export class H15SsxbService {
             const dfsl = detail.jfyl;
             await transactionalEntityManager.query(
               `UPDATE h31_kcxx
-             SET ssdfsl = isnull(ssdfsl,0) + ?
-             WHERE ypid = ? AND scph = ? AND ksid = ?`,
+             SET ssdfsl = isnull(ssdfsl,0) + @0
+             WHERE ypid = @1 AND scph = @2 AND ksid = @3`,
               [dfsl, detail.xmid, detail.scph, detail.zxksid],
             );
           }
@@ -184,10 +193,10 @@ export class H15SsxbService {
         }
         await this.saveSsxb(ssxb, transactionalEntityManager);
 
-        // 如果是发药模式5，执行发药记录
-        if (process.env.KSSZ === '5') {
+        // 如果是发药模式5，执行发药记录，
+        if (kssz === '5') {
           await transactionalEntityManager.query(
-            `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = ?, @ls_usid = ?, @yzlx = 3`,
+            `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
             [ssxb.zyid, ssxb.userId],
           );
         }
@@ -287,7 +296,9 @@ export class H15SsxbService {
 
     const queryBuilder = this.h15SsxbRepository
       .createQueryBuilder('entity')
-      .leftJoinAndSelect('entity.h15SszbEntity', 'h15Sszb');
+      .leftJoinAndSelect('entity.h15SszbEntity', 'h15Sszb')
+      .leftJoinAndSelect('entity.h15SsxbTfs', 'tf')
+      .addSelect(['tf.jfyl as tfJfyl', 'tf.tpbz as tfTpbz']);
 
     // 基础条件查询
     Object.entries(conditions).forEach(([key, value]) => {
@@ -335,15 +346,6 @@ export class H15SsxbService {
     queryBuilder.skip(offset).take(pageSize);
 
     return await queryBuilder.getMany();
-    // const [items, total] = await queryBuilder.getManyAndCount();
-
-    // return {
-    //   items,
-    //   total,
-    //   pageNo,
-    //   pageSize,
-    //   totalPages: Math.ceil(total / pageSize),
-    // };
   }
 
   /**
