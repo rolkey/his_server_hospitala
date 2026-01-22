@@ -441,14 +441,14 @@ export class h12_yzxbServiceNew {
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
           .leftJoin('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
           .addSelect(['h12_yzxb.xmzl', 'h12_yzxb.xmmc'])
-          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
+          .leftJoin('h13_yzzxcs.h31Lyjl', 'h31Lyjl')
           .addSelect([
-            'H31Lyjl.djbh',
-            'H31Lyjl.tjbz',
-            'H31Lyjl.zyid',
-            'H31Lyjl.ckclbz',
-            'H31Lyjl.ksid',
-            'H31Lyjl.fhksid',
+            'h31Lyjl.djbh',
+            'h31Lyjl.tjbz',
+            'h31Lyjl.zyid',
+            'h31Lyjl.ckclbz',
+            'h31Lyjl.ksid',
+            'h31Lyjl.fhksid',
           ])
           .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'H13YzzxcsTfList')
           .addSelect([
@@ -850,7 +850,7 @@ export class h12_yzxbServiceNew {
           .createQueryBuilder('h13_yzzxcs')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
-          .leftJoin('h13_yzzxcs.H31Lyjl', 'H31Lyjl')
+          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
           .addSelect([
             'H31Lyjl.zyid',
             'H31Lyjl.djbh',
