@@ -296,9 +296,9 @@ export class H15SsxbService {
 
     const queryBuilder = this.h15SsxbRepository
       .createQueryBuilder('entity')
-      .leftJoinAndSelect('entity.h15SszbEntity', 'h15Sszb')
-      .leftJoinAndSelect('entity.h15SsxbTfs', 'tf')
-      .addSelect(['tf.jfyl as tfJfyl', 'tf.tpbz as tfTpbz']);
+      .leftJoin('entity.h15SszbEntity', 'h15Sszb')
+      .leftJoin('entity.h15SsxbTfs', 'tf')
+      .addSelect(['tf.jfyl', 'tf.tpbz']);
 
     // 基础条件查询
     Object.entries(conditions).forEach(([key, value]) => {

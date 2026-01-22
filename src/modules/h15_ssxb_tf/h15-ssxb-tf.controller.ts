@@ -7,8 +7,8 @@ export class H15SsxbTfController {
   constructor(private readonly h15SsxbTfService: H15SsxbTfService) {}
 
   @Post()
-  async add(@Body() createH15SsxbTfDto: CreateH15SsxbTfDto[]) {
-    await this.h15SsxbTfService.add(createH15SsxbTfDto);
+  async commitTf(@Body() createH15SsxbTfDto: CreateH15SsxbTfDto[]) {
+    await this.h15SsxbTfService.commitTf(createH15SsxbTfDto);
     return;
   }
 }

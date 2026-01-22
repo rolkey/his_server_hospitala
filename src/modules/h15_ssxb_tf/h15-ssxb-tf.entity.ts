@@ -258,9 +258,11 @@ export class H15SsxbTf {
   })
   jzry: string;
 
-  @PrimaryGeneratedColumn('identity', {
+  @PrimaryColumn('integer', {
     name: 'maxid',
-    type: 'int',
+    insert: false,
+    update: false,
+    // transformer: numberToStringTransformer,
   })
   maxid: number;
 
@@ -516,5 +518,6 @@ export class H15SsxbTf {
     cascade: false, // 禁用级联操作
   })
   @JoinColumn({ name: 'xnhbz', referencedColumnName: 'maxid' })
+  //   @JoinColumn({ name: 'xnhbz', referencedColumnName: 'maxid' })
   h15SsxbEntity: H15Ssxb;
 }

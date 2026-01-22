@@ -14,11 +14,17 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { BaseH15SsxbDto } from '@/modules/h15_ssxb/dto/h15-ssxb.dto';
 
 /**
  * 基础 DTO，包含所有字段
  */
+/**
+ * BaseH15SsxbTfDto 类是一个数据传输对象(DTO)，用于定义和验证一系列属性
+ * 这些属性可能用于某个系统中的特定业务模块，具有严格的类型和长度限制
+ */
 export class BaseH15SsxbTfDto {
+  // SSID标识符，字符串类型，最大长度为12
   @IsString()
   @MaxLength(12)
   ssid: string;
@@ -306,7 +312,7 @@ export class BaseH15SsxbTfDto {
 /**
  * 创建 DTO
  */
-export class CreateH15SsxbTfDto extends PartialType(BaseH15SsxbTfDto) {
+export class CreateH15SsxbTfDto extends PartialType(BaseH15SsxbDto) {
   // 逻辑字段
   tfsl: number;
 }

@@ -263,4 +263,16 @@ export class H13YzzxcsResponseDto extends H13YzzxcsBaseDto {
 
   @Allow()
   syplmc: string;
+
+  /**
+   * 退回数量
+   */
+  @Allow()
+  thsl: number;
+
+  /**
+   * 退回金额
+   */
+  @Allow()
+  thje: number;
 }

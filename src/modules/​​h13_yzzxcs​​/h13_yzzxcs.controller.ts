@@ -102,29 +102,39 @@ export class h13_yzzxcsController {
     // 准备公共参数
     const gstr_ainf = { u_userid };
 
-    // 并行调用两个方法
-    const [futureData, currentData] = await Promise.all([
-      this.h13_yzzxcsService.generateTempDataForFutureDates(
-        zyid,
-        yzxh,
-        yzlx,
-        yzzhArray,
-        zxrq,
-        gstr_ainf,
-      ),
-      this.h13_yzzxcsService.generateTempDataForCurrentDate(
-        zyid,
-        yzxh,
-        yzlx,
-        yzzhArray,
-        zxrq,
-        mrcs,
-        gstr_ainf,
-      ),
-    ]);
+    // // 合并两个结果数组
+    // const [futureData, currentData] = await Promise.all([
+    //   this.h13_yzzxcsService.generateTempDataForFutureDates(
+    //     zyid,
+    //     yzxh,
+    //     yzlx,
+    //     yzzhArray,
+    //     zxrq,
+    //     gstr_ainf,
+    //   ),
+    //   this.h13_yzzxcsService.generateTempDataForCurrentDate(
+    //     zyid,
+    //     yzxh,
+    //     yzlx,
+    //     yzzhArray,
+    //     zxrq,
+    //     mrcs,
+    //     gstr_ainf,
+    //   ),
+    // ]);
 
-    // 合并两个结果数组
-    return [...currentData, ...futureData];
+    // // 合并两个结果数组
+    // return [...currentData, ...futureData];
+
+    return await this.h13_yzzxcsService.generateTempData(
+      zyid,
+      yzxh,
+      yzlx,
+      yzzhArray,
+      zxrq,
+      mrcs,
+      gstr_ainf,
+    );
   }
 
   //   @Post('stop-fymx')

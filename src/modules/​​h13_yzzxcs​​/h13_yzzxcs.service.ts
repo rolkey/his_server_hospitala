@@ -50,6 +50,130 @@ export class h13_yzzxcsService {
     return this.h13_yzzxcsRepository.find({ where: { yzxh } });
   }
 
+  /**
+   *
+   * @param zyid
+   * @param yzxh
+   * @param yzlx
+   * @param yzzh
+   * @param zxrq
+   * @param mrcs 可能的值：0,1,2,9(9是全部)
+   * @param gstr_ainf
+   * @returns
+   */
+  async generateTempData(
+    zyid: string,
+    yzxh: number,
+    yzlx: number,
+    yzzh: number[],
+    zxrq: string,
+    mrcs: number,
+    gstr_ainf: { u_userid: string },
+  ): Promise<H13YzzxcsResponseDto[]> {
+    const tzrq = new Date(); // 对应PB9中的ldt_sj
+    const targetDate = new Date(zxrq);
+    targetDate.setHours(0, 0, 0, 0);
+
+    // 使用QueryBuilder进行精确的日期比较
+    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
+      .createQueryBuilder('tf')
+      .where('tf.zyid = :zyid', { zyid })
+      .andWhere('tf.yzxh = :yzxh', { yzxh })
+      .andWhere('tf.yzlx = :yzlx', { yzlx })
+      .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
+      .andWhere('tf.zxrq >= :zxrq', { zxrq: targetDate });
+    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
+
+    const h13YzzxcsListQuery = this.h13_yzzxcsRepository
+      .createQueryBuilder('h13')
+      .leftJoin('h13.h12_yzxb', 'h12_yzxb')
+      .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+      .leftJoin('h13.h00_fylb', 'h00_fylb')
+      .select([
+        'h13', // 选择 h13 的所有字段
+        'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
+        'h00_sypl.syplmc',
+        'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
+      ])
+      .where('h13.zyid = :zyid', { zyid })
+      .andWhere('h13.yzxh = :yzxh', { yzxh })
+      .andWhere('h13.yzlx = :yzlx', { yzlx })
+      .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
+      //   .andWhere('h13.fybz = 1')
+      //   .andWhere('h13.clbz = 1')
+      .andWhere('h13.zxrq >= :zxrq', { zxrq: targetDate })
+      .orderBy('h13.maxid', 'ASC'); // 添加排序，ASC表示升序
+    // console.log(
+    //   'h13YzzxcsListQuery 1: --------------------------------------',
+    //   '\n',
+    //   getSqlWithParameters(h13YzzxcsListQuery),
+    // );
+
+    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+      h13YzzxcsTfListQuery.getMany(),
+      h13YzzxcsListQuery.getMany(),
+    ]);
+
+    const transformedData = h13YzzxcsList.map((h13) => {
+      const returnData = new H13YzzxcsResponseDto();
+      Object.assign(returnData, {
+        ...h13,
+        ...{
+          xmmc: h13.h12_yzxb?.xmmc || '',
+          fylbmc: h13.h00_fylb?.fylbmc || '',
+          syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
+        },
+      });
+
+      // 检查已经生成的退费记录是否已经处理，如果没有处理，则调整不执行次数
+      const h13YzzxcsTf = h13YzzxcsTfList.find(
+        (tf) =>
+          //   tf.zxrq === h13.zxrq &&
+          //   tf.yzxh === h13.yzxh &&
+          //   tf.yzlx === h13.yzlx &&
+          tf.zxcs2 === h13.maxid,
+      );
+      if (h13YzzxcsTf && h13YzzxcsTf.clbz === 0) {
+        returnData.bzxcs -= h13YzzxcsTf.zxcs;
+      }
+
+      // 处理末日次数
+      if (h13.zxrq === targetDate && mrcs !== 9) {
+        // 计算退费数量
+        console.log('mrcs', mrcs);
+      } else {
+        returnData.thsl = h13.zxcs;
+      }
+
+      //   const dateStr = h13.zxrq.toISOString().split('T')[0];
+      //   const timeStr = currentTime.toTimeString().split(' ')[0];
+      //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
+
+      const bzxcs = h13.zxcs - h13.bzxcs;
+      returnData.sjtysl = bzxcs * h13.jfyl;
+      return returnData;
+    });
+
+    // 添加更新操作，对应PB9中的第一个update语句
+    // await this.h13_yzzxcsRepository
+    //   .createQueryBuilder()
+    //   .update()
+    //   .set({
+    //     bzxcs: () => 'zxcs',
+    //     sjtysl: () => 'zxcs * jfyl',
+    //     tysj: tzrq,
+    //     tyrid: gstr_ainf.u_userid,
+    //   })
+    //   .where('zyid = :zyid', { zyid })
+    //   .andWhere('yzxh = :yzxh', { yzxh })
+    //   .andWhere('yzlx = :yzlx', { yzlx })
+    //   .andWhere('yzzh IN (:...yzzh)', { yzzh })
+    //   .andWhere('CONVERT(date, zxrq) > :zxrq', { zxrq: targetDate })
+    //   .execute();
+
+    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+  }
+
   async generateTempDataForFutureDates(
     zyid: string,
     yzxh: number,
@@ -114,7 +238,7 @@ export class h13_yzzxcsService {
     });
 
     const transformedData = newRecords.map((h13) => {
-      const currentTime = new Date();
+      //   const currentTime = new Date();
       //   const dateStr = h13.zxrq.toISOString().split('T')[0];
       //   const timeStr = currentTime.toTimeString().split(' ')[0];
       //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
@@ -177,23 +301,6 @@ export class h13_yzzxcsService {
         syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
       };
     });
-
-    // 添加更新操作，对应PB9中的第一个update语句
-    // await this.h13_yzzxcsRepository
-    //   .createQueryBuilder()
-    //   .update()
-    //   .set({
-    //     bzxcs: () => 'zxcs',
-    //     sjtysl: () => 'zxcs * jfyl',
-    //     tysj: tzrq,
-    //     tyrid: gstr_ainf.u_userid,
-    //   })
-    //   .where('zyid = :zyid', { zyid })
-    //   .andWhere('yzxh = :yzxh', { yzxh })
-    //   .andWhere('yzlx = :yzlx', { yzlx })
-    //   .andWhere('yzzh IN (:...yzzh)', { yzzh })
-    //   .andWhere('CONVERT(date, zxrq) > :zxrq', { zxrq: targetDate })
-    //   .execute();
 
     return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }

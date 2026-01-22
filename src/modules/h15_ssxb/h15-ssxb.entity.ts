@@ -527,6 +527,6 @@ export class H15Ssxb {
   @JoinColumn({ name: 'ssid', referencedColumnName: 'ssid' })
   h15SszbEntity: H15Sszb;
 
-  @OneToMany(() => H15SsxbTf, (h15SsxbTf) => h15SsxbTf.h15SszbEntity)
+  @OneToMany(() => H15SsxbTf, (h15SsxbTf) => h15SsxbTf.h15SsxbEntity)
   h15SsxbTfs: H15SsxbTf[];
 }
