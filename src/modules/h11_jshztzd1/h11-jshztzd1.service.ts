@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, EntityManager } from 'typeorm';
+import { Repository, Like, Between, EntityManager, DataSource } from 'typeorm';
 import { H11Jshztzd1 } from './h11-jshztzd1.entity';
 import {
   CreateH11Jshztzd1Dto,
@@ -17,6 +17,8 @@ export class H11Jshztzd1Service {
 
     @InjectRepository(H11Jshztzd1)
     private readonly h11Jshztzd1Repository: Repository<H11Jshztzd1>,
+
+    private dataSource: DataSource,
   ) {}
 
   async create(createDto: CreateH11Jshztzd1Dto): Promise<H11Jshztzd1> {
@@ -53,52 +55,53 @@ export class H11Jshztzd1Service {
   }
 
   async queryMessages(ksid: string): Promise<any[]> {
-    const query = this.h11Jshztzd1Repository
-      .createQueryBuilder('h11')
-      .select([
-        'h11.ksid',
-        'h11.zybh',
-        'h11.brxm',
-        'h11.cycw',
-        'h11.zyid',
-        'h11.qfbz',
-        'h11.hkdz',
-        'h11.tjsj',
-      ])
-      .where('h11.ksid = :ksid', { ksid })
-      .andWhere('ISNULL(h11.hdbz, 0) = 0');
+    // 使用 queryRunner 执行原生 SQL
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    const secondQuery = this.h11Jshztzd1Repository
-      .createQueryBuilder()
-      .select([
-        "'' as ksid",
-        'h12.zybh',
-        'h11.brxm',
-        'h11.rycw as cycw',
-        'h11.zyid',
-        'h12.yzlx as qfbz',
-        "'1' as hkdz",
-        'h11.rysj as tjsj',
-      ])
-      .from(h12_yzxb, 'h12')
-      .innerJoin('h11_brxx', 'h11', 'h12.zyid = h11.zyid')
-      .where('h11.zyzt < 3')
-      .andWhere('h11.cyksid = :ksid', { ksid })
-      .andWhere('h12.ysbz = 1')
-      .andWhere('h12.tjbz = 1')
-      .andWhere("(h12.hdbz = 0 OR (h12.yzlx = 1 AND h12.tzbz = 1 AND ISNULL(h12.jshs, '') = ''))")
-      .andWhere(
-        'NOT EXISTS (SELECT 1 FROM h11_jshztzd1 WHERE h11_jshztzd1.zyid = h12.zyid AND h11_jshztzd1.qfbz = h12.yzlx AND h11_jshztzd1.hdbz = 0)',
-      )
-      .andWhere("h12.xmmc NOT IN ('     重 整 医 嘱', '     术 后 医 嘱', '     产 后 医 嘱')");
+    try {
+      const sql = `
+      SELECT h11_jshztzd1.ksid,
+             h11_jshztzd1.zybh,
+             h11_jshztzd1.brxm,
+             h11_jshztzd1.cycw,
+             h11_jshztzd1.zyid,
+             h11_jshztzd1.qfbz,
+             h11_jshztzd1.hkdz,
+             h11_jshztzd1.tjsj
+        FROM h11_jshztzd1
+       WHERE (h11_jshztzd1.ksid = @0)
+         AND isnull(h11_jshztzd1.hdbz, 0) = 0
+      union all
+      select distinct '',
+                      h12_yzxb.zybh,
+                      h11_brxx.brxm,
+                      h11_brxx.rycw,
+                      h11_brxx.zyid,
+                      h12_yzxb.yzlx,
+                      '1',
+                      h11_brxx.rysj
+        from h12_yzxb,
+             h11_brxx
+       where h12_yzxb.zyid = h11_brxx.zyid
+         and h11_brxx.zyzt < 3
+         and h11_brxx.cyksid = @1
+         and h12_yzxb.ysbz = 1
+         and h12_yzxb.tjbz = 1
+         and ((h12_yzxb.hdbz = 0) or
+             (h12_yzxb.yzlx = 1 and h12_yzxb.tzbz = 1 and isnull(h12_yzxb.jshs, '') = ''))
+         and not exists (select *
+                from h11_jshztzd1
+               where h11_jshztzd1.zyid = h12_yzxb.zyid
+                 and h11_jshztzd1.qfbz = h12_yzxb.yzlx
+                 and h11_jshztzd1.hdbz = 0)
+         and (h12_yzxb.xmmc <> '     重 整 医 嘱' and h12_yzxb.xmmc <> '     术 后 医 嘱' and
+             h12_yzxb.xmmc <> '     产 后 医 嘱')
+    `;
 
-    const finalQuery = this.h11Jshztzd1Repository
-      .createQueryBuilder()
-      .select('*')
-      .from(`(${query.getQuery()}) UNION ALL (${secondQuery.getQuery()})`, 'result')
-      .setParameters({ ...query.getParameters(), ...secondQuery.getParameters() });
-
-    return await finalQuery.getRawMany();
+      return await queryRunner.query(sql, [ksid, ksid]);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async update(
