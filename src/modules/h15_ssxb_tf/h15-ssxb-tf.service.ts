@@ -144,10 +144,10 @@ export class H15SsxbTfService {
       }
     });
 
-    await this.dataSource.query(
-      `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
-      [sourceDtos.zyid, sourceDtos.userId],
-    );
+    // await this.dataSource.query(
+    //   `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
+    //   [sourceDtos.zyid, sourceDtos.userId],
+    // );
   }
 
   // 分页查询
