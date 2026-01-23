@@ -1,4 +1,3 @@
-
 import { forwardRef, Global, Module } from '@nestjs/common';
 import { emr_jcsqService } from './emr_jcsq.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,10 +8,9 @@ import { GyIdentityModule } from '../gy_identity/gy-identity.module';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([emr_jcsq, emr_jcsqmx,]),
-  forwardRef(() => GyIdentityModule),],
+  imports: [TypeOrmModule.forFeature([emr_jcsq, emr_jcsqmx]), forwardRef(() => GyIdentityModule)],
   controllers: [emr_jcsqController],
   providers: [emr_jcsqService],
   exports: [emr_jcsqService],
 })
-export class emr_jcsqModule { }
+export class emr_jcsqModule {}

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { emr_jcsq } from './emr_jcsq.entity';
-import { Jcbw, Jcff, QueryDto, SaveDto, } from './dto';
+import { Jcbw, Jcff, QueryDto, SaveDto } from './dto';
 import { ERR } from '@/common/exceptions/error-code';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { emr_jcsqmx } from './emr_jcsqmx.entity';
@@ -10,13 +10,12 @@ import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 @Injectable()
 export class emr_jcsqService {
-
   constructor(
     @InjectRepository(emr_jcsq)
     private emr_jcsqRepo: Repository<emr_jcsq>,
     private dataSource: DataSource,
     private readonly gyIdentityService: GyIdentityService,
-  ) { }
+  ) {}
 
   async save(saveDto: SaveDto) {
     const { jcbwList, jcffList, zlxmList, ...data } = saveDto;
@@ -31,12 +30,10 @@ export class emr_jcsqService {
           where: { sqdh: data.sqdh },
         });
         if (existingJcsq && data.sqdh) {
-
           //这里实现生成医嘱逻辑
 
           return await this.updateJcsq(existingJcsq, data, jcbwList, jcffList, manager);
         } else {
-
           //这里实现生成医嘱逻辑
 
           return await this.createJcsq(data, jcbwList, jcffList, manager);
@@ -56,7 +53,7 @@ export class emr_jcsqService {
     data: Partial<emr_jcsq>,
     jcbwList: any[],
     jcffList: any[],
-    manager: EntityManager
+    manager: EntityManager,
   ): Promise<emr_jcsq> {
     // 手动合并属性，避免类型问题
     Object.assign(existingJcsq, data);
@@ -65,7 +62,7 @@ export class emr_jcsqService {
     // 清空旧的明细记录
     await manager.delete(emr_jcsqmx, { sqdh: data.sqdh! });
 
-    await this.saveJcsqDetails(data.sqdh, jcbwList, jcffList, manager)
+    await this.saveJcsqDetails(data.sqdh, jcbwList, jcffList, manager);
 
     return await manager.save(updatedJcsq);
   }
@@ -77,7 +74,7 @@ export class emr_jcsqService {
     data: Partial<emr_jcsq>,
     jcbwList: Jcbw[],
     jcffList: Jcff[],
-    manager: EntityManager
+    manager: EntityManager,
   ): Promise<emr_jcsq> {
     const newId = await this.gyIdentityService.getMax('emr_jcsq');
     const newJcsq = manager.create(emr_jcsq, {
@@ -86,7 +83,7 @@ export class emr_jcsqService {
       jczt: '0',
     });
 
-    await this.saveJcsqDetails(newId.toString(), jcbwList, jcffList, manager)
+    await this.saveJcsqDetails(newId.toString(), jcbwList, jcffList, manager);
 
     return await manager.save(newJcsq);
   }
@@ -98,7 +95,7 @@ export class emr_jcsqService {
     sqdh: string,
     jcbwList: Jcbw[],
     jcffList: Jcff[],
-    manager: EntityManager
+    manager: EntityManager,
   ): Promise<void> {
     // 保存检查部位
     if (jcbwList?.length) {
@@ -125,34 +122,34 @@ export class emr_jcsqService {
     }
   }
   findOne(queryDto: QueryDto) {
-    const queryBuilder = this.emr_jcsqRepo.createQueryBuilder('jcsq')
+    const queryBuilder = this.emr_jcsqRepo
+      .createQueryBuilder('jcsq')
 
       // 👇 部位和方法从 emr_jcxmmx 取出来
       .leftJoinAndMapMany(
         'jcsq.jcsqmxList', // 映射成 jcxm.mxList 数组
-        'emr_jcsqmx',  // 中间表
+        'emr_jcsqmx', // 中间表
         'mx',
-        'mx.sqdh = jcsq.sqdh'
+        'mx.sqdh = jcsq.sqdh',
       )
       .leftJoinAndMapOne('mx.jcbw', 'emr_jcbw', 'bw', 'bw.bwid = mx.bwid')
       .leftJoinAndMapOne('mx.jcff', 'emr_jcff', 'ff', 'ff.ffid = mx.ffid')
       .leftJoinAndMapOne('mx.jcxm', 'emr_jcxm', 'xm', 'xm.jcxmid = mx.jcxmid')
-      .leftJoinAndSelect('bw.zlxmList', 'zlxmList')
+      .leftJoinAndSelect('bw.zlxmList', 'zlxmList');
     queryBuilder.andWhere('jcsq.sqdh = :sqdh', { sqdh: queryDto.sqdh });
 
-    return queryBuilder.getOne()
+    return queryBuilder.getOne();
   }
 
   async deleteJcsq(zyid: string, sqdhs: string[], manager: EntityManager) {
-    if (!sqdhs.length) return
+    if (!sqdhs.length) return;
     const jcsq = await manager.find(emr_jcsq, {
-      where: { mzid: zyid, sqdh: In([...sqdhs]), },
-      select: (['sqdh'])
-    })
-    if (!jcsq.length) return
+      where: { mzid: zyid, sqdh: In([...sqdhs]) },
+      select: ['sqdh'],
+    });
+    if (!jcsq.length) return;
 
-    await manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) })
-    await manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) })
-
+    await manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) });
+    await manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) });
   }
 }

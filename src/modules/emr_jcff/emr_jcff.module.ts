@@ -1,4 +1,3 @@
-
 import { Global, Module } from '@nestjs/common';
 import { emr_jcffService } from './emr_jcff.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,4 +14,4 @@ import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
   providers: [emr_jcffService],
   exports: [emr_jcffService],
 })
-export class emr_jcffModule { }
+export class emr_jcffModule {}

@@ -1,4 +1,3 @@
-
 import { Global, Module } from '@nestjs/common';
 import { emr_jcxmService } from './emr_jcxm.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -11,12 +10,9 @@ import { emr_jcxmmx } from './emr_jcxmmx.entity';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    emr_jcxm, emr_jcbw,
-    emr_jcff, emr_xmfl, emr_jcxmmx
-  ])],
+  imports: [TypeOrmModule.forFeature([emr_jcxm, emr_jcbw, emr_jcff, emr_xmfl, emr_jcxmmx])],
   controllers: [emr_jcxmController],
   providers: [emr_jcxmService],
   exports: [emr_jcxmService],
 })
-export class emr_jcxmModule { }
+export class emr_jcxmModule {}

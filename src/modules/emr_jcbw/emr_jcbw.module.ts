@@ -1,4 +1,3 @@
-
 import { Global, Module } from '@nestjs/common';
 import { emr_jcbwService } from './emr_jcbw.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,4 +13,4 @@ import { emr_xmfl } from '../emr_xmfl/emr_xmfl.entity';
   providers: [emr_jcbwService],
   exports: [emr_jcbwService],
 })
-export class emr_jcbwModule { }
+export class emr_jcbwModule {}

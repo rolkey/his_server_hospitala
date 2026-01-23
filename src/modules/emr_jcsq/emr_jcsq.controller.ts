@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common'
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { emr_jcsqService } from './emr_jcsq.service';
 import { QueryDto, SaveDto } from './dto';
 
 @Controller('emr_jcsq')
 export class emr_jcsqController {
-  constructor(private readonly emr_jcsqService: emr_jcsqService) { }
+  constructor(private readonly emr_jcsqService: emr_jcsqService) {}
 
   @Post('save')
   async save(@Body() saveDto: SaveDto) {

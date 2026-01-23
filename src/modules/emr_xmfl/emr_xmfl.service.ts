@@ -1,4 +1,3 @@
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -9,6 +8,4 @@ import { ERR } from '@/common/exceptions/error-code';
 import { CustomException } from '@/common/exceptions/custom.exception';
 
 @Injectable()
-export class emr_xmflService {
-
-}
+export class emr_xmflService {}
