@@ -24,7 +24,8 @@ export class H11Jshztzd1Controller {
   @ApiOperation({ summary: '查询结算汇总通知单列表' })
   @ApiResponse({ type: [H11Jshztzd1ResponseDto] })
   async findAll(@Query() queryDto: QueryH11Jshztzd1Dto) {
-    return this.h11Jshztzd1Service.findAll(queryDto);
+    // return this.h11Jshztzd1Service.findAll(queryDto);
+    return this.h11Jshztzd1Service.queryMessages(queryDto.ksid);
   }
 
   @Get(':zyid/:ksid/:qfbz')

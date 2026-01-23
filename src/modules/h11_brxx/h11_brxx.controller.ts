@@ -11,10 +11,14 @@ import {
   ForciblyDeleteDto,
   receiptDto,
 } from './dto';
+import { h11_brxxService_new } from './h11_brxx.service_new';
 
 @Controller('h11_brxx')
 export class h11_brxxController {
-  constructor(private readonly h11_brxxService: h11_brxxService) {}
+  constructor(
+    private readonly h11_brxxService: h11_brxxService,
+    private readonly h11_brxxService_new: h11_brxxService_new,
+  ) {}
 
   @Get('findAll')
   async findAll(@Query() queryDto: Queryh11_brxxDto) {
@@ -63,6 +67,24 @@ export class h11_brxxController {
   @Post('bedAllocation')
   async bedAllocation(@Body() dto: bedAllocationDto) {
     return await this.h11_brxxService.bedAllocation(dto);
+  }
+
+  //分配床位
+  @Post('updateBedAllocation')
+  async updateBedAllocation(
+    @Body()
+    data: {
+      lrsj: Date;
+      cwid: string;
+      cwidOld: string;
+      zyid: string;
+      cwmc: string;
+      ksid: string;
+      userId: string;
+      userName: string;
+    },
+  ) {
+    return await this.h11_brxxService_new.updateBedAllocation(data);
   }
 
   // 删除

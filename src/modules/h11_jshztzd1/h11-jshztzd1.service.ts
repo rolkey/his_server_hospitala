@@ -7,10 +7,14 @@ import {
   UpdateH11Jshztzd1Dto,
   QueryH11Jshztzd1Dto,
 } from './h11-jshztzd1.dto';
+import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 
 @Injectable()
 export class H11Jshztzd1Service {
   constructor(
+    @InjectRepository(h12_yzxb)
+    private readonly h12_yzxxbRepository: Repository<h12_yzxb>,
+
     @InjectRepository(H11Jshztzd1)
     private readonly h11Jshztzd1Repository: Repository<H11Jshztzd1>,
   ) {}
@@ -46,6 +50,55 @@ export class H11Jshztzd1Service {
     return await this.h11Jshztzd1Repository.findOne({
       where: { zyid, ksid, qfbz },
     });
+  }
+
+  async queryMessages(ksid: string): Promise<any[]> {
+    const query = this.h11Jshztzd1Repository
+      .createQueryBuilder('h11')
+      .select([
+        'h11.ksid',
+        'h11.zybh',
+        'h11.brxm',
+        'h11.cycw',
+        'h11.zyid',
+        'h11.qfbz',
+        'h11.hkdz',
+        'h11.tjsj',
+      ])
+      .where('h11.ksid = :ksid', { ksid })
+      .andWhere('ISNULL(h11.hdbz, 0) = 0');
+
+    const secondQuery = this.h11Jshztzd1Repository
+      .createQueryBuilder()
+      .select([
+        "'' as ksid",
+        'h12.zybh',
+        'h11.brxm',
+        'h11.rycw as cycw',
+        'h11.zyid',
+        'h12.yzlx as qfbz',
+        "'1' as hkdz",
+        'h11.rysj as tjsj',
+      ])
+      .from(h12_yzxb, 'h12')
+      .innerJoin('h11_brxx', 'h11', 'h12.zyid = h11.zyid')
+      .where('h11.zyzt < 3')
+      .andWhere('h11.cyksid = :ksid', { ksid })
+      .andWhere('h12.ysbz = 1')
+      .andWhere('h12.tjbz = 1')
+      .andWhere("(h12.hdbz = 0 OR (h12.yzlx = 1 AND h12.tzbz = 1 AND ISNULL(h12.jshs, '') = ''))")
+      .andWhere(
+        'NOT EXISTS (SELECT 1 FROM h11_jshztzd1 WHERE h11_jshztzd1.zyid = h12.zyid AND h11_jshztzd1.qfbz = h12.yzlx AND h11_jshztzd1.hdbz = 0)',
+      )
+      .andWhere("h12.xmmc NOT IN ('     重 整 医 嘱', '     术 后 医 嘱', '     产 后 医 嘱')");
+
+    const finalQuery = this.h11Jshztzd1Repository
+      .createQueryBuilder()
+      .select('*')
+      .from(`(${query.getQuery()}) UNION ALL (${secondQuery.getQuery()})`, 'result')
+      .setParameters({ ...query.getParameters(), ...secondQuery.getParameters() });
+
+    return await finalQuery.getRawMany();
   }
 
   async update(

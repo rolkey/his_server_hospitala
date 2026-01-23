@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { H11Jshztzd1 } from './h11-jshztzd1.entity';
 import { H11Jshztzd1Service } from './h11-jshztzd1.service';
 import { H11Jshztzd1Controller } from './h11-jshztzd1.controller';
+import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([H11Jshztzd1])],
+  imports: [TypeOrmModule.forFeature([H11Jshztzd1, h12_yzxb])],
   controllers: [H11Jshztzd1Controller],
   providers: [H11Jshztzd1Service],
   exports: [H11Jshztzd1Service],

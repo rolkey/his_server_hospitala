@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { H15SsxbTf } from './h15-ssxb-tf.entity';
 import { CreateH15SsxbTfDto, H15SsxbTfDto } from './dto/h15-ssxb-tf.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
+import { GyIdentityService } from '../gy_identity/gy-identity.service';
 
 // readGsCxsz
 
@@ -15,6 +16,8 @@ export class H15SsxbTfService {
 
     private readonly entityManager: EntityManager,
     private readonly paramService: ParamService,
+    private readonly gyIdentityService: GyIdentityService,
+    private dataSource: DataSource,
   ) {}
 
   // 创建记录 - Controller中 @Post() 使用
@@ -61,6 +64,10 @@ export class H15SsxbTfService {
       returnRecord.xnhbz = sourceDto.maxid;
       returnRecord.fydh = '';
       returnRecord.ssrq = new Date(); // 当前时间作为退费日期
+
+      // 处理主键
+      returnRecord.ssmxid = await this.gyIdentityService.getMax('h15_ssxb_tf_ssmxid');
+      returnRecord.czid = '1';
 
       if (sourceDto.tpbz === 0) {
         returnRecord.sjtysl = sourceDto.tfsl * -1;
@@ -131,15 +138,16 @@ export class H15SsxbTfService {
     await this.entityManager.transaction(async (manager) => {
       try {
         await this.add(sourceDtos.tfList, manager);
-
-        await manager.query(
-          `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
-          [sourceDtos.zyid, sourceDtos.userId],
-        );
       } catch (error) {
         console.error('手术退费错误！！', error);
+        throw new BadRequestException('手术退费错误！！' + error.message);
       }
     });
+
+    await this.dataSource.query(
+      `EXEC sp_h13zxcs_fyjl @as_ksid = '', @li_para = @0, @ls_usid = @1, @yzlx = 3`,
+      [sourceDtos.zyid, sourceDtos.userId],
+    );
   }
 
   // 分页查询
