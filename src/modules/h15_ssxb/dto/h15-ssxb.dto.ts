@@ -200,6 +200,9 @@ export class BaseH15SsxbDto {
 
   @Allow()
   tcmc?: string;
+
+  @Allow()
+  h15SsxbTfs: any[]; // 这是一对多关系
 }
 
 /**
