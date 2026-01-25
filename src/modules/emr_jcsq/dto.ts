@@ -169,6 +169,10 @@ export class Jcbw {
   @IsOptional()
   @IsString()
   jcxmid?: string;
+
+  @IsOptional()
+  @IsString()
+  jcxmmc?: string;
 }
 
 export class Jcff {
@@ -317,8 +321,4 @@ export class UpdateDto extends CreateDto {
 export class SaveDto extends CreateDto {
   @IsOptional()
   sqdh?: string; // 申请单号（主键）
-
-  @IsOptional()
-  @IsString()
-  cfid?: string; // 处方id
 }

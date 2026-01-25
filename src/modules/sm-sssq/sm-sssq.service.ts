@@ -168,7 +168,7 @@ export class SmSssqService {
       typbz: '',
       ksys: smSssq.czgh,
       kshs: '',
-      fylbid: '35',
+      fylbid: '14',
       sfje: 0,
       sjbz: 0,
       sfbz: 1,

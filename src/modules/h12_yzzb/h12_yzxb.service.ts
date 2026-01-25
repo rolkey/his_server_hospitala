@@ -44,6 +44,8 @@ import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { log } from 'console';
+import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
+import { emr_jcsqService } from '../emr_jcsq/emr_jcsq.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -87,6 +89,9 @@ export class h12_yzxbService {
     private contextService: ContextService,
     // private sfxmService: SfxmService,
     private h12CyclService: H12CyclService,
+
+    @Inject(forwardRef(() => emr_jcsqService))
+    private emrJcsqService: emr_jcsqService,
   ) {
     // this.context = new RequestContext();
   }
@@ -943,10 +948,16 @@ export class h12_yzxbService {
     // }
 
     // 处理删除记录
+    const promises = [];
     for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
-      const { zyid, yzlx, yzxh, mxxh } = h12_yzzbOpe.deleteList[i];
-      await this.remove(zyid, yzlx, yzxh, mxxh, manager);
+      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
+      if (scdh && xmid === '0000000') {
+        // 只有主项删除时，关联的检查申请才能删除
+        promises.push(...(await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager)));
+      }
+      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
     }
+    await Promise.all(promises);
 
     // 初始化变量
     // const today = new Date().getFullYear().toString();

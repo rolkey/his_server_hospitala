@@ -45,6 +45,10 @@ import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
 import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
+import { emr_jcsqService } from '../emr_jcsq/emr_jcsq.service';
+import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
+// import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
+
 @Global()
 @Module({
   imports: [
@@ -70,6 +74,7 @@ import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
       h13_cwsyxx,
       C00Fbxx,
       H13YzzxcsDelete,
+      emr_jcsq,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -82,6 +87,7 @@ import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
     forwardRef(() => SharedModule),
     forwardRef(() => h11_lshModule),
     forwardRef(() => H12CyclModule),
+    // forwardRef(() => emr_jcsqModule),
   ],
   controllers: [h12_yzzbController],
   providers: [
@@ -94,6 +100,7 @@ import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
     h11_lshService,
     SfxmService,
     H12CyclService,
+    emr_jcsqService,
   ],
   exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
 })
