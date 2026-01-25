@@ -218,6 +218,15 @@ export class h13_yzzxcs {
   ])
   h31Lyjl?: H31Lyjl;
 
+  @ManyToOne(() => h12_yzxb, { cascade: false })
+  @JoinColumn([
+    { name: 'yzxh', referencedColumnName: 'yzxh' },
+    { name: 'mxxh', referencedColumnName: 'mxxh' },
+    { name: 'yzlx', referencedColumnName: 'yzlx' },
+    { name: 'zyid', referencedColumnName: 'zyid' },
+  ])
+  h12_yzxbs?: h12_yzxb;
+
   @OneToMany(() => H13YzzxcsTf, (H13YzzxcsTf) => H13YzzxcsTf.h13_yzzxcs, {
     cascade: false, // 禁用级联操作
   })

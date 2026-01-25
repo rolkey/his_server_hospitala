@@ -86,6 +86,13 @@ export class h13_yzzxcsController {
     return this.h13_yzzxcsService.delete({ yzxh, mxxh, yzlx, zyid, zxrq });
   }
 
+  @Get('generate-temp-data-nurse')
+  async generateTempNurse(
+    @Query() data: { zyid: string; yzzhs: string },
+  ): Promise<H13YzzxcsResponseDto[]> {
+    return await this.h13_yzzxcsService.generateTempDataNurse(data);
+  }
+
   @Get('generate-temp-data')
   async generateTempData(
     @Query('zyid') zyid: string,

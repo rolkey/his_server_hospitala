@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
+import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 
 @Entity({ name: 'h13_yzzxcs_tf', schema: 'dbo' })
 export class H13YzzxcsTf {
@@ -178,6 +179,15 @@ export class H13YzzxcsTf {
     { name: 'zxcs2', referencedColumnName: 'maxid' },
   ])
   h13_yzzxcs?: h13_yzzxcs;
+
+  @ManyToOne(() => h12_yzxb, { cascade: false })
+  @JoinColumn([
+    { name: 'yzxh', referencedColumnName: 'yzxh' },
+    { name: 'mxxh', referencedColumnName: 'mxxh' },
+    { name: 'yzlx', referencedColumnName: 'yzlx' },
+    { name: 'zyid', referencedColumnName: 'zyid' },
+  ])
+  h12_yzxbs?: h12_yzxb;
 
   @ManyToOne(() => H00_xmzd, { cascade: false })
   @JoinColumn([{ name: 'xmid', referencedColumnName: 'xmid' }])

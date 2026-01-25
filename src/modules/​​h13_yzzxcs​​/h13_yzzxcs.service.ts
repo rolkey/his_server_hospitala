@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, In } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
@@ -8,6 +8,7 @@ import { H13YzzxcsTfResponseDto } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.dto';
 import { plainToInstance } from 'class-transformer';
 import { getCompleteSqlWithParameters, getSqlWithParameters } from '@/utils/sql-utils';
 import DateFormater from '@/utils/DateFormater';
+import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 
 @Injectable()
 export class h13_yzzxcsService {
@@ -15,39 +16,100 @@ export class h13_yzzxcsService {
 
   constructor(
     @InjectRepository(h13_yzzxcs)
-    private readonly h13_yzzxcsRepository: Repository<h13_yzzxcs>,
+    private readonly h13YzzxcsRepository: Repository<h13_yzzxcs>,
+    @InjectRepository(h12_yzxb)
+    private readonly h12yzxbRepository: Repository<h12_yzxb>,
     @InjectRepository(H13YzzxcsTf)
     private readonly h13YzzxcsTfRepository: Repository<H13YzzxcsTf>,
   ) {}
 
   async findAll(): Promise<h13_yzzxcs[]> {
-    return this.h13_yzzxcsRepository.find();
+    return this.h13YzzxcsRepository.find();
   }
 
   async findOne(conditions: any): Promise<h13_yzzxcs> {
-    return this.h13_yzzxcsRepository.findOne({ where: conditions });
+    return this.h13YzzxcsRepository.findOne({ where: conditions });
   }
 
   async create(createDto: CreateH13YzzxcsDto): Promise<h13_yzzxcs> {
-    const record = this.h13_yzzxcsRepository.create(createDto);
-    return this.h13_yzzxcsRepository.save(record);
+    const record = this.h13YzzxcsRepository.create(createDto);
+    return this.h13YzzxcsRepository.save(record);
   }
 
   async update(conditions: any, updateDto: UpdateH13YzzxcsDto): Promise<h13_yzzxcs> {
-    await this.h13_yzzxcsRepository.update(conditions, updateDto);
-    return this.h13_yzzxcsRepository.findOne({ where: conditions });
+    await this.h13YzzxcsRepository.update(conditions, updateDto);
+    return this.h13YzzxcsRepository.findOne({ where: conditions });
   }
 
   async delete(conditions: any): Promise<void> {
-    await this.h13_yzzxcsRepository.delete(conditions);
+    await this.h13YzzxcsRepository.delete(conditions);
   }
 
   async findByZyid(zyid: string): Promise<h13_yzzxcs[]> {
-    return this.h13_yzzxcsRepository.find({ where: { zyid } });
+    return this.h13YzzxcsRepository.find({ where: { zyid } });
   }
 
   async findByYzxh(yzxh: number): Promise<h13_yzzxcs[]> {
-    return this.h13_yzzxcsRepository.find({ where: { yzxh } });
+    return this.h13YzzxcsRepository.find({ where: { yzxh } });
+  }
+
+  async generateTempDataNurse(data: {
+    zyid: string;
+    yzzhs: string;
+  }): Promise<H13YzzxcsResponseDto[]> {
+    const { zyid, yzzhs } = data;
+    const yzzhArray = yzzhs.split(',').map(Number);
+
+    // 按医嘱检查待停医嘱及医嘱时间
+    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
+      .createQueryBuilder('tf')
+      .select(['tf', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
+      .leftJoinAndSelect('tf.h12_yzxbs', 'h')
+      .where('tf.zyid = :zyid', { zyid })
+      .andWhere('tf.yzxh = 1')
+      .andWhere('tf.yzzh in (:...yzzh)', { yzzh: yzzhArray })
+      .andWhere('tf.yzlx = 1')
+      .andWhere('tf.zxrq >= h.tzrq');
+
+    const h13YzzxcsListQuery = this.h13YzzxcsRepository
+      .createQueryBuilder('tf')
+      .select(['tf', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
+      .leftJoinAndSelect('tf.h12_yzxbs', 'h')
+      .where('tf.zyid = :zyid', { zyid })
+      .andWhere('tf.yzzh in (:...yzzh)', { yzzh: yzzhArray })
+      .andWhere('tf.yzxh = 1')
+      .andWhere('tf.yzlx = 1')
+      .andWhere('tf.zxrq >= h.tzrq')
+      .orderBy('tf.zxrq', 'ASC');
+    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+      h13YzzxcsTfListQuery.getMany(),
+      h13YzzxcsListQuery.getMany(),
+    ]);
+
+    // 首先按yzzh进行分组
+    const groupedByYzzh = h13YzzxcsList.reduce(
+      (acc, item) => {
+        const { yzzh } = item.h12_yzxb;
+        if (!acc[yzzh]) {
+          acc[yzzh] = [];
+        }
+        acc[yzzh].push(item);
+        return acc;
+      },
+      {} as Record<string, typeof h13YzzxcsList>,
+    );
+
+    const h13Yzzxcss = [];
+    // 对每个分组进行处理
+    for (const yzzh in groupedByYzzh) {
+      const group = groupedByYzzh[yzzh];
+      // 取第一个项目的tzrq和mrcs（假设同一分组内的这些值是相同的）
+      const { tzrq, mrcs } = group[0].h12_yzxb;
+      const transformedData = this.getYzzxcsFees(group, h13YzzxcsTfList, tzrq, mrcs);
+      h13Yzzxcss.push(...transformedData);
+    }
+
+    return h13Yzzxcss.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }
 
   /**
@@ -82,9 +144,8 @@ export class h13_yzzxcsService {
       .andWhere('tf.yzlx = :yzlx', { yzlx })
       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
       .andWhere('tf.zxrq >= :zxrq', { zxrq: targetDate });
-    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
-    const h13YzzxcsListQuery = this.h13_yzzxcsRepository
+    const h13YzzxcsListQuery = this.h13YzzxcsRepository
       .createQueryBuilder('h13')
       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
@@ -103,18 +164,24 @@ export class h13_yzzxcsService {
       //   .andWhere('h13.clbz = 1')
       .andWhere('h13.zxrq >= :zxrq', { zxrq: targetDate })
       .orderBy('h13.maxid', 'ASC'); // 添加排序，ASC表示升序
-    // console.log(
-    //   'h13YzzxcsListQuery 1: --------------------------------------',
-    //   '\n',
-    //   getSqlWithParameters(h13YzzxcsListQuery),
-    // );
 
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
       h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
     ]);
 
-    const transformedData = h13YzzxcsList.map((h13) => {
+    const transformedData = this.getYzzxcsFees(h13YzzxcsList, h13YzzxcsTfList, targetDate, mrcs);
+
+    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+  }
+
+  private getYzzxcsFees(
+    h13YzzxcsList: h13_yzzxcs[],
+    h13YzzxcsTfList: H13YzzxcsTf[],
+    targetDate: Date,
+    mrcs: number,
+  ) {
+    return h13YzzxcsList.map((h13) => {
       const returnData = new H13YzzxcsResponseDto();
       Object.assign(returnData, {
         ...h13,
@@ -145,33 +212,10 @@ export class h13_yzzxcsService {
         returnData.thsl = h13.zxcs;
       }
 
-      //   const dateStr = h13.zxrq.toISOString().split('T')[0];
-      //   const timeStr = currentTime.toTimeString().split(' ')[0];
-      //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
-
       const bzxcs = h13.zxcs - h13.bzxcs;
       returnData.sjtysl = bzxcs * h13.jfyl;
       return returnData;
     });
-
-    // 添加更新操作，对应PB9中的第一个update语句
-    // await this.h13_yzzxcsRepository
-    //   .createQueryBuilder()
-    //   .update()
-    //   .set({
-    //     bzxcs: () => 'zxcs',
-    //     sjtysl: () => 'zxcs * jfyl',
-    //     tysj: tzrq,
-    //     tyrid: gstr_ainf.u_userid,
-    //   })
-    //   .where('zyid = :zyid', { zyid })
-    //   .andWhere('yzxh = :yzxh', { yzxh })
-    //   .andWhere('yzlx = :yzlx', { yzlx })
-    //   .andWhere('yzzh IN (:...yzzh)', { yzzh })
-    //   .andWhere('CONVERT(date, zxrq) > :zxrq', { zxrq: targetDate })
-    //   .execute();
-
-    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }
 
   async generateTempDataForFutureDates(
@@ -196,7 +240,7 @@ export class h13_yzzxcsService {
       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
     // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
-    const h13YzzxcsListQuery = this.h13_yzzxcsRepository
+    const h13YzzxcsListQuery = this.h13YzzxcsRepository
       .createQueryBuilder('h13')
       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
@@ -327,7 +371,7 @@ export class h13_yzzxcsService {
       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
     // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
-    const h13YzzxcsListQuery = this.h13_yzzxcsRepository
+    const h13YzzxcsListQuery = this.h13YzzxcsRepository
       .createQueryBuilder('h13')
       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
@@ -439,7 +483,7 @@ export class h13_yzzxcsService {
     });
 
     // 添加更新操作，对应PB9中的第二个update语句
-    // await this.h13_yzzxcsRepository
+    // await this.h13YzzxcsRepository
     //   .createQueryBuilder()
     //   .update()
     //   .set({
