@@ -1385,8 +1385,12 @@ export class h12_yzxbService {
     });
     await this.dataSource.transaction(async (manager) => {
       await manager.save(h12_yzxb, h12_yzxbs);
+
+      // 处理库存
       //   const zxrq = DateFormater.formatDate1(tzsj);
       //   await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
+
+      // 更新消息数据
       await this.h11Jshztzd1Service.updateOrCreateRecord(
         {
           zyid,

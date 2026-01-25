@@ -422,7 +422,7 @@ export class H31_kcxxService {
           return response;
         }
 
-        const xs = ypzd.ysxs || 1;
+        const xs = ypzd.ysxs || 1; // ypzd.ysxs 包装系数
         const kcgl = ypzd.jsl2 ?? 1;
 
         if (kcgl !== 0) {

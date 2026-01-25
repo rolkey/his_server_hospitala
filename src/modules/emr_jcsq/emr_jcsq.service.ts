@@ -96,7 +96,7 @@ export class emr_jcsqService {
       xmdj: 0,
       typbz: '',
       ksys: jcsq.sqys,
-      kshs: '',
+      kshs: null,
       fylbid: '11',
       sfje: 0,
       sjbz: 0,
