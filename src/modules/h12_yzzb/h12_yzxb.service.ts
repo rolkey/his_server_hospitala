@@ -953,7 +953,8 @@ export class h12_yzxbService {
       const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
       if (scdh && xmid === '0000000') {
         // 只有主项删除时，关联的检查申请才能删除
-        promises.push(...(await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager)));
+        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
+        if (deleteJcsq) promises.push(...deleteJcsq);
       }
       promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
     }
