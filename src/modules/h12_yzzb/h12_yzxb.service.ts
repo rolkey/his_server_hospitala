@@ -1603,8 +1603,8 @@ export class h12_yzxbService {
         newAdvice.sfbz = index + 1;
         newAdvice.jsbz = 0;
         newAdvice.tjbz = 0;
-        newAdvice.zxbz = 0;
         newAdvice.tzbz = 0;
+        newAdvice.zxbz = 0;
         newAdvice.hdbz = 0;
         newAdvice.zxcs = 0;
         newAdvice.lryid = userId;
