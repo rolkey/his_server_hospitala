@@ -899,6 +899,7 @@ export class h12_yzxbService {
       }
     });
   }
+
   /**
    * 验证并保存医嘱数据
    * @param h12_yzzbObj 主表数据
@@ -1573,24 +1574,35 @@ export class h12_yzxbService {
       //   flagAdvice.fylbid = '00';
       newH12_yzxb.push(flagAdvice);
 
-      // h12_yzxbs.forEach(async (advice) =>
+      const yzzhInfo = { oldYzzh: 0, newYzzh: 0, newGroup: false };
       for (const [index, advice] of h12_yzxbs.entries()) {
+        if (yzzhInfo.oldYzzh === advice.yzzh) {
+          yzzhInfo.newGroup = false;
+        } else {
+          yzzhInfo.newGroup = true;
+        }
         const newAdvice = await this.createAdvice({
           zyid,
           yzlx: 1,
-          newGroup: false,
-          newZxcs: false,
+          newGroup: yzzhInfo.newGroup,
+          newZxcs: true,
         });
+        if (yzzhInfo.oldYzzh === advice.yzzh) {
+          newAdvice.yzzh = yzzhInfo.newYzzh;
+        } else {
+          yzzhInfo.newYzzh = newAdvice.yzzh;
+        }
         const { yzlx, yzrq, mxxh, ksys, kssxys, srcs, ...copyValue } = advice;
 
         Object.assign(newAdvice, copyValue);
 
-        newAdvice.yzzh -= 200;
+        // newAdvice.yzzh -= 200;
         newAdvice.yzrq = kssj;
         newAdvice.tcbz = 0;
         newAdvice.sjbz = 2;
         newAdvice.sfbz = index + 1;
         newAdvice.jsbz = 0;
+        newAdvice.tjbz = 0;
         newAdvice.zxbz = 0;
         newAdvice.tzbz = 0;
         newAdvice.hdbz = 0;
