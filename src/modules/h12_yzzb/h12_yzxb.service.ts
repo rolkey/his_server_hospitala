@@ -1592,12 +1592,13 @@ export class h12_yzxbService {
         } else {
           yzzhInfo.newYzzh = newAdvice.yzzh;
         }
-        const { yzlx, yzrq, mxxh, ksys, kssxys, srcs, ...copyValue } = advice;
+        const { yzlx, yzrq, mxxh, ksys, kssxys, srcs, yzzh, ...copyValue } = advice;
 
         Object.assign(newAdvice, copyValue);
 
         // newAdvice.yzzh -= 200;
         newAdvice.yzrq = kssj;
+        newAdvice.yzzt = 0;
         newAdvice.tcbz = 0;
         newAdvice.sjbz = 2;
         newAdvice.sfbz = index + 1;
