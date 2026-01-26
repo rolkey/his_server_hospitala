@@ -47,6 +47,10 @@ export class reviewDto {
 
   @IsOptional()
   kssxhs?: string;
+
+  // 忽略费用：不处理未退费医嘱
+  @IsOptional()
+  hlfy?: boolean;
 }
 
 export class executeDto {

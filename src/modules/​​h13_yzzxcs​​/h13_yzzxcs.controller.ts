@@ -109,30 +109,6 @@ export class h13_yzzxcsController {
     // 准备公共参数
     const gstr_ainf = { u_userid };
 
-    // // 合并两个结果数组
-    // const [futureData, currentData] = await Promise.all([
-    //   this.h13_yzzxcsService.generateTempDataForFutureDates(
-    //     zyid,
-    //     yzxh,
-    //     yzlx,
-    //     yzzhArray,
-    //     zxrq,
-    //     gstr_ainf,
-    //   ),
-    //   this.h13_yzzxcsService.generateTempDataForCurrentDate(
-    //     zyid,
-    //     yzxh,
-    //     yzlx,
-    //     yzzhArray,
-    //     zxrq,
-    //     mrcs,
-    //     gstr_ainf,
-    //   ),
-    // ]);
-
-    // // 合并两个结果数组
-    // return [...currentData, ...futureData];
-
     return await this.h13_yzzxcsService.generateTempData(
       zyid,
       yzxh,
@@ -143,39 +119,4 @@ export class h13_yzzxcsController {
       gstr_ainf,
     );
   }
-
-  //   @Post('stop-fymx')
-  //   @ApiOperation({ summary: '停止医嘱费用明细' })
-  //   @ApiResponse({ status: 200, description: '医嘱停止成功' })
-  //   async wfStopFymx(
-  //     @Body()
-  //     body: {
-  //       zyid: string;
-  //       yzxh: number;
-  //       yzlx: number;
-  //       yzzh: number[];
-  //       zxrq: string;
-  //       mrcs: number;
-  //       userId: string;
-  //       u_zcid: string;
-  //       jsys: string;
-  //       ysstopbz: string;
-  //     },
-  //   ): Promise<void> {
-  //     const { zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, u_zcid, jsys, ysstopbz } = body;
-
-  //     await this.h12_yzxbService.stopAdvice(
-  //       zyid,
-  //       yzxh,
-  //       yzlx,
-  //       yzzh,
-  //       new Date(zxrq),
-  //       mrcs,
-  //       userId,
-  //       u_zcid,
-  //       jsys,
-  //       ysstopbz,
-  //     );
-  //     return;
-  //   }
 }

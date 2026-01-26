@@ -190,7 +190,7 @@ export class h13_yzzxcs {
   @Column({ name: 'scrq', type: 'datetime', nullable: true })
   scrq: Date | null;
 
-  @ManyToOne(() => h12_yzxb, (h12_yzxb) => h12_yzxb.mxxh)
+  @ManyToOne(() => h12_yzxb, (h12Yzxb) => h12Yzxb.h13_yzzxcsList, { cascade: false })
   @JoinColumn([
     { name: 'yzxh', referencedColumnName: 'yzxh' },
     { name: 'mxxh', referencedColumnName: 'mxxh' },
@@ -218,14 +218,14 @@ export class h13_yzzxcs {
   ])
   h31Lyjl?: H31Lyjl;
 
-  @ManyToOne(() => h12_yzxb, { cascade: false })
-  @JoinColumn([
-    { name: 'yzxh', referencedColumnName: 'yzxh' },
-    { name: 'mxxh', referencedColumnName: 'mxxh' },
-    { name: 'yzlx', referencedColumnName: 'yzlx' },
-    { name: 'zyid', referencedColumnName: 'zyid' },
-  ])
-  h12_yzxbs?: h12_yzxb;
+  //   @ManyToOne(() => h12_yzxb, { cascade: false })
+  //   @JoinColumn([
+  //     { name: 'yzxh', referencedColumnName: 'yzxh' },
+  //     { name: 'mxxh', referencedColumnName: 'mxxh' },
+  //     { name: 'yzlx', referencedColumnName: 'yzlx' },
+  //     { name: 'zyid', referencedColumnName: 'zyid' },
+  //   ])
+  //   h12Yzxb?: h12_yzxb;
 
   @OneToMany(() => H13YzzxcsTf, (H13YzzxcsTf) => H13YzzxcsTf.h13_yzzxcs, {
     cascade: false, // 禁用级联操作

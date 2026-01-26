@@ -113,7 +113,7 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 护士复核医嘱
+  // 复核医嘱
   // -------------------------
   async review(dto: reviewDto): Promise<void> {
     try {
@@ -255,7 +255,7 @@ export class h12_yzxbServiceNew {
             });
           }
 
-          //自动附加项目
+          // 自动附加项目？
           if (yzxb.tpbz == 1 || yzxb.tpbz == 2 || yzxb.yzzh == 0 || yzauton == '0') {
           } else {
             if (yzxbFJ.length <= 0 && yzxb.syffid) {

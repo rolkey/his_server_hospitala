@@ -63,24 +63,26 @@ export class h13_yzzxcsService {
     // 按医嘱检查待停医嘱及医嘱时间
     const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
       .createQueryBuilder('tf')
-      .select(['tf', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
+      //   .select(['tf', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
       .leftJoinAndSelect('tf.h12_yzxbs', 'h')
       .where('tf.zyid = :zyid', { zyid })
       .andWhere('tf.yzxh = 1')
       .andWhere('tf.yzzh in (:...yzzh)', { yzzh: yzzhArray })
       .andWhere('tf.yzlx = 1')
-      .andWhere('tf.zxrq >= h.tzrq');
+      .andWhere('CAST("tf"."zxrq" AS DATE) >= CAST("h"."tzrq" AS DATE)');
 
     const h13YzzxcsListQuery = this.h13YzzxcsRepository
-      .createQueryBuilder('tf')
-      .select(['tf', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
-      .leftJoinAndSelect('tf.h12_yzxbs', 'h')
-      .where('tf.zyid = :zyid', { zyid })
-      .andWhere('tf.yzzh in (:...yzzh)', { yzzh: yzzhArray })
-      .andWhere('tf.yzxh = 1')
-      .andWhere('tf.yzlx = 1')
-      .andWhere('tf.zxrq >= h.tzrq')
-      .orderBy('tf.zxrq', 'ASC');
+      .createQueryBuilder('fy')
+      //   .select(['fy', 'h.tzrq', 'h.mrcs', 'h.yzzh', 'h.yzxh', 'h.mxxh', 'h.yzlx', 'h.zyid'])
+      //   .select(['fy', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
+      .leftJoinAndSelect('fy.h12_yzxb', 'h')
+      .where('fy.zyid = :zyid', { zyid })
+      .andWhere('fy.yzzh in (:...yzzh)', { yzzh: yzzhArray })
+      .andWhere('fy.yzxh = 1')
+      .andWhere('fy.yzlx = 1')
+      .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h"."tzrq" AS DATE)')
+      .orderBy('fy.zxrq', 'ASC');
+    console.log('h13Yzzxcs查询明细', h13YzzxcsListQuery.getSql());
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
       h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
@@ -105,7 +107,11 @@ export class h13_yzzxcsService {
       const group = groupedByYzzh[yzzh];
       // 取第一个项目的tzrq和mrcs（假设同一分组内的这些值是相同的）
       const { tzrq, mrcs } = group[0].h12_yzxb;
-      const transformedData = this.getYzzxcsFees(group, h13YzzxcsTfList, tzrq, mrcs);
+
+      const truncTzrq = new Date(tzrq);
+      truncTzrq.setHours(0, 0, 0, 0); // 去掉时分秒
+
+      const transformedData = this.getYzzxcsFees(group, h13YzzxcsTfList, truncTzrq, mrcs);
       h13Yzzxcss.push(...transformedData);
     }
 
@@ -135,6 +141,9 @@ export class h13_yzzxcsService {
     const tzrq = new Date(); // 对应PB9中的ldt_sj
     const targetDate = new Date(zxrq);
     targetDate.setHours(0, 0, 0, 0);
+    if (!mrcs) {
+      mrcs = 9; // 默认全部用完
+    }
 
     // 使用QueryBuilder进行精确的日期比较
     const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
@@ -189,6 +198,7 @@ export class h13_yzzxcsService {
           xmmc: h13.h12_yzxb?.xmmc || '',
           fylbmc: h13.h00_fylb?.fylbmc || '',
           syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
+          thsl: 0,
         },
       });
 
@@ -200,20 +210,24 @@ export class h13_yzzxcsService {
           //   tf.yzlx === h13.yzlx &&
           tf.zxcs2 === h13.maxid,
       );
-      if (h13YzzxcsTf && h13YzzxcsTf.clbz === 0) {
-        returnData.bzxcs -= h13YzzxcsTf.zxcs;
-      }
+      if (h13YzzxcsTf && h13YzzxcsTf.clbz === 1) {
+        returnData.ytsl -= h13YzzxcsTf.zxcs;
+      } else returnData.ytsl = 0;
 
       // 处理末日次数
-      if (h13.zxrq === targetDate && mrcs !== 9) {
+      const h13Date = new Date(h13.zxrq);
+      h13Date.setHours(0, 0, 0, 0); // 去掉时分秒
+
+      if (h13Date.getTime() === targetDate.getTime() && mrcs !== 9) {
         // 计算退费数量
-        console.log('mrcs', mrcs);
+        returnData.dtsl = mrcs;
       } else {
-        returnData.thsl = h13.zxcs;
+        returnData.dtsl = 0;
       }
 
-      const bzxcs = h13.zxcs - h13.bzxcs;
-      returnData.sjtysl = bzxcs * h13.jfyl;
+      // 重新计算退费数量
+      const tfsl = returnData.zxcs - returnData.ytsl - returnData.dtsl;
+      returnData.sjtysl = tfsl * h13.jfyl;
       return returnData;
     });
   }
