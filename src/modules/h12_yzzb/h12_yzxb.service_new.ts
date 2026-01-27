@@ -156,7 +156,7 @@ export class h12_yzxbServiceNew {
               deleteYzzxcss.push(item);
             }
 
-            if (item.clbz === 1 && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
+            if ((item.clbz === 1 || item.fydh) && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
               if (dto.hlfy) return true;
               else throw new BadRequestException('仍有未退费医嘱，复核失败！！');
             } else return false;
