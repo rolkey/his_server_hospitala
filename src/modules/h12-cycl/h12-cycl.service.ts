@@ -133,48 +133,10 @@ export class H12CyclService {
   }
 
   async recreateCycl(dto: CreateH12CyclDto, manager: EntityManager): Promise<void> {
-    // const {
-    //   zyid,
-    //   zybh,
-    //   brxm,
-    //   rycw,
-    //   ryqk,
-    //   ksid,
-    //   sjzt,
-    //   xbid,
-    //   rysj,
-    //   cyqk,
-    //   cysj,
-    //   bz2,
-    //   lrsj,
-    //   bz3,
-    //   bzxx,
-    //   bz1,
-    // } = dto;
-    // const entity = this.h12CyclRepository.create({
-    //   zyid,
-    //   zybh,
-    //   brxm,
-    //   rycw,
-    //   ryqk,
-    //   ksid,
-    //   sjzt,
-    //   xbid,
-    //   rysj,
-    //   cyqk,
-    //   cysj,
-    //   bz2,
-    //   lrsj,
-    //   bz3,
-    //   bzxx,
-    //   bz1,
-    // });
-    const cycl = await manager.findOne(H12Cycl, { where: { zyid: dto.zyid } });
-    if (cycl) {
-      await manager.remove(cycl);
-    }
     const entity = this.h12CyclRepository.create(dto);
-    await manager.update(h11_brxx, { zyid: dto.zyid }, { bz2: dto.bz2, cyzd: dto.bz3 });
-    await manager.save(entity);
+    await Promise.all([
+      manager.update(h11_brxx, { zyid: dto.zyid }, { bz2: dto.bz2, cyzd: dto.bz3 }),
+      manager.save(entity),
+    ]);
   }
 }
