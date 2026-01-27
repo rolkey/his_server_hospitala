@@ -156,6 +156,10 @@ export class Zlxm {
   @IsOptional()
   @IsNumber()
   tzbz?: number;
+
+  @IsOptional()
+  @IsString()
+  jcxmmc?: string;
 }
 export class Jcbw {
   @IsNotEmpty()

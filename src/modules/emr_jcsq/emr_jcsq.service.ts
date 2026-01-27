@@ -138,8 +138,8 @@ export class emr_jcsqService {
     const grouped = saveDto.zlxmList.reduce(
       (acc, item) => {
         // 如果当前项目名称还没有被记录，则添加到集合中
-        if (!acc.has(item.xmmc)) {
-          acc.add(item.xmmc);
+        if (!acc.has(item.jcxmmc)) {
+          acc.add(item.jcxmmc);
         }
         return acc;
       },
