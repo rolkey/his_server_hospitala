@@ -6,6 +6,7 @@ import { ConfigReaderService } from './config-reader.service';
 import { TempSfxm } from '../entity/temp-sfxm.entity';
 import { SysparNew } from '../entity/__syspar_new.entity';
 import { DataSource } from 'typeorm';
+import { G_ksidDto } from '../dto/g_ksid.dto';
 
 @Injectable()
 export class SfxmService {
@@ -187,7 +188,7 @@ export class SfxmService {
     `;
   }
 
-  private buildCountQuery(params, ls_cxsz: string, query: SfxmQueryDto): string {
+  private buildCountQuery(params: G_ksidDto, ls_cxsz: string, query: SfxmQueryDto): string {
     if (query.bz === 1) {
       return `
         SELECT COUNT(*) AS count

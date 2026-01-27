@@ -786,7 +786,7 @@ export class h12_yzxbService {
     childAdvice.yzzt = 0;
     childAdvice.kyfs = 1;
     childAdvice.hdbz = parentAdvice.hdbz;
-    childAdvice.lryid = this.userId;
+    childAdvice.lryid = this.userId ?? childAdvice.lryid;
     // childAdvice.yzzh = parentAdvice.yzzh;
     childAdvice.ysbz = 0; // 套餐子项按附加项目来看
 

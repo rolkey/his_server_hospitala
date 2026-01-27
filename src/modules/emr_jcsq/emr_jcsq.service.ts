@@ -33,15 +33,26 @@ export class emr_jcsqService {
     // 删除同组明细，新增明细
     const yzxbs = [];
     for (const [index, item] of saveDto.zlxmList.entries()) {
-      const yzxb = new h12_yzxb();
-      Object.assign(yzxb, h12Yzxb);
-      // 处理检查明细
-      yzxb.xmid = item.xmid;
-      yzxb.xmmc = item.xmmc;
-      yzxb.xmgg = item.gg;
-      yzxb.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
+      if (item.xmid.startsWith('T')) {
+        const advices = await this.h12YzxbService.getPackageItems({
+          advice: h12Yzxb,
+          mbid: item.xmid,
+          recursionDepth: 0,
+        });
+        yzxbs.push(...advices);
+      } else {
+        const yzxb = new h12_yzxb();
+        Object.assign(yzxb, h12Yzxb);
+        // 处理检查明细
+        yzxb.xmid = item.xmid;
+        yzxb.xmmc = item.xmmc;
+        yzxb.xmgg = item.gg;
+        yzxb.tpbz = 0;
+        yzxb.tcbz = 1;
+        yzxb.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
 
-      yzxbs.push(yzxb);
+        yzxbs.push(yzxb);
+      }
     }
     return [
       manager.delete(h12_yzxb, {
@@ -95,6 +106,7 @@ export class emr_jcsqService {
       xmdw: '',
       xmdj: 0,
       typbz: '',
+      ksid: h11_brxx.cyksid ?? h11_brxx.ryksid,
       ksys: jcsq.sqys,
       kshs: null,
       fylbid: '11',
@@ -107,7 +119,8 @@ export class emr_jcsqService {
       fybz: '0',
       lryid: jcsq.sqys,
       hdbz: 1,
-      tpbz: 0,
+      tpbz: 1,
+      tcbz: 0,
       scdh: jcsq.sqdh,
       zflx: '0',
       xmzl: 1,
@@ -115,7 +128,7 @@ export class emr_jcsqService {
       kyts: 1,
       clbz: 0,
       ypid: '0000000',
-      ksid: jcsq.sqks,
+      //   ksid: jcsq.sqks,
       ysbz: 1,
       srcs: 0,
       yzrq: currentTime,
