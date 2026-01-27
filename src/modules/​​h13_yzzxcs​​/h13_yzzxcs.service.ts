@@ -232,289 +232,289 @@ export class h13_yzzxcsService {
     });
   }
 
-  async generateTempDataForFutureDates(
-    zyid: string,
-    yzxh: number,
-    yzlx: number,
-    yzzh: number[],
-    zxrq: string,
-    gstr_ainf: { u_userid: string },
-  ): Promise<H13YzzxcsResponseDto[]> {
-    const tzrq = new Date(); // 对应PB9中的ldt_sj
-    const targetDate = new Date(zxrq);
-    targetDate.setHours(0, 0, 0, 0);
+  //   async generateTempDataForFutureDates(
+  //     zyid: string,
+  //     yzxh: number,
+  //     yzlx: number,
+  //     yzzh: number[],
+  //     zxrq: string,
+  //     gstr_ainf: { u_userid: string },
+  //   ): Promise<H13YzzxcsResponseDto[]> {
+  //     const tzrq = new Date(); // 对应PB9中的ldt_sj
+  //     const targetDate = new Date(zxrq);
+  //     targetDate.setHours(0, 0, 0, 0);
 
-    // 使用QueryBuilder进行精确的日期比较
-    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
-      .createQueryBuilder('tf')
-      .where('tf.zyid = :zyid', { zyid })
-      .andWhere('tf.yzxh = :yzxh', { yzxh })
-      .andWhere('tf.yzlx = :yzlx', { yzlx })
-      .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
-    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
+  //     // 使用QueryBuilder进行精确的日期比较
+  //     const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
+  //       .createQueryBuilder('tf')
+  //       .where('tf.zyid = :zyid', { zyid })
+  //       .andWhere('tf.yzxh = :yzxh', { yzxh })
+  //       .andWhere('tf.yzlx = :yzlx', { yzlx })
+  //       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
+  //       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
+  //     // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
-    const h13YzzxcsListQuery = this.h13YzzxcsRepository
-      .createQueryBuilder('h13')
-      .leftJoin('h13.h12_yzxb', 'h12_yzxb')
-      .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
-      .leftJoin('h13.h00_fylb', 'h00_fylb')
-      .select([
-        'h13', // 选择 h13 的所有字段
-        'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
-        'h00_sypl.syplmc',
-        'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
-      ])
-      .where('h13.zyid = :zyid', { zyid })
-      .andWhere('h13.yzxh = :yzxh', { yzxh })
-      .andWhere('h13.yzlx = :yzlx', { yzlx })
-      .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
-      //   .andWhere('h13.fybz = 1')
-      //   .andWhere('h13.clbz = 1')
-      .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
-      .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
-    // console.log(
-    //   'h13YzzxcsListQuery 1: --------------------------------------',
-    //   '\n',
-    //   getSqlWithParameters(h13YzzxcsListQuery),
-    // );
+  //     const h13YzzxcsListQuery = this.h13YzzxcsRepository
+  //       .createQueryBuilder('h13')
+  //       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
+  //       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+  //       .leftJoin('h13.h00_fylb', 'h00_fylb')
+  //       .select([
+  //         'h13', // 选择 h13 的所有字段
+  //         'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
+  //         'h00_sypl.syplmc',
+  //         'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
+  //       ])
+  //       .where('h13.zyid = :zyid', { zyid })
+  //       .andWhere('h13.yzxh = :yzxh', { yzxh })
+  //       .andWhere('h13.yzlx = :yzlx', { yzlx })
+  //       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
+  //       //   .andWhere('h13.fybz = 1')
+  //       //   .andWhere('h13.clbz = 1')
+  //       .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
+  //       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
+  //     // console.log(
+  //     //   'h13YzzxcsListQuery 1: --------------------------------------',
+  //     //   '\n',
+  //     //   getSqlWithParameters(h13YzzxcsListQuery),
+  //     // );
 
-    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
-      h13YzzxcsTfListQuery.getMany(),
-      h13YzzxcsListQuery.getMany(),
-    ]);
+  //     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+  //       h13YzzxcsTfListQuery.getMany(),
+  //       h13YzzxcsListQuery.getMany(),
+  //     ]);
 
-    const newRecords = h13YzzxcsList.filter((h13) => {
-      return !h13YzzxcsTfList.some(
-        (tf) =>
-          tf.zyid === h13.zyid &&
-          tf.yzxh === h13.yzxh &&
-          tf.yzlx === h13.yzlx &&
-          yzzh.includes(tf.yzzh) &&
-          tf.zxrq.toDateString() === h13.zxrq.toDateString(),
-      );
-    });
+  //     const newRecords = h13YzzxcsList.filter((h13) => {
+  //       return !h13YzzxcsTfList.some(
+  //         (tf) =>
+  //           tf.zyid === h13.zyid &&
+  //           tf.yzxh === h13.yzxh &&
+  //           tf.yzlx === h13.yzlx &&
+  //           yzzh.includes(tf.yzzh) &&
+  //           tf.zxrq.toDateString() === h13.zxrq.toDateString(),
+  //       );
+  //     });
 
-    const transformedData = newRecords.map((h13) => {
-      //   const currentTime = new Date();
-      //   const dateStr = h13.zxrq.toISOString().split('T')[0];
-      //   const timeStr = currentTime.toTimeString().split(' ')[0];
-      //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
+  //     const transformedData = newRecords.map((h13) => {
+  //       //   const currentTime = new Date();
+  //       //   const dateStr = h13.zxrq.toISOString().split('T')[0];
+  //       //   const timeStr = currentTime.toTimeString().split(' ')[0];
+  //       //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
 
-      const bzxcs = h13.zxcs - h13.bzxcs;
-      const sjtysl = bzxcs * h13.jfyl;
+  //       const bzxcs = h13.zxcs - h13.bzxcs;
+  //       const sjtysl = bzxcs * h13.jfyl;
 
-      return {
-        yzxh: h13.yzxh,
-        mxxh: h13.mxxh,
-        yzlx: h13.yzlx,
-        zyid: h13.zyid,
-        zxrq: h13.zxrq,
-        ksid: h13.ksid,
-        fydh: '',
-        zybh: h13.zybh,
-        jfyl: h13.jfyl,
-        xmdj: h13.xmdj,
-        sfbz: h13.sfbz,
-        fylbid: h13.fylbid,
-        jsdh: h13.jsdh,
-        jsbz: h13.jsbz,
-        zxcs2: h13.maxid,
-        zxhs: gstr_ainf.u_userid,
-        zxsj: h13.zxsj,
-        zflx: h13.zflx,
-        syffid: h13.syffid,
-        bzxcs,
-        tyrid: gstr_ainf.u_userid,
-        tysj: tzrq,
-        sqtysl: h13.sqtysl,
-        sjtysl,
-        syrid: h13.syrid,
-        sysj: tzrq,
-        kyts: h13.kyts,
-        zfbl: h13.zfbl,
-        fybz: h13.fybz,
-        fysj: h13.fysj,
-        fyrid: h13.fyrid,
-        zxcs: h13.zxcs,
-        zkksid: h13.zkksid,
-        clbz: h13.clbz,
-        dybz: 0,
-        xnhbz: h13.xnhbz,
-        jzje: h13.jzje,
-        jzry: h13.jzry,
-        ybfl: h13.ybfl,
-        scph: h13.scph,
-        cjid: h13.cjid,
-        bz1: h13.bz1,
-        zfje: h13.zfje,
-        pfjg: h13.pfjg,
-        xmid: h13.xmid,
-        yjry: h13.yjry,
-        yjrq: h13.yjrq,
-        yzzh: h13.yzzh,
-        czrq: tzrq,
-        xmmc: h13.h12_yzxb?.xmmc || '',
-        fylbmc: h13.h00_fylb?.fylbmc || '',
-        syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
-      };
-    });
+  //       return {
+  //         yzxh: h13.yzxh,
+  //         mxxh: h13.mxxh,
+  //         yzlx: h13.yzlx,
+  //         zyid: h13.zyid,
+  //         zxrq: h13.zxrq,
+  //         ksid: h13.ksid,
+  //         fydh: '',
+  //         zybh: h13.zybh,
+  //         jfyl: h13.jfyl,
+  //         xmdj: h13.xmdj,
+  //         sfbz: h13.sfbz,
+  //         fylbid: h13.fylbid,
+  //         jsdh: h13.jsdh,
+  //         jsbz: h13.jsbz,
+  //         zxcs2: h13.maxid,
+  //         zxhs: gstr_ainf.u_userid,
+  //         zxsj: h13.zxsj,
+  //         zflx: h13.zflx,
+  //         syffid: h13.syffid,
+  //         bzxcs,
+  //         tyrid: gstr_ainf.u_userid,
+  //         tysj: tzrq,
+  //         sqtysl: h13.sqtysl,
+  //         sjtysl,
+  //         syrid: h13.syrid,
+  //         sysj: tzrq,
+  //         kyts: h13.kyts,
+  //         zfbl: h13.zfbl,
+  //         fybz: h13.fybz,
+  //         fysj: h13.fysj,
+  //         fyrid: h13.fyrid,
+  //         zxcs: h13.zxcs,
+  //         zkksid: h13.zkksid,
+  //         clbz: h13.clbz,
+  //         dybz: 0,
+  //         xnhbz: h13.xnhbz,
+  //         jzje: h13.jzje,
+  //         jzry: h13.jzry,
+  //         ybfl: h13.ybfl,
+  //         scph: h13.scph,
+  //         cjid: h13.cjid,
+  //         bz1: h13.bz1,
+  //         zfje: h13.zfje,
+  //         pfjg: h13.pfjg,
+  //         xmid: h13.xmid,
+  //         yjry: h13.yjry,
+  //         yjrq: h13.yjrq,
+  //         yzzh: h13.yzzh,
+  //         czrq: tzrq,
+  //         xmmc: h13.h12_yzxb?.xmmc || '',
+  //         fylbmc: h13.h00_fylb?.fylbmc || '',
+  //         syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
+  //       };
+  //     });
 
-    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
-  }
+  //     return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+  //   }
 
-  async generateTempDataForCurrentDate(
-    zyid: string,
-    yzxh: number,
-    yzlx: number,
-    yzzh: number[],
-    zxrq: string,
-    mrcs: number,
-    gstr_ainf: { u_userid: string },
-  ): Promise<H13YzzxcsResponseDto[]> {
-    const tzrq = new Date();
-    const targetDate = new Date(zxrq);
-    targetDate.setHours(0, 0, 0, 0);
+  //   async generateTempDataForCurrentDate(
+  //     zyid: string,
+  //     yzxh: number,
+  //     yzlx: number,
+  //     yzzh: number[],
+  //     zxrq: string,
+  //     mrcs: number,
+  //     gstr_ainf: { u_userid: string },
+  //   ): Promise<H13YzzxcsResponseDto[]> {
+  //     const tzrq = new Date();
+  //     const targetDate = new Date(zxrq);
+  //     targetDate.setHours(0, 0, 0, 0);
 
-    const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
-      .createQueryBuilder('tf')
-      .where('tf.zyid = :zyid', { zyid })
-      .andWhere('tf.yzxh = :yzxh', { yzxh })
-      .andWhere('tf.yzlx = :yzlx', { yzlx })
-      .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
-      .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
-    // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
+  //     const h13YzzxcsTfListQuery = this.h13YzzxcsTfRepository
+  //       .createQueryBuilder('tf')
+  //       .where('tf.zyid = :zyid', { zyid })
+  //       .andWhere('tf.yzxh = :yzxh', { yzxh })
+  //       .andWhere('tf.yzlx = :yzlx', { yzlx })
+  //       .andWhere('tf.yzzh IN (:...yzzh)', { yzzh })
+  //       .andWhere('CONVERT(date, tf.zxrq) >= :zxrq', { zxrq: targetDate });
+  //     // console.log('h13YzzxcsTfListQuery: ', getSqlWithParameters(h13YzzxcsTfListQuery));
 
-    const h13YzzxcsListQuery = this.h13YzzxcsRepository
-      .createQueryBuilder('h13')
-      .leftJoin('h13.h12_yzxb', 'h12_yzxb')
-      .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
-      .leftJoin('h13.h00_fylb', 'h00_fylb')
-      .select([
-        'h13', // 选择 h13 的所有字段
-        'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
-        'h00_sypl.syplmc',
-        'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
-      ])
-      .where('h13.zyid = :zyid', { zyid })
-      .andWhere('h13.yzxh = :yzxh', { yzxh })
-      .andWhere('h13.yzlx = :yzlx', { yzlx })
-      .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
-      //   .andWhere('h13.fybz = 1')
-      //   .andWhere('h13.clbz = 1')
-      .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
-      .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
-    // console.log(
-    //   'h13YzzxcsListQuery 2: --------------------------------------',
-    //   '\n',
-    //   getSqlWithParameters(h13YzzxcsListQuery),
-    // );
+  //     const h13YzzxcsListQuery = this.h13YzzxcsRepository
+  //       .createQueryBuilder('h13')
+  //       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
+  //       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+  //       .leftJoin('h13.h00_fylb', 'h00_fylb')
+  //       .select([
+  //         'h13', // 选择 h13 的所有字段
+  //         'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
+  //         'h00_sypl.syplmc',
+  //         'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
+  //       ])
+  //       .where('h13.zyid = :zyid', { zyid })
+  //       .andWhere('h13.yzxh = :yzxh', { yzxh })
+  //       .andWhere('h13.yzlx = :yzlx', { yzlx })
+  //       .andWhere('h13.yzzh IN (:...yzzh)', { yzzh })
+  //       //   .andWhere('h13.fybz = 1')
+  //       //   .andWhere('h13.clbz = 1')
+  //       .andWhere('CONVERT(date, h13.zxrq) >= :zxrq', { zxrq: targetDate })
+  //       .orderBy('h13.zxrq', 'ASC'); // 添加排序，ASC表示升序
+  //     // console.log(
+  //     //   'h13YzzxcsListQuery 2: --------------------------------------',
+  //     //   '\n',
+  //     //   getSqlWithParameters(h13YzzxcsListQuery),
+  //     // );
 
-    const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
-      h13YzzxcsTfListQuery.getMany(),
-      h13YzzxcsListQuery.getMany(),
-    ]);
-    const newRecords = h13YzzxcsList.filter((h13) => {
-      return !h13YzzxcsTfList.some(
-        (tf) =>
-          tf.zyid === h13.zyid &&
-          tf.yzxh === h13.yzxh &&
-          tf.yzlx === h13.yzlx &&
-          yzzh.includes(tf.yzzh) &&
-          tf.zxrq.toDateString() === h13.zxrq.toDateString(),
-      );
-    });
+  //     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
+  //       h13YzzxcsTfListQuery.getMany(),
+  //       h13YzzxcsListQuery.getMany(),
+  //     ]);
+  //     const newRecords = h13YzzxcsList.filter((h13) => {
+  //       return !h13YzzxcsTfList.some(
+  //         (tf) =>
+  //           tf.zyid === h13.zyid &&
+  //           tf.yzxh === h13.yzxh &&
+  //           tf.yzlx === h13.yzlx &&
+  //           yzzh.includes(tf.yzzh) &&
+  //           tf.zxrq.toDateString() === h13.zxrq.toDateString(),
+  //       );
+  //     });
 
-    const transformedData = newRecords.map((h13) => {
-      const currentTime = new Date();
-      //   const dateStr = h13.zxrq.toISOString().split('T')[0];
-      //   const timeStr = currentTime.toTimeString().split(' ')[0];
-      //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
+  //     const transformedData = newRecords.map((h13) => {
+  //       const currentTime = new Date();
+  //       //   const dateStr = h13.zxrq.toISOString().split('T')[0];
+  //       //   const timeStr = currentTime.toTimeString().split(' ')[0];
+  //       //   const newZxrq = new Date(`${dateStr}T${timeStr}`);
 
-      //   const zxcs = -1 * (h13.zxcs - mrcs);
-      //   const bzxcs = h13.fybz === 1 ? 0 : -1 * (h13.zxcs - mrcs - h13.bzxcs);
-      //   const sjtysl = h13.fybz === 1 ? 0 : -1 * (h13.zxcs - mrcs - h13.bzxcs) * h13.jfyl;
+  //       //   const zxcs = -1 * (h13.zxcs - mrcs);
+  //       //   const bzxcs = h13.fybz === 1 ? 0 : -1 * (h13.zxcs - mrcs - h13.bzxcs);
+  //       //   const sjtysl = h13.fybz === 1 ? 0 : -1 * (h13.zxcs - mrcs - h13.bzxcs) * h13.jfyl;
 
-      // 末日次数不能大于执行次数
-      //   const zxcs = mrcs > h13.zxcs ? h13.zxcs : mrcs; //zxcs: 执行次数
-      const bzxcs = mrcs >= h13.zxcs ? 0 : h13.zxcs - mrcs; // bzxcs: 需要退药的次数
-      const sjtysl = bzxcs * h13.jfyl; // sjtysj: 实际退药数量
+  //       // 末日次数不能大于执行次数
+  //       //   const zxcs = mrcs > h13.zxcs ? h13.zxcs : mrcs; //zxcs: 执行次数
+  //       const bzxcs = mrcs >= h13.zxcs ? 0 : h13.zxcs - mrcs; // bzxcs: 需要退药的次数
+  //       const sjtysl = bzxcs * h13.jfyl; // sjtysj: 实际退药数量
 
-      return {
-        yzxh: h13.yzxh,
-        mxxh: h13.mxxh,
-        yzlx: h13.yzlx,
-        zyid: h13.zyid,
-        zxrq: h13.zxrq,
-        ksid: h13.ksid,
-        fydh: '',
-        zybh: h13.zybh,
-        jfyl: h13.jfyl,
-        xmdj: h13.xmdj,
-        sfbz: h13.sfbz,
-        fylbid: h13.fylbid,
-        jsdh: h13.jsdh,
-        jsbz: h13.jsbz,
-        zxcs2: h13.maxid,
-        zxhs: gstr_ainf.u_userid,
-        zxsj: h13.zxsj,
-        zflx: h13.zflx,
-        syffid: h13.syffid,
-        bzxcs,
-        tyrid: gstr_ainf.u_userid,
-        tysj: tzrq,
-        sqtysl: h13.sqtysl,
-        sjtysl,
-        syrid: h13.syrid,
-        sysj: tzrq,
-        kyts: h13.kyts,
-        zfbl: h13.zfbl,
-        fybz: h13.fybz,
-        fysj: h13.fysj,
-        fyrid: h13.fyrid,
-        zxcs: h13.zxcs,
-        zkksid: h13.zkksid,
-        clbz: h13.clbz,
-        dybz: 0,
-        xnhbz: h13.xnhbz,
-        jzje: h13.jzje,
-        jzry: h13.jzry,
-        ybfl: h13.ybfl,
-        scph: h13.scph,
-        cjid: h13.cjid,
-        bz1: h13.bz1,
-        zfje: h13.zfje,
-        pfjg: h13.pfjg,
-        xmid: h13.xmid,
-        yjry: h13.yjry,
-        yjrq: h13.yjrq,
-        yzzh: h13.yzzh,
-        czrq: tzrq,
-        xmmc: h13.h12_yzxb?.xmmc || '',
-        fylbmc: h13.h00_fylb?.fylbmc || '',
-        syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
-      };
-    });
+  //       return {
+  //         yzxh: h13.yzxh,
+  //         mxxh: h13.mxxh,
+  //         yzlx: h13.yzlx,
+  //         zyid: h13.zyid,
+  //         zxrq: h13.zxrq,
+  //         ksid: h13.ksid,
+  //         fydh: '',
+  //         zybh: h13.zybh,
+  //         jfyl: h13.jfyl,
+  //         xmdj: h13.xmdj,
+  //         sfbz: h13.sfbz,
+  //         fylbid: h13.fylbid,
+  //         jsdh: h13.jsdh,
+  //         jsbz: h13.jsbz,
+  //         zxcs2: h13.maxid,
+  //         zxhs: gstr_ainf.u_userid,
+  //         zxsj: h13.zxsj,
+  //         zflx: h13.zflx,
+  //         syffid: h13.syffid,
+  //         bzxcs,
+  //         tyrid: gstr_ainf.u_userid,
+  //         tysj: tzrq,
+  //         sqtysl: h13.sqtysl,
+  //         sjtysl,
+  //         syrid: h13.syrid,
+  //         sysj: tzrq,
+  //         kyts: h13.kyts,
+  //         zfbl: h13.zfbl,
+  //         fybz: h13.fybz,
+  //         fysj: h13.fysj,
+  //         fyrid: h13.fyrid,
+  //         zxcs: h13.zxcs,
+  //         zkksid: h13.zkksid,
+  //         clbz: h13.clbz,
+  //         dybz: 0,
+  //         xnhbz: h13.xnhbz,
+  //         jzje: h13.jzje,
+  //         jzry: h13.jzry,
+  //         ybfl: h13.ybfl,
+  //         scph: h13.scph,
+  //         cjid: h13.cjid,
+  //         bz1: h13.bz1,
+  //         zfje: h13.zfje,
+  //         pfjg: h13.pfjg,
+  //         xmid: h13.xmid,
+  //         yjry: h13.yjry,
+  //         yjrq: h13.yjrq,
+  //         yzzh: h13.yzzh,
+  //         czrq: tzrq,
+  //         xmmc: h13.h12_yzxb?.xmmc || '',
+  //         fylbmc: h13.h00_fylb?.fylbmc || '',
+  //         syplmc: h13.h12_yzxb?.syplidEntity?.syplmc || '',
+  //       };
+  //     });
 
-    // 添加更新操作，对应PB9中的第二个update语句
-    // await this.h13YzzxcsRepository
-    //   .createQueryBuilder()
-    //   .update()
-    //   .set({
-    //     bzxcs: () => `zxcs - ${mrcs}`,
-    //     sjtysl: () => `(zxcs - ${mrcs}) * jfyl`,
-    //     tysj: tzrq,
-    //     tyrid: gstr_ainf.u_userid,
-    //   })
-    //   .where('zyid = :zyid', { zyid })
-    //   .andWhere('yzxh = :yzxh', { yzxh })
-    //   .andWhere('yzlx = :yzlx', { yzlx })
-    //   .andWhere('yzzh IN (:...yzzh)', { yzzh })
-    //   .andWhere('CONVERT(date, zxrq) = :zxrq', { zxrq: targetDate })
-    //   .execute();
+  //     // 添加更新操作，对应PB9中的第二个update语句
+  //     // await this.h13YzzxcsRepository
+  //     //   .createQueryBuilder()
+  //     //   .update()
+  //     //   .set({
+  //     //     bzxcs: () => `zxcs - ${mrcs}`,
+  //     //     sjtysl: () => `(zxcs - ${mrcs}) * jfyl`,
+  //     //     tysj: tzrq,
+  //     //     tyrid: gstr_ainf.u_userid,
+  //     //   })
+  //     //   .where('zyid = :zyid', { zyid })
+  //     //   .andWhere('yzxh = :yzxh', { yzxh })
+  //     //   .andWhere('yzlx = :yzlx', { yzlx })
+  //     //   .andWhere('yzzh IN (:...yzzh)', { yzzh })
+  //     //   .andWhere('CONVERT(date, zxrq) = :zxrq', { zxrq: targetDate })
+  //     //   .execute();
 
-    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
-  }
+  //     return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+  //   }
 
   async wfStopFymx(
     zyid: string,
