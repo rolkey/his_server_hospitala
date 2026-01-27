@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import dayjs = require('dayjs');
 import {
@@ -45,6 +45,7 @@ import DateFormater from '@/utils/DateFormater';
 import { log } from 'console';
 import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
+import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 
 /**
  * 完整重构版 Service
@@ -105,6 +106,7 @@ export class h12_yzxbServiceNew {
     private readonly h12_yzxbOldService: h12_yzxbService,
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
+    private readonly h13YzzxcsService: h13_yzzxcsService,
   ) {}
 
   // 取组套（保留入口，按需实现）
@@ -132,10 +134,37 @@ export class h12_yzxbServiceNew {
             tjbz: 1,
             yzzt: In([1, 5]), // 只复核：提交/待核停嘱
           },
+          relations: ['h13_yzzxcsList'],
         }),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), //医嘱自动复核增加附加项目
       ]);
+
+      const deleteYzzxcss = [];
+      const allYzxbs = yzxbList.filter((yzxb) => {
+        if (yzxb.h13_yzzxcsList) {
+          // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
+          // 默认情况下，未执行的超出执行时间的费用需要删除
+          const h13YzzxcsItem = yzxb.h13_yzzxcsList.filter((item) => {
+            // 检查是否存在未处理的费用记录
+
+            // 如果执行日期大于等于停嘱日期，则放入删除数组deleteYzzxcss
+            const tzrq = new Date(yzxb.tzrq);
+            tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
+
+            if (item.clbz === 0 && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
+              deleteYzzxcss.push(item);
+            }
+
+            if (item.clbz === 1 && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
+              if (dto.hlfy) return true;
+              else throw new BadRequestException('仍有未退费医嘱，复核失败！！');
+            } else return false;
+          });
+          return h13YzzxcsItem.length === 0;
+        } else return true;
+      });
+      console.log('');
 
       // 转换日期
       const dtoZXRQ = new Date(dto.rq);
@@ -144,7 +173,7 @@ export class h12_yzxbServiceNew {
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
       await Promise.all(
-        yzxbList.map(async (yzxb) => {
+        allYzxbs.map(async (yzxb) => {
           //yzxbList.forEach(async (yzxb) => {
           const ksrq = new Date(yzxb.ksrq);
           let zzrq = new Date(yzxb.tzrq);
@@ -282,12 +311,17 @@ export class h12_yzxbServiceNew {
       );
 
       await this.entityManager.transaction(async (transactionalEntityManager) => {
-        if (yzxbList.length > 0) {
-          await transactionalEntityManager.save(yzxbList);
+        const promisses = [];
+        if (deleteYzzxcss.length > 0) {
+          promisses.push(transactionalEntityManager.remove(deleteYzzxcss));
+        }
+        if (allYzxbs.length > 0) {
+          promisses.push(transactionalEntityManager.save(allYzxbs));
         }
         if (yzxbFJList.length > 0) {
-          await transactionalEntityManager.save(yzxbFJList);
+          promisses.push(transactionalEntityManager.save(yzxbFJList));
         }
+        await Promise.all(promisses);
       });
       // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
       // if (yzxbFJList.length) await this.h12_yzxbRepo.save(yzxbFJList);
