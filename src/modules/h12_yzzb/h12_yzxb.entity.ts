@@ -259,7 +259,7 @@ export class h12_yzxb {
   @Column('smallint', { name: 'dw_grade', nullable: true })
   dw_grade: number | null;
 
-  @Column('int', { name: 'dw_xs', nullable: true })
+  @Column('decimal', { name: 'dw_xs', nullable: true, precision: 16, scale: 4 })
   dw_xs: number | '';
 
   @Column('varchar', { name: 'ypid', nullable: true, length: 12 })
