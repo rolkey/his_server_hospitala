@@ -276,23 +276,23 @@ export class h13_yzzxcsService {
           tf.zxcs2 === h13.maxid,
       );
       if (h13YzzxcsTf && h13YzzxcsTf.clbz === 1) {
-        returnData.ytsl -= h13YzzxcsTf.zxcs;
-      } else returnData.ytsl = 0;
+        returnData.ytcs -= h13YzzxcsTf.zxcs;
+      } else returnData.ytcs = 0;
 
       // 处理末日次数
       const h13Date = new Date(h13.zxrq);
       h13Date.setHours(0, 0, 0, 0); // 去掉时分秒
 
-      if (h13Date.getTime() === targetDate.getTime() && mrcs !== 9) {
+      if (h13Date.getTime() === targetDate.getTime()) {
         // 计算退费数量
-        returnData.dtsl = mrcs;
+        returnData.ylcs = mrcs === 9 ? returnData.zxcs : mrcs;
       } else {
-        returnData.dtsl = 0;
+        returnData.ylcs = 0;
       }
 
       // 重新计算退费数量
-      const tfsl = returnData.zxcs - returnData.ytsl - returnData.dtsl;
-      returnData.sjtysl = tfsl * h13.jfyl;
+      const tfsl = returnData.zxcs - returnData.ytcs - returnData.ylcs;
+      returnData.sjtysl = tfsl >= 0 ? tfsl * h13.jfyl : 0;
       return returnData;
     });
   }
