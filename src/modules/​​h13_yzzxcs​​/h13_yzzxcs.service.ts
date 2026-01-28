@@ -75,14 +75,21 @@ export class h13_yzzxcsService {
       .createQueryBuilder('fy')
       //   .select(['fy', 'h.tzrq', 'h.mrcs', 'h.yzzh', 'h.yzxh', 'h.mxxh', 'h.yzlx', 'h.zyid'])
       //   .select(['fy', 'h.tzrq', 'h.mrcs', 'h.yzzh'])
-      .leftJoinAndSelect('fy.h12_yzxb', 'h')
+      .leftJoin('fy.h12_yzxb', 'h12_yzxb')
+      .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+      .leftJoin('fy.h00_fylb', 'h00_fylb')
+      .addSelect([
+        // 'h13', // 选择 h13 的所有字段
+        'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
+        'h00_sypl.syplmc',
+        'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
+      ])
       .where('fy.zyid = :zyid', { zyid })
       .andWhere('fy.yzzh in (:...yzzh)', { yzzh: yzzhArray })
       .andWhere('fy.yzxh = 1')
       .andWhere('fy.yzlx = 1')
-      .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h"."tzrq" AS DATE)')
+      .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h12_yzxb"."tzrq" AS DATE)')
       .orderBy('fy.zxrq', 'ASC');
-    console.log('h13Yzzxcs查询明细', h13YzzxcsListQuery.getSql());
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
       h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
@@ -159,8 +166,8 @@ export class h13_yzzxcsService {
       .leftJoin('h13.h12_yzxb', 'h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
       .leftJoin('h13.h00_fylb', 'h00_fylb')
-      .select([
-        'h13', // 选择 h13 的所有字段
+      .addSelect([
+        // 'h13', // 选择 h13 的所有字段
         'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
         'h00_sypl.syplmc',
         'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
