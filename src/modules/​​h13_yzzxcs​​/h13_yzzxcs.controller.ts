@@ -119,4 +119,33 @@ export class h13_yzzxcsController {
       gstr_ainf,
     );
   }
+
+  @Get('query-yzzxcs')
+  async queryByYzzh(@Query() data: { zyid: string; yzzhs: string }) {
+    // 将逗号分隔的字符串转换为数字数组
+    return await this.h13_yzzxcsService.queryByYzzh({
+      zyid: data.zyid,
+      yzzhs: data.yzzhs.split(',').map(Number),
+    });
+  }
+
+  // 撤回退费：没有领药单、没有退费
+  @Put('revoke-refund')
+  async revokeRefund(@Body() data: { zyid: string; maxids: string }) {
+    // 将逗号分隔的字符串转换为数字数组
+    return await this.h13_yzzxcsService.revokeRefund({
+      zyid: data.zyid,
+      maxids: data.maxids.split(',').map(Number),
+    });
+  }
+
+  // 撤回退费领药单：有领药单没有发药，已经有领药单
+  @Put('revoke-refund-medicine-receipt')
+  async revokeRefundMedicineReceipt(@Body() data: { zyid: string; maxids: string }) {
+    // 将逗号分隔的字符串转换为数字数组
+    return await this.h13_yzzxcsService.revokeRefundMedicineReceipt({
+      zyid: data.zyid,
+      maxids: data.maxids.split(',').map(Number),
+    });
+  }
 }

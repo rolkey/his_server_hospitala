@@ -172,6 +172,6 @@ export class H31Lymx {
   kssxys: string | null;
 
   @ManyToOne(() => H31Lyjl, (H31Lyjl) => H31Lyjl.H31LymxList)
-  @JoinColumn({ name: "djbh" })
+  @JoinColumn({ name: 'djbh' })
   H31Lyjl: H31Lyjl;
 }

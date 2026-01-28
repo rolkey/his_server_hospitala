@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, In } from 'typeorm';
+import { Repository, EntityManager, In, DataSource } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
@@ -21,6 +21,8 @@ export class h13_yzzxcsService {
     private readonly h12yzxbRepository: Repository<h12_yzxb>,
     @InjectRepository(H13YzzxcsTf)
     private readonly h13YzzxcsTfRepository: Repository<H13YzzxcsTf>,
+
+    private dataSource: DataSource,
   ) {}
 
   async findAll(): Promise<h13_yzzxcs[]> {
@@ -51,6 +53,62 @@ export class h13_yzzxcsService {
 
   async findByYzxh(yzxh: number): Promise<h13_yzzxcs[]> {
     return this.h13YzzxcsRepository.find({ where: { yzxh } });
+  }
+
+  /**
+   * 费用查询
+   * @param data
+   * @returns
+   */
+  async queryByYzzh(data: { zyid: string; yzzhs: number[] }): Promise<h13_yzzxcs[]> {
+    const { zyid, yzzhs } = data;
+    return await this.h13YzzxcsRepository
+      .createQueryBuilder('h13_yzzxcs')
+      .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
+      .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
+      .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
+      .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'h13YzzxcsTf')
+      .addSelect(['h13YzzxcsTf.fydh', 'h13YzzxcsTf.clbz', 'h13YzzxcsTf.fybz'])
+      .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
+      .addSelect([
+        'H31Lyjl.djbh',
+        'H31Lyjl.tjbz',
+        'H31Lyjl.ckclbz',
+        'H31Lyjl.ksid',
+        'H31Lyjl.fhksid',
+      ])
+      .where({
+        zyid,
+        yzzh: In(yzzhs),
+      })
+      .getMany();
+  }
+
+  // 撤回退费：没有领药单
+  async revokeRefund(data: { zyid: string; maxids: number[] }): Promise<void> {
+    // 删除退费单
+    await this.h13YzzxcsTfRepository.delete({ zyid: data.zyid, zxcs2: In(data.maxids) });
+  }
+
+  // 撤回退费领药单：有领药单没有发药，已经有领药单
+  async revokeRefundMedicineReceipt(data: { zyid: string; maxids: number[] }): Promise<void> {
+    // 撤回发药单号
+    const h13YzzxcsTfList = await this.h13YzzxcsTfRepository.find({
+      where: { zyid: data.zyid, zxcs2: In(data.maxids) },
+    });
+    // 删除领药单与领药明细
+    const fhdys = h13YzzxcsTfList.map((item) => item.fydh);
+    await this.dataSource.transaction(async (manager) => {
+      await Promise.all([
+        manager.update(
+          H13YzzxcsTf,
+          { zyid: data.zyid, zxcs2: In(data.maxids) },
+          { clbz: 0, fydh: null },
+        ),
+        manager.delete('h31_lyjl', { zyid: data.zyid, djbh: In(fhdys) }),
+        manager.delete('h31_lymx', { zyid: data.zyid, djbh: In(fhdys) }),
+      ]);
+    });
   }
 
   async generateTempDataNurse(data: {

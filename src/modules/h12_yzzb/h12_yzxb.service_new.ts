@@ -2029,7 +2029,7 @@ export class h12_yzxbServiceNew {
     try {
       //参数校验
       if (!dto.zyid || !dto.zxhs) {
-        throw new CustomException(ERR.ERR_10000, '患者ID或医嘱号不能为空');
+        throw new BadRequestException('患者ID或医嘱号不能为空');
       }
       // 调用发药记录的存储过程生成退费单（存储过程内部已开启事务）
       await this.dataSource.query(
@@ -2038,7 +2038,7 @@ export class h12_yzxbServiceNew {
       );
     } catch (error: any) {
       this.logger.error('生成发药单失败', error?.stack ?? error?.message ?? error);
-      throw new CustomException(ERR.ERR_10000, error?.message ?? '生成发药单失败');
+      throw new BadRequestException('生成发药单失败');
     }
   }
 
