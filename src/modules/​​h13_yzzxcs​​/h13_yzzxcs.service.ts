@@ -96,7 +96,6 @@ export class h13_yzzxcsService {
         throw error;
       }
     });
-    console.log('退费成功');
   }
 
   // 撤回退费领药单：有领药单没有发药，已经有领药单
