@@ -138,9 +138,11 @@ export class h13_yzzxcsService {
       .leftJoin('fy.h00_fylb', 'h00_fylb')
       .addSelect([
         // 'h13', // 选择 h13 的所有字段
-        'h12_yzxb.xmmc', // 只选择 h12_yzxb 的 xmmc 字段
+        'h12_yzxb.xmmc',
+        'h12_yzxb.tzrq',
+        'h12_yzxb.mrcs',
         'h00_sypl.syplmc',
-        'h00_fylb.fylbmc', // 只选择 h00_fylb 的 xmmc 字段
+        'h00_fylb.fylbmc',
       ])
       .where('fy.zyid = :zyid', { zyid })
       .andWhere('fy.yzzh in (:...yzzh)', { yzzh: yzzhArray })

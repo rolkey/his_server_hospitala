@@ -148,12 +148,13 @@ export class h12_yzxbServiceNew {
         if (yzxb.h13_yzzxcsList) {
           // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
           // 默认情况下，未执行的超出执行时间的费用需要删除
+
+          // 执行日期大于等于停嘱日期，要进行相应处理
+          const tzrq = new Date(yzxb.tzrq);
+          tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
+
           const h13YzzxcsItem = yzxb.h13_yzzxcsList.filter((item) => {
             // 检查是否存在未处理的费用记录
-
-            // 执行日期大于等于停嘱日期，要进行相应处理
-            const tzrq = new Date(yzxb.tzrq);
-            tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
             //  如果则放入删除数组deleteYzzxcss
             if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
@@ -178,29 +179,29 @@ export class h12_yzxbServiceNew {
                 // 没有处理可以直接删除
                 deleteYzzxcss.push(item);
               }
-            } else if (item.zxrq === tzrq) {
-              if ((item.clbz === 1 || item.fydh) && item.zxcs - item.bzxcs - yzxb.mrcs > 0) {
-                // 生成部分退费记录
-                const costDtoValue = {
-                  mxxh: item.mxxh,
-                  maxid: item.maxid,
-                  bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
-                };
-                const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
-                  [item],
-                  [costDtoValue],
-                  {
-                    zyid: dto.zyid,
-                    yzlx: dto.yzlx,
-                    zxhs: dto.jshs,
-                  },
-                );
-                tfListToInsertAll.push(...tfListToInsert);
-              } else {
-                item.bzxcs = item.zxcs - yzxb.mrcs > 0 ? item.zxcs - yzxb.mrcs : 0;
-                if (item.bzxcs > 0) {
-                  updateYzzxcss.push(item);
+            } else if (item.zxrq.getTime() === tzrq.getTime()) {
+              if (item.clbz === 1 || item.fydh) {
+                if (item.zxcs - item.bzxcs - yzxb.mrcs > 0) {
+                  // 生成部分退费记录
+                  const costDtoValue = {
+                    mxxh: item.mxxh,
+                    maxid: item.maxid,
+                    bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
+                  };
+                  const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
+                    [item],
+                    [costDtoValue],
+                    {
+                      zyid: dto.zyid,
+                      yzlx: dto.yzlx,
+                      zxhs: dto.jshs,
+                    },
+                  );
+                  tfListToInsertAll.push(...tfListToInsert);
                 }
+              } else {
+                item.zxcs = yzxb.mrcs;
+                updateYzzxcss.push(item);
               }
             }
 
@@ -371,7 +372,9 @@ export class h12_yzxbServiceNew {
         if (yzxbFJList.length > 0) {
           promisses.push(transactionalEntityManager.save(yzxbFJList));
         }
-        await Promise.all(promisses);
+        if (promisses.length > 0) {
+          await Promise.all(promisses);
+        }
       });
       // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
       // if (yzxbFJList.length) await this.h12_yzxbRepo.save(yzxbFJList);
