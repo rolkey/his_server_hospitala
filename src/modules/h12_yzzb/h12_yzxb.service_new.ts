@@ -971,7 +971,7 @@ export class h12_yzxbServiceNew {
           yzlx: dto.yzlx,
           zxhs: dto.zxhs,
         });
-        //console.log('退费记录tfListToInsert:------', tfListToInsert);
+        // console.log('退费记录tfListToInsert:------', tfListToInsert);
 
         // 批量保存主记录和退费记录
         await Promise.all([h13Repo.save(h13_yzzxcsList), H13YzzxcsTfRepo.save(tfListToInsert)]);
@@ -1014,14 +1014,7 @@ export class h12_yzxbServiceNew {
       // 处理退费数量
       const dtoItem = costFees.find((cost) => cost.maxid === item.maxid);
 
-      const bzxcs = dtoItem ? (item.zxcs - dtoItem.bzxcs > 0 ? dtoItem.bzxcs : 0) : 1;
-
-      //控制台输出dtoItem的值
-      // console.log('退费数量dtoItem:', dtoItem);
-      //控制台输出bzxcs的值
-      // console.log('不执行次数bzxcs:', bzxcs);//3
-      // console.log('执行次数zxcs:', item.zxcs);//1
-      if (bzxcs > item.zxcs && bzxcs > 0) {
+      if (dtoItem.bzxcs > item.zxcs && dtoItem.bzxcs > 0) {
         throw new CustomException(
           ERR.ERR_10000,
           `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数且不能小于0!`,
@@ -1036,7 +1029,7 @@ export class h12_yzxbServiceNew {
         fydh: '', // 发药单号清空
         zxcs2: item.maxid,
         zxhs: dto.zxhs,
-        zxcs: -1 * bzxcs,
+        zxcs: -1 * dtoItem.bzxcs,
         bzxcs: 0,
         tyrid: dto.zxhs,
         tysj: new Date(), // 退药时间为当前时间？
@@ -1048,7 +1041,7 @@ export class h12_yzxbServiceNew {
       //控制台输出退费记录tfListToInsert
       //console.log('退费记录tfListToInsert:------', tfListToInsert);
       // 修改主记录的已退次数
-      item.bzxcs = bzxcs;
+      item.bzxcs = dtoItem.bzxcs;
       // item.H31Lyjl = undefined as any;
       item.h13YzzxcsTfList = undefined as any;
     }

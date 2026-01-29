@@ -87,7 +87,17 @@ export class h13_yzzxcsService {
   // 撤回退费：没有领药单
   async revokeRefund(data: { zyid: string; maxids: number[] }): Promise<void> {
     // 删除退费单
-    await this.h13YzzxcsTfRepository.delete({ zyid: data.zyid, zxcs2: In(data.maxids) });
+    await this.dataSource.transaction(async (manager) => {
+      try {
+        //   await manager.remove(H13YzzxcsTf, { zyid: data.zyid, zxcs2: In(data.maxids) });
+        await manager.remove('h13_yzzxcs_tf', { zyid: data.zyid, zxcs2: In(data.maxids) });
+        await manager.update(h13_yzzxcs, { zyid: data.zyid, maxid: In(data.maxids) }, { bzxcs: 0 });
+      } catch (error) {
+        console.error('执行错误：', error);
+        throw error;
+      }
+    });
+    console.log('退费成功');
   }
 
   // 撤回退费领药单：有领药单没有发药，已经有领药单
