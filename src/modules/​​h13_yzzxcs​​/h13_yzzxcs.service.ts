@@ -89,8 +89,7 @@ export class h13_yzzxcsService {
     // 删除退费单
     await this.dataSource.transaction(async (manager) => {
       try {
-        //   await manager.remove(H13YzzxcsTf, { zyid: data.zyid, zxcs2: In(data.maxids) });
-        await manager.remove('h13_yzzxcs_tf', { zyid: data.zyid, zxcs2: In(data.maxids) });
+        await manager.delete('h13_yzzxcs_tf', { zyid: data.zyid, zxcs2: In(data.maxids) });
         await manager.update(h13_yzzxcs, { zyid: data.zyid, maxid: In(data.maxids) }, { bzxcs: 0 });
       } catch (error) {
         console.error('执行错误：', error);
