@@ -1021,6 +1021,8 @@ export class h12_yzxbServiceNew {
         );
       }
 
+      if (dtoItem.bzxcs === 0) continue;
+
       // 创建退费记录
       tfListToInsert.push({
         ...item,
