@@ -1553,11 +1553,11 @@ export class h12_yzxbService {
       } else {
         flagAdvice.ksys = userId;
       }
-      if (czlx === 1 || czlx === 2) {
+      if (czlx === 1) {
         flagAdvice.xmmc = '     重 整 医 嘱';
-      } else if (czlx === 4) {
+      } else if (czlx === 3) {
         flagAdvice.xmmc = '     术 后 医 嘱';
-      } else {
+      } else if (czlx === 4) {
         flagAdvice.xmmc = '     产 后 医 嘱';
       }
       flagAdvice.yzrq = kssj;
