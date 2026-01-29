@@ -104,9 +104,9 @@ export class adviceDto {
   @IsOptional()
   zxhs?: string;
 
-  @Allow()
-  @IsOptional()
-  userId?: string;
+  //   @Allow()
+  //   @IsOptional()
+  //   userId?: string;
 
   @IsArray()
   @IsOptional()

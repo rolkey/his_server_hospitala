@@ -24,6 +24,7 @@ import {
   checkOutDto,
   CopyAdviceDto,
   medicineReceiptDto,
+  costDto,
 } from './dto/h12_yzzbOpe.dto';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
@@ -141,19 +142,66 @@ export class h12_yzxbServiceNew {
       ]);
 
       const deleteYzzxcss = [];
-      const allYzxbs = yzxbList.filter((yzxb) => {
+      const updateYzzxcss = [];
+      const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
+      const allYzxbs = yzxbList.filter(async (yzxb) => {
         if (yzxb.h13_yzzxcsList) {
           // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
           // 默认情况下，未执行的超出执行时间的费用需要删除
           const h13YzzxcsItem = yzxb.h13_yzzxcsList.filter((item) => {
             // 检查是否存在未处理的费用记录
 
-            // 如果执行日期大于等于停嘱日期，则放入删除数组deleteYzzxcss
+            // 执行日期大于等于停嘱日期，要进行相应处理
             const tzrq = new Date(yzxb.tzrq);
             tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
-            if (item.clbz === 0 && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
-              deleteYzzxcss.push(item);
+            //  如果则放入删除数组deleteYzzxcss
+            if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
+              if (item.clbz === 1 || item.fydh) {
+                // todo: 已经处理处理，要生成退费单
+                const costDtoValue = {
+                  mxxh: item.mxxh,
+                  maxid: item.maxid,
+                  bzxcs: item.zxcs,
+                };
+                const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
+                  [item],
+                  [costDtoValue],
+                  {
+                    zyid: dto.zyid,
+                    yzlx: dto.yzlx,
+                    zxhs: dto.jshs,
+                  },
+                );
+                tfListToInsertAll.push(...tfListToInsert);
+              } else {
+                // 没有处理可以直接删除
+                deleteYzzxcss.push(item);
+              }
+            } else if (item.zxrq === tzrq) {
+              if ((item.clbz === 1 || item.fydh) && item.zxcs - item.bzxcs - yzxb.mrcs > 0) {
+                // 生成部分退费记录
+                const costDtoValue = {
+                  mxxh: item.mxxh,
+                  maxid: item.maxid,
+                  bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
+                };
+                const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
+                  [item],
+                  [costDtoValue],
+                  {
+                    zyid: dto.zyid,
+                    yzlx: dto.yzlx,
+                    zxhs: dto.jshs,
+                  },
+                );
+                tfListToInsertAll.push(...tfListToInsert);
+              } else {
+                item.bzxcs = item.zxcs - yzxb.mrcs > 0 ? item.zxcs - yzxb.mrcs : 0;
+                if (item.bzxcs > 0) {
+                  updateYzzxcss.push(item);
+                }
+              }
             }
 
             if ((item.clbz === 1 || item.fydh) && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
@@ -164,7 +212,6 @@ export class h12_yzxbServiceNew {
           return h13YzzxcsItem.length === 0;
         } else return true;
       });
-      console.log('');
 
       // 转换日期
       const dtoZXRQ = new Date(dto.rq);
@@ -314,6 +361,9 @@ export class h12_yzxbServiceNew {
         const promisses = [];
         if (deleteYzzxcss.length > 0) {
           promisses.push(transactionalEntityManager.remove(deleteYzzxcss));
+        }
+        if (updateYzzxcss.length > 0) {
+          promisses.push(transactionalEntityManager.save(updateYzzxcss));
         }
         if (allYzxbs.length > 0) {
           promisses.push(transactionalEntityManager.save(allYzxbs));
@@ -835,7 +885,7 @@ export class h12_yzxbServiceNew {
               },
               {
                 tjbz: 0,
-                bz1: dto.userId,
+                bz1: dto.zxhs,
                 ckclbz: 1,
               },
             ),
@@ -877,7 +927,7 @@ export class h12_yzxbServiceNew {
 
         const h13Repo = manager.getRepository(h13_yzzxcs);
         const H13YzzxcsTfRepo = manager.getRepository(H13YzzxcsTf);
-        const H31LyjlRepo = manager.getRepository(H31Lyjl);
+        // const H31LyjlRepo = manager.getRepository(H31Lyjl);
 
         // 查询需要退费的费用记录
         const h13_yzzxcsList = await h13Repo
@@ -905,85 +955,19 @@ export class h12_yzxbServiceNew {
 
         if (!h13_yzzxcsList.length) return;
 
-        const tfListToInsert: H13YzzxcsTf[] = [];
-        // const gs_cxsz = await this.configReaderService.readGsCxsz();
+        // const costDtoList: costDto[] = h13_yzzxcsList.map((item) => {
+        //   const dto = new costDto();
+        //   dto.mxxh = item.mxxh;
+        //   dto.maxid = item.maxid;
+        //   dto.bzxcs = item.bzxcs;
+        //   return dto;
+        // });
 
-        for (const item of h13_yzzxcsList) {
-          // 检查项目是否已执行
-          if (
-            item.fybz === 0 &&
-            item.clbz === 1 &&
-            item.fylbid !== '01' &&
-            item.fylbid !== '02' &&
-            item.fylbid !== '03' &&
-            item.fylbid !== '90'
-          ) {
-            throw new CustomException(
-              ERR.ERR_10000,
-              `该项目已执行:${item.xmidEntity.xmmc},请医技科室取消执行！`,
-            );
-          }
-
-          // 检查记录是否已被其他护士退费
-          const [countslResult] = await manager.query(
-            `SELECT ISNULL(SUM((zxcs - bzxcs) * jfyl), 0) as countsl FROM h13_yzzxcs WHERE zyid = @0 AND mxxh = @1 AND maxid = @2`,
-            [dto.zyid, item.mxxh, item.maxid],
-          );
-
-          const ll_countsl = parseFloat(countslResult?.countsl || '0');
-          if (ll_countsl === 0) {
-            throw new CustomException(ERR.ERR_10000, '该记录已有护士退费，请咨询同事！');
-          }
-
-          // 检查退费数量是否合理
-          const dtoItem = dto.maxidList.find((d) => {
-            if (typeof d === 'object' && d !== null && 'maxid' in d) {
-              return d.maxid === item.maxid;
-            }
-            return Number(d) === item.maxid;
-          });
-
-          const bzxcs =
-            dtoItem && typeof dtoItem === 'object' && 'bzxcs' in dtoItem ? dtoItem.bzxcs : 1;
-
-          //控制台输出dtoItem的值
-          // console.log('退费数量dtoItem:', dtoItem);
-          //控制台输出bzxcs的值
-          // console.log('不执行次数bzxcs:', bzxcs);//3
-          // console.log('执行次数zxcs:', item.zxcs);//1
-
-          if (bzxcs > item.zxcs && bzxcs > 0) {
-            throw new CustomException(
-              ERR.ERR_10000,
-              `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数且不能小于0!`,
-            );
-          }
-
-          // 创建退费记录
-          tfListToInsert.push({
-            ...item,
-            czrq: new Date(),
-            //zxrq: new Date(),
-            fydh: '', // 发药单号清空
-            zxcs2: item.maxid,
-            zxhs: dto.zxhs,
-            zxcs: -1 * bzxcs,
-            bzxcs: 0,
-            tyrid: dto.zxhs,
-            tysj: new Date(), // 退药时间为当前时间？
-            sysj: null,
-            clbz: 0,
-            fybz: 0,
-          } as any);
-
-          //控制台输出退费记录tfListToInsert
-          //console.log('退费记录tfListToInsert:------', tfListToInsert);
-
-          // 修改主记录的已退次数
-          item.bzxcs = bzxcs;
-          // item.H31Lyjl = undefined as any;
-          item.h13YzzxcsTfList = undefined as any;
-        }
+        const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(h13_yzzxcsList, dto.maxidList, {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          zxhs: dto.zxhs,
+        });
         //console.log('退费记录tfListToInsert:------', tfListToInsert);
 
         // 批量保存主记录和退费记录
@@ -993,6 +977,79 @@ export class h12_yzxbServiceNew {
         throw new CustomException(ERR.ERR_10000, error?.message ?? '退费失败');
       }
     });
+  }
+
+  private createRefundList(
+    h13_yzzxcsList: h13_yzzxcs[],
+    costFees: costDto[],
+    dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
+  ) {
+    const tfListToInsert: H13YzzxcsTf[] = [];
+    // const gs_cxsz = await this.configReaderService.readGsCxsz();
+    for (const item of h13_yzzxcsList) {
+      // 检查项目是否已执行
+      if (
+        item.fybz === 0 &&
+        item.clbz === 1 &&
+        item.fylbid !== '01' &&
+        item.fylbid !== '02' &&
+        item.fylbid !== '03' &&
+        item.fylbid !== '90'
+      ) {
+        throw new CustomException(
+          ERR.ERR_10000,
+          `该项目已执行:${item.xmidEntity.xmmc},请医技科室取消执行！`,
+        );
+      }
+
+      const countsl = (item.zxcs - item.bzxcs) * item.jfyl;
+
+      if (countsl <= 0) {
+        throw new CustomException(ERR.ERR_10000, '该记录已退费，请咨询同事！');
+      }
+
+      // 处理退费数量
+      const dtoItem = costFees.find((cost) => cost.maxid === item.maxid);
+
+      const bzxcs = dtoItem ? (item.zxcs - dtoItem.bzxcs > 0 ? dtoItem.bzxcs : 0) : 1;
+
+      //控制台输出dtoItem的值
+      // console.log('退费数量dtoItem:', dtoItem);
+      //控制台输出bzxcs的值
+      // console.log('不执行次数bzxcs:', bzxcs);//3
+      // console.log('执行次数zxcs:', item.zxcs);//1
+      if (bzxcs > item.zxcs && bzxcs > 0) {
+        throw new CustomException(
+          ERR.ERR_10000,
+          `[${item.xmidEntity.xmmc}] 不执行次数不能大于执行次数且不能小于0!`,
+        );
+      }
+
+      // 创建退费记录
+      tfListToInsert.push({
+        ...item,
+        czrq: new Date(),
+        //zxrq: new Date(),
+        fydh: '', // 发药单号清空
+        zxcs2: item.maxid,
+        zxhs: dto.zxhs,
+        zxcs: -1 * bzxcs,
+        bzxcs: 0,
+        tyrid: dto.zxhs,
+        tysj: new Date(), // 退药时间为当前时间？
+        sysj: null,
+        clbz: 0,
+        fybz: 0,
+      } as any);
+
+      //控制台输出退费记录tfListToInsert
+      //console.log('退费记录tfListToInsert:------', tfListToInsert);
+      // 修改主记录的已退次数
+      item.bzxcs = bzxcs;
+      // item.H31Lyjl = undefined as any;
+      item.h13YzzxcsTfList = undefined as any;
+    }
+    return tfListToInsert;
   }
 
   // -------------------------
