@@ -624,7 +624,7 @@ export class h12_yzxbService {
     advice.ypid = mbxb.ypid ?? mbxb.xmid;
     advice.xmmc = mbxb.xmmc;
     advice.xmdw = mbxb.xmdw?.trim();
-    advice.xmdj = advice.xmdj ?? mbxb.lsjg ?? mbxb.xmdj;
+    advice.xmdj = mbxb.xmdj ?? (mbxb.lsjg > 0 ? mbxb.lsjg : advice.xmdj);
     advice.xmgg = mbxb.xmgg ?? mbxb.ypgg;
     advice.syffid = mbxb.syffid || '';
     advice.syffidEntity = mbxb.syffidEntity;
@@ -730,7 +730,7 @@ export class h12_yzxbService {
         const childItem = await this._getItemDetail(pkgItem);
 
         // 设置子项目信息
-        this._setChildItemInfo(childAdvice, childItem);
+        this._setItemInfo(childAdvice, childItem);
         childAdvice.ypid = mbid;
       }
     } catch (error) {
@@ -805,43 +805,6 @@ export class h12_yzxbService {
     childAdvice.srcs = parentAdvice.srcs;
     childAdvice.mrcs = parentAdvice.mrcs;
     childAdvice.syplid = parentAdvice.syplid;
-  }
-
-  /**
-   * 设置套餐子项信息
-   * @private
-   */
-  _setChildItemInfo(childAdvice: h12_yzxb, childItem: any) {
-    childAdvice.ksid = childItem.ksid ?? childAdvice.ksid;
-    childAdvice.xmzl = childItem.xmzl;
-    childAdvice.xmid = childItem.xmid?.trim();
-    // childAdvice.ypid = childItem.ypid ? childItem.ypid.trim() : childAdvice.xmid;
-    childAdvice.xmmc = childItem.xmmc?.trim();
-    childAdvice.xmdw = childItem.xmdw?.trim();
-    childAdvice.xmdj = childItem.lsjg; // jldj;
-    childAdvice.xmgg = childItem.xmgg;
-    childAdvice.pfjg = childItem.pfjg;
-    childAdvice.cjid = childItem.cjid;
-    childAdvice.scph = childItem.scph;
-    childAdvice.jfyl = childItem.jlsl;
-    childAdvice.sjyl = childItem.jlsl;
-    childAdvice.fylbid = childItem.fylbid?.trim();
-    childAdvice.sfbz = childItem.sfbz;
-    childAdvice.fybz = childItem.fybz?.trim();
-    // childAdvice.zflx = childItem.ybfl?.trim();
-    childAdvice.zflx = childItem.fyfs?.trim();
-    childAdvice.jssj = childItem.ybfl?.trim();
-    childAdvice.syplid = childItem.syplid || 'QD';
-    childAdvice.srcs = Math.min(childItem.scdh || 24, childItem.mrcs || 1);
-    childAdvice.gjybbm = childItem.gjybbm;
-    childAdvice.gjybmc = childItem.gjybmc;
-    childAdvice.ltbz = childItem.ltbz;
-    childAdvice.sjyl1 = childItem.sjyl1;
-    childAdvice.jldw = childItem.jldw?.trim();
-    childAdvice.typbz = childItem.typbz;
-    // childAdvice.jssj = childItem.ybfl?.trim();
-    // childAdvice.kyts = childItem.kyts;
-    // childAdvice.kyfs = childItem.kyfs;
   }
 
   /**
