@@ -327,7 +327,7 @@ export class h12_yzxbService {
             // 4. 根据用法取组套
             if (index === 0) {
               // 取用法
-              const addFee = async (newMbid) => {
+              const addFee = async (newMbid: string) => {
                 await this._processPackageItems(newAdvice, newMbid, packageAdvices);
                 if (packageAdvices.length > 0) {
                   newAdvice.tpbz = 1;
