@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -303,10 +303,14 @@ export class h11_brxxService {
     }
 
     if (queryDto.zkksid) {
-      baseQuery.andWhere(
-        ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
-        { zkksid: `%${queryDto.zkksid.trim()}%` },
-      );
+      if (queryDto.isZk === '1') {
+        baseQuery.andWhere(
+          ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
+          { zkksid: `%${queryDto.zkksid.trim()}%` },
+        );
+      } else {
+        baseQuery.andWhere('h11_brxx.zkksid LIKE :zkksid', { zkksid: `%${queryDto.zkksid.trim()}%` });
+      }
     }
 
     if (queryDto.fyksid) {
@@ -694,8 +698,8 @@ export class h11_brxxService {
 
     // 通用日期格式化函数
     const buildDateRange = (start: string, end: string) => ({
-      start: dayjs(start).format('YYYY-MM-DD 00:00:00'),
-      end: dayjs(end).format('YYYY-MM-DD 23:59:59'),
+      start: dayjs(start).format('YYYY-MM-DD HH:mm:ss'),
+      end: dayjs(end).format('YYYY-MM-DD HH:mm:ss'),
     });
 
     // 创建通用 QueryBuilder 函数
@@ -721,7 +725,7 @@ export class h11_brxxService {
       )`,
         { zkksid: `%${zkksid.trim()}%` },
       )
-      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange);
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange).andWhere('h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL');
 
     // 3. inQuery (在院)
     const inQuery = qb()
