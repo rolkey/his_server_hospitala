@@ -141,13 +141,11 @@ export class h13_yzzxcsController {
 
   // 撤回退费领药单：有领药单没有发药，已经有领药单
   @Put('revoke-refund-medicine-receipt')
-  async revokeRefundMedicineReceipt(
-    @Body() data: { zyid: string; maxidList: Array<{ maxid: number }> },
-  ) {
+  async revokeRefundMedicineReceipt(@Body() data: { zyid: string; maxids: string }) {
     // 将逗号分隔的字符串转换为数字数组
     return await this.h13_yzzxcsService.revokeRefundMedicineReceipt({
       zyid: data.zyid,
-      maxids: data.maxidList.map((item) => item.maxid),
+      maxids: data.maxids.split(',').map(Number),
     });
   }
 }
