@@ -216,7 +216,7 @@ export class h13_yzzxcsService {
     const tzrq = new Date(); // 对应PB9中的ldt_sj
     const targetDate = new Date(zxrq);
     targetDate.setHours(0, 0, 0, 0);
-    if (!mrcs) {
+    if (!mrcs && mrcs !== 0) {
       mrcs = 9; // 默认全部用完
     }
 
