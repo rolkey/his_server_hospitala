@@ -327,15 +327,21 @@ export class h12_yzxbService {
             // 4. 根据用法取组套
             if (index === 0) {
               // 取用法
+              const addFee = async (newMbid) => {
+                await this._processPackageItems(newAdvice, newMbid, packageAdvices);
+                if (packageAdvices.length > 0) {
+                  newAdvice.tpbz = 1;
+                }
+              };
               if (
                 mbxb.syffidEntity &&
                 mbxb.syffidEntity.xmid &&
                 mbxb.syffidEntity.xmid.startsWith('T')
               ) {
-                await this._processPackageItems(newAdvice, mbxb.syffidEntity.xmid, packageAdvices);
-                if (packageAdvices.length > 0) {
-                  newAdvice.tpbz = 1;
-                }
+                await addFee(mbxb.syffidEntity.xmid);
+              }
+              if (newAdvice.xmid.startsWith('T')) {
+                await addFee(newAdvice.xmid);
               }
             }
 
