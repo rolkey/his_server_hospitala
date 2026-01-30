@@ -1516,7 +1516,7 @@ export class h12_yzxbService {
       } else {
         flagAdvice.ksys = userId;
       }
-      if (czlx === 1) {
+      if ([1, 2].includes(czlx)) {
         flagAdvice.xmmc = '     重 整 医 嘱';
       } else if (czlx === 3) {
         flagAdvice.xmmc = '     术 后 医 嘱';
