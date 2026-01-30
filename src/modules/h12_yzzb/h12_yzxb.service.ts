@@ -1559,7 +1559,7 @@ export class h12_yzxbService {
 
         Object.assign(newAdvice, copyValue);
 
-        // newAdvice.yzzh -= 200;
+        // 涉及时间与医嘱状态的标志
         newAdvice.yzrq = kssj;
         newAdvice.yzzt = 0;
         newAdvice.tcbz = 0;
