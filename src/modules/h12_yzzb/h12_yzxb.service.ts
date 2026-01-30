@@ -340,9 +340,9 @@ export class h12_yzxbService {
               ) {
                 await addFee(mbxb.syffidEntity.xmid);
               }
-              if (newAdvice.xmid.startsWith('T')) {
-                await addFee(newAdvice.xmid);
-              }
+              //   if (newAdvice.xmid.startsWith('T')) {
+              //     await addFee(newAdvice.xmid);
+              //   }
             }
 
             const mbid =

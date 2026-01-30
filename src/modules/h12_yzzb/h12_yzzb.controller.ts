@@ -34,7 +34,8 @@ export class h12_yzzbController {
     @Query() data: { zyid: string; yzlx: string; yzzt?: string; yzzxcs?: string },
   ) {
     const record = await this.h12_yzzbService.findAllByPatient(data);
-    return { record: JSON.parse(JSON.stringify(record)) };
+    // return { record: JSON.parse(JSON.stringify(record)) };
+    return { record };
   }
 
   /**
