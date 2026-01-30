@@ -356,6 +356,9 @@ export class QueryDto {
 
   @OnlyOneOf('cykssj', { message: '出院开始时间和出院结束时间不能同时为空' })
   cyjssj?: string;
+
+  @Allow()
+  isZk?: string; // 1. 是 0. 否
 }
 
 export class Queryh11_brxxDto extends QueryDto {
