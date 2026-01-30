@@ -640,7 +640,7 @@ export class h12_yzxbService {
     advice.cjid = mbxb.cjid;
     advice.scph = mbxb.scph?.trim();
     advice.jfyl = mbxb.jfyl;
-    advice.sjyl = mbxb.sjyl1;
+    advice.sjyl = mbxb.sjyl ?? mbxb.sjyl1;
     advice.sjyl1 = mbxb.sjyl1;
     advice.fylbid = mbxb.fylbid?.trim() || '35';
     advice.fybz = mbxb.fybz ?? mbxb.bz1;

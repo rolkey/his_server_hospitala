@@ -110,11 +110,6 @@ export class h12_yzxbServiceNew {
     private readonly h13YzzxcsService: h13_yzzxcsService,
   ) {}
 
-  // 取组套（保留入口，按需实现）
-  async addPackageToAdvice(): Promise<void> {
-    // TODO: implement
-  }
-
   // -------------------------
   // 复核医嘱
   // -------------------------
