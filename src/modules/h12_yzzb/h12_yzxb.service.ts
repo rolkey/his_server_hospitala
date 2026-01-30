@@ -945,7 +945,12 @@ export class h12_yzxbService {
         }
 
         // 验证用量
-        if ((!adviceRow.jfyl || adviceRow.jfyl === 0) && adviceRow.sfbz === 1) {
+        if (
+          (!adviceRow.jfyl || adviceRow.jfyl === 0) &&
+          adviceRow.sfbz === 1 &&
+          adviceRow.xmid !== '0000000' &&
+          !adviceRow.xmid.startsWith('T')
+        ) {
           throw new BadRequestException('请录入用量!');
         }
 
