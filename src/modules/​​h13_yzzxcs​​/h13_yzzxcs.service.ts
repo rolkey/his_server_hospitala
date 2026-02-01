@@ -254,9 +254,10 @@ export class h13_yzzxcsService {
       h13YzzxcsListQuery.getMany(),
     ]);
 
-    const transformedData = this.getYzzxcsFees(h13YzzxcsList, h13YzzxcsTfList, targetDate, mrcs);
+    return this.getYzzxcsFees(h13YzzxcsList, h13YzzxcsTfList, targetDate, mrcs);
+    // const transformedData = this.getYzzxcsFees(h13YzzxcsList, h13YzzxcsTfList, targetDate, mrcs);
 
-    return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+    // return transformedData.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
   }
 
   private getYzzxcsFees(
@@ -264,7 +265,7 @@ export class h13_yzzxcsService {
     h13YzzxcsTfList: H13YzzxcsTf[],
     targetDate: Date,
     mrcs: number,
-  ) {
+  ): H13YzzxcsResponseDto[] {
     return h13YzzxcsList.map((h13) => {
       const returnData = new H13YzzxcsResponseDto();
       Object.assign(returnData, {

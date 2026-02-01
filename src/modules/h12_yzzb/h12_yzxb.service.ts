@@ -621,9 +621,11 @@ export class h12_yzxbService {
    */
   async _setItemInfo(advice: h12_yzxb, mbxb: any) {
     // If dw_xb_new.GetItemString(i - 1 ,"typbz") <> '' And left(dw_xb_new.GetItemString(i - 1 ,"typbz"),1) = ls_typbz And ls_typbz <> '' Then
-    if (!mbxb.typbz) {
-      advice.yzzh = await this.gyIdentityService.getMax('h12_yzzh');
-    }
+
+    // if (!mbxb.typbz) {
+    //   advice.yzzh = await this.gyIdentityService.getMax('h12_yzzh');
+    // }
+
     advice.ksid = mbxb.ksid ?? advice.ksid;
     advice.xmzl = mbxb.xmzl;
     advice.xmid = mbxb.xmid;
@@ -737,7 +739,7 @@ export class h12_yzxbService {
 
         // 设置子项目信息
         this._setItemInfo(childAdvice, childItem);
-        childAdvice.ypid = mbid;
+        // childAdvice.ypid = mbid;
       }
     } catch (error) {
       console.error(error);
@@ -938,9 +940,7 @@ export class h12_yzxbService {
     // const orderDate = firstOrder.yzrq || new Date();
 
     // 验证医嘱
-    for (let i = 0; i < h12_yzxbList.length; i++) {
-      const adviceRow = h12_yzxbList[i];
-
+    for (const [i, adviceRow] of h12_yzxbList.entries()) {
       // 特殊医嘱处理
       const specialOrders = ['     术 后 医 嘱', '     重 整 医 嘱', '     产 后 医 嘱'];
       if (specialOrders.includes(adviceRow.xmmc)) {
@@ -1055,7 +1055,15 @@ export class h12_yzxbService {
     //   try {
     // for (let i = 0; i < h12_yzxbList.length; i++) {
     //   const adviceRow = h12_yzxbList[i];
-    await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
+    // await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
+
+    try {
+      await manager.save(h12_yzxb, h12_yzxbList);
+    } catch (error) {
+      console.error('保存医嘱出错', error);
+      throw error;
+    }
+
     //   附加项目会保存在主记录的附加记录中
     // if (adviceRow.ysbz === 0) continue;
 
