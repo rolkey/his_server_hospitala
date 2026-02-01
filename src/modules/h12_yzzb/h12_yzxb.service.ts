@@ -694,9 +694,6 @@ export class h12_yzxbService {
   }
 
   private async _processPackageItems(advice: any, mbid: string, packageAdvices: any[]) {
-    if (!this.g_ksid) {
-      this.g_ksid = await this.configReaderService.getKsids(advice.ksid);
-    }
     if (!this.brxx) {
       this.brxx = await this.h11_brxxRepo.findOne({
         where: { zyid: advice.zyid },
@@ -718,6 +715,10 @@ export class h12_yzxbService {
     }
     const patientInfo = this.brxx;
 
+    if (!this.g_ksid) {
+      this.g_ksid = await this.configReaderService.getKsids(patientInfo.cyksid);
+    }
+
     // 获取套餐项目
     const packageItems = await this.h00TcxbService.getCombinedData(mbid);
 
@@ -727,12 +728,26 @@ export class h12_yzxbService {
         const childAdvice = new h12_yzxb();
         packageAdvices.push(childAdvice);
 
+        const kcjgxx = await this._getKcjgA({
+          lx: 1, // 是否跟item.mblx模板类型有关？
+          ypid: pkgItem.xmid,
+          ypmc: pkgItem.xmmc,
+          xmzl: pkgItem.xmzl,
+          ksid1: this.g_ksid.xyksid,
+          ksid2: this.g_ksid.cyksid,
+          ksid3: this.g_ksid.zyksid,
+          ksid4: this.g_ksid.clksid,
+          ksid5: this.g_ksid.qtksid,
+        });
+
+        childAdvice.ksid = kcjgxx.ksid;
+
         // 设置子医嘱基本信息
         await this._setChildAdviceBaseInfo(childAdvice, advice);
         childAdvice.zxcs = index + 1;
-        childAdvice.ksid = patientInfo.cyksid
-          ? patientInfo.cyksid.trim()
-          : patientInfo.ryksid.trim();
+        // childAdvice.ksid = patientInfo.cyksid
+        //   ? patientInfo.cyksid.trim()
+        //   : patientInfo.ryksid.trim();
 
         // 获取子项目详情
         const childItem = await this._getItemDetail(pkgItem);

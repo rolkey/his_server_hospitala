@@ -470,7 +470,9 @@ export class ConfigReaderService {
    */
   public async getKsids(uKsid: string): Promise<G_ksidDto> {
     // 并行获取西药、成药、中药、材料、其他、针剂的ksid
-    uKsid = '0109'; // HIS系统在初始化的时候是写死的，未知原因
+    if (!uKsid) {
+      uKsid = '0109'; // HIS系统在初始化的时候是写死的，未知原因
+    }
     const [xyksid, cyksid, zyksid, clksid, qtksid, zjksid] = await Promise.all([
       this.paramService.gfGetPara(13, `xy${uKsid}`, '0603', `西药${uKsid}`),
       this.paramService.gfGetPara(13, `cy${uKsid}`, '0603', `成药${uKsid}`),
