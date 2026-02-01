@@ -603,14 +603,16 @@ export class h12_yzxbServiceNew {
             throw new CustomException(ERR.ERR_40805, `单号 [${item.fydh}] 未退完全部执行次数`);
           }
           for (const yzzxcsTf of item.h13YzzxcsTfList) {
-            yzzxcsTf.yzxh = item.yzxh;
-            yzzxcsTf.zxrq = item.zxrq;
-            h13_yzzxcs_tf_maxids.push(yzzxcsTf.maxid);
-            delete yzzxcsTf.maxid;
+            // yzzxcsTf.yzxh = item.yzxh;
+            // yzzxcsTf.zxrq = item.zxrq;
+            if (!(yzzxcsTf.clbz === 1 || yzzxcsTf.fydh)) {
+              h13_yzzxcs_tf_maxids.push(yzzxcsTf.maxid);
+              delete yzzxcsTf.maxid;
+            }
           }
-          h13_yzzxcs_tfs.push(...item.h13YzzxcsTfList);
-          item.zxcs2 = item.maxid;
-          delete item.maxid;
+          //   h13_yzzxcs_tfs.push(...item.h13YzzxcsTfList);
+          //   item.zxcs2 = item.maxid;
+          //   delete item.maxid;
 
           if (item.bzxcs !== item.zxcs && xmzl === 1 && item.clbz === 1) {
             throw new CustomException(ERR.ERR_40806, `[${xmmc}] 已执行，不能删除`);
@@ -618,21 +620,19 @@ export class h12_yzxbServiceNew {
         }
 
         // 把退费表保存到h13_yzzxcs_delete表中，并删除退费记录
-        await Promise.all([
-          manager.save(H13YzzxcsDelete, h13_yzzxcs_tfs),
-          manager.delete(H13YzzxcsTf, {
-            zyid: dto.zyid,
-            maxid: In(h13_yzzxcs_tf_maxids),
-          }),
-          // 删除退费记录
-          manager.save(H13YzzxcsDelete, h13_yzzxcsList),
-          // 删除费用
-          manager.delete(h13_yzzxcs, {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            maxid: In(maxidList),
-          }),
-        ]);
+        await manager.save(H13YzzxcsDelete, h13_yzzxcs_tfs);
+        await manager.delete(H13YzzxcsTf, {
+          zyid: dto.zyid,
+          maxid: In(h13_yzzxcs_tf_maxids),
+        });
+        // 删除退费记录
+        await manager.save(H13YzzxcsDelete, h13_yzzxcsList);
+        // 删除费用
+        await manager.delete(h13_yzzxcs, {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          maxid: In(maxidList),
+        });
 
         //如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
         const H31LyjlRepo = manager.getRepository(H31Lyjl);
