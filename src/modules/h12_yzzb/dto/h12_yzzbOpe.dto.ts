@@ -97,8 +97,9 @@ export class adviceDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid: string;
 
-  @IsNotEmpty({ message: 'yzlx不能为空' })
-  yzlx: number;
+  //   @IsNotEmpty({ message: 'yzlx不能为空' })
+  @Allow()
+  yzlx?: number;
 
   @Allow()
   @IsOptional()

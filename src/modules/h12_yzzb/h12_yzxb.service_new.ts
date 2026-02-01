@@ -953,14 +953,10 @@ export class h12_yzxbServiceNew {
             'H31Lyjl.ksid',
             'H31Lyjl.fhksid',
           ])
-          .where(
-            'h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx and h13_yzzxcs.maxid IN (:...maxidList)',
-            {
-              zyid: dto.zyid,
-              yzlx: dto.yzlx,
-              maxidList: maxidList,
-            },
-          )
+          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.maxid IN (:...maxidList)', {
+            zyid: dto.zyid,
+            maxidList: maxidList,
+          })
           .getMany();
 
         if (!h13_yzzxcsList.length) return;
