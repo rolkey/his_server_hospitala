@@ -635,25 +635,27 @@ export class h12_yzxbServiceNew {
         });
 
         //如果有领药记录 则把相对应的item.H31Lyjl里所有记录的ckclbz重置为0
-        const H31LyjlRepo = manager.getRepository(H31Lyjl);
-        for (const item of h13_yzzxcsList) {
-          if (item?.h31Lyjl) {
-            const lyjlList = await H31LyjlRepo.find({
-              where: {
-                ksid: item.h31Lyjl.ksid,
-                djlb: item.h31Lyjl.djlb,
-                djbh: item.h31Lyjl.djbh,
-              },
-            });
-            if (lyjlList.length > 0) {
-              for (const lyjl of lyjlList) {
-                //调整相对应h31_lyjl表里的相应记录的ckclbz为0
-                lyjl.ckclbz = 0;
-              }
-              await H31LyjlRepo.save(lyjlList);
-            }
-          }
-        }
+        // const H31LyjlRepo = manager.getRepository(H31Lyjl);
+        // for (const item of h13_yzzxcsList) {
+        //   if (item?.h31Lyjl) {
+        //     const lyjlList = await H31LyjlRepo.find({
+        //       where: {
+        //         ksid: item.h31Lyjl.ksid,
+        //         djlb: item.h31Lyjl.djlb,
+        //         djbh: item.h31Lyjl.djbh,
+        //       },
+        //     });
+        //     if (lyjlList.length > 0) {
+        //       for (const lyjl of lyjlList) {
+        //         //调整相对应h31_lyjl表里的相应记录的ckclbz为0
+        //         if (lyjl.ckclbz !== 1) {
+        //           lyjl.ckclbz = 0;
+        //           await H31LyjlRepo.save(lyjl);
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
 
         // 功能：检查如果同组费用已经全部清除，则修改医嘱状态
         const h12Repo = manager.getRepository(h12_yzxb);
@@ -960,7 +962,7 @@ export class h12_yzxbServiceNew {
           .getMany();
 
         if (!h13_yzzxcsList.length) return;
-        //
+        ////
 
         // const costDtoList: costDto[] = h13_yzzxcsList.map((item) => {
         //   const dto = new costDto();
