@@ -201,7 +201,11 @@ export class h12_yzxbServiceNew {
               }
             }
 
-            if ((item.clbz === 1 || item.fydh) && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
+            if (
+              (item.clbz === 1 || item.fydh) &&
+              item.zxrq >= tzrq &&
+              item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
+            ) {
               if (dto.hlfy) return true;
               else {
                 filterError.push('仍有未退费医嘱，复核失败！！');
