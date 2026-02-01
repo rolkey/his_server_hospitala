@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, In } from 'typeorm';
 import { H31_kcxx } from './h31_kcxx.entity';
@@ -607,26 +607,30 @@ export class H31_kcxxService {
             response.data.xs = data.xs;
             response.data.kcgl = data.kcgl;
           } else {
-            response.message = `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允许使用该药品或材料，请手工录入附加!`;
+            throw new BadRequestException(
+              `${ypzd.zwmc}${request.ypid}该药品：${ypzd.zwmc},发药科室：${lsKsid},库存：${kcsl}无库存，不允许使用该药品或材料，请手工录入附加!`,
+            );
           }
         } else if (xs * kcsl < 3) {
-          response.message = `${ypzd.zwmc},${request.ypid}关联科室药品库存为:${this.roundNumber(
-            kcsl * xs,
-            2,
-          )}${ypzd.yjjl},请与药剂科确认，是否足够使用!${lsKsid}`;
+          throw new BadRequestException(
+            `${ypzd.zwmc},${request.ypid}关联科室药品库存为:${this.roundNumber(
+              kcsl * xs,
+              2,
+            )}${ypzd.yjjl},请与药剂科确认，是否足够使用!${lsKsid}`,
+          );
         }
 
         if (!response.data.zxks) {
-          response.message = `${request.ypid}${ypzd.zwmc}该药未找到发药科室，请记下操作步聚与网管或工程师联系！`;
+          throw new BadRequestException(
+            `${request.ypid}${ypzd.zwmc}该药未找到发药科室，请记下操作步聚与网管或工程师联系！`,
+          );
         }
       }
 
       return response;
     } catch (error) {
       console.error('库存查询错误', error);
-      response.success = false;
-      response.message = `查询药品库存价格时出错: ${error.message}`;
-      return response;
+      throw error;
     }
   }
 
