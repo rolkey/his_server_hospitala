@@ -619,9 +619,10 @@ export class h11_brxxService {
   }
 
   async update(dto: UpdateDto) {
-    const { zyid, ...rest } = dto;
-    await this.h11_brxxRepo.update(zyid, rest);
-    return await this.h11_brxxRepo.findOne({ where: { zyid } });
+    const h11_brxx = await this.h11_brxxRepo.findOne({ where: { zyid: dto.zyid } });
+    const newH11_brxx = this.h11_brxxRepo.merge(h11_brxx, dto)
+    await this.h11_brxxRepo.save(newH11_brxx);
+    return newH11_brxx
   }
 
   async costDetails(queryCostDetailDto: QueryCostDetailDto) {
