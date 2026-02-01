@@ -139,6 +139,7 @@ export class h12_yzxbServiceNew {
       const deleteYzzxcss = [];
       const updateYzzxcss = [];
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
+      const filterError = [];
       const allYzxbs = yzxbList.filter(async (yzxb) => {
         if (yzxb.h13_yzzxcsList) {
           // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
@@ -202,12 +203,19 @@ export class h12_yzxbServiceNew {
 
             if ((item.clbz === 1 || item.fydh) && item.zxrq >= tzrq && item.zxcs - item.bzxcs > 0) {
               if (dto.hlfy) return true;
-              else throw new BadRequestException('仍有未退费医嘱，复核失败！！');
+              else {
+                filterError.push('仍有未退费医嘱，复核失败！！');
+                return false;
+              }
             } else return false;
           });
           return h13YzzxcsItem.length === 0;
         } else return true;
       });
+
+      if (filterError.length > 0) {
+        throw new BadRequestException(filterError.join(','));
+      }
 
       // 转换日期
       const dtoZXRQ = new Date(dto.rq);
@@ -374,7 +382,7 @@ export class h12_yzxbServiceNew {
       // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
       // if (yzxbFJList.length) await this.h12_yzxbRepo.save(yzxbFJList);
     } catch (error: any) {
-      this.logger.error('复核医嘱失败', error?.stack ?? error?.message ?? error);
+      this.logger.error('复核医嘱失败', error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '复核医嘱失败');
     }
   }
