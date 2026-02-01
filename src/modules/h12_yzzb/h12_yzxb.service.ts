@@ -1589,16 +1589,34 @@ export class h12_yzxbService {
         } else {
           yzzhInfo.newYzzh = newAdvice.yzzh;
         }
-        const { yzlx, yzrq, mxxh, ksys, kssxys, srcs, yzzh, ...copyValue } = advice;
+        const {
+          yzlx,
+          yzrq,
+          mxxh,
+          ksys,
+          kssxys,
+          jsys,
+          jssxys,
+          srcs,
+          yzzh,
+          kshs,
+          kssxhs,
+          jshs,
+          jssxhs,
+          hdhs,
+          zxrq,
+          ...copyValue
+        } = advice;
 
         Object.assign(newAdvice, copyValue);
 
         // 涉及时间与医嘱状态的标志
         newAdvice.yzrq = kssj;
         newAdvice.yzzt = 0;
-        newAdvice.tcbz = 0;
-        newAdvice.sjbz = 2;
-        newAdvice.sfbz = index + 1;
+        // newAdvice.tcbz = 0;
+        // newAdvice.sjbz = 2;
+        // newAdvice.sfbz = index + 1;
+        newAdvice.fybz = '0';
         newAdvice.jsbz = 0;
         newAdvice.tjbz = 0;
         newAdvice.tzbz = 0;
