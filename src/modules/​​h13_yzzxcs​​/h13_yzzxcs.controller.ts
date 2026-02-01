@@ -12,7 +12,7 @@ export class h13_yzzxcsController {
   constructor(
     private readonly h13_yzzxcsService: h13_yzzxcsService,
     // private readonly h12_yzxbService: h12_yzxbService,
-  ) {}
+  ) { }
 
   @Get()
   @ApiOperation({ summary: '获取所有h13医嘱执行次数记录' })
@@ -120,12 +120,15 @@ export class h13_yzzxcsController {
     );
   }
 
-  @Get('query-yzzxcs')
-  async queryByYzzh(@Query() data: { zyid: string; yzzhs: string }) {
+  @Post('query-yzzxcs')
+  async queryByYzzh(@Body() data: { zyid: string; yzzhs?: number[]; rq: Date[]; xmmc?: string; yzlx?: number }) {
     // 将逗号分隔的字符串转换为数字数组
     return await this.h13_yzzxcsService.queryByYzzh({
       zyid: data.zyid,
-      yzzhs: data.yzzhs.split(',').map(Number),
+      yzzhs: data.yzzhs,
+      yzlx: data.yzlx,
+      rq: data.rq,
+      xmmc: data.xmmc,
     });
   }
 

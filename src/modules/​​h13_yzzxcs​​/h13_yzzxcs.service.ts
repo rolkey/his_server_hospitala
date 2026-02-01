@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, In, DataSource } from 'typeorm';
+import { Repository, EntityManager, In, DataSource, Between, Like, Equal } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
@@ -23,7 +23,7 @@ export class h13_yzzxcsService {
     private readonly h13YzzxcsTfRepository: Repository<H13YzzxcsTf>,
 
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async findAll(): Promise<h13_yzzxcs[]> {
     return this.h13YzzxcsRepository.find();
@@ -60,9 +60,9 @@ export class h13_yzzxcsService {
    * @param data
    * @returns
    */
-  async queryByYzzh(data: { zyid: string; yzzhs: number[] }): Promise<h13_yzzxcs[]> {
+  async queryByYzzh(data: { zyid: string; yzzhs?: number[]; rq?: Date[]; xmmc?: string; yzlx?: number }): Promise<h13_yzzxcs[]> {
     const { zyid, yzzhs } = data;
-    return await this.h13YzzxcsRepository
+    const queryBuilder = this.h13YzzxcsRepository
       .createQueryBuilder('h13_yzzxcs')
       .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
       .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
@@ -79,9 +79,22 @@ export class h13_yzzxcsService {
       ])
       .where({
         zyid,
-        yzzh: In(yzzhs),
-      })
-      .getMany();
+      });
+    if (yzzhs && yzzhs.length > 0) {
+      queryBuilder.andWhere('h13_yzzxcs.yzzh IN (:...yzzh)', { yzzh: yzzhs });
+    }
+    if (data.rq && data.rq.length > 0) {
+      queryBuilder.andWhere('h13_yzzxcs.zxrq BETWEEN :start AND :end', { start: data.rq[0], end: data.rq[1] });
+    }
+    if (data.yzlx) {
+      queryBuilder.andWhere('h13_yzzxcs.yzlx = :yzlx', { yzlx: data.yzlx });
+    }
+    // 从关联表 xmidEntity 中查询 xmmc
+    if (data.xmmc) {
+      queryBuilder.andWhere('xmidEntity.xmmc LIKE :xmmc', { xmmc: `%${data.xmmc}%` });
+    }
+
+    return await queryBuilder.getMany();
   }
 
   // 撤回退费：没有领药单
@@ -720,31 +733,31 @@ export class h13_yzzxcsService {
         'h13.syffid',
         // 'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) - h13.bzxcs) END as bzxcs',
         'CASE\n' +
-          '  WHEN h13.fybz = 1 THEN\n' +
-          '   0\n' +
-          '  ELSE\n' +
-          '   -1 * ((case\n' +
-          '     when :mrcs > h13.zxcs then\n' +
-          '      h13.zxcs\n' +
-          '     else\n' +
-          '      h13.zxcs - :mrcs\n' +
-          '   end) - h13.bzxcs)\n' +
-          'END as bzxcs',
+        '  WHEN h13.fybz = 1 THEN\n' +
+        '   0\n' +
+        '  ELSE\n' +
+        '   -1 * ((case\n' +
+        '     when :mrcs > h13.zxcs then\n' +
+        '      h13.zxcs\n' +
+        '     else\n' +
+        '      h13.zxcs - :mrcs\n' +
+        '   end) - h13.bzxcs)\n' +
+        'END as bzxcs',
         ':userId as tyrid',
         ':ldt_sj as tysj',
         'h13.sqtysl',
         // 'CASE WHEN h13.fybz = 1 THEN 0 ELSE -1 * ((case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) - h13.bzxcs) * h13.jfyl END as sjtysl',
         'CASE\n' +
-          '  WHEN h13.fybz = 1 THEN\n' +
-          '   0\n' +
-          '  ELSE\n' +
-          '   -1 * ((case\n' +
-          '     when :mrcs > h13.zxcs then\n' +
-          '      h13.zxcs\n' +
-          '     else\n' +
-          '      h13.zxcs - :mrcs\n' +
-          '   end) - h13.bzxcs) * h13.jfyl\n' +
-          'END as sjtysl',
+        '  WHEN h13.fybz = 1 THEN\n' +
+        '   0\n' +
+        '  ELSE\n' +
+        '   -1 * ((case\n' +
+        '     when :mrcs > h13.zxcs then\n' +
+        '      h13.zxcs\n' +
+        '     else\n' +
+        '      h13.zxcs - :mrcs\n' +
+        '   end) - h13.bzxcs) * h13.jfyl\n' +
+        'END as sjtysl',
         'h13.syrid',
         ':ldt_sj as sysj',
         'h13.kyts',
@@ -754,11 +767,11 @@ export class h13_yzzxcsService {
         'h13.fyrid',
         // '-1 * (case when :mrcs > h13.zxcs then h13.zxcs else h13.zxcs - :mrcs end) as zxcs',
         '-1 * (case\n' +
-          '  when :mrcs > h13.zxcs then\n' +
-          '   h13.zxcs\n' +
-          '  else\n' +
-          '   h13.zxcs - :mrcs\n' +
-          'end) as zxcs',
+        '  when :mrcs > h13.zxcs then\n' +
+        '   h13.zxcs\n' +
+        '  else\n' +
+        '   h13.zxcs - :mrcs\n' +
+        'end) as zxcs',
         'h13.zkksid',
         '0 as clbz',
         '0 as dybz',
