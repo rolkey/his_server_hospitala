@@ -945,6 +945,7 @@ export class h12_yzxbServiceNew {
         const h13_yzzxcsList = await h13Repo
           .createQueryBuilder('h13_yzzxcs')
           .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
+          .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'tfEntity')
           .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
           .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
           .addSelect([
@@ -954,6 +955,8 @@ export class h12_yzxbServiceNew {
             'H31Lyjl.ckclbz',
             'H31Lyjl.ksid',
             'H31Lyjl.fhksid',
+            'tfEntity.bzxcs',
+            'tfEntity.clbz',
           ])
           .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.maxid IN (:...maxidList)', {
             zyid: dto.zyid,
@@ -962,15 +965,6 @@ export class h12_yzxbServiceNew {
           .getMany();
 
         if (!h13_yzzxcsList.length) return;
-        ////
-
-        // const costDtoList: costDto[] = h13_yzzxcsList.map((item) => {
-        //   const dto = new costDto();
-        //   dto.mxxh = item.mxxh;
-        //   dto.maxid = item.maxid;
-        //   dto.bzxcs = item.bzxcs;
-        //   return dto;
-        // });
 
         const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(h13_yzzxcsList, dto.maxidList, {
           zyid: dto.zyid,
@@ -996,14 +990,19 @@ export class h12_yzxbServiceNew {
     const tfListToInsert: H13YzzxcsTf[] = [];
     // const gs_cxsz = await this.configReaderService.readGsCxsz();
     for (const item of h13_yzzxcsList) {
+      if (item.h13YzzxcsTfList) {
+        throw new BadRequestException('已经产生退费记录，请咨询同事！');
+      }
+
       // 检查项目是否已执行
       if (
         item.fybz === 0 &&
         item.clbz === 1 &&
-        item.fylbid !== '01' &&
-        item.fylbid !== '02' &&
-        item.fylbid !== '03' &&
-        item.fylbid !== '90'
+        item.fylbid !== '01' && // 西药
+        item.fylbid !== '02' && // 中草药
+        item.fylbid !== '03' && // 中成料
+        item.fylbid !== '15' && // 材料
+        item.fylbid !== '90' // 疫苗
       ) {
         throw new CustomException(
           ERR.ERR_10000,
