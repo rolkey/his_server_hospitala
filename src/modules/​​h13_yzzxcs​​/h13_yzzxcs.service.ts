@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, In, DataSource, Between, Like, Equal } from 'typeorm';
+import { Repository, EntityManager, In, DataSource, Between, Like, Equal, Not } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
 import { CreateH13YzzxcsDto, H13YzzxcsResponseDto, UpdateH13YzzxcsDto } from './dto/h13-yzzxcs.dto';
 import { H13YzzxcsTf } from '../h13_yzzxcs_tf/h13-yzzxcs-tf.entity';
@@ -178,6 +178,7 @@ export class h13_yzzxcsService {
       .andWhere('fy.yzzh in (:...yzzh)', { yzzh: yzzhArray })
       .andWhere('fy.yzxh = 1')
       .andWhere('fy.yzlx = 1')
+      .andWhere({ h12_yzxb: { yzzt: Not(7) } })
       .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h12_yzxb"."tzrq" AS DATE)')
       .orderBy('fy.zxrq', 'ASC');
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
