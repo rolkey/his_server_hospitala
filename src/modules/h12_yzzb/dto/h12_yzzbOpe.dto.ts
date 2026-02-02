@@ -79,7 +79,7 @@ export class executeDto {
   medicine?: string;
 
   @IsOptional()
-  yzzh: number;
+  yzzh: string;
 }
 
 export class costDto {
