@@ -124,8 +124,8 @@ export class h12_yzxbServiceNew {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
             // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
-            // ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
-            ...(dto.yzzh && dto.yzzh.length > 0 ? { mxxh: In(dto.yzzh) } : {}),
+            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            // ...(dto.yzzh && dto.yzzh.length > 0 ? { mxxh: In(dto.yzzh) } : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
@@ -2224,13 +2224,13 @@ export class h12_yzxbServiceNew {
    * @param user
    * @param info
    */
-  async reviewBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
+  async reviewBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
     // 检查是否执行有费用，有费用不允许退回，另外状态也必须在2, 5, 6中
     const yzzxcs = await this.h13_yzzxcsRepo.find({
       where: {
         zyid: dto.zyid,
         yzlx: dto.yzlx,
-        mxxh: In(dto.mxxh),
+        yzzh: In(dto.yzzh),
         zxcs: Raw((zxcs) => `${zxcs} > bzxcs`),
       },
     });
@@ -2240,11 +2240,11 @@ export class h12_yzxbServiceNew {
 
     // 如果新提交医嘱，则直接退回不提单状态，让医生可以修改
     await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: 1 },
+      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: 1 },
       { yzzt: 7, tjbz: 0, hdbz: 0, kssxhs: null, kshs: null },
     );
     await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([2, 5, 6]) },
+      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([2, 5, 6]) },
       { yzzt: 7, hdbz: 0, kssxhs: null, kshs: null },
     );
   }

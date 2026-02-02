@@ -28,12 +28,12 @@ export class reviewDto {
   @Allow()
   yzxh?: number[];
 
-  //   @Allow()
-  //   mxxh?: number[];
+  @Allow()
+  mxxh?: number[];
 
-  @IsNotEmpty({ message: 'mxxh不能为空' })
-  @IsArray()
-  yzzh: number[];
+  //   @IsNotEmpty({ message: 'mxxh不能为空' })
+  //   @IsArray()
+  //   yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
