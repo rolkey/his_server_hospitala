@@ -139,7 +139,8 @@ export class h12_yzxbServiceNew {
       const deleteYzzxcss = [];
       const updateYzzxcss = [];
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
-      const filterError = [];
+      const errorInfoList = []; // 过滤错误
+      const hlYzzh = []; // 忽略医嘱组号
       const allYzxbs = yzxbList.filter(async (yzxb) => {
         if (yzxb.h13_yzzxcsList) {
           // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
@@ -151,6 +152,8 @@ export class h12_yzxbServiceNew {
 
           const h13YzzxcsItem = yzxb.h13_yzzxcsList.filter((item) => {
             // 检查是否存在未处理的费用记录
+
+            if (hlYzzh.includes(item.yzzh)) return false;
 
             //  如果则放入删除数组deleteYzzxcss
             if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
@@ -173,7 +176,9 @@ export class h12_yzxbServiceNew {
                 tfListToInsertAll.push(...tfListToInsert);
               } else {
                 // 没有处理可以直接删除
-                deleteYzzxcss.push(item);
+                if (!hlYzzh.includes(item.yzzh)) {
+                  deleteYzzxcss.push(item);
+                }
               }
             } else if (item.zxrq.getTime() === tzrq.getTime()) {
               if (item.clbz === 1 || item.fydh) {
@@ -206,9 +211,13 @@ export class h12_yzxbServiceNew {
               item.zxrq >= tzrq &&
               item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
             ) {
-              if (dto.hlfy) return true;
-              else {
-                filterError.push('仍有未退费医嘱，复核失败！！');
+              if (dto.hlfy) {
+                if (!hlYzzh.includes[item.yzzh]) {
+                  hlYzzh.push(item.yzzh);
+                }
+                return true;
+              } else {
+                errorInfoList.push('仍有未退费医嘱，复核失败！！');
                 return false;
               }
             } else return false;
@@ -217,8 +226,8 @@ export class h12_yzxbServiceNew {
         } else return true;
       });
 
-      if (filterError.length > 0) {
-        throw new BadRequestException(filterError.join(','));
+      if (errorInfoList.length > 0) {
+        throw new BadRequestException(errorInfoList.join(','));
       }
 
       // 转换日期
@@ -368,7 +377,7 @@ export class h12_yzxbServiceNew {
       await this.entityManager.transaction(async (transactionalEntityManager) => {
         const promisses = [];
         if (deleteYzzxcss.length > 0) {
-          promisses.push(transactionalEntityManager.remove(deleteYzzxcss));
+          promisses.push(transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss));
         }
         if (updateYzzxcss.length > 0) {
           promisses.push(transactionalEntityManager.save(updateYzzxcss));
