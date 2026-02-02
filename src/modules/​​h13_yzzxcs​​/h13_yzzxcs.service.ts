@@ -182,7 +182,10 @@ export class h13_yzzxcsService {
       //   .andWhere({ h12_yzxb: { yzzt: Not(7) } })
       .andWhere('h12_yzxb.yzzt in (1, 5)')
       .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h12_yzxb"."tzrq" AS DATE)')
-      .orderBy('fy.zxrq', 'ASC');
+      .orderBy('fy.zxrq', 'ASC')
+      .addOrderBy('fy.yzzh', 'ASC')
+      .addOrderBy('fy.mxxh', 'ASC'); // 添加排序，ASC表示升序
+
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
       h13YzzxcsTfListQuery.getMany(),
       h13YzzxcsListQuery.getMany(),
