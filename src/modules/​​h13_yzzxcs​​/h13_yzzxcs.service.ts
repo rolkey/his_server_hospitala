@@ -87,7 +87,7 @@ export class h13_yzzxcsService {
       .where({
         zyid,
       })
-      .andWhere('h12_yzxb.yzzt = 5');
+      .andWhere('h12_yzxb.yzzt <> 7'); // 驳回医嘱不进行退费操作
     if (yzzhs && yzzhs.length > 0) {
       queryBuilder.andWhere('h13_yzzxcs.yzzh IN (:...yzzh)', { yzzh: yzzhs });
     }
