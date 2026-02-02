@@ -408,11 +408,6 @@ export class h12_yzxbServiceNew {
     try {
       // 参数解构与校验
       const { zxhs, zxks, zyid, beginDate, endDate, newYear = '', medicine = '', yzzh } = dto;
-      console.log(
-        '日期：',
-        dayjs(beginDate).format('YYYY-MM-DD HH:mm:ss'),
-        dayjs(endDate).format('YYYY-MM-DD HH:mm:ss'),
-      );
 
       if (!zyid) throw new CustomException(ERR.ERR_10000, '缺少住院ID');
 
