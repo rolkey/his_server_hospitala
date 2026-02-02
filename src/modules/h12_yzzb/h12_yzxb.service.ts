@@ -1550,7 +1550,9 @@ export class h12_yzxbService {
     const h12_yzxbs = await h12_yzxbsQuery.getMany();
     const yzzh = [...new Set(h12_yzxbs.map((mbxb) => mbxb.yzzh))];
     try {
-      await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz, 1);
+      if (yzzh && yzzh.length > 0) {
+        await this.stopAdvice(zyid, yzxh, 1, yzzh, kssj, 0, userId, u_zcid, jsys, ysstopbz, 1);
+      }
 
       // 拷贝医嘱
       const newH12_yzxb = [];
@@ -1648,6 +1650,7 @@ export class h12_yzxbService {
 
         newH12_yzxb.push(newAdvice);
       }
+
       await this.h12_yzxbRepo.save(newH12_yzxb);
     } catch (error) {
       console.error(error);
