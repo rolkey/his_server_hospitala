@@ -73,6 +73,7 @@ export class h13_yzzxcsService {
       .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
       .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
       .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
+      .leftJoin('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
       .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'h13YzzxcsTf')
       .addSelect(['h13YzzxcsTf.fydh', 'h13YzzxcsTf.clbz', 'h13YzzxcsTf.fybz'])
       .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
@@ -85,7 +86,8 @@ export class h13_yzzxcsService {
       ])
       .where({
         zyid,
-      });
+      })
+      .andWhere('h12_yzxb.yzzt = 5');
     if (yzzhs && yzzhs.length > 0) {
       queryBuilder.andWhere('h13_yzzxcs.yzzh IN (:...yzzh)', { yzzh: yzzhs });
     }

@@ -996,7 +996,7 @@ export class h12_yzxbServiceNew {
     const tfListToInsert: H13YzzxcsTf[] = [];
     // const gs_cxsz = await this.configReaderService.readGsCxsz();
     for (const item of h13_yzzxcsList) {
-      if (item.h13YzzxcsTfList) {
+      if (item.h13YzzxcsTfList && item.h13YzzxcsTfList.length > 0) {
         throw new BadRequestException('已经产生退费记录，请咨询同事！');
       }
 
@@ -1901,12 +1901,12 @@ export class h12_yzxbServiceNew {
           };
         });
 
-        // 格式化错误消息
-        const weiFuheMx = formattedWeiFuhelist
-          .map((item) => {
-            return `项目：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl || 0}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksysName}，科室护士：${item.kshsName}`;
-          })
-          .join('\n');
+        // // 格式化错误消息
+        // const weiFuheMx = formattedWeiFuhelist
+        //   .map((item) => {
+        //     return `项目：${item.xmmc}，医嘱类型：${item.yzlx}，明细号：${item.mxxh}，医嘱日期：${item.yzrq}，项目ID：${item.xmid}，用量：${item.jfyl || 0}，使用方法：${item.syffid}，使用频率：${item.syplid}，科室医生：${item.ksysName}，科室护士：${item.kshsName}`;
+        //   })
+        //   .join('\n');
 
         // throw new CustomException(ERR.ERR_10000, `有医嘱未复核，请复核后再出院：\n${weiFuheMx}`);
         return createErrorResponse(
