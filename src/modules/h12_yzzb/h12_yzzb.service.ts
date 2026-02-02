@@ -318,63 +318,19 @@ export class h12_yzzbService {
     if (data.yzzt) {
       h12YzxbQuery.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt.split(',') });
     }
-    const getYzzxcs = (): Promise<h13_yzzxcs[]> => {
-      if (data.yzzxcs === '1') {
-        const h13_yzzxcsqb = this.h13_yzzxcsRepo
-          .createQueryBuilder('h13_yzzxcs')
-          .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
-          .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
-          .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
-          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
-          .addSelect([
-            'H31Lyjl.djbh',
-            'H31Lyjl.tjbz',
-            'H31Lyjl.ckclbz',
-            'H31Lyjl.ksid',
-            'H31Lyjl.fhksid',
-          ])
-          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.yzlx=:yzlx', {
-            zyid: data.zyid,
-            yzlx: data.yzlx || '',
-          })
-          .orderBy('h13_yzzxcs.yzxh', 'ASC')
-          .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
-        return h13_yzzxcsqb.getMany();
-      } else return Promise.resolve([]); // 明确指定返回类型
-    };
 
-    // 测试
-    // const yzzb = await h12YzzbQuery.getOne();
-    // const h12_yzxbList = await h12YzxbQuery.getMany();
-    // const ksidList = await this.ksmcRepo.find({ select: ['ksid', 'ksmc'] });
-    // const usidList = await this.usrcatRepo.find({ select: ['usid', 'unam'] });
-    // // const h13_yzzxcsList = new Array<h13_yzzxcs>();
-    // const h13_yzzxcsList = await getYzzxcs();
-
-    const [yzzb, h12_yzxbList, ksidList, usidList, h13_yzzxcsList] = await Promise.all([
+    const [yzzb, h12_yzxbList, ksidList, usidList] = await Promise.all([
       h12YzzbQuery.getOne(),
       h12YzxbQuery.getMany(),
       this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
       this.usrcatRepo.find({ select: ['usid', 'unam'] }),
-      getYzzxcs(),
     ]);
     if (!yzzb) return null;
 
     // 构建字典
     const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
     const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
-    h13_yzzxcsList.forEach((item) => {
-      item.ksidEntity = ksmcDict[item.ksid] || null;
-      item.zkksidEntity = ksmcDict[item.zkksid] || null;
-      item.syridEntity = usrcatDict[item.syrid] || null;
-      item.fyridEntity = usrcatDict[item.fyrid] || null;
-    });
     h12_yzxbList.forEach((item) => {
-      // 找到所有匹配的 h13_yzzxcs
-      const matchedH13 = h13_yzzxcsList.filter(
-        (h13) => h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
-      );
-      item.h13_yzzxcsList = matchedH13;
       // 赋值所有注释掉的 leftJoinAndSelect 关联的字典
       item.ksysEntity = usrcatDict[item.ksys] || null;
       item.kshsEntity = usrcatDict[item.kshs] || null;
