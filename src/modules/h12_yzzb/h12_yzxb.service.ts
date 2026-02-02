@@ -1502,7 +1502,21 @@ export class h12_yzxbService {
     await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
     return true;
   }
-  // 重整医嘱 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  //  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  /**
+   * 重整医嘱
+   * @param zyid 住院ID
+   * @param yzxh
+   * @param czlx
+   * @param kssj
+   * @param userId
+   * @param u_zcid
+   * @param jsys
+   * @param ysstopbz
+   * @returns
+   */
   async reorganize(
     zyid: string,
     yzxh: number,
