@@ -123,8 +123,9 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
-            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
+            // ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            ...(dto.yzzh && dto.yzzh.length > 0 ? { mxxh: In(dto.yzzh) } : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,

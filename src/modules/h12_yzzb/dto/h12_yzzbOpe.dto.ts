@@ -25,13 +25,15 @@ export class reviewDto {
   @IsNotEmpty({ message: 'zyid不能为空' })
   zyid: string;
 
-  @IsNotEmpty({ message: 'yzxh不能为空' })
-  @IsArray()
-  yzxh: number[];
+  @Allow()
+  yzxh?: number[];
+
+  //   @Allow()
+  //   mxxh?: number[];
 
   @IsNotEmpty({ message: 'mxxh不能为空' })
   @IsArray()
-  mxxh: number[];
+  yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
