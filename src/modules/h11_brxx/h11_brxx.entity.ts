@@ -492,6 +492,10 @@ export class h11_brxx {
     if (this.gjid) {
       this.gjid = this.gjid.trim();
     }
+    if (this.rybqid) {
+      this.rybqid = this.rybqid.trim();
+    }
+
 
     this.zyts = this.cysj
       ? dayjs(this.cysj).diff(this.rysj, 'day')
