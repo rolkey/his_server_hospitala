@@ -124,8 +124,8 @@ export class h12_yzxbServiceNew {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
             // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
-            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
-            // ...(dto.yzzh && dto.yzzh.length > 0 ? { mxxh: In(dto.yzzh) } : {}),
+            // ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            ...(dto.yzzh && dto.yzzh.length > 0 ? { yzzh: In(dto.yzzh) } : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
@@ -441,15 +441,21 @@ export class h12_yzxbServiceNew {
         yzlx = '%';
         zxbz = Zxbz.AUTO_ITEMS;
       }
+      const errorList = [];
       if (executeType === '104') {
         zxbz = Zxbz.WITH_GROUP;
         for (const yzzhItem of dto.yzzh.split(',')) {
           // 执行存储过程
-          await this.dataSource.query(
-            `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
-                @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
-            [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzzhItem],
-          );
+          try {
+            await this.dataSource.query(
+              `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+                    @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
+              [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzzhItem],
+            );
+          } catch (error) {
+            console.error('医嘱执行错误', error);
+            // errorList.push(error.message);
+          }
         }
       } else {
         // 执行存储过程

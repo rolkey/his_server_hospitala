@@ -31,9 +31,8 @@ export class reviewDto {
   @Allow()
   mxxh?: number[];
 
-  //   @IsNotEmpty({ message: 'mxxh不能为空' })
-  //   @IsArray()
-  //   yzzh: number[];
+  @Allow()
+  yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;

@@ -157,6 +157,7 @@ export class h13_yzzxcsService {
       .andWhere('tf.yzxh = 1')
       .andWhere('tf.yzzh in (:...yzzh)', { yzzh: yzzhArray })
       .andWhere('tf.yzlx = 1')
+      .andWhere('h.yzzt in (1, 5)')
       .andWhere('CAST("tf"."zxrq" AS DATE) >= CAST("h"."tzrq" AS DATE)');
 
     const h13YzzxcsListQuery = this.h13YzzxcsRepository
@@ -178,7 +179,8 @@ export class h13_yzzxcsService {
       .andWhere('fy.yzzh in (:...yzzh)', { yzzh: yzzhArray })
       .andWhere('fy.yzxh = 1')
       .andWhere('fy.yzlx = 1')
-      .andWhere({ h12_yzxb: { yzzt: Not(7) } })
+      //   .andWhere({ h12_yzxb: { yzzt: Not(7) } })
+      .andWhere('h12_yzxb.yzzt in (1, 5)')
       .andWhere('CAST("fy"."zxrq" AS DATE) >= CAST("h12_yzxb"."tzrq" AS DATE)')
       .orderBy('fy.zxrq', 'ASC');
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
@@ -270,7 +272,9 @@ export class h13_yzzxcsService {
       //   .andWhere('h13.fybz = 1')
       //   .andWhere('h13.clbz = 1')
       .andWhere('h13.zxrq >= :zxrq', { zxrq: targetDate })
-      .orderBy('h13.maxid', 'ASC'); // 添加排序，ASC表示升序
+      .orderBy('h13.zxrq', 'ASC')
+      .addOrderBy('h13.yzzh', 'ASC')
+      .addOrderBy('h13.mxxh', 'ASC'); // 添加排序，ASC表示升序
 
     const [h13YzzxcsTfList, h13YzzxcsList] = await Promise.all([
       h13YzzxcsTfListQuery.getMany(),
@@ -289,6 +293,7 @@ export class h13_yzzxcsService {
     targetDate: Date,
     mrcs: number,
   ): H13YzzxcsResponseDto[] {
+    console.log('末日次数', mrcs);
     return h13YzzxcsList.map((h13) => {
       const returnData = new H13YzzxcsResponseDto();
       Object.assign(returnData, {
