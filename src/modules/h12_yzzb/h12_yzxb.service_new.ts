@@ -2258,7 +2258,7 @@ export class h12_yzxbServiceNew {
   async stopBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
     // 只更新停嘱提交数据，其他数据不更新
     await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.yzzh), yzzt: In([5, 6]) },
+      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([5, 6]) },
       { yzzt: 7, jssxhs: null, jshs: null },
     );
   }
