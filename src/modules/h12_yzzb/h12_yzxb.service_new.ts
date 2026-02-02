@@ -912,8 +912,8 @@ export class h12_yzxbServiceNew {
         await Promise.all(promisses);
       });
     } catch (error: any) {
-      this.logger.error('取消领药失败！！', error);
-      throw new CustomException(ERR.ERR_10000, error?.message ?? '生成发药单失败');
+      this.logger.error('退回领药单失败！！', error);
+      throw new CustomException(ERR.ERR_10000, error?.message ?? '退回领药单失败！！');
     }
   }
 
@@ -2255,10 +2255,10 @@ export class h12_yzxbServiceNew {
    * @param user
    * @param info
    */
-  async stopBack(dto: { zyid: string; yzlx: number; mxxh: number[]; info: string }, user: any) {
+  async stopBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
     // 只更新停嘱提交数据，其他数据不更新
     await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.mxxh), yzzt: In([5, 6]) },
+      { zyid: dto.zyid, yzlx: dto.yzlx, mxxh: In(dto.yzzh), yzzt: In([5, 6]) },
       { yzzt: 7, jssxhs: null, jshs: null },
     );
   }

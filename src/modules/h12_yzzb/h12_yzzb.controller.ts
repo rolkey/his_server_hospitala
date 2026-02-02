@@ -343,7 +343,7 @@ export class h12_yzzbController {
   @Post('stopBack')
   //   @UseGuards(JwtGuard)
   async stopBack(
-    @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
+    @Body() dto: { zyid: string; yzlx: number; yzzh: number[]; info: string },
     @Req() request: any,
   ) {
     return await this.h12_yzxbServiceNew.stopBack(dto, request.user);
