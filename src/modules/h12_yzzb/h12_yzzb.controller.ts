@@ -331,7 +331,7 @@ export class h12_yzzbController {
   @Post('reviewBack')
   //   @UseGuards(JwtGuard)
   async reviewBack(
-    @Body() dto: { zyid: string; yzlx: number; mxxh: number[]; info: string },
+    @Body() dto: { zyid: string; yzlx: number; yzzh: number[]; info: string },
     @Req() request: any,
   ) {
     return await this.h12_yzxbServiceNew.reviewBack(dto, request.user);
