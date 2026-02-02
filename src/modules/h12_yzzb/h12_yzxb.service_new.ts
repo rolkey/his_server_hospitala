@@ -940,55 +940,65 @@ export class h12_yzxbServiceNew {
       .filter((maxid) => !isNaN(maxid));
 
     if (!maxidList.length) return;
+    // 检查系统参数：住院医嘱生成发药状态(0未执行,1正在执行)
+
+    // const h13Repo = manager.getRepository(h13_yzzxcs);
+    // const H13YzzxcsTfRepo = manager.getRepository(H13YzzxcsTf);
+    // const H31LyjlRepo = manager.getRepository(H31Lyjl);
+
+    // 查询需要退费的费用记录
+    const h13_yzzxcsList = await this.h13_yzzxcsRepo
+      .createQueryBuilder('h13_yzzxcs')
+      .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
+      .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'tfEntity')
+      .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
+      .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
+      .addSelect([
+        'H31Lyjl.zyid',
+        'H31Lyjl.djbh',
+        'H31Lyjl.tjbz',
+        'H31Lyjl.ckclbz',
+        'H31Lyjl.ksid',
+        'H31Lyjl.fhksid',
+        'tfEntity.bzxcs',
+        'tfEntity.clbz',
+      ])
+      .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.maxid IN (:...maxidList)', {
+        zyid: dto.zyid,
+        maxidList: maxidList,
+      })
+      .getMany();
+
+    if (!h13_yzzxcsList.length) return;
+
+    const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(h13_yzzxcsList, dto.maxidList, {
+      zyid: dto.zyid,
+      yzlx: dto.yzlx,
+      zxhs: dto.zxhs,
+    });
 
     await this.dataSource.transaction(async (manager) => {
       try {
-        // 检查系统参数：住院医嘱生成发药状态(0未执行,1正在执行)
         const syspar_new = await this.syspar_newService.findNewOne('99', 'zyyzfyzxbz', manager);
         if (syspar_new?.pval === '1') {
           throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
         }
 
-        const h13Repo = manager.getRepository(h13_yzzxcs);
-        const H13YzzxcsTfRepo = manager.getRepository(H13YzzxcsTf);
-        // const H31LyjlRepo = manager.getRepository(H31Lyjl);
-
-        // 查询需要退费的费用记录
-        const h13_yzzxcsList = await h13Repo
-          .createQueryBuilder('h13_yzzxcs')
-          .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
-          .leftJoin('h13_yzzxcs.h13YzzxcsTfList', 'tfEntity')
-          .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh', 'xmidEntity.xmzl'])
-          .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
-          .addSelect([
-            'H31Lyjl.zyid',
-            'H31Lyjl.djbh',
-            'H31Lyjl.tjbz',
-            'H31Lyjl.ckclbz',
-            'H31Lyjl.ksid',
-            'H31Lyjl.fhksid',
-            'tfEntity.bzxcs',
-            'tfEntity.clbz',
-          ])
-          .where('h13_yzzxcs.zyid = :zyid and h13_yzzxcs.maxid IN (:...maxidList)', {
-            zyid: dto.zyid,
-            maxidList: maxidList,
-          })
-          .getMany();
-
-        if (!h13_yzzxcsList.length) return;
-
-        const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(h13_yzzxcsList, dto.maxidList, {
-          zyid: dto.zyid,
-          yzlx: dto.yzlx,
-          zxhs: dto.zxhs,
-        });
         // console.log('退费记录tfListToInsert:------', tfListToInsert);
 
         // 批量保存主记录和退费记录
-        await Promise.all([h13Repo.save(h13_yzzxcsList), H13YzzxcsTfRepo.save(tfListToInsert)]);
+        for (const yzzxcs of h13_yzzxcsList) {
+          await manager.update(
+            h13_yzzxcs,
+            { maxid: yzzxcs.maxid, zyid: yzzxcs.zyid },
+            { bzxcs: yzzxcs.bzxcs },
+          );
+        }
+
+        // await manager.save(h13_yzzxcs, h13_yzzxcsList);
+        await manager.save(H13YzzxcsTf, tfListToInsert);
       } catch (error: any) {
-        this.logger.error('退费失败', error?.stack ?? error?.message ?? error);
+        this.logger.error('退费失败', error);
         throw new CustomException(ERR.ERR_10000, error?.message ?? '退费失败');
       }
     });
@@ -1055,6 +1065,7 @@ export class h12_yzxbServiceNew {
         sysj: null,
         clbz: 0,
         fybz: 0,
+        zyid: dto.zyid,
       } as any);
 
       //控制台输出退费记录tfListToInsert
