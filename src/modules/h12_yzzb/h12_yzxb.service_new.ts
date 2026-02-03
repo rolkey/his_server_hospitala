@@ -171,8 +171,7 @@ export class h12_yzxbServiceNew {
                 hlYzzh.push(item.yzzh);
               }
               h13YzzxcsItem.push(item);
-            } else {
-              throw new BadRequestException('仍有未退费医嘱，复核失败！！');
+              continue;
             }
           }
 
@@ -384,22 +383,19 @@ export class h12_yzxbServiceNew {
       await this.entityManager.transaction(async (transactionalEntityManager) => {
         const promisses = [];
         if (deleteYzzxcss.length > 0) {
-          promisses.push(transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss));
+          await transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss);
         }
         if (updateYzzxcss.length > 0) {
-          promisses.push(transactionalEntityManager.save(updateYzzxcss));
+          await transactionalEntityManager.save(h13_yzzxcs, updateYzzxcss);
         }
         if (allYzxbs.length > 0) {
-          promisses.push(transactionalEntityManager.save(allYzxbs));
+          await transactionalEntityManager.save(h12_yzxb, allYzxbs);
         }
         if (tfListToInsertAll.length > 0) {
-          promisses.push(transactionalEntityManager.save(tfListToInsertAll));
+          await transactionalEntityManager.save(H13YzzxcsTf, tfListToInsertAll);
         }
         if (yzxbFJList.length > 0) {
-          promisses.push(transactionalEntityManager.save(yzxbFJList));
-        }
-        if (promisses.length > 0) {
-          await Promise.all(promisses);
+          await transactionalEntityManager.save(h12_yzxb, yzxbFJList);
         }
       });
       // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
