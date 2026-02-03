@@ -1,4 +1,11 @@
-import { Allow, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  Allow,
+  ArrayMinSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { UpdateH12_yzxbDto, H12_yzxbDto } from './h12_yzxb.dto';
 
 /**
@@ -32,6 +39,8 @@ export class reviewDto {
   mxxh?: number[];
 
   @Allow()
+  @ArrayNotEmpty()
+  @ArrayMinSize(1, { message: 'yzzh至少要有一个组号值' })
   yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
@@ -183,5 +192,3 @@ export class CopyAdviceDto {
   @IsNotEmpty({ message: '新医嘱的zyid不能为空' })
   zyidNew?: string;
 }
-
-////
