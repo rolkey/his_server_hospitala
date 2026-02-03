@@ -67,6 +67,11 @@ export class H13YzzxcsTfService {
         yzzh,
       },
       relations: ['h00XmzdEntiry'],
+      select: {
+        h00XmzdEntiry: {
+          xmmc: true,
+        },
+      },
     });
   }
 
