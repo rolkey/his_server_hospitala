@@ -10,6 +10,16 @@ export class ksmcController {
     const results = await this.ksmcService.findHisDept(queryDto);
     return { pageData: results, total: results.length };
   }
+
+  @Get('findMidDept')
+  async findMidDept(
+    @Query() queryDto: { usid?: string; usrcats?: boolean; zc?: string; ksflid?: string[] },
+  ) {
+    queryDto.ksflid = ['01', '02', '05', '06', '07', '04'];
+    const results = await this.ksmcService.feeDepartMent(queryDto);
+    return { pageData: results, total: results.length };
+  }
+
   @Get('findAll')
   async findAll() {
     const results = await this.ksmcService.findAll();

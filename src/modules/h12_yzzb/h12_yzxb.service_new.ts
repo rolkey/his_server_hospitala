@@ -142,28 +142,53 @@ export class h12_yzxbServiceNew {
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
       const errorInfoList = []; // 过滤错误
       const hlYzzh = []; // 忽略医嘱组号
-      const allYzxbs = yzxbList.filter(async (yzxb) => {
-        if (yzxb.h13_yzzxcsList) {
-          // 逻辑：dto.hlfy为true时过滤掉还有费用的医嘱
-          // 默认情况下，未执行的超出执行时间的费用需要删除
+      const allYzxbs = [];
 
-          // 执行日期大于等于停嘱日期，要进行相应处理
-          const tzrq = new Date(yzxb.tzrq);
-          tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
+      // 将filter改为for循环
+      for (const yzxb of yzxbList) {
+        if (!yzxb.h13_yzzxcsList) {
+          allYzxbs.push(yzxb);
+          continue;
+        }
 
-          const h13YzzxcsItem = yzxb.h13_yzzxcsList.filter((item) => {
-            // 检查是否存在未处理的费用记录
+        // 执行日期大于等于停嘱日期，要进行相应处理
+        const tzrq = new Date(yzxb.tzrq);
+        tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
-            if (hlYzzh.includes(item.yzzh)) return false;
+        const h13YzzxcsItem = [];
+        for (const item of yzxb.h13_yzzxcsList) {
+          // 检查是否存在未处理的费用记录
+          if (hlYzzh.includes(item.yzzh)) continue;
 
-            //  如果则放入删除数组deleteYzzxcss
-            if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
-              if (item.clbz === 1 || item.fydh) {
-                // todo: 已经处理处理，要生成退费单
+          // 如果未发药则放入删除数组deleteYzzxcss
+          if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
+            if (item.clbz === 1 || item.fydh) {
+              // todo: 已经处理处理，要生成退费单
+              const costDtoValue = {
+                mxxh: item.mxxh,
+                maxid: item.maxid,
+                bzxcs: item.zxcs,
+              };
+              const tfListToInsert: H13YzzxcsTf[] = this.createRefundList([item], [costDtoValue], {
+                zyid: dto.zyid,
+                yzlx: dto.yzlx,
+                zxhs: dto.jshs,
+              });
+              tfListToInsertAll.push(...tfListToInsert);
+            } else {
+              // 没有处理可以直接删除
+              if (!hlYzzh.includes(item.yzzh)) {
+                deleteYzzxcss.push(item);
+              }
+            }
+          } else if (item.zxrq.getTime() === tzrq.getTime()) {
+            if (item.clbz === 1 || item.fydh) {
+              if (item.zxcs - item.bzxcs - yzxb.mrcs > 0) {
+                // 生成退费记录
                 const costDtoValue = {
                   mxxh: item.mxxh,
                   maxid: item.maxid,
-                  bzxcs: item.zxcs,
+                  bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
                 };
                 const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
                   [item],
@@ -175,57 +200,42 @@ export class h12_yzxbServiceNew {
                   },
                 );
                 tfListToInsertAll.push(...tfListToInsert);
+              }
+            } else {
+              if (yzxb.mrcs > 0) {
+                if (item.zxcs > yzxb.mrcs) {
+                  item.zxcs = yzxb.mrcs;
+                  updateYzzxcss.push(item);
+                }
               } else {
-                // 没有处理可以直接删除
                 if (!hlYzzh.includes(item.yzzh)) {
                   deleteYzzxcss.push(item);
                 }
               }
-            } else if (item.zxrq.getTime() === tzrq.getTime()) {
-              if (item.clbz === 1 || item.fydh) {
-                if (item.zxcs - item.bzxcs - yzxb.mrcs > 0) {
-                  // 生成部分退费记录
-                  const costDtoValue = {
-                    mxxh: item.mxxh,
-                    maxid: item.maxid,
-                    bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
-                  };
-                  const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
-                    [item],
-                    [costDtoValue],
-                    {
-                      zyid: dto.zyid,
-                      yzlx: dto.yzlx,
-                      zxhs: dto.jshs,
-                    },
-                  );
-                  tfListToInsertAll.push(...tfListToInsert);
-                }
-              } else {
-                item.zxcs = yzxb.mrcs;
-                updateYzzxcss.push(item);
-              }
             }
+          }
 
-            if (
-              (item.clbz === 1 || item.fydh) &&
-              item.zxrq >= tzrq &&
-              item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
-            ) {
-              if (dto.hlfy) {
-                if (!hlYzzh.includes[item.yzzh]) {
-                  hlYzzh.push(item.yzzh);
-                }
-                return true;
-              } else {
-                errorInfoList.push('仍有未退费医嘱，复核失败！！');
-                return false;
+          if (
+            (item.clbz === 1 || item.fydh) &&
+            item.zxrq >= tzrq &&
+            item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
+          ) {
+            if (dto.hlfy) {
+              if (!hlYzzh.includes[item.yzzh]) {
+                hlYzzh.push(item.yzzh);
               }
-            } else return false;
-          });
-          return h13YzzxcsItem.length === 0;
-        } else return true;
-      });
+              h13YzzxcsItem.push(item);
+            } else {
+              errorInfoList.push('仍有未退费医嘱，复核失败！！');
+              break;
+            }
+          }
+        }
+
+        if (h13YzzxcsItem.length === 0) {
+          allYzxbs.push(yzxb);
+        }
+      }
 
       if (errorInfoList.length > 0) {
         throw new BadRequestException(errorInfoList.join(','));
@@ -454,8 +464,11 @@ export class h12_yzxbServiceNew {
             );
           } catch (error) {
             console.error('医嘱执行错误', error);
-            // errorList.push(error.message);
+            errorList.push(error.message);
           }
+        }
+        if (errorList.length > 0) {
+          throw new BadRequestException(errorList.join(','));
         }
       } else {
         // 执行存储过程
@@ -899,21 +912,22 @@ export class h12_yzxbServiceNew {
               },
             ),
           );
-          promisses.push(
-            manager.update(
-              H31Lyjl,
-              {
-                zyid: fydh.zyid,
-                ksid: fydh.ksid,
-                djbh: fydh.djbh,
-              },
-              {
-                tjbz: 0,
-                bz1: dto.zxhs,
-                ckclbz: 1,
-              },
-            ),
-          );
+          // TODO: 更新领药单状态存在问题，必须所有领药单的记录都退药后才能更新领药单状态
+          //   promisses.push(
+          //     manager.update(
+          //       H31Lyjl,
+          //       {
+          //         zyid: fydh.zyid,
+          //         ksid: fydh.ksid,
+          //         djbh: fydh.djbh,
+          //       },
+          //       {
+          //         tjbz: 0,
+          //         bz1: dto.zxhs,
+          //         ckclbz: 1,
+          //       },
+          //     ),
+          //   );
         }
         await Promise.all(promisses);
       });
@@ -930,14 +944,7 @@ export class h12_yzxbServiceNew {
     if (!dto?.maxidList?.length) return;
 
     // 兼容前端传入的两种格式：数字数组或包含maxid属性的对象数组
-    const maxidList = dto.maxidList
-      .map((item) => {
-        if (typeof item === 'object' && item !== null && 'maxid' in item) {
-          return item.maxid;
-        }
-        return Number(item);
-      })
-      .filter((maxid) => !isNaN(maxid));
+    const maxidList = dto.maxidList.map((it) => it.maxid).filter(Boolean);
 
     if (!maxidList.length) return;
     // 检查系统参数：住院医嘱生成发药状态(0未执行,1正在执行)
@@ -981,7 +988,7 @@ export class h12_yzxbServiceNew {
       try {
         const syspar_new = await this.syspar_newService.findNewOne('99', 'zyyzfyzxbz', manager);
         if (syspar_new?.pval === '1') {
-          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
+          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍侯再试！');
         }
 
         // console.log('退费记录tfListToInsert:------', tfListToInsert);

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Syspar } from '../entity/syspar.entity';
 import { SysparNew } from '../entity/__syspar_new.entity';
+import { SysparDto } from '@/modules/system/dto/syspar.dto';
 
 @Injectable()
 export class ParamService {
@@ -51,6 +52,40 @@ export class ParamService {
 
     // 参数存在，返回当前值
     return existingParam.pval?.trim();
+  }
+
+  async saveParam(sysparDto: SysparDto) {
+    const syspar = this.sysparRepository.findOne({
+      where: {
+        syid: String(sysparDto.xtsb),
+        prid: sysparDto.csmc.toUpperCase(),
+      },
+    });
+    if (syspar) {
+      await this.sysparRepository.update(
+        {
+          syid: String(sysparDto.xtsb),
+          prid: sysparDto.csmc.toUpperCase(),
+        },
+        {
+          pval: sysparDto.default,
+          pnam: sysparDto.bz,
+        },
+      );
+    } else {
+      await this.sysparRepository.save({
+        syid: String(sysparDto.xtsb),
+        prid: sysparDto.csmc.toUpperCase(),
+        pval: sysparDto.default,
+        pnam: sysparDto.bz,
+      });
+    }
+  }
+
+  async saveNewParam(sysparNew: SysparDto) {
+    const saveData = new SysparNew();
+    Object.assign(saveData, sysparNew);
+    await this.sysparNewRepository.save(saveData);
   }
 
   async gfGetParaNew(

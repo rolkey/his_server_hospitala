@@ -1,14 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Query } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Body, Query } from '@nestjs/common';
 import { syspar_newService } from './syspar_new.service';
 
 import { syspar } from './syspar.entity';
 import { QueryDto } from './dto';
 
-
 @Controller('syspar_new')
 export class syspar_newController {
-
-  constructor(private readonly syspar_newService: syspar_newService) { }
+  constructor(private readonly syspar_newService: syspar_newService) {}
 
   @Get('getRegisterMode')
   async getRegisterMode() {
