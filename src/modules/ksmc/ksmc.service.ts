@@ -11,7 +11,12 @@ export class ksmcService {
     private ksmcRepo: Repository<ksmc>,
   ) {}
 
-  async findHisDept(queryDto: { usid?: string; usrcats?: boolean; zc?: string }) {
+  async findHisDept(queryDto: {
+    usid?: string;
+    usrcats?: boolean;
+    zc?: string;
+    ksflid?: string[];
+  }) {
     const queryBuilder = this.ksmcRepo
       .createQueryBuilder('ksmc')
       .leftJoinAndSelect('ksmc.fyxxEntity', 'fyxxEntity')
@@ -41,6 +46,11 @@ export class ksmcService {
         ]);
     } else {
       queryBuilder.select(['ksmc.ksid', 'ksmc.ksmc', 'fyxxEntity.fyid', 'fyxxEntity.fymc']);
+    }
+
+    // 根据科室分类信息是否为空，决定是否过滤用户分类信息ksflid
+    if (queryDto.ksflid) {
+      queryBuilder.andWhere(`ksmc.ksflid in (:...ksflid)`, { ksflid: queryDto.ksflid });
     }
 
     const data = await queryBuilder.getMany();
