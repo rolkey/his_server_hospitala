@@ -161,11 +161,7 @@ export class h12_yzxbServiceNew {
           if (hlYzzh.includes(item.yzzh)) continue;
 
           // 有发药数据没有处理时，如果选择了忽略，要添加忽略费用，再用于忽略相关医嘱
-          if (
-            (item.clbz === 1 || item.fydh) &&
-            item.zxrq >= tzrq &&
-            item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
-          ) {
+          if ((item.clbz === 1 || item.fydh) && item.zxrq.getTime() >= tzrq.getTime()) {
             if (dto.hlfy) {
               if (!hlYzzh.includes[item.yzzh]) {
                 hlYzzh.push(item.yzzh);
@@ -236,7 +232,7 @@ export class h12_yzxbServiceNew {
         }
       }
 
-      // 转换日期
+      // 转换日期 //
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
@@ -381,7 +377,6 @@ export class h12_yzxbServiceNew {
       );
 
       await this.entityManager.transaction(async (transactionalEntityManager) => {
-        const promisses = [];
         if (deleteYzzxcss.length > 0) {
           await transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss);
         }
@@ -398,8 +393,6 @@ export class h12_yzxbServiceNew {
           await transactionalEntityManager.save(h12_yzxb, yzxbFJList);
         }
       });
-      // if (yzxbList.length) await this.h12_yzxbRepo.save(yzxbList);
-      // if (yzxbFJList.length) await this.h12_yzxbRepo.save(yzxbFJList);
     } catch (error: any) {
       this.logger.error('复核医嘱失败', error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '复核医嘱失败');
