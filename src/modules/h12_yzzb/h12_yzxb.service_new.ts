@@ -140,7 +140,7 @@ export class h12_yzxbServiceNew {
       const deleteYzzxcss = [];
       const updateYzzxcss = [];
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
-      const errorInfoList = []; // 过滤错误
+      //   const errorInfoList = []; // 过滤错误
       const hlYzzh = []; // 忽略医嘱组号
       const allYzxbs = [];
 
@@ -159,6 +159,22 @@ export class h12_yzxbServiceNew {
         for (const item of yzxb.h13_yzzxcsList) {
           // 检查是否存在未处理的费用记录
           if (hlYzzh.includes(item.yzzh)) continue;
+
+          // 有发药数据没有处理时，如果选择了忽略，要添加忽略费用，再用于忽略相关医嘱
+          if (
+            (item.clbz === 1 || item.fydh) &&
+            item.zxrq >= tzrq &&
+            item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
+          ) {
+            if (dto.hlfy) {
+              if (!hlYzzh.includes[item.yzzh]) {
+                hlYzzh.push(item.yzzh);
+              }
+              h13YzzxcsItem.push(item);
+            } else {
+              throw new BadRequestException('仍有未退费医嘱，复核失败！！');
+            }
+          }
 
           // 如果未发药则放入删除数组deleteYzzxcss
           if (item.zxrq > tzrq && item.zxcs - item.bzxcs > 0) {
@@ -214,31 +230,11 @@ export class h12_yzxbServiceNew {
               }
             }
           }
-
-          if (
-            (item.clbz === 1 || item.fydh) &&
-            item.zxrq >= tzrq &&
-            item.zxcs - item.bzxcs - yzxb.mrcs > 0 // 检查数量时要考虑末日次数
-          ) {
-            if (dto.hlfy) {
-              if (!hlYzzh.includes[item.yzzh]) {
-                hlYzzh.push(item.yzzh);
-              }
-              h13YzzxcsItem.push(item);
-            } else {
-              errorInfoList.push('仍有未退费医嘱，复核失败！！');
-              break;
-            }
-          }
         }
 
         if (h13YzzxcsItem.length === 0) {
           allYzxbs.push(yzxb);
         }
-      }
-
-      if (errorInfoList.length > 0) {
-        throw new BadRequestException(errorInfoList.join(','));
       }
 
       // 转换日期
@@ -395,6 +391,9 @@ export class h12_yzxbServiceNew {
         }
         if (allYzxbs.length > 0) {
           promisses.push(transactionalEntityManager.save(allYzxbs));
+        }
+        if (tfListToInsertAll.length > 0) {
+          promisses.push(transactionalEntityManager.save(tfListToInsertAll));
         }
         if (yzxbFJList.length > 0) {
           promisses.push(transactionalEntityManager.save(yzxbFJList));
