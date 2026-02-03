@@ -454,8 +454,11 @@ export class h12_yzxbServiceNew {
             );
           } catch (error) {
             console.error('医嘱执行错误', error);
-            // errorList.push(error.message);
+            errorList.push(error.message);
           }
+        }
+        if (errorList.length > 0) {
+          throw new BadRequestException(errorList.join(','));
         }
       } else {
         // 执行存储过程
