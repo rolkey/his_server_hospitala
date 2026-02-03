@@ -19,7 +19,31 @@ export class SystemService {
    * 获取系统参数
    * @returns 返回当前系统时间的ISO字符串
    */
-  getParam(query: SysparDto): Promise<string> {
-    return this.paramService.gfGetPara(query.xtsb, query.csmc, query.default, query.bz);
+  async getParam(query: SysparDto): Promise<string> {
+    return await this.paramService.gfGetPara(query.xtsb, query.csmc, query.default, query.bz);
+  }
+
+  /**
+   * 批量读配置
+   * @param data
+   * @returns
+   */
+  async batchParamsRead(data: SysparDto[]): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
+    await Promise.all(
+      data.map(async (item) => {
+        const value = await this.getParam(item);
+        result[item.csmc] = value;
+      }),
+    );
+    return result;
+  }
+
+  /**
+   * 批量保存配置
+   * @param data
+   */
+  async batchParamsWrite(data: SysparDto[]): Promise<void> {
+    Promise.all(data.map((item) => this.paramService.saveParam(item)));
   }
 }
