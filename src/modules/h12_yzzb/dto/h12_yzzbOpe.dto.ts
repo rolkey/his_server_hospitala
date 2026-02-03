@@ -38,10 +38,10 @@ export class reviewDto {
   @Allow()
   mxxh?: number[];
 
-  @Allow()
-  @ArrayNotEmpty()
-  @ArrayMinSize(1, { message: 'yzzh至少要有一个组号值' })
-  yzzh: number[];
+  //   @Allow()
+  //   @ArrayNotEmpty()
+  //   @ArrayMinSize(1, { message: 'yzzh至少要有一个组号值' })
+  //   yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
