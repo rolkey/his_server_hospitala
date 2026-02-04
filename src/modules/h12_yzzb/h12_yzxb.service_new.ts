@@ -127,8 +127,8 @@ export class h12_yzxbServiceNew {
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
                   or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: In(item.mxxh) } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: In(item.yzxh) } : {}),
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
                   })),
                 }
               : {}),
@@ -203,8 +203,8 @@ export class h12_yzxbServiceNew {
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
                   or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: In(item.mxxh) } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: In(item.yzxh) } : {}),
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
                   })),
                 }
               : {}),
@@ -449,16 +449,14 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
                   or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: In(item.mxxh) } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: In(item.yzxh) } : {}),
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
                   })),
                 }
               : {}),
-            // ...(dto.yzzh && dto.yzzh.length > 0 ? { yzzh: In(dto.yzzh) } : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
