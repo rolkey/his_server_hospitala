@@ -35,8 +35,8 @@ export class reviewDto {
   @Allow()
   mxxhs: [
     {
-      mxxh?: number[];
-      yzxh?: number[];
+      mxxh?: number;
+      yzxh?: number;
     },
   ];
 

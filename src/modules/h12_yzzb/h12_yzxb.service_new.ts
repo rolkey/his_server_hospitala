@@ -12,6 +12,7 @@ import {
   Raw,
   Not,
   IsNull,
+  Brackets,
 } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
@@ -108,47 +109,55 @@ export class h12_yzxbServiceNew {
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
     private readonly h13YzzxcsService: h13_yzzxcsService,
-  ) { }
+  ) {}
 
   // -------------------------
-  // 复核无关费用医嘱：
-
+  // 复核医嘱 0201
   // -------------------------
   async reviewNoFee(dto: reviewDto): Promise<void> {
+    const yzxbQueryBuilder = this.h12_yzxbRepo
+      .createQueryBuilder('yzxb')
+      .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+      .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+      .andWhere('yzxb.ysbz = 1')
+      .andWhere('yzxb.tjbz = 1')
+      .andWhere('yzxb.yzzt IN (1, 5)');
+
+    // 添加 OR 组合条件
+    if (dto.mxxhs && dto.mxxhs.length > 0) {
+      //   const validItems = dto.mxxhs.filter((item) => !(item.mxxh && item.yzxh));
+      const validItems = dto.mxxhs;
+
+      if (validItems.length > 0) {
+        yzxbQueryBuilder.andWhere(
+          new Brackets((qb) => {
+            validItems.forEach((item, index) => {
+              if (index === 0) {
+                // 第一个条件用 where
+                qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
+                  mxxh: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              } else {
+                // 后续条件用 orWhere
+                qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
+                  mxxh: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              }
+            });
+          }),
+        );
+      }
+    }
+
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: ['h13_yzzxcsList'],
-          select: {
-            h13_yzzxcsList: {
-              zyid: true,
-              yzlx: true,
-              yzxh: true,
-              mxxh: true,
-              yzzh: true,
-              clbz: true,
-            },
-          },
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), //医嘱自动复核增加附加项目
       ]);
@@ -188,33 +197,55 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 复核医嘱_01
+  // 复核医嘱 01
   // -------------------------
   async review(dto: reviewDto): Promise<void> {
     try {
+      const yzxbQueryBuilder = this.h12_yzxbRepo
+        .createQueryBuilder('yzxb')
+        .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+        .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+        .andWhere('yzxb.ysbz = 1')
+        .andWhere('yzxb.tjbz = 1')
+        .andWhere('yzxb.yzzt IN (1, 5)');
+
+      // 添加 OR 组合条件
+      if (dto.mxxhs && dto.mxxhs.length > 0) {
+        // const validItems = dto.mxxhs.filter((item) => {
+        //   console.log('过滤条件', item);
+        //   return item.mxxh && item.mxxh;
+        // });
+        const validItems = dto.mxxhs;
+
+        if (validItems.length > 0) {
+          yzxbQueryBuilder.andWhere(
+            new Brackets((qb) => {
+              validItems.forEach((item, index) => {
+                if (index === 0) {
+                  // 第一个条件用 where
+                  qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
+                    mxxh: item.mxxh,
+                    yzxh: item.yzxh,
+                  });
+                } else {
+                  // 后续条件用 orWhere
+                  qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
+                    mxxh: item.mxxh,
+                    yzxh: item.yzxh,
+                  });
+                }
+              });
+            }),
+          );
+        }
+      }
+
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: ['h13_yzzxcsList'],
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), // 医嘱自动复核增加附加项目
       ]);
@@ -437,44 +468,52 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 复核医嘱(新)
+  // 复核医嘱 0202
   // -------------------------
   async reviewNew(dto: reviewDto): Promise<void> {
+    const yzxbQueryBuilder = this.h12_yzxbRepo
+      .createQueryBuilder('yzxb')
+      .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+      .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+      .andWhere('yzxb.ysbz = 1')
+      .andWhere('yzxb.tjbz = 1')
+      .andWhere('yzxb.yzzt IN (1, 5)');
+
+    // 添加 OR 组合条件
+    if (dto.mxxhs && dto.mxxhs.length > 0) {
+      //   const validItems = dto.mxxhs.filter((item) => !(item.mxxh && item.yzxh));
+      const validItems = dto.mxxhs;
+
+      if (validItems.length > 0) {
+        yzxbQueryBuilder.andWhere(
+          new Brackets((qb) => {
+            validItems.forEach((item, index) => {
+              if (index === 0) {
+                // 第一个条件用 where
+                qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
+                  mxxh: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              } else {
+                // 后续条件用 orWhere
+                qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
+                  mxxh: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              }
+            });
+          }),
+        );
+      }
+    }
+
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: {
-            h13_yzzxcsList: {
-              h13YzzxcsTfList: true,
-            },
-          },
-          //   select: {
-          //     h13_yzzxcsList: {
-          //       h13YzzxcsTfList: {
-          //         clbz: true,
-          //       },
-          //     },
-          //   },
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), // 医嘱自动复核增加附加项目
       ]);
@@ -994,9 +1033,7 @@ export class h12_yzxbServiceNew {
           h13_yzzxcsList: {
             // 选择关联表 h13_yzzxcs 中的字段
             mxxh: true,
-            yzzt: true,
             zxrq: true,
-            zxbz: true,
             // 添加其他你需要的字段
           },
         },
@@ -1338,7 +1375,7 @@ export class h12_yzxbServiceNew {
   /**
    * 生成复核列表
    */
-  private reviewDelete() { }
+  private reviewDelete() {}
 
   /**
    * 创建退费列表
@@ -1553,11 +1590,11 @@ export class h12_yzxbServiceNew {
             .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
             .andWhere(
               'EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE ' +
-              'h13.zyid = h13_tf.zyid ' +
-              'AND h13.maxid = h13_tf.zxcs2 ' +
-              'AND h13.yzzh = :yzzh ' +
-              'AND h13.yzlx = :yzlx ' +
-              'AND ISNULL(h13.fybz, 0) = 1)',
+                'h13.zyid = h13_tf.zyid ' +
+                'AND h13.maxid = h13_tf.zxcs2 ' +
+                'AND h13.yzzh = :yzzh ' +
+                'AND h13.yzlx = :yzlx ' +
+                'AND ISNULL(h13.fybz, 0) = 1)',
               {
                 yzzh: item.yzzh,
                 yzlx: item.yzlx,
