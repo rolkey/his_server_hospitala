@@ -190,7 +190,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   // 复核医嘱_01
   // -------------------------
-  async review_01(dto: reviewDto): Promise<void> {
+  async review(dto: reviewDto): Promise<void> {
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
@@ -439,7 +439,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   // 复核医嘱(新)
   // -------------------------
-  async review(dto: reviewDto): Promise<void> {
+  async reviewNew(dto: reviewDto): Promise<void> {
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
