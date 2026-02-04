@@ -126,7 +126,6 @@ export class h12_yzxbServiceNew {
 
     // 添加 OR 组合条件
     if (dto.mxxhs && dto.mxxhs.length > 0) {
-      //   const validItems = dto.mxxhs.filter((item) => !(item.mxxh && item.yzxh));
       const validItems = dto.mxxhs;
 
       if (validItems.length > 0) {
@@ -1029,11 +1028,12 @@ export class h12_yzxbServiceNew {
           yzxh: true,
           mxxh: true,
           yzzt: true,
+          zxrq: true,
+          zxbz: true,
           // 添加其他你需要的字段
           h13_yzzxcsList: {
             // 选择关联表 h13_yzzxcs 中的字段
             mxxh: true,
-            zxrq: true,
             // 添加其他你需要的字段
           },
         },
