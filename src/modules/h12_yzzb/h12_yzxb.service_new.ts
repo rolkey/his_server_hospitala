@@ -135,14 +135,14 @@ export class h12_yzxbServiceNew {
             validItems.forEach((item, index) => {
               if (index === 0) {
                 // 第一个条件用 where
-                qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
-                  mxxh: item.mxxh,
+                qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
                   yzxh: item.yzxh,
                 });
               } else {
                 // 后续条件用 orWhere
-                qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
-                  mxxh: item.mxxh,
+                qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
                   yzxh: item.yzxh,
                 });
               }
@@ -175,7 +175,7 @@ export class h12_yzxbServiceNew {
         throw new BadRequestException('选择的医嘱中仍存在未处理的费用！！');
       }
 
-      // 转换日期 //
+      // 转换日期 ////
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
@@ -199,7 +199,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   // 复核医嘱 01
   // -------------------------
-  async review(dto: reviewDto): Promise<void> {
+  async review_01(dto: reviewDto): Promise<void> {
     try {
       const yzxbQueryBuilder = this.h12_yzxbRepo
         .createQueryBuilder('yzxb')
@@ -470,7 +470,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   // 复核医嘱 0202
   // -------------------------
-  async reviewNew(dto: reviewDto): Promise<void> {
+  async review(dto: reviewDto): Promise<void> {
     const yzxbQueryBuilder = this.h12_yzxbRepo
       .createQueryBuilder('yzxb')
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
