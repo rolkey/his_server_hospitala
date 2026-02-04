@@ -126,11 +126,11 @@ export class h12_yzxbServiceNew {
             yzlx: dto.yzlx,
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
+                or: dto.mxxhs.map((item) => ({
+                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                })),
+              }
               : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
@@ -202,11 +202,11 @@ export class h12_yzxbServiceNew {
             yzlx: dto.yzlx,
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
+                or: dto.mxxhs.map((item) => ({
+                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                })),
+              }
               : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
@@ -451,11 +451,11 @@ export class h12_yzxbServiceNew {
             yzlx: dto.yzlx,
             ...(dto.mxxhs && dto.mxxhs.length > 0
               ? {
-                  or: dto.mxxhs.map((item) => ({
-                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                  })),
-                }
+                or: dto.mxxhs.map((item) => ({
+                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                })),
+              }
               : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
@@ -990,13 +990,12 @@ export class h12_yzxbServiceNew {
           yzxh: true,
           mxxh: true,
           yzzt: true,
+          zxrq: true,
+          zxbz: true,
           // 添加其他你需要的字段
           h13_yzzxcsList: {
             // 选择关联表 h13_yzzxcs 中的字段
             mxxh: true,
-            yzzt: true,
-            zxrq: true,
-            zxbz: true,
             // 添加其他你需要的字段
           },
         },
