@@ -33,10 +33,12 @@ export class reviewDto {
   zyid: string;
 
   @Allow()
-  yzxh?: number[];
-
-  @Allow()
-  mxxh?: number[];
+  mxxhs: [
+    {
+      mxxh?: number[];
+      yzxh?: number[];
+    },
+  ];
 
   //   @Allow()
   //   @ArrayNotEmpty()
