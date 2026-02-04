@@ -124,7 +124,14 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
+            ...(dto.mxxhs && dto.mxxhs.length > 0
+              ? {
+                  or: dto.mxxhs.map((item) => ({
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                  })),
+                }
+              : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
@@ -181,9 +188,9 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 复核医嘱
+  // 复核医嘱_01
   // -------------------------
-  async review(dto: reviewDto): Promise<void> {
+  async review_01(dto: reviewDto): Promise<void> {
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
@@ -193,9 +200,14 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
-            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
-            // ...(dto.yzzh && dto.yzzh.length > 0 ? { yzzh: In(dto.yzzh) } : {}),
+            ...(dto.mxxhs && dto.mxxhs.length > 0
+              ? {
+                  or: dto.mxxhs.map((item) => ({
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                  })),
+                }
+              : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
@@ -427,7 +439,7 @@ export class h12_yzxbServiceNew {
   // -------------------------
   // 复核医嘱(新)
   // -------------------------
-  async reviewNew(dto: reviewDto): Promise<void> {
+  async review(dto: reviewDto): Promise<void> {
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
@@ -437,9 +449,14 @@ export class h12_yzxbServiceNew {
           where: {
             zyid: dto.zyid,
             yzlx: dto.yzlx,
-            // ...(dto.yzxh && dto.yzxh.length > 0 ? { yzxh: In(dto.yzxh) } : {}),
-            ...(dto.mxxh && dto.mxxh.length > 0 ? { mxxh: In(dto.mxxh) } : {}),
-            // ...(dto.yzzh && dto.yzzh.length > 0 ? { yzzh: In(dto.yzzh) } : {}),
+            ...(dto.mxxhs && dto.mxxhs.length > 0
+              ? {
+                  or: dto.mxxhs.map((item) => ({
+                    ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
+                    ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
+                  })),
+                }
+              : {}),
             hdbz: In([0, 1, null]),
             ysbz: 1,
             tjbz: 1,
