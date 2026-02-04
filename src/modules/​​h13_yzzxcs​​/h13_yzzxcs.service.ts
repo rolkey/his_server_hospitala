@@ -218,7 +218,7 @@ export class h13_yzzxcsService {
       h13Yzzxcss.push(...transformedData);
     }
 
-    return h13Yzzxcss.map((item) => plainToInstance(H13YzzxcsResponseDto, item));
+    return h13Yzzxcss;
   }
 
   /**
