@@ -1,4 +1,11 @@
-import { Allow, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  Allow,
+  ArrayMinSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { UpdateH12_yzxbDto, H12_yzxbDto } from './h12_yzxb.dto';
 
 /**
@@ -31,8 +38,10 @@ export class reviewDto {
   @Allow()
   mxxh?: number[];
 
-  @Allow()
-  yzzh: number[];
+  //   @Allow()
+  //   @ArrayNotEmpty()
+  //   @ArrayMinSize(1, { message: 'yzzh至少要有一个组号值' })
+  //   yzzh: number[];
 
   @IsNotEmpty({ message: 'yzlx不能为空' })
   yzlx?: number;
@@ -49,9 +58,11 @@ export class reviewDto {
   @IsOptional()
   kssxhs?: string;
 
-  // 忽略费用：不处理未退费医嘱
-  @IsOptional()
-  hlfy?: boolean;
+  /**
+   * 忽略有费用的数据
+   */
+  //   @IsOptional()
+  //   hlfy?: boolean;
 }
 
 export class executeDto {
@@ -67,7 +78,8 @@ export class executeDto {
   @IsNotEmpty({ message: 'zxhs不能为空' })
   zxhs: string;
 
-  @IsNotEmpty({ message: 'zxks不能为空' })
+  //   @IsNotEmpty({ message: 'zxks不能为空' })
+  @Allow()
   zxks: string;
 
   @IsNotEmpty({ message: 'executeType不能为空' })
@@ -183,5 +195,3 @@ export class CopyAdviceDto {
   @IsNotEmpty({ message: '新医嘱的zyid不能为空' })
   zyidNew?: string;
 }
-
-////

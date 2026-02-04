@@ -65,6 +65,31 @@ export class ksmcService {
     }
   }
 
+  async feeDepartMent(queryDto: {
+    usid?: string;
+    usrcats?: boolean;
+    zc?: string;
+    ksflid?: string[];
+  }) {
+    const queryBuilder = this.ksmcRepo.createQueryBuilder('ksmc');
+
+    // 根据科室分类信息是否为空，决定是否过滤用户分类信息ksflid
+    if (queryDto.ksflid) {
+      queryBuilder.andWhere(`ksmc.ksflid in (:...ksflid)`, { ksflid: queryDto.ksflid });
+    }
+
+    const data = await queryBuilder.getMany();
+
+    if (queryDto.zc) {
+      return data.map((item) => ({
+        ...item,
+        usrcats: item?.usrcats?.filter((usrcat) => usrcat.zcidEntity) || [],
+      }));
+    } else {
+      return data;
+    }
+  }
+
   findAll() {
     return this.ksmcRepo
       .createQueryBuilder('ksmc')

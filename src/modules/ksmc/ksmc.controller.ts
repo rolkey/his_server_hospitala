@@ -16,7 +16,7 @@ export class ksmcController {
     @Query() queryDto: { usid?: string; usrcats?: boolean; zc?: string; ksflid?: string[] },
   ) {
     queryDto.ksflid = ['01', '02', '05', '06', '07', '04'];
-    const results = await this.ksmcService.findHisDept(queryDto);
+    const results = await this.ksmcService.feeDepartMent(queryDto);
     return { pageData: results, total: results.length };
   }
 

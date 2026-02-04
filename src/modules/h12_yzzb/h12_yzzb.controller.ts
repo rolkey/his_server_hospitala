@@ -243,6 +243,14 @@ export class h12_yzzbController {
   /**
    * 护士复核医嘱
    */
+  @Post('review-no-fee')
+  async reviewNoFee(@Body() dto: reviewDto) {
+    return await this.h12_yzxbServiceNew.reviewNoFee(dto);
+  }
+
+  /**
+   * 护士复核医嘱
+   */
   @Post('review')
   async review(@Body() dto: reviewDto) {
     return await this.h12_yzxbServiceNew.review(dto);

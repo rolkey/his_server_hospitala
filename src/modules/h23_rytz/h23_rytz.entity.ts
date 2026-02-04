@@ -192,6 +192,6 @@ export class H23Rytz {
   dwyb: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'ryqk', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'ryqk', referencedColumnName: 'bzbm' })
   ryqkEntity: Jbbmicd10;
 }
