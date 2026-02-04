@@ -78,7 +78,8 @@ export class executeDto {
   @IsNotEmpty({ message: 'zxhs不能为空' })
   zxhs: string;
 
-  @IsNotEmpty({ message: 'zxks不能为空' })
+  //   @IsNotEmpty({ message: 'zxks不能为空' })
+  @Allow()
   zxks: string;
 
   @IsNotEmpty({ message: 'executeType不能为空' })
