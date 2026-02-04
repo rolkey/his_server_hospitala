@@ -211,10 +211,6 @@ export class h12_yzxbServiceNew {
 
       // 添加 OR 组合条件
       if (dto.mxxhs && dto.mxxhs.length > 0) {
-        // const validItems = dto.mxxhs.filter((item) => {
-        //   console.log('过滤条件', item);
-        //   return item.mxxh && item.mxxh;
-        // });
         const validItems = dto.mxxhs;
 
         if (validItems.length > 0) {
@@ -223,14 +219,14 @@ export class h12_yzxbServiceNew {
               validItems.forEach((item, index) => {
                 if (index === 0) {
                   // 第一个条件用 where
-                  qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
-                    mxxh: item.mxxh,
+                  qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                    [`mxxh_${index}`]: item.mxxh,
                     yzxh: item.yzxh,
                   });
                 } else {
                   // 后续条件用 orWhere
-                  qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
-                    mxxh: item.mxxh,
+                  qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                    [`mxxh_${index}`]: item.mxxh,
                     yzxh: item.yzxh,
                   });
                 }
@@ -481,7 +477,6 @@ export class h12_yzxbServiceNew {
 
     // 添加 OR 组合条件
     if (dto.mxxhs && dto.mxxhs.length > 0) {
-      //   const validItems = dto.mxxhs.filter((item) => !(item.mxxh && item.yzxh));
       const validItems = dto.mxxhs;
 
       if (validItems.length > 0) {
@@ -490,14 +485,14 @@ export class h12_yzxbServiceNew {
             validItems.forEach((item, index) => {
               if (index === 0) {
                 // 第一个条件用 where
-                qb.where('(yzxb.mxxh = :mxxh AND yzxb.yzxh = :yzxh)', {
-                  mxxh: item.mxxh,
+                qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
                   yzxh: item.yzxh,
                 });
               } else {
                 // 后续条件用 orWhere
-                qb.orWhere('(yzxb.mxxh = :mxxh AND yzxh = :yzxh)', {
-                  mxxh: item.mxxh,
+                qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
                   yzxh: item.yzxh,
                 });
               }
