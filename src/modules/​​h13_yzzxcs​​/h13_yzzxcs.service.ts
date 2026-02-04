@@ -296,7 +296,6 @@ export class h13_yzzxcsService {
     targetDate: Date,
     mrcs: number,
   ): H13YzzxcsResponseDto[] {
-    console.log('末日次数', mrcs);
     return h13YzzxcsList.map((h13) => {
       const returnData = new H13YzzxcsResponseDto();
       Object.assign(returnData, {

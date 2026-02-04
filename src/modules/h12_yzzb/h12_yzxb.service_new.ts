@@ -167,12 +167,12 @@ export class h12_yzxbServiceNew {
       // 批量修改并保存
       await this.reviewAdvices(yzxbList, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
 
-      await this.entityManager.transaction(async (transactionalEntityManager) => {
+      await this.entityManager.transaction(async (reviewManager) => {
         if (yzxbList.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, yzxbList);
+          await reviewManager.save(h12_yzxb, yzxbList);
         }
         if (yzxbFJList.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, yzxbFJList);
+          await reviewManager.save(h12_yzxb, yzxbFJList);
         }
       });
     } catch (errror) {
@@ -306,21 +306,21 @@ export class h12_yzxbServiceNew {
       // 批量修改并保存
       await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
 
-      await this.entityManager.transaction(async (transactionalEntityManager) => {
+      await this.entityManager.transaction(async (reviewManager) => {
         if (deleteYzzxcss.length > 0) {
-          await transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss);
+          await reviewManager.delete(h13_yzzxcs, deleteYzzxcss);
         }
         if (updateYzzxcss.length > 0) {
-          await transactionalEntityManager.save(h13_yzzxcs, updateYzzxcss);
+          await reviewManager.save(h13_yzzxcs, updateYzzxcss);
         }
         if (allYzxbs.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, allYzxbs);
+          await reviewManager.save(h12_yzxb, allYzxbs);
         }
         if (tfListToInsertAll.length > 0) {
-          await transactionalEntityManager.save(H13YzzxcsTf, tfListToInsertAll);
+          await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
         }
         if (yzxbFJList.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, yzxbFJList);
+          await reviewManager.save(h12_yzxb, yzxbFJList);
         }
       });
     } catch (error: any) {
@@ -349,11 +349,25 @@ export class h12_yzxbServiceNew {
     refundYzzxcss: h13_yzzxcs[],
     deleteYzzxcss: h13_yzzxcs[],
   ) {
-    for (const h13Yzzxcs of h12Yzxb.h13_yzzxcsList) {
-      for (const h13YzzxcsTf of h13Yzzxcs.h13YzzxcsTfList) {
-        if (h13YzzxcsTf.zxrq > tzrq) {
-        }
-      }
+    const refundFee = { mrcs: 0, ytcs: 0, thje: 0 };
+    if (h13YzzxcsTf.zxrq.getTime() === tzrq.getTime()) {
+      // 部分退
+      refundFee.mrcs = h12Yzxb.mrcs;
+    } else {
+      // 全退
+      refundFee.mrcs = 0;
+    }
+    // 不执行次数
+    const bzxcs = h12Yzxb.zxcs - refundFee.ytcs - refundFee.mrcs;
+    h13Yzzxcs.bzxcs = bzxcs > 0 ? bzxcs : h13Yzzxcs.bzxcs;
+
+    if (h13YzzxcsTf.clbz === 0 && h13YzzxcsTf.fybz === 0 && !h13YzzxcsTf.fydh) {
+      lysjYzzxcss.push(h13Yzzxcs);
+      refundYzzxcss.push(h13Yzzxcs);
+      deleteYzzxcss.push(h13Yzzxcs);
+    } else if (h13YzzxcsTf.clbz === 1 && h13YzzxcsTf.fybz === 1 && h13YzzxcsTf.fydh) {
+      refundYzzxcss.push(h13Yzzxcs);
+      deleteYzzxcss.push(h13Yzzxcs);
     }
   }
 
@@ -463,12 +477,11 @@ export class h12_yzxbServiceNew {
         tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
-          if (h13Yzzxcs.zxrq >= tzrq) {
+          if (h13Yzzxcs.zxrq.getDate() >= tzrq.getDate()) {
             await this.reviewFee(yzxb, tzrq, h13Yzzxcs, lysjYzzxcss, refundYzzxcss, deleteYzzxcss);
+            allYzxbs.push(yzxb);
           }
         }
-
-        allYzxbs.push(yzxb);
       }
 
       // 转换日期 //
@@ -479,21 +492,27 @@ export class h12_yzxbServiceNew {
       // 批量修改并保存
       await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
 
-      await this.entityManager.transaction(async (transactionalEntityManager) => {
-        if (deleteYzzxcss.length > 0) {
-          await transactionalEntityManager.delete(h13_yzzxcs, deleteYzzxcss);
-        }
+      await this.entityManager.transaction(async (reviewManager) => {
         if (updateYzzxcss.length > 0) {
-          await transactionalEntityManager.save(h13_yzzxcs, updateYzzxcss);
-        }
-        if (allYzxbs.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, allYzxbs);
+          // 费用明细：主要是 bzxcs
+          await reviewManager.save(h13_yzzxcs, updateYzzxcss);
         }
         if (tfListToInsertAll.length > 0) {
-          await transactionalEntityManager.save(H13YzzxcsTf, tfListToInsertAll);
+          // 退费单
+          await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
+        }
+        await reviewManager.query(
+          `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
+          ['', dto.zyid, dto.jshs, 0],
+        );
+        if (allYzxbs.length > 0) {
+          await reviewManager.save(h12_yzxb, allYzxbs);
         }
         if (yzxbFJList.length > 0) {
-          await transactionalEntityManager.save(h12_yzxb, yzxbFJList);
+          await reviewManager.save(h12_yzxb, yzxbFJList);
+        }
+        if (deleteYzzxcss.length > 0) {
+          await reviewManager.delete(h13_yzzxcs, deleteYzzxcss);
         }
       });
     } catch (error: any) {
