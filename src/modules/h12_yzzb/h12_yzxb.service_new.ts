@@ -108,7 +108,7 @@ export class h12_yzxbServiceNew {
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
     private readonly h13YzzxcsService: h13_yzzxcsService,
-  ) {}
+  ) { }
 
   // -------------------------
   // 复核无关费用医嘱：
@@ -994,6 +994,9 @@ export class h12_yzxbServiceNew {
           h13_yzzxcsList: {
             // 选择关联表 h13_yzzxcs 中的字段
             mxxh: true,
+            yzzt: true,
+            zxrq: true,
+            zxbz: true,
             // 添加其他你需要的字段
           },
         },
@@ -1027,6 +1030,7 @@ export class h12_yzxbServiceNew {
           }
           if (yzxbup.zxbz) {
             yzxbup.zxbz = 0;
+            yzxbup.zxrq = null;
           }
         });
 
@@ -1334,7 +1338,7 @@ export class h12_yzxbServiceNew {
   /**
    * 生成复核列表
    */
-  private reviewDelete() {}
+  private reviewDelete() { }
 
   /**
    * 创建退费列表
@@ -1549,11 +1553,11 @@ export class h12_yzxbServiceNew {
             .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
             .andWhere(
               'EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE ' +
-                'h13.zyid = h13_tf.zyid ' +
-                'AND h13.maxid = h13_tf.zxcs2 ' +
-                'AND h13.yzzh = :yzzh ' +
-                'AND h13.yzlx = :yzlx ' +
-                'AND ISNULL(h13.fybz, 0) = 1)',
+              'h13.zyid = h13_tf.zyid ' +
+              'AND h13.maxid = h13_tf.zxcs2 ' +
+              'AND h13.yzzh = :yzzh ' +
+              'AND h13.yzlx = :yzlx ' +
+              'AND ISNULL(h13.fybz, 0) = 1)',
               {
                 yzzh: item.yzzh,
                 yzlx: item.yzlx,
