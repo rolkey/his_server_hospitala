@@ -80,9 +80,13 @@ export class h11_brxxService {
 
     if (queryDto.zkksid) {
       baseQuery.andWhere(
-        ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
+        'h11_brxx.zkksid LIKE :zkksid',
         { zkksid: `%${queryDto.zkksid.trim()}%` },
       );
+      // baseQuery.andWhere(
+      //   ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
+      //   { zkksid: `%${queryDto.zkksid.trim()}%` },
+      // );
     }
 
     if (queryDto.mzys) {

@@ -402,6 +402,7 @@ export class h12_yzxbService {
         'nldw1',
         'zybh',
         'zkksid',
+        'ryksid',
       ],
     });
 
