@@ -30,7 +30,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) {}
+  ) { }
 
   async getPatientListForZyidAndReceipt(data: {
     zyidList: string[];
@@ -134,7 +134,7 @@ export class h12_yzzbService {
       });
     }
 
-    // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid
+    // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
     if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
       h12YzxbQuery.andWhere('syffidEntity.dyflid = :lx', {
         lx: data.lx.trim(),
