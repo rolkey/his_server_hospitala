@@ -673,27 +673,23 @@ export class h12_yzxbServiceNew {
         if (refundFydhs.length > 0) {
           await this.refundMedicineReceiptWithManager(dto.jshs, refundFydhs, reviewManager);
         }
-        if (updateYzzxcss.length > 0) {
-          // 使用 update 方法批量更新
-          await Promise.all(
-            updateYzzxcss.map(async (item) => {
-              await reviewManager.update(
-                h13_yzzxcs,
-                {
-                  zyid: dto.zyid,
-                  maxid: item.maxid,
-                },
-                {
-                  zxcs: item.zxcs,
-                },
-              );
-            }),
-          );
-        }
-        if (tfListToInsertAll.length > 0) {
-          // 退费单
-          await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
-        }
+        // 使用 update 方法批量更新
+        await Promise.all(
+          updateYzzxcss.map(async (item) => {
+            await reviewManager.update(
+              h13_yzzxcs,
+              {
+                zyid: dto.zyid,
+                maxid: item.maxid,
+              },
+              {
+                zxcs: item.zxcs,
+              },
+            );
+          }),
+        );
+        // 退费单
+        await reviewManager.insert(H13YzzxcsTf, tfListToInsertAll);
         if (refundYzzxcss.length > 0) {
           await reviewManager.query(
             `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
@@ -1401,7 +1397,7 @@ export class h12_yzxbServiceNew {
           h13_yzzxcs,
           {
             zyid: fydh.zyid,
-            ksid: fydh.ksid,
+            // ksid: fydh.ksid,
             fydh: fydh.djbh,
           },
           {
