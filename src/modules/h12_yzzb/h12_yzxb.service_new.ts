@@ -616,6 +616,7 @@ export class h12_yzxbServiceNew {
         const tzrq = new Date(yzxb.tzrq);
         tzrq.setHours(0, 0, 0, 0); // 去掉时分秒，
 
+        let tfsl = 0;
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
           if (h13Yzzxcs.zxrq.getDate() >= tzrq.getDate()) {
             await this.reviewFee(
@@ -628,18 +629,11 @@ export class h12_yzxbServiceNew {
               deleteYzzxcss,
               updateYzzxcss,
             );
-            if (
-              !changeYzxbs.some(
-                (yzxbItem) =>
-                  yzxbItem.zyid === h13Yzzxcs.zyid &&
-                  yzxbItem.yzlx === h13Yzzxcs.yzlx &&
-                  yzxbItem.yzxh === h13Yzzxcs.yzxh &&
-                  yzxbItem.mxxh === h13Yzzxcs.mxxh,
-              )
-            ) {
-              changeYzxbs.push(yzxb);
-            }
+            tfsl++;
           }
+        }
+        if (tfsl) {
+          changeYzxbs.push(yzxb);
         }
       }
 
