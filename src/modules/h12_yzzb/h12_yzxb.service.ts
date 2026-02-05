@@ -1478,7 +1478,7 @@ export class h12_yzxbService {
       mrcs: null,
     };
     const yzxbs = await this.h12_yzxbRepo.find({
-      where: { yzlx, yzxh, zyid, yzzh: In(yzzh) },
+      where: { yzlx, yzxh, zyid, yzzh: In(yzzh), yzzt: In([5, 7]) },
     });
     for (const yzxb of yzxbs) {
       Object.assign(yzxb, defaultValue);
