@@ -325,7 +325,7 @@ export class h12_yzxb {
   })
   gjybmc: string | null;
 
-  @Column('tinyint', { name: 'yzzt', nullable: true, default: () => '(0)' })
+  @Column('int', { name: 'yzzt', nullable: true, default: () => '(0)' })
   yzzt: number | null;
 
   @Column('varchar', {
