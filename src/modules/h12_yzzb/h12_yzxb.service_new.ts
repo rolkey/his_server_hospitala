@@ -438,7 +438,7 @@ export class h12_yzxbServiceNew {
         deleteYzzxcss.push(h13Yzzxcs);
       } else {
         if (h13Yzzxcs.zxcs !== h12Yzxb.mrcs) {
-          h13Yzzxcs.zxcs = h12Yzxb.mrcs;
+          h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs - h12Yzxb.mrcs;
           updateYzzxcss.push(h13Yzzxcs);
         }
       }
@@ -474,6 +474,7 @@ export class h12_yzxbServiceNew {
           if (h13Yzzxcs.zxcs > h12Yzxb.mrcs) {
             // yzzxcs会被清除
             h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs - h12Yzxb.mrcs;
+            updateYzzxcss.push(h13Yzzxcs);
             refundYzzxcss.push(h13Yzzxcs);
           }
         }
@@ -488,8 +489,8 @@ export class h12_yzxbServiceNew {
       if (h13Yzzxcs.fydh) {
         // 步骤2
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
-          refundFydhs.push(h13Yzzxcs);
           stopDayClbz0();
+          refundFydhs.push(h13Yzzxcs);
         } else {
           refundFydhs.push(h13Yzzxcs);
           deleteYzzxcss.push(h13Yzzxcs);
@@ -502,7 +503,7 @@ export class h12_yzxbServiceNew {
       }
     } else if (h13Yzzxcs.clbz === 1) {
       if (h13Yzzxcs.fybz === 0 && !h13Yzzxcs.fydh) {
-        // 步骤3
+        // 步骤3，
         deleteYzzxcss.push(h13Yzzxcs);
       } else if (h13Yzzxcs.fydh && h13Yzzxcs.fybz === 1) {
         if (h13Yzzxcs.h13YzzxcsTfList?.length > 0) {
@@ -594,7 +595,7 @@ export class h12_yzxbServiceNew {
       for (const yzxb of yzxbList) {
         // 执行日期大于等于停嘱日期，要进行相应处理
         const tzrq = new Date(yzxb.tzrq);
-        tzrq.setHours(0, 0, 0, 0); // 去掉时分秒，
+        tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
         let tfsl = 0;
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
@@ -643,7 +644,7 @@ export class h12_yzxbServiceNew {
       );
 
       await this.entityManager.transaction(async (reviewManager) => {
-        // 设置事务的日志记录器
+        // 设置事务的日志记录器，
         // reviewManager.connection.logger = this.transactionLogger;
 
         const deleteFydhNulls = deleteYzzxcss.filter((yzzxcs) => !yzzxcs.fydh);
@@ -673,7 +674,7 @@ export class h12_yzxbServiceNew {
             );
           }),
         );
-        // 退费单
+        // 退费单，
         await reviewManager.insert(H13YzzxcsTf, tfListToInsertAll);
         if (refundYzzxcss.length > 0 || lysjYzzxcss.length > 0) {
           await reviewManager.query(
