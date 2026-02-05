@@ -1466,7 +1466,7 @@ export class h12_yzxbService {
     return true;
   }
 
-  // 取消停嘱
+  // 撤停嘱
   async unStop(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
     const defaultValue = {
       tzbz: 0,
@@ -1478,7 +1478,7 @@ export class h12_yzxbService {
       mrcs: null,
     };
     const yzxbs = await this.h12_yzxbRepo.find({
-      where: { yzlx, yzxh, zyid, yzzh: In(yzzh), yzzt: 5 },
+      where: { yzlx, yzxh, zyid, yzzh: In(yzzh) },
     });
     for (const yzxb of yzxbs) {
       Object.assign(yzxb, defaultValue);
