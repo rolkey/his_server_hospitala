@@ -674,8 +674,21 @@ export class h12_yzxbServiceNew {
           await this.refundMedicineReceiptWithManager(dto.jshs, refundFydhs, reviewManager);
         }
         if (updateYzzxcss.length > 0) {
-          // 费用明细：主要是 bzxcs
-          await reviewManager.save(h13_yzzxcs, updateYzzxcss);
+          // 使用 update 方法批量更新
+          await Promise.all(
+            updateYzzxcss.map(async (item) => {
+              await reviewManager.update(
+                h13_yzzxcs,
+                {
+                  zyid: dto.zyid,
+                  maxid: item.maxid,
+                },
+                {
+                  zxcs: item.zxcs,
+                },
+              );
+            }),
+          );
         }
         if (tfListToInsertAll.length > 0) {
           // 退费单
