@@ -316,7 +316,9 @@ export class h13_yzzxcsService {
           //   tf.yzlx === h13.yzlx &&
           tf.zxcs2 === h13.maxid,
       );
-      if (h13YzzxcsTf && h13YzzxcsTf.clbz === 1) {
+
+      // 不管是否处理，以护士退费为准
+      if (h13YzzxcsTf) {
         returnData.ytcs -= h13YzzxcsTf.zxcs;
       } else returnData.ytcs = 0;
 
@@ -326,13 +328,15 @@ export class h13_yzzxcsService {
 
       if (h13Date.getTime() === targetDate.getTime()) {
         // 计算退费数量
-        returnData.ylcs = mrcs === 9 ? returnData.zxcs : mrcs;
+        if (returnData.ytcs === 0) {
+          returnData.ylcs = mrcs === 9 ? returnData.zxcs : mrcs;
+        }
       } else {
         returnData.ylcs = 0;
       }
 
       // 重新计算退费数量
-      const tfsl = returnData.zxcs - returnData.ytcs - returnData.ylcs;
+      const tfsl = returnData.zxcs - returnData.ylcs;
       returnData.sjtysl = tfsl >= 0 ? tfsl * h13.jfyl : 0;
       return returnData;
     });

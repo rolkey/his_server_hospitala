@@ -433,6 +433,9 @@ export class h12_yzxbServiceNew {
     updateYzzxcss: h13_yzzxcs[],
   ) {
     const stopDayClbz0 = () => {
+      // 如果有过退费，以护士退费数为准，不允许修改
+      if (h13Yzzxcs.h13YzzxcsTfList?.length > 0) return;
+
       // 判断末日次数
       if (h12Yzxb.mrcs === 0) {
         deleteYzzxcss.push(h13Yzzxcs);
