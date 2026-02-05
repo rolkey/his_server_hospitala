@@ -486,7 +486,7 @@ export class h12_yzxbServiceNew {
     };
     if (h13Yzzxcs.clbz === 0 && h13Yzzxcs.fybz === 0) {
       if (h13Yzzxcs.fydh) {
-        // 先退费再删除
+        // 步骤2
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
           refundFydhs.push(h13Yzzxcs);
           setMrcs();
@@ -495,14 +495,14 @@ export class h12_yzxbServiceNew {
           deleteYzzxcss.push(h13Yzzxcs);
         }
       } else {
-        // 直接删除
-        // 删除
+        // 步骤1
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
           setMrcs();
         } else deleteYzzxcss.push(h13Yzzxcs);
       }
     } else if (h13Yzzxcs.clbz === 1) {
       if (h13Yzzxcs.fybz === 0 && !h13Yzzxcs.fydh) {
+        // 步骤3
         deleteYzzxcss.push(h13Yzzxcs);
       } else if (h13Yzzxcs.fydh && h13Yzzxcs.fybz === 1) {
         if (h13Yzzxcs.h13YzzxcsTfList.length > 0) {
