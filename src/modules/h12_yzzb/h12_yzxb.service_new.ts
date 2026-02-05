@@ -12,6 +12,7 @@ import {
   Raw,
   Not,
   IsNull,
+  Brackets,
 } from 'typeorm';
 import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
@@ -81,6 +82,47 @@ enum Zxbz {
 export class h12_yzxbServiceNew {
   private readonly logger = new Logger(h12_yzxbServiceNew.name);
   private readonly SYSPAR_KEY = { type: '99', key: 'zyyzfyzxbz' };
+  //   private readonly transactionLogger = {
+  //     logQuery: (query: string, parameters?: any[]) => {
+  //       this.logger.debug(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.debug(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logQueryError: (error: string, query: string, parameters?: any[]) => {
+  //       this.logger.error(`[Transaction SQL Error] ${error}`);
+  //       this.logger.error(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.error(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logQuerySlow: (time: number, query: string, parameters?: any[]) => {
+  //       this.logger.warn(`[Transaction SQL Slow] ${time}ms`);
+  //       this.logger.warn(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.warn(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logSchemaBuild: (message: string) => {
+  //       this.logger.log(`[Schema Build] ${message}`);
+  //     },
+  //     logMigration: (message: string) => {
+  //       this.logger.log(`[Migration] ${message}`);
+  //     },
+  //     log: (level: 'log' | 'info' | 'warn', message: any) => {
+  //       switch (level) {
+  //         case 'log':
+  //           this.logger.log(message);
+  //           break;
+  //         case 'info':
+  //           this.logger.log(message);
+  //           break;
+  //         case 'warn':
+  //           this.logger.warn(message);
+  //           break;
+  //       }
+  //     },
+  //   };
 
   constructor(
     @InjectRepository(h12_yzzb)
@@ -108,47 +150,54 @@ export class h12_yzxbServiceNew {
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
     private readonly h13YzzxcsService: h13_yzzxcsService,
-  ) { }
+  ) {}
 
   // -------------------------
-  // 复核无关费用医嘱：
-
+  // 复核医嘱 0201
   // -------------------------
   async reviewNoFee(dto: reviewDto): Promise<void> {
+    const yzxbQueryBuilder = this.h12_yzxbRepo
+      .createQueryBuilder('yzxb')
+      .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+      .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+      //   .andWhere('yzxb.ysbz = 1')
+      .andWhere('yzxb.tjbz = 1')
+      .andWhere('yzxb.yzzt IN (1, 5)');
+
+    // 添加 OR 组合条件
+    if (dto.mxxhs && dto.mxxhs.length > 0) {
+      const validItems = dto.mxxhs;
+
+      if (validItems.length > 0) {
+        yzxbQueryBuilder.andWhere(
+          new Brackets((qb) => {
+            validItems.forEach((item, index) => {
+              if (index === 0) {
+                // 第一个条件用 where
+                qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              } else {
+                // 后续条件用 orWhere
+                qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              }
+            });
+          }),
+        );
+      }
+    }
+
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                or: dto.mxxhs.map((item) => ({
-                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                })),
-              }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: ['h13_yzzxcsList'],
-          select: {
-            h13_yzzxcsList: {
-              zyid: true,
-              yzlx: true,
-              yzxh: true,
-              mxxh: true,
-              yzzh: true,
-              clbz: true,
-            },
-          },
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), //医嘱自动复核增加附加项目
       ]);
@@ -166,7 +215,7 @@ export class h12_yzxbServiceNew {
         throw new BadRequestException('选择的医嘱中仍存在未处理的费用！！');
       }
 
-      // 转换日期 //
+      // 转换日期 ////
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
@@ -188,33 +237,51 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 复核医嘱_01
+  // 复核医嘱 01
   // -------------------------
-  async review(dto: reviewDto): Promise<void> {
+  async review_01(dto: reviewDto): Promise<void> {
     try {
+      const yzxbQueryBuilder = this.h12_yzxbRepo
+        .createQueryBuilder('yzxb')
+        .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+        .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+        // .andWhere('yzxb.ysbz = 1')
+        .andWhere('yzxb.tjbz = 1')
+        .andWhere('yzxb.yzzt IN (1, 5)');
+
+      // 添加 OR 组合条件
+      if (dto.mxxhs && dto.mxxhs.length > 0) {
+        const validItems = dto.mxxhs;
+
+        if (validItems.length > 0) {
+          yzxbQueryBuilder.andWhere(
+            new Brackets((qb) => {
+              validItems.forEach((item, index) => {
+                if (index === 0) {
+                  // 第一个条件用 where
+                  qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                    [`mxxh_${index}`]: item.mxxh,
+                    yzxh: item.yzxh,
+                  });
+                } else {
+                  // 后续条件用 orWhere
+                  qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                    [`mxxh_${index}`]: item.mxxh,
+                    yzxh: item.yzxh,
+                  });
+                }
+              });
+            }),
+          );
+        }
+      }
+
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                or: dto.mxxhs.map((item) => ({
-                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                })),
-              }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: ['h13_yzzxcsList'],
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), // 医嘱自动复核增加附加项目
       ]);
@@ -225,12 +292,12 @@ export class h12_yzxbServiceNew {
       const updateYzzxcss = []; // 待更新记录
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
       const hlYzzh = []; // 忽略医嘱组号
-      const allYzxbs = [];
+      const changeYzxbs = [];
 
       // 检查医嘱对应的费用项目合法性
       for (const yzxb of yzxbList) {
         if (!yzxb.h13_yzzxcsList) {
-          allYzxbs.push(yzxb);
+          changeYzxbs.push(yzxb);
           continue;
         }
 
@@ -251,15 +318,11 @@ export class h12_yzxbServiceNew {
                 maxid: item.maxid,
                 bzxcs: item.zxcs,
               };
-              const tfListToInsert: H13YzzxcsTf[] = this.createRefundListOfReview(
-                [item],
-                [costDtoValue],
-                {
-                  zyid: dto.zyid,
-                  yzlx: dto.yzlx,
-                  zxhs: dto.jshs,
-                },
-              );
+              const tfListToInsert: H13YzzxcsTf[] = this.createRefundList([item], [costDtoValue], {
+                zyid: dto.zyid,
+                yzlx: dto.yzlx,
+                zxhs: dto.jshs,
+              });
               tfListToInsertAll.push(...tfListToInsert);
               updateYzzxcss.push(item); // 更新执行次数
             } else if (item.clbz === 0 || (item.fydh && item.fydh !== '')) {
@@ -279,7 +342,7 @@ export class h12_yzxbServiceNew {
                   maxid: item.maxid,
                   bzxcs: item.zxcs - item.bzxcs - yzxb.mrcs,
                 };
-                const tfListToInsert: H13YzzxcsTf[] = this.createRefundListOfReview(
+                const tfListToInsert: H13YzzxcsTf[] = this.createRefundList(
                   [item],
                   [costDtoValue],
                   {
@@ -306,7 +369,7 @@ export class h12_yzxbServiceNew {
         }
 
         if (h13YzzxcsItem.length === 0) {
-          allYzxbs.push(yzxb);
+          changeYzxbs.push(yzxb);
         }
       }
 
@@ -316,7 +379,15 @@ export class h12_yzxbServiceNew {
       // 附加信息
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
+      await this.reviewAdvices(
+        changeYzxbs,
+        formatZXRQ,
+        dtoZXRQ,
+        dto,
+        yzhshdbz,
+        yzauton,
+        yzxbFJList,
+      );
 
       await this.entityManager.transaction(async (reviewManager) => {
         if (deleteYzzxcss.length > 0) {
@@ -325,8 +396,8 @@ export class h12_yzxbServiceNew {
         if (updateYzzxcss.length > 0) {
           await reviewManager.save(h13_yzzxcs, updateYzzxcss);
         }
-        if (allYzxbs.length > 0) {
-          await reviewManager.save(h12_yzxb, allYzxbs);
+        if (changeYzxbs.length > 0) {
+          await reviewManager.save(h12_yzxb, changeYzxbs);
         }
         if (tfListToInsertAll.length > 0) {
           await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
@@ -342,53 +413,11 @@ export class h12_yzxbServiceNew {
   }
 
   /**
-   * 停嘱退费：整理出需要退费的细项
-   *     需要考虑内容
-   *         停嘱日期 == 费用日期，处理末日次数
-   *         停嘱日期 > 费用日期，zxcs - bzxcs != 0，补的退费单zxrq+01分钟
-   * @param h12Yzxb 医嘱细表
-   * @param tzrq 停嘱日期
-   * @param lysjYzzxcss 待领药记录
-   * @param refundYzzxcss 待退药记录
-   * @param deleteYzzxcss 待删除记录
-   */
-  private async reviewRefund(
-    h12Yzxb: h12_yzxb,
-    tzrq: Date,
-    h13Yzzxcs: h13_yzzxcs,
-    h13YzzxcsTf: H13YzzxcsTf,
-    lysjYzzxcss: h13_yzzxcs[],
-    refundYzzxcss: h13_yzzxcs[],
-    deleteYzzxcss: h13_yzzxcs[],
-  ) {
-    const refundFee = { mrcs: 0, ytcs: 0, thje: 0 };
-    if (h13YzzxcsTf.zxrq.getTime() === tzrq.getTime()) {
-      // 部分退
-      refundFee.mrcs = h12Yzxb.mrcs;
-    } else {
-      // 全退
-      refundFee.mrcs = 0;
-    }
-    // 不执行次数
-    const bzxcs = h12Yzxb.zxcs - refundFee.ytcs - refundFee.mrcs;
-    h13Yzzxcs.bzxcs = bzxcs > 0 ? bzxcs : h13Yzzxcs.bzxcs;
-
-    if (h13YzzxcsTf.clbz === 0 && h13YzzxcsTf.fybz === 0 && !h13YzzxcsTf.fydh) {
-      lysjYzzxcss.push(h13Yzzxcs);
-      refundYzzxcss.push(h13Yzzxcs);
-      deleteYzzxcss.push(h13Yzzxcs);
-    } else if (h13YzzxcsTf.clbz === 1 && h13YzzxcsTf.fybz === 1 && h13YzzxcsTf.fydh) {
-      refundYzzxcss.push(h13Yzzxcs);
-      deleteYzzxcss.push(h13Yzzxcs);
-    }
-  }
-
-  /**
    * 处理待退费医嘱数据
    * @param h12Yzxb 医嘱记录
    * @param tzrq 停嘱日期
    * @param lysjYzzxcss 待领药记录
-   * @param refundYzzxcss 待退药记录
+   * @param refundYzzxcss 待退费记录
    * @param deleteYzzxcss 待删除记录
    * @param updateYzzxcss 待更新记录
    */
@@ -397,36 +426,90 @@ export class h12_yzxbServiceNew {
     tzrq: Date,
     h13Yzzxcs: h13_yzzxcs,
     lysjYzzxcss: h13_yzzxcs[],
+    refundFydhs: h13_yzzxcs[],
     refundYzzxcss: h13_yzzxcs[],
     deleteYzzxcss: h13_yzzxcs[],
-    // updateYzzxcss: h13_yzzxcs[],
+    deleteYzzxcsTfs: H13YzzxcsTf[],
+    updateYzzxcss: h13_yzzxcs[],
   ) {
+    const stopDayClbz0 = () => {
+      // 判断末日次数
+      if (h12Yzxb.mrcs === 0) {
+        deleteYzzxcss.push(h13Yzzxcs);
+      } else {
+        if (h13Yzzxcs.zxcs !== h12Yzxb.mrcs) {
+          h13Yzzxcs.zxcs = h12Yzxb.mrcs;
+          updateYzzxcss.push(h13Yzzxcs);
+        }
+      }
+    };
+    const step41 = (h13YzzxcsTf: H13YzzxcsTf) => {
+      const refundFee = { mrcs: 0, ytcs: 0, thje: 0 };
+      if (h13YzzxcsTf.zxrq.getTime() === tzrq.getTime()) {
+        // 部分退
+        refundFee.mrcs = h12Yzxb.mrcs;
+      } else {
+        // 全退
+        refundFee.mrcs = 0;
+      }
+      // 不执行次数
+      const bzxcs = h12Yzxb.zxcs - refundFee.ytcs - refundFee.mrcs;
+      h13Yzzxcs.bzxcs = bzxcs > 0 ? bzxcs : h13Yzzxcs.bzxcs;
+
+      if (h13YzzxcsTf.clbz === 0 && h13YzzxcsTf.fybz === 0 && !h13YzzxcsTf.fydh) {
+        lysjYzzxcss.push(h13Yzzxcs);
+        // refundYzzxcss.push(h13Yzzxcs);
+        deleteYzzxcsTfs.push(h13YzzxcsTf);
+      } else if (h13YzzxcsTf.clbz === 1 && h13YzzxcsTf.fybz === 1 && h13YzzxcsTf.fydh) {
+        // refundYzzxcss.push(h13Yzzxcs);
+        deleteYzzxcsTfs.push(h13YzzxcsTf);
+      }
+    };
+    const step42 = () => {
+      if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
+        if (h12Yzxb.mrcs === 0) {
+          refundYzzxcss.push(h13Yzzxcs);
+          deleteYzzxcss.push(h13Yzzxcs);
+        } else {
+          if (h13Yzzxcs.zxcs > h12Yzxb.mrcs) {
+            // yzzxcs会被清除
+            h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs - h12Yzxb.mrcs;
+            refundYzzxcss.push(h13Yzzxcs);
+          }
+        }
+      } else {
+        h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs;
+        updateYzzxcss.push(h13Yzzxcs);
+        refundYzzxcss.push(h13Yzzxcs);
+        deleteYzzxcss.push(h13Yzzxcs);
+      }
+    };
     if (h13Yzzxcs.clbz === 0 && h13Yzzxcs.fybz === 0) {
       if (h13Yzzxcs.fydh) {
-        // 先退费再删除
-        refundYzzxcss.push(h13Yzzxcs);
+        // 步骤2
+        if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
+          refundFydhs.push(h13Yzzxcs);
+          stopDayClbz0();
+        } else {
+          refundFydhs.push(h13Yzzxcs);
+          deleteYzzxcss.push(h13Yzzxcs);
+        }
       } else {
-        // 直接删除
+        // 步骤1
+        if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
+          stopDayClbz0();
+        } else deleteYzzxcss.push(h13Yzzxcs);
       }
-      // 删除
-      deleteYzzxcss.push(h13Yzzxcs);
     } else if (h13Yzzxcs.clbz === 1) {
       if (h13Yzzxcs.fybz === 0 && !h13Yzzxcs.fydh) {
+        // 步骤3
         deleteYzzxcss.push(h13Yzzxcs);
       } else if (h13Yzzxcs.fydh && h13Yzzxcs.fybz === 1) {
-        if (h13Yzzxcs.h13YzzxcsTfList.length > 0) {
+        if (h13Yzzxcs.h13YzzxcsTfList?.length > 0) {
           // 有退费
-          await this.reviewRefund(
-            h12Yzxb,
-            tzrq,
-            h13Yzzxcs,
-            h13Yzzxcs.h13YzzxcsTfList[0], // 只取第一个
-            lysjYzzxcss,
-            refundYzzxcss,
-            deleteYzzxcss,
-          );
+          step41(h13Yzzxcs.h13YzzxcsTfList[0]);
         } else {
-          refundYzzxcss.push(h13Yzzxcs);
+          step42();
         }
       } else {
         throw new BadRequestException(
@@ -437,103 +520,206 @@ export class h12_yzxbServiceNew {
   }
 
   // -------------------------
-  // 复核医嘱(新)
+  // 复核医嘱 0202
   // -------------------------
-  async reviewNew(dto: reviewDto): Promise<void> {
+  async review_02(dto: reviewDto): Promise<void> {
+    const yzxbQueryBuilder = this.h12_yzxbRepo
+      .createQueryBuilder('yzxb')
+      .leftJoinAndSelect('yzxb.h13_yzzxcsList', 'yzzxcs')
+      .leftJoin('yzzxcs.h13YzzxcsTfList', 'yzzxcsTf')
+      .select([
+        'yzxb',
+        'yzzxcs',
+        'yzzxcsTf.clbz',
+        'yzzxcsTf.fybz',
+        'yzzxcsTf.fydh',
+        'yzzxcsTf.zxrq',
+        'yzzxcsTf.maxid',
+      ])
+      .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
+      .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
+      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
+      //   .andWhere('yzxb.ysbz = 1')
+      .andWhere('yzxb.tjbz = 1')
+      .andWhere('yzxb.yzzt IN (1, 5)');
+
+    // 添加 OR 组合条件//
+    if (dto.mxxhs && dto.mxxhs.length > 0) {
+      const validItems = dto.mxxhs;
+
+      if (validItems.length > 0) {
+        yzxbQueryBuilder.andWhere(
+          new Brackets((qb) => {
+            validItems.forEach((item, index) => {
+              if (index === 0) {
+                // 第一个条件用 where
+                qb.where(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              } else {
+                // 后续条件用 orWhere
+                qb.orWhere(`(yzxb.mxxh = :mxxh_${index} AND yzxb.yzxh = :yzxh)`, {
+                  [`mxxh_${index}`]: item.mxxh,
+                  yzxh: item.yzxh,
+                });
+              }
+            });
+          }),
+        );
+      }
+    }
+
     try {
       const [yzzb, yzxbList, yzhshdbz, yzauton] = await Promise.all([
         this.h12_yzzbRepo.findOne({
           where: { zyid: dto.zyid, yzlx: dto.yzlx, yzxh: 1 },
         }),
-        this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            ...(dto.mxxhs && dto.mxxhs.length > 0
-              ? {
-                or: dto.mxxhs.map((item) => ({
-                  ...(item.mxxh && item.mxxh.length > 0 ? { mxxh: item.mxxh } : {}),
-                  ...(item.yzxh && item.yzxh.length > 0 ? { yzxh: item.yzxh } : {}),
-                })),
-              }
-              : {}),
-            hdbz: In([0, 1, null]),
-            ysbz: 1,
-            tjbz: 1,
-            yzzt: In([1, 5]), // 只复核：提交/待核停嘱
-          },
-          relations: {
-            h13_yzzxcsList: {
-              h13YzzxcsTfList: true,
-            },
-          },
-          //   select: {
-          //     h13_yzzxcsList: {
-          //       h13YzzxcsTfList: {
-          //         clbz: true,
-          //       },
-          //     },
-          //   },
-        }),
+        yzxbQueryBuilder.getMany(),
         this.paramService.gfGetParaNew(13, 'yzhshdbz', '1', '启用复核医嘱同时校对(1是，0否)'),
         this.paramService.gfGetPara(99, 'yzauton', '0', 'yzauton'), // 医嘱自动复核增加附加项目
       ]);
 
       const lysjYzzxcss: h13_yzzxcs[] = []; // 待领药记录
-      const refundYzzxcss: h13_yzzxcs[] = []; // 待退药记录
+      const refundFydhs: h13_yzzxcs[] = []; // 待退领药单
+      const refundYzzxcss: h13_yzzxcs[] = []; // 待退费单
       const deleteYzzxcss: h13_yzzxcs[] = []; // 待删除记录
+      const deleteYzzxcsTfs: H13YzzxcsTf[] = []; // 待删除退费记录
       const updateYzzxcss: h13_yzzxcs[] = []; // 待更新记录，只要生成退药单，就更新？
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
       //   const hlYzzh = []; // 忽略医嘱组号
-      const allYzxbs = [];
+      const changeYzxbs = []; // 需要更新的医嘱细表
 
       // 检查医嘱对应的费用项目合法性
       for (const yzxb of yzxbList) {
         // 执行日期大于等于停嘱日期，要进行相应处理
         const tzrq = new Date(yzxb.tzrq);
-        tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
+        tzrq.setHours(0, 0, 0, 0); // 去掉时分秒，
 
+        let tfsl = 0;
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
           if (h13Yzzxcs.zxrq.getDate() >= tzrq.getDate()) {
-            await this.reviewFee(yzxb, tzrq, h13Yzzxcs, lysjYzzxcss, refundYzzxcss, deleteYzzxcss);
-            allYzxbs.push(yzxb);
+            await this.reviewFee(
+              yzxb,
+              tzrq,
+              h13Yzzxcs,
+              lysjYzzxcss,
+              refundFydhs,
+              refundYzzxcss,
+              deleteYzzxcss,
+              deleteYzzxcsTfs,
+              updateYzzxcss,
+            );
+            tfsl++;
           }
+        }
+        if (tfsl) {
+          changeYzxbs.push(yzxb);
         }
       }
 
-      // 转换日期 //
+      tfListToInsertAll.push(
+        ...this.createRefundListOfReview(refundYzzxcss, {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          zxhs: dto.jshs,
+        }),
+      );
+
+      // 转换日期
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
+      await this.reviewAdvices(
+        changeYzxbs,
+        formatZXRQ,
+        dtoZXRQ,
+        dto,
+        yzhshdbz,
+        yzauton,
+        yzxbFJList,
+      );
 
       await this.entityManager.transaction(async (reviewManager) => {
-        if (updateYzzxcss.length > 0) {
+        // 设置事务的日志记录器
+        // reviewManager.connection.logger = this.transactionLogger;
+
+        const deleteFydhNulls = deleteYzzxcss.filter((yzzxcs) => !yzzxcs.fydh);
+        if (deleteFydhNulls.length > 0) {
           // 费用明细：主要是 bzxcs
-          await reviewManager.save(h13_yzzxcs, updateYzzxcss);
+          await reviewManager.delete(h13_yzzxcs, {
+            zyid: dto.zyid,
+            maxid: In(deleteFydhNulls.map((yzzxcs) => yzzxcs.maxid)),
+          });
         }
-        if (tfListToInsertAll.length > 0) {
-          // 退费单
-          await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
+        if (refundFydhs.length > 0) {
+          await this.refundMedicineReceiptWithManager(dto.jshs, refundFydhs, reviewManager);
         }
-        await reviewManager.query(
-          `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
-          ['', dto.zyid, dto.jshs, 0],
+        // 使用 update 方法批量更新
+        await Promise.all(
+          updateYzzxcss.map(async (item) => {
+            await reviewManager.update(
+              h13_yzzxcs,
+              {
+                zyid: dto.zyid,
+                maxid: item.maxid,
+              },
+              {
+                zxcs: item.zxcs,
+                bzxcs: item.bzxcs,
+              },
+            );
+          }),
         );
-        if (allYzxbs.length > 0) {
-          await reviewManager.save(h12_yzxb, allYzxbs);
+        // 退费单
+        await reviewManager.insert(H13YzzxcsTf, tfListToInsertAll);
+        if (refundYzzxcss.length > 0 || lysjYzzxcss.length > 0) {
+          await reviewManager.query(
+            `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
+            ['', dto.zyid, dto.jshs, 0],
+          );
         }
-        if (yzxbFJList.length > 0) {
-          await reviewManager.save(h12_yzxb, yzxbFJList);
+        if (changeYzxbs.length > 0) {
+          await reviewManager.save(h12_yzxb, changeYzxbs);
         }
+        // if (yzxbFJList.length > 0) {
+        //   await reviewManager.save(h12_yzxb, yzxbFJList);
+        // }
         if (deleteYzzxcss.length > 0) {
-          await reviewManager.delete(h13_yzzxcs, deleteYzzxcss);
+          // 备份单子
+          await reviewManager.insert(H13YzzxcsDelete, deleteYzzxcss);
+          await reviewManager.insert(H13YzzxcsDelete, tfListToInsertAll);
+
+          await reviewManager.delete(h13_yzzxcs, {
+            zyid: dto.zyid,
+            maxid: In(deleteYzzxcss.map((yzzxcs) => yzzxcs.maxid)),
+          });
+          await reviewManager.delete(H13YzzxcsTf, {
+            zyid: dto.zyid,
+            zxcs2: In(tfListToInsertAll.map((tfRow) => tfRow.zxcs2)),
+          });
+        }
+        // 41. 删除退费记录
+        if (deleteYzzxcsTfs.length > 0) {
+          // 备份
+          const tfNewRecords = await reviewManager.find(H13YzzxcsTf, {
+            where: {
+              zyid: dto.zyid,
+              maxid: In(deleteYzzxcsTfs.map((tfRow) => tfRow.maxid)),
+            },
+          });
+          await reviewManager.insert(H13YzzxcsDelete, tfNewRecords);
+          await reviewManager.delete(H13YzzxcsTf, {
+            zyid: dto.zyid,
+            maxid: In(deleteYzzxcsTfs.map((tfRow) => tfRow.maxid)),
+          });
         }
       });
     } catch (error: any) {
       this.logger.error('复核医嘱失败', error);
+      console.error('复核医嘱失败', error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '复核医嘱失败');
     }
   }
@@ -541,7 +727,7 @@ export class h12_yzxbServiceNew {
   /**
    * 复核医嘱，调整医嘱状态
    *
-   * @param allYzxbs 医嘱列表
+   * @param changeYzxbs 医嘱列表
    * @param formatZXRQ 格式化的执行日期
    * @param dtoZXRQ 传入的执行日期
    * @param dto 审核医嘱参数
@@ -550,7 +736,7 @@ export class h12_yzxbServiceNew {
    * @param yzxbFJList 医嘱细表附加项目数组
    */
   private async reviewAdvices(
-    allYzxbs: any[],
+    changeYzxbs: any[],
     formatZXRQ: string,
     dtoZXRQ: Date,
     dto: reviewDto,
@@ -559,7 +745,7 @@ export class h12_yzxbServiceNew {
     yzxbFJList: h12_yzxb[],
   ) {
     await Promise.all(
-      allYzxbs.map(async (yzxb) => {
+      changeYzxbs.map(async (yzxb) => {
         //yzxbList.forEach(async (yzxb) => {
         const ksrq = new Date(yzxb.ksrq);
         let zzrq = new Date(yzxb.tzrq);
@@ -631,68 +817,68 @@ export class h12_yzxbServiceNew {
         }
 
         //查询附加
-        const yzxbFJ = await this.h12_yzxbRepo.find({
-          where: {
-            zyid: dto.zyid,
-            yzlx: dto.yzlx,
-            yzxh: yzxb.yzxh,
-            yzzh: yzxb.yzzh, // 大于0
-            ysbz: 0,
-          },
-        });
+        // const yzxbFJ = await this.h12_yzxbRepo.find({
+        //   where: {
+        //     zyid: dto.zyid,
+        //     yzlx: dto.yzlx,
+        //     yzxh: yzxb.yzxh,
+        //     yzzh: yzxb.yzzh, // 大于0
+        //     ysbz: 0,
+        //   },
+        // });
 
-        // 复核附加
-        if (yzxbFJ.length > 0) {
-          yzxbFJ.forEach((yzxbFJItem) => {
-            yzxbFJItem.hdbz = 1;
-            yzxbFJItem.yzzt = 2; // 已复核
-            yzxbFJItem.kshs = dto.kshs;
-            if (yzxbFJItem.yzlx === 2) {
-              yzxbFJItem.tzrq = yzxb.tzrq;
-            }
-            // 复核停嘱附加
-            if (
-              (yzxb.tpbz == 1 && (yzxb.yzlx == 2 || yzxb.yzlx == 5) && yzxb.jsys && !yzxb.jshs) ||
-              yzauton == '1'
-            ) {
-              if (yzxbFJItem.tzbz == 1) {
-              } else {
-                yzxbFJItem.tzbz = yzxb.tzbz;
-                yzxbFJItem.jsnf = yzxb.jsnf;
-                yzxbFJItem.mrcs = yzxb.mrcs;
-                yzxbFJItem.tzrq = yzxb.tzrq;
-              }
-              yzxbFJItem.jsys = yzxb.jsys;
-              yzxbFJItem.jshs = yzxb.jshs;
-            }
+        // // 复核附加
+        // if (yzxbFJ.length > 0) {
+        //   yzxbFJ.forEach((yzxbFJItem) => {
+        //     yzxbFJItem.hdbz = 1;
+        //     yzxbFJItem.yzzt = 2; // 已复核
+        //     yzxbFJItem.kshs = dto.kshs;
+        //     if (yzxbFJItem.yzlx === 2) {
+        //       yzxbFJItem.tzrq = yzxb.tzrq;
+        //     }
+        //     // 复核停嘱附加
+        //     if (
+        //       (yzxb.tpbz == 1 && (yzxb.yzlx == 2 || yzxb.yzlx == 5) && yzxb.jsys && !yzxb.jshs) ||
+        //       yzauton == '1'
+        //     ) {
+        //       if (yzxbFJItem.tzbz == 1) {
+        //       } else {
+        //         yzxbFJItem.tzbz = yzxb.tzbz;
+        //         yzxbFJItem.jsnf = yzxb.jsnf;
+        //         yzxbFJItem.mrcs = yzxb.mrcs;
+        //         yzxbFJItem.tzrq = yzxb.tzrq;
+        //       }
+        //       yzxbFJItem.jsys = yzxb.jsys;
+        //       yzxbFJItem.jshs = yzxb.jshs;
+        //     }
 
-            yzxbFJList.push(yzxbFJItem);
-          });
-        }
+        //     yzxbFJList.push(yzxbFJItem);
+        //   });
+        // }
 
-        // 自动附加项目？
-        if (yzxb.tpbz == 1 || yzxb.tpbz == 2 || yzxb.yzzh == 0 || yzauton == '0') {
-        } else {
-          if (yzxbFJ.length <= 0 && yzxb.syffid) {
-            const syffItem = await this.h00syffService.findOne(yzxb.syffid);
-            let mbid = '';
-            // xmid1 1:全院 2:科室
-            if (syffItem.xmid1 === '2') {
-              mbid = syffItem.xmid || '';
-            } else {
-              mbid = syffItem.xmid || '';
-            }
+        // // 自动附加项目？
+        // if (yzxb.tpbz == 1 || yzxb.tpbz == 2 || yzxb.yzzh == 0 || yzauton == '0') {
+        // } else {
+        //   if (yzxbFJ.length <= 0 && yzxb.syffid) {
+        //     const syffItem = await this.h00syffService.findOne(yzxb.syffid);
+        //     let mbid = '';
+        //     // xmid1 1:全院 2:科室
+        //     if (syffItem.xmid1 === '2') {
+        //       mbid = syffItem.xmid || '';
+        //     } else {
+        //       mbid = syffItem.xmid || '';
+        //     }
 
-            if (mbid) {
-              const fjxx = await this.h12_yzxbOldService.getPackageItems({
-                advice: yzxb,
-                mbid: mbid,
-                recursionDepth: 1,
-              });
-              yzxbFJList.push(...fjxx);
-            }
-          }
-        }
+        //     if (mbid) {
+        //       const fjxx = await this.h12_yzxbOldService.getPackageItems({
+        //         advice: yzxb,
+        //         mbid: mbid,
+        //         recursionDepth: 1,
+        //       });
+        //       yzxbFJList.push(...fjxx);
+        //     }
+        //   }
+        // }
       }),
     );
   }
@@ -1036,7 +1222,6 @@ export class h12_yzxbServiceNew {
         await h12Repo.save(yzxbUpdate);
       }
     } catch (error: any) {
-      console.error('删除费用出错：', error);
       if (error instanceof CustomException) {
         throw error;
       } else throw new CustomException(ERR.ERR_40810);
@@ -1161,7 +1346,18 @@ export class h12_yzxbServiceNew {
   async refundMedicineReceipt(dto: adviceDto): Promise<void> {
     try {
       await this.dataSource.transaction(async (manager) => {
-        await this.refundMedicineReceiptWithManager(dto, manager);
+        const maxidList = dto.maxidList.map((it) => it.maxid).filter(Boolean);
+        const h13_yzzxcsList = await this.h13_yzzxcsRepo.find({
+          where: {
+            zyid: dto.zyid,
+            yzlx: dto.yzlx,
+            maxid: In(maxidList),
+            fydh: Not(IsNull()),
+            clbz: 0,
+          },
+        });
+
+        await this.refundMedicineReceiptWithManager(dto.zxhs, h13_yzzxcsList, manager);
       });
     } catch (error: any) {
       this.logger.error('退回领药单失败！！', error);
@@ -1169,18 +1365,17 @@ export class h12_yzxbServiceNew {
     }
   }
 
-  private async refundMedicineReceiptWithManager(dto: adviceDto, manager: EntityManager) {
-    const maxidList = dto.maxidList.map((it) => it.maxid).filter(Boolean);
-    const h13_yzzxcsList = await this.h13_yzzxcsRepo.find({
-      where: {
-        zyid: dto.zyid,
-        yzlx: dto.yzlx,
-        maxid: In(maxidList),
-        fydh: Not(IsNull()),
-        clbz: 0,
-      },
-    });
-
+  /**
+   * 通过事务退回领药单
+   * @param zxhs
+   * @param h13_yzzxcsList
+   * @param manager
+   */
+  private async refundMedicineReceiptWithManager(
+    zxhs: string,
+    h13_yzzxcsList: h13_yzzxcs[],
+    manager: EntityManager,
+  ) {
     // 分组原则：同一个病人/领药单/执行科室(ksid)相同
     const fydhList = [];
     for (const h13_yzzxcs of h13_yzzxcsList) {
@@ -1205,7 +1400,7 @@ export class h12_yzxbServiceNew {
           h13_yzzxcs,
           {
             zyid: fydh.zyid,
-            ksid: fydh.ksid,
+            // ksid: fydh.ksid,
             fydh: fydh.djbh,
           },
           {
@@ -1213,22 +1408,22 @@ export class h12_yzxbServiceNew {
           },
         ),
       );
-      // TODO: 更新领药单状态存在问题，必须所有领药单的记录都退药后才能更新领药单状态
-      //   promisses.push(
-      //     manager.update(
-      //       H31Lyjl,
-      //       {
-      //         zyid: fydh.zyid,
-      //         ksid: fydh.ksid,
-      //         djbh: fydh.djbh,
-      //       },
-      //       {
-      //         tjbz: 0,
-      //         bz1: dto.zxhs,
-      //         ckclbz: 1,
-      //       },
-      //     ),
-      //   );
+      // 更新领药单状态存在问题，必须所有领药单的记录都退药后才能更新领药单状态
+      promisses.push(
+        manager.update(
+          H31Lyjl,
+          {
+            zyid: fydh.zyid,
+            ksid: fydh.ksid,
+            djbh: fydh.djbh,
+          },
+          {
+            tjbz: 0,
+            bz1: zxhs,
+            ckclbz: 1,
+          },
+        ),
+      );
     }
     await Promise.all(promisses);
   }
@@ -1315,11 +1510,27 @@ export class h12_yzxbServiceNew {
    */
   private createRefundListOfReview(
     h13_yzzxcsList: h13_yzzxcs[],
-    costFees: costDto[],
+    // costFees: costDto[],
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
-  ) {
-    const tfListToInsert: H13YzzxcsTf[] = [];
-    return tfListToInsert;
+  ): H13YzzxcsTf[] {
+    return h13_yzzxcsList.map((item) =>
+      //   this.createRefundListOfReviewOne(item, dto),
+      ({
+        ...item,
+        czrq: new Date(),
+        fydh: null,
+        zxcs2: item.maxid,
+        zxhs: dto.zxhs,
+        zxcs: -1 * item.bzxcs,
+        bzxcs: 0,
+        tyrid: dto.zxhs,
+        tysj: new Date(),
+        sysj: null,
+        clbz: 0,
+        fybz: 0,
+        zyid: dto.zyid,
+      }),
+    ) as H13YzzxcsTf[];
   }
 
   /**
@@ -1330,14 +1541,15 @@ export class h12_yzxbServiceNew {
     costFees: costDto[],
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
   ) {
-    const reviewListToInsert: H13YzzxcsTf[] = [];
-    return reviewListToInsert;
+    const tfListToInsert: H13YzzxcsTf[] = [];
+
+    return tfListToInsert;
   }
 
   /**
    * 生成复核列表
    */
-  private reviewDelete() { }
+  private reviewDelete() {}
 
   /**
    * 创建退费列表
@@ -1552,11 +1764,11 @@ export class h12_yzxbServiceNew {
             .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
             .andWhere(
               'EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE ' +
-              'h13.zyid = h13_tf.zyid ' +
-              'AND h13.maxid = h13_tf.zxcs2 ' +
-              'AND h13.yzzh = :yzzh ' +
-              'AND h13.yzlx = :yzlx ' +
-              'AND ISNULL(h13.fybz, 0) = 1)',
+                'h13.zyid = h13_tf.zyid ' +
+                'AND h13.maxid = h13_tf.zxcs2 ' +
+                'AND h13.yzzh = :yzzh ' +
+                'AND h13.yzlx = :yzlx ' +
+                'AND ISNULL(h13.fybz, 0) = 1)',
               {
                 yzzh: item.yzzh,
                 yzlx: item.yzlx,

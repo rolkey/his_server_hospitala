@@ -253,7 +253,7 @@ export class h12_yzzbController {
    */
   @Post('review')
   async review(@Body() dto: reviewDto) {
-    return await this.h12_yzxbServiceNew.review(dto);
+    return await this.h12_yzxbServiceNew.review_02(dto);
   }
 
   /**
