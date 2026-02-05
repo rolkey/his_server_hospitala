@@ -82,6 +82,47 @@ enum Zxbz {
 export class h12_yzxbServiceNew {
   private readonly logger = new Logger(h12_yzxbServiceNew.name);
   private readonly SYSPAR_KEY = { type: '99', key: 'zyyzfyzxbz' };
+  //   private readonly transactionLogger = {
+  //     logQuery: (query: string, parameters?: any[]) => {
+  //       this.logger.debug(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.debug(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logQueryError: (error: string, query: string, parameters?: any[]) => {
+  //       this.logger.error(`[Transaction SQL Error] ${error}`);
+  //       this.logger.error(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.error(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logQuerySlow: (time: number, query: string, parameters?: any[]) => {
+  //       this.logger.warn(`[Transaction SQL Slow] ${time}ms`);
+  //       this.logger.warn(`[Transaction SQL] ${query}`);
+  //       if (parameters) {
+  //         this.logger.warn(`[Transaction Parameters] ${JSON.stringify(parameters)}`);
+  //       }
+  //     },
+  //     logSchemaBuild: (message: string) => {
+  //       this.logger.log(`[Schema Build] ${message}`);
+  //     },
+  //     logMigration: (message: string) => {
+  //       this.logger.log(`[Migration] ${message}`);
+  //     },
+  //     log: (level: 'log' | 'info' | 'warn', message: any) => {
+  //       switch (level) {
+  //         case 'log':
+  //           this.logger.log(message);
+  //           break;
+  //         case 'info':
+  //           this.logger.log(message);
+  //           break;
+  //         case 'warn':
+  //           this.logger.warn(message);
+  //           break;
+  //       }
+  //     },
+  //   };
 
   constructor(
     @InjectRepository(h12_yzzb)
@@ -251,12 +292,12 @@ export class h12_yzxbServiceNew {
       const updateYzzxcss = []; // 待更新记录
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
       const hlYzzh = []; // 忽略医嘱组号
-      const allYzxbs = [];
+      const changeYzxbs = [];
 
       // 检查医嘱对应的费用项目合法性
       for (const yzxb of yzxbList) {
         if (!yzxb.h13_yzzxcsList) {
-          allYzxbs.push(yzxb);
+          changeYzxbs.push(yzxb);
           continue;
         }
 
@@ -328,7 +369,7 @@ export class h12_yzxbServiceNew {
         }
 
         if (h13YzzxcsItem.length === 0) {
-          allYzxbs.push(yzxb);
+          changeYzxbs.push(yzxb);
         }
       }
 
@@ -338,7 +379,15 @@ export class h12_yzxbServiceNew {
       // 附加信息
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
+      await this.reviewAdvices(
+        changeYzxbs,
+        formatZXRQ,
+        dtoZXRQ,
+        dto,
+        yzhshdbz,
+        yzauton,
+        yzxbFJList,
+      );
 
       await this.entityManager.transaction(async (reviewManager) => {
         if (deleteYzzxcss.length > 0) {
@@ -347,8 +396,8 @@ export class h12_yzxbServiceNew {
         if (updateYzzxcss.length > 0) {
           await reviewManager.save(h13_yzzxcs, updateYzzxcss);
         }
-        if (allYzxbs.length > 0) {
-          await reviewManager.save(h12_yzxb, allYzxbs);
+        if (changeYzxbs.length > 0) {
+          await reviewManager.save(h12_yzxb, changeYzxbs);
         }
         if (tfListToInsertAll.length > 0) {
           await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
@@ -424,24 +473,32 @@ export class h12_yzxbServiceNew {
     deleteYzzxcss: h13_yzzxcs[],
     updateYzzxcss: h13_yzzxcs[],
   ) {
+    const setMrcs = () => {
+      // 判断末日次数
+      if (h12Yzxb.mrcs === 0) {
+        deleteYzzxcss.push(h13Yzzxcs);
+      } else {
+        if (h13Yzzxcs.zxcs !== h12Yzxb.mrcs) {
+          h13Yzzxcs.zxcs = h12Yzxb.mrcs;
+          updateYzzxcss.push(h13Yzzxcs);
+        }
+      }
+    };
     if (h13Yzzxcs.clbz === 0 && h13Yzzxcs.fybz === 0) {
       if (h13Yzzxcs.fydh) {
         // 先退费再删除
-        refundFydhs.push(h13Yzzxcs);
-        deleteYzzxcss.push(h13Yzzxcs);
+        if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
+          refundFydhs.push(h13Yzzxcs);
+          setMrcs();
+        } else {
+          refundFydhs.push(h13Yzzxcs);
+          deleteYzzxcss.push(h13Yzzxcs);
+        }
       } else {
         // 直接删除
         // 删除
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
-          // 判断末日次数
-          if (h12Yzxb.mrcs === 0) {
-            deleteYzzxcss.push(h13Yzzxcs);
-          } else {
-            if (h13Yzzxcs.zxcs !== h12Yzxb.mrcs) {
-              h13Yzzxcs.zxcs = h12Yzxb.mrcs;
-              updateYzzxcss.push(h13Yzzxcs);
-            }
-          }
+          setMrcs();
         } else deleteYzzxcss.push(h13Yzzxcs);
       }
     } else if (h13Yzzxcs.clbz === 1) {
@@ -542,7 +599,7 @@ export class h12_yzxbServiceNew {
       const updateYzzxcss: h13_yzzxcs[] = []; // 待更新记录，只要生成退药单，就更新？
       const tfListToInsertAll: H13YzzxcsTf[] = []; // 退费记录
       //   const hlYzzh = []; // 忽略医嘱组号
-      const allYzxbs = [];
+      const changeYzxbs = []; // 需要更新的医嘱细表
 
       // 检查医嘱对应的费用项目合法性
       for (const yzxb of yzxbList) {
@@ -562,18 +619,28 @@ export class h12_yzxbServiceNew {
               deleteYzzxcss,
               updateYzzxcss,
             );
-            allYzxbs.push(yzxb);
+            if (
+              !changeYzxbs.some(
+                (yzxbItem) =>
+                  yzxbItem.zyid === h13Yzzxcs.zyid &&
+                  yzxbItem.yzlx === h13Yzzxcs.yzlx &&
+                  yzxbItem.yzxh === h13Yzzxcs.yzxh &&
+                  yzxbItem.mxid === h13Yzzxcs.mxxh,
+              )
+            ) {
+              changeYzxbs.push(yzxb);
+            }
           }
         }
       }
 
-      //   tfListToInsertAll.push(
-      //     ...this.createRefundListOfReview(refundYzzxcss, {
-      //       zyid: dto.zyid,
-      //       yzlx: dto.yzlx,
-      //       zxhs: dto.jshs,
-      //     }),
-      //   );
+      tfListToInsertAll.push(
+        ...this.createRefundListOfReview(refundYzzxcss, {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          zxhs: dto.jshs,
+        }),
+      );
 
       // 转换日期 //
       const dtoZXRQ = new Date(dto.rq);
@@ -581,9 +648,20 @@ export class h12_yzxbServiceNew {
       // 附加信息
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      await this.reviewAdvices(allYzxbs, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
+      await this.reviewAdvices(
+        changeYzxbs,
+        formatZXRQ,
+        dtoZXRQ,
+        dto,
+        yzhshdbz,
+        yzauton,
+        yzxbFJList,
+      );
 
       await this.entityManager.transaction(async (reviewManager) => {
+        // 设置事务的日志记录器
+        // reviewManager.connection.logger = this.transactionLogger;
+
         const deleteFydhNulls = deleteYzzxcss.filter((yzzxcs) => !yzzxcs.fydh);
         if (deleteFydhNulls.length > 0) {
           // 费用明细：主要是 bzxcs
@@ -591,6 +669,9 @@ export class h12_yzxbServiceNew {
             zyid: dto.zyid,
             maxid: In(deleteFydhNulls.map((yzzxcs) => yzzxcs.maxid)),
           });
+        }
+        if (refundFydhs.length > 0) {
+          await this.refundMedicineReceiptWithManager(dto.jshs, refundFydhs, reviewManager);
         }
         if (updateYzzxcss.length > 0) {
           // 费用明细：主要是 bzxcs
@@ -610,8 +691,8 @@ export class h12_yzxbServiceNew {
           // 退费单
           await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
         }
-        if (allYzxbs.length > 0) {
-          await reviewManager.save(h12_yzxb, allYzxbs);
+        if (changeYzxbs.length > 0) {
+          await reviewManager.save(h12_yzxb, changeYzxbs);
         }
         // if (yzxbFJList.length > 0) {
         //   await reviewManager.save(h12_yzxb, yzxbFJList);
@@ -624,7 +705,7 @@ export class h12_yzxbServiceNew {
         }
       });
     } catch (error: any) {
-      //   this.logger.error('复核医嘱失败', error);
+      this.logger.error('复核医嘱失败', error);
       console.error('复核医嘱失败', error);
       throw new CustomException(ERR.ERR_10000, error?.message ?? '复核医嘱失败');
     }
@@ -633,7 +714,7 @@ export class h12_yzxbServiceNew {
   /**
    * 复核医嘱，调整医嘱状态
    *
-   * @param allYzxbs 医嘱列表
+   * @param changeYzxbs 医嘱列表
    * @param formatZXRQ 格式化的执行日期
    * @param dtoZXRQ 传入的执行日期
    * @param dto 审核医嘱参数
@@ -642,7 +723,7 @@ export class h12_yzxbServiceNew {
    * @param yzxbFJList 医嘱细表附加项目数组
    */
   private async reviewAdvices(
-    allYzxbs: any[],
+    changeYzxbs: any[],
     formatZXRQ: string,
     dtoZXRQ: Date,
     dto: reviewDto,
@@ -651,7 +732,7 @@ export class h12_yzxbServiceNew {
     yzxbFJList: h12_yzxb[],
   ) {
     await Promise.all(
-      allYzxbs.map(async (yzxb) => {
+      changeYzxbs.map(async (yzxb) => {
         //yzxbList.forEach(async (yzxb) => {
         const ksrq = new Date(yzxb.ksrq);
         let zzrq = new Date(yzxb.tzrq);
@@ -1419,27 +1500,22 @@ export class h12_yzxbServiceNew {
     h13_yzzxcsList: h13_yzzxcs[],
     // costFees: costDto[],
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
-  ) {
-    const tfListToInsert: H13YzzxcsTf[] = [];
-    for (const item of h13_yzzxcsList) {
-      tfListToInsert.push({
-        ...item,
-        czrq: new Date(),
-        //zxrq: new Date(),
-        fydh: '', // 发药单号清空
-        zxcs2: item.maxid,
-        zxhs: dto.zxhs,
-        zxcs: -1 * item.bzxcs,
-        bzxcs: 0,
-        tyrid: dto.zxhs,
-        tysj: new Date(), // 退药时间为当前时间？
-        sysj: null,
-        clbz: 0,
-        fybz: 0,
-        zyid: dto.zyid,
-      } as any);
-    }
-    return tfListToInsert;
+  ): H13YzzxcsTf[] {
+    return h13_yzzxcsList.map((item) => ({
+      ...item,
+      czrq: new Date(),
+      fydh: '',
+      zxcs2: item.maxid,
+      zxhs: dto.zxhs,
+      zxcs: -1 * item.bzxcs,
+      bzxcs: 0,
+      tyrid: dto.zxhs,
+      tysj: new Date(),
+      sysj: null,
+      clbz: 0,
+      fybz: 0,
+      zyid: dto.zyid,
+    })) as H13YzzxcsTf[];
   }
 
   /**
