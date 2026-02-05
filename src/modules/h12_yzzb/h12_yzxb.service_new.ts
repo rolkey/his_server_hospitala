@@ -459,7 +459,7 @@ export class h12_yzxbServiceNew {
    * @param h12Yzxb 医嘱记录
    * @param tzrq 停嘱日期
    * @param lysjYzzxcss 待领药记录
-   * @param refundYzzxcss 待退药记录
+   * @param refundYzzxcss 待退费记录
    * @param deleteYzzxcss 待删除记录
    * @param updateYzzxcss 待更新记录
    */
@@ -473,7 +473,7 @@ export class h12_yzxbServiceNew {
     deleteYzzxcss: h13_yzzxcs[],
     updateYzzxcss: h13_yzzxcs[],
   ) {
-    const setMrcs = () => {
+    const stopDayClbz0 = () => {
       // 判断末日次数
       if (h12Yzxb.mrcs === 0) {
         deleteYzzxcss.push(h13Yzzxcs);
@@ -484,12 +484,33 @@ export class h12_yzxbServiceNew {
         }
       }
     };
+    const step42 = () => {
+      // refundYzzxcss.push(h13Yzzxcs)
+
+      if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
+        if (h12Yzxb.mrcs === 0) {
+          refundYzzxcss.push(h13Yzzxcs);
+          deleteYzzxcss.push(h13Yzzxcs);
+        } else {
+          if (h13Yzzxcs.zxcs > h12Yzxb.mrcs) {
+            // yzzxcs会被清除
+            h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs - h12Yzxb.mrcs;
+            refundYzzxcss.push(h13Yzzxcs);
+          }
+        }
+      } else {
+        h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs;
+        updateYzzxcss.push(h13Yzzxcs);
+        refundYzzxcss.push(h13Yzzxcs);
+        deleteYzzxcss.push(h13Yzzxcs);
+      }
+    };
     if (h13Yzzxcs.clbz === 0 && h13Yzzxcs.fybz === 0) {
       if (h13Yzzxcs.fydh) {
         // 步骤2
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
           refundFydhs.push(h13Yzzxcs);
-          setMrcs();
+          stopDayClbz0();
         } else {
           refundFydhs.push(h13Yzzxcs);
           deleteYzzxcss.push(h13Yzzxcs);
@@ -497,7 +518,7 @@ export class h12_yzxbServiceNew {
       } else {
         // 步骤1
         if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
-          setMrcs();
+          stopDayClbz0();
         } else deleteYzzxcss.push(h13Yzzxcs);
       }
     } else if (h13Yzzxcs.clbz === 1) {
@@ -505,8 +526,8 @@ export class h12_yzxbServiceNew {
         // 步骤3
         deleteYzzxcss.push(h13Yzzxcs);
       } else if (h13Yzzxcs.fydh && h13Yzzxcs.fybz === 1) {
-        if (h13Yzzxcs.h13YzzxcsTfList.length > 0) {
-          // 有退费
+        if (h13Yzzxcs.h13YzzxcsTfList?.length > 0) {
+          // 有退费，
           await this.reviewRefund(
             h12Yzxb,
             tzrq,
@@ -517,7 +538,7 @@ export class h12_yzxbServiceNew {
             deleteYzzxcss,
           );
         } else {
-          refundYzzxcss.push(h13Yzzxcs);
+          step42();
         }
       } else {
         throw new BadRequestException(
@@ -533,21 +554,9 @@ export class h12_yzxbServiceNew {
   async review_02(dto: reviewDto): Promise<void> {
     const yzxbQueryBuilder = this.h12_yzxbRepo
       .createQueryBuilder('yzxb')
-      .leftJoin('yzxb.h13_yzzxcsList', 'yzzxcs')
-      .select([
-        'yzxb',
-        'yzzxcs.zyid',
-        'yzzxcs.yzlx',
-        'yzzxcs.yzxh',
-        'yzzxcs.mxxh',
-        'yzzxcs.zxrq',
-        'yzzxcs.yzzh',
-        'yzzxcs.clbz',
-        'yzzxcs.fydh',
-        'yzzxcs.fybz',
-        'yzzxcs.maxid',
-        'yzzxcs.zxcs',
-      ])
+      .leftJoinAndSelect('yzxb.h13_yzzxcsList', 'yzzxcs')
+      .leftJoin('yzzxcs.h13YzzxcsTfList', 'yzzxcsTf')
+      .select(['yzxb', 'yzzxcs', 'yzzxcsTf.clbz', 'yzzxcsTf.fybz', 'yzzxcsTf.fydh'])
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
@@ -555,7 +564,7 @@ export class h12_yzxbServiceNew {
       .andWhere('yzxb.tjbz = 1')
       .andWhere('yzxb.yzzt IN (1, 5)');
 
-    // 添加 OR 组合条件
+    // 添加 OR 组合条件//
     if (dto.mxxhs && dto.mxxhs.length > 0) {
       const validItems = dto.mxxhs;
 
@@ -625,7 +634,7 @@ export class h12_yzxbServiceNew {
                   yzxbItem.zyid === h13Yzzxcs.zyid &&
                   yzxbItem.yzlx === h13Yzzxcs.yzlx &&
                   yzxbItem.yzxh === h13Yzzxcs.yzxh &&
-                  yzxbItem.mxid === h13Yzzxcs.mxxh,
+                  yzxbItem.mxxh === h13Yzzxcs.mxxh,
               )
             ) {
               changeYzxbs.push(yzxb);
@@ -642,7 +651,7 @@ export class h12_yzxbServiceNew {
         }),
       );
 
-      // 转换日期 //
+      // 转换日期
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
@@ -684,6 +693,7 @@ export class h12_yzxbServiceNew {
               },
               {
                 zxcs: item.zxcs,
+                bzxcs: item.bzxcs,
               },
             );
           }),
@@ -696,10 +706,6 @@ export class h12_yzxbServiceNew {
             ['', dto.zyid, dto.jshs, 0],
           );
         }
-        if (tfListToInsertAll.length > 0) {
-          // 退费单
-          await reviewManager.save(H13YzzxcsTf, tfListToInsertAll);
-        }
         if (changeYzxbs.length > 0) {
           await reviewManager.save(h12_yzxb, changeYzxbs);
         }
@@ -707,9 +713,17 @@ export class h12_yzxbServiceNew {
         //   await reviewManager.save(h12_yzxb, yzxbFJList);
         // }
         if (deleteYzzxcss.length > 0) {
+          // 备份单子
+          await reviewManager.insert(H13YzzxcsDelete, deleteYzzxcss);
+          await reviewManager.insert(H13YzzxcsDelete, tfListToInsertAll);
+
           await reviewManager.delete(h13_yzzxcs, {
             zyid: dto.zyid,
             maxid: In(deleteYzzxcss.map((yzzxcs) => yzzxcs.maxid)),
+          });
+          await reviewManager.delete(H13YzzxcsTf, {
+            zyid: dto.zyid,
+            zxcs2: In(tfListToInsertAll.map((tfZxcs2) => tfZxcs2.zxcs2)),
           });
         }
       });
@@ -1218,7 +1232,6 @@ export class h12_yzxbServiceNew {
         await h12Repo.save(yzxbUpdate);
       }
     } catch (error: any) {
-      console.error('删除费用出错：', error);
       if (error instanceof CustomException) {
         throw error;
       } else throw new CustomException(ERR.ERR_40810);
@@ -1510,21 +1523,24 @@ export class h12_yzxbServiceNew {
     // costFees: costDto[],
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
   ): H13YzzxcsTf[] {
-    return h13_yzzxcsList.map((item) => ({
-      ...item,
-      czrq: new Date(),
-      fydh: '',
-      zxcs2: item.maxid,
-      zxhs: dto.zxhs,
-      zxcs: -1 * item.bzxcs,
-      bzxcs: 0,
-      tyrid: dto.zxhs,
-      tysj: new Date(),
-      sysj: null,
-      clbz: 0,
-      fybz: 0,
-      zyid: dto.zyid,
-    })) as H13YzzxcsTf[];
+    return h13_yzzxcsList.map((item) =>
+      //   this.createRefundListOfReviewOne(item, dto),
+      ({
+        ...item,
+        czrq: new Date(),
+        fydh: null,
+        zxcs2: item.maxid,
+        zxhs: dto.zxhs,
+        zxcs: -1 * item.bzxcs,
+        bzxcs: 0,
+        tyrid: dto.zxhs,
+        tysj: new Date(),
+        sysj: null,
+        clbz: 0,
+        fybz: 0,
+        zyid: dto.zyid,
+      }),
+    ) as H13YzzxcsTf[];
   }
 
   /**
