@@ -935,19 +935,6 @@ export class h12_yzxbService {
     //   h12_yzxbList.pop();
     // }
 
-    // 处理删除记录
-    const promises = [];
-    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
-      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
-      if (scdh && xmid === '0000000') {
-        // 只有主项删除时，关联的检查申请才能删除
-        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
-        if (deleteJcsq) promises.push(...deleteJcsq);
-      }
-      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
-    }
-    await Promise.all(promises);
-
     // 初始化变量
     // const today = new Date().getFullYear().toString();
     // const firstOrder = h12_yzxbList[0];
@@ -1072,6 +1059,19 @@ export class h12_yzxbService {
     // for (let i = 0; i < h12_yzxbList.length; i++) {
     //   const adviceRow = h12_yzxbList[i];
     // await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
+
+    // 处理删除记录
+    const promises = [];
+    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
+      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
+      if (scdh && xmid === '0000000') {
+        // 只有主项删除时，关联的检查申请才能删除
+        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
+        if (deleteJcsq) promises.push(...deleteJcsq);
+      }
+      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
+    }
+    await Promise.all(promises);
 
     try {
       await manager.save(h12_yzxb, h12_yzxbList);
