@@ -22,7 +22,10 @@ export class h13_djdy {
   @Column('varchar', { name: 'czry', nullable: true, length: 10 })
   czry: string | null;
 
-  @Column('datetime', { name: 'czrq', nullable: true })
+  @Column('datetime', { name: 'czrq', nullable: true, default: () => 'getdate()' })
   @DateTransformer()
   czrq: Date | null;
+
+  @Column('varchar', { name: 'dyflid', length: 10, default: '' })
+  dyflid: string;
 }

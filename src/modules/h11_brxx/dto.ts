@@ -404,8 +404,8 @@ export class receiptDto extends QueryDto {
   @Allow()
   cycw?: string;
 
-  @IsNotEmpty({ message: 'dyflid不能为空' })
-  dyflid?: string;
+  @Allow()
+  fylbid?: string;
 }
 
 export class UpdateDto extends CreateDto {

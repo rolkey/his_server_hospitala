@@ -8,6 +8,7 @@ import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { varcharNumberTransformer } from '@/utils/varchar-number.transformer'; // 引入 transformer
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 
 @Index('h12_yzxb_mxxh', ['zyid', 'mxxh'], {})
 @Index('h12_yzxb_x', ['zyid', 'yzlx', 'yzxh', 'mxxh'], { unique: true })
@@ -24,6 +25,10 @@ export class h12_yzxb {
 
   @PrimaryColumn('varchar', { primary: true, name: 'zyid', length: 12, update: false })
   zyid: string;
+
+  @ManyToOne(() => h11_brxx)
+  @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
+  h11_brxxEntity: h11_brxx;
 
   @PrimaryColumn('int', { primary: true, name: 'mxxh', update: false })
   mxxh: number;
