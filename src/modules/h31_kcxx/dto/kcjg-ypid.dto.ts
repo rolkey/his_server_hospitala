@@ -13,6 +13,12 @@ export class KcjgYpidRequestDto {
   @Allow()
   xmzl: number;
 
+  /**
+   * 申请数量
+   */
+  @Allow()
+  sqsl: number;
+
   @Allow()
   ksid1: string;
 
