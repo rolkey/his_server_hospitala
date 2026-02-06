@@ -600,6 +600,7 @@ export class h12_yzxbService {
       ypid: mbxb.xmid,
       ypmc: mbxb.xmmc,
       xmzl: mbxb.xmzl,
+      sqsl: 0,
       ksid1: this.g_ksid.xyksid,
       ksid2: this.g_ksid.cyksid,
       ksid3: this.g_ksid.zyksid,
@@ -734,6 +735,7 @@ export class h12_yzxbService {
           ypid: pkgItem.xmid,
           ypmc: pkgItem.xmmc,
           xmzl: pkgItem.xmzl,
+          sqsl: 0,
           ksid1: this.g_ksid.xyksid,
           ksid2: this.g_ksid.cyksid,
           ksid3: this.g_ksid.zyksid,
@@ -942,6 +944,12 @@ export class h12_yzxbService {
     // const groupId = firstOrder.yzzh || 0;
     // const orderDate = firstOrder.yzrq || new Date();
 
+    const g_ksid = await this.configReaderService.getKsids(this.departmentId);
+    // const gstr_ainf = await this.configReaderService.readGstrAinf({
+    //   userId: h12_yzxbList[0].cyksid,
+    //   systemId: 13,
+    // });
+
     // 验证医嘱
     for (const [i, adviceRow] of h12_yzxbList.entries()) {
       // 特殊医嘱处理
@@ -963,7 +971,7 @@ export class h12_yzxbService {
           throw new BadRequestException('请录入用量!');
         }
 
-        // 验证频次
+        // 验证频次，
         if (!adviceRow.syplid || adviceRow.syplid.trim() === '') {
           throw new BadRequestException('请录入次数!');
         }
@@ -1020,23 +1028,34 @@ export class h12_yzxbService {
       }
 
       // 验证库存
-      if (
-        (adviceRow.tjbz === 0 || adviceRow.tzbz === 0) &&
-        (adviceRow.xmzl === 2 || adviceRow.xmzl === 3)
-      ) {
+      if ((adviceRow.tjbz === 0 || adviceRow.tzbz === 0) && [2, 3].includes(adviceRow.xmzl)) {
         const usageFrequency = await this.getUsageFrequency(adviceRow.syplid, manager);
         const requiredQuantity = adviceRow.jfyl * usageFrequency * adviceRow.kyts;
 
-        const stockAvailable = await this.checkStock(
-          adviceRow.xmid,
-          adviceRow.xmmc,
-          adviceRow.xmgg,
-          adviceRow.ksid,
-          requiredQuantity,
-          i,
-        );
-        if (!stockAvailable) {
-          throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
+        // const stockAvailable = await this.checkStock(
+        //   adviceRow.xmid,
+        //   adviceRow.xmmc,
+        //   adviceRow.xmgg,
+        //   adviceRow.ksid,
+        //   requiredQuantity,
+        //   i,
+        // );
+
+        const kcjgxx = await this._getKcjgA({
+          lx: 1, // 是否跟item.mblx模板类型有关？
+          ypid: adviceRow.xmid,
+          ypmc: adviceRow.xmmc,
+          xmzl: adviceRow.xmzl,
+          sqsl: requiredQuantity,
+          ksid1: g_ksid.xyksid,
+          ksid2: g_ksid.cyksid,
+          ksid3: g_ksid.zyksid,
+          ksid4: g_ksid.clksid,
+          ksid5: g_ksid.qtksid,
+        });
+
+        if (!kcjgxx || kcjgxx.kcsl < requiredQuantity) {
+          throw new BadRequestException(`${adviceRow.xmmc}  库存不足，请修改医嘱后再保存！`);
         }
       }
 
