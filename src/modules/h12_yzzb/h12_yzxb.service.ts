@@ -945,10 +945,6 @@ export class h12_yzxbService {
     // const orderDate = firstOrder.yzrq || new Date();
 
     const g_ksid = await this.configReaderService.getKsids(this.departmentId);
-    // const gstr_ainf = await this.configReaderService.readGstrAinf({
-    //   userId: h12_yzxbList[0].cyksid,
-    //   systemId: 13,
-    // });
 
     // 验证医嘱
     for (const [i, adviceRow] of h12_yzxbList.entries()) {
@@ -1032,15 +1028,6 @@ export class h12_yzxbService {
         const usageFrequency = await this.getUsageFrequency(adviceRow.syplid, manager);
         const requiredQuantity = adviceRow.jfyl * usageFrequency * adviceRow.kyts;
 
-        // const stockAvailable = await this.checkStock(
-        //   adviceRow.xmid,
-        //   adviceRow.xmmc,
-        //   adviceRow.xmgg,
-        //   adviceRow.ksid,
-        //   requiredQuantity,
-        //   i,
-        // );
-
         const kcjgxx = await this._getKcjgA({
           lx: 1, // 是否跟item.mblx模板类型有关？
           ypid: adviceRow.xmid,
@@ -1054,7 +1041,7 @@ export class h12_yzxbService {
           ksid5: g_ksid.qtksid,
         });
 
-        if (!kcjgxx || kcjgxx.kcsl < requiredQuantity) {
+        if (!kcjgxx) {
           throw new BadRequestException(`${adviceRow.xmmc}  库存不足，请修改医嘱后再保存！`);
         }
       }
@@ -1312,28 +1299,6 @@ export class h12_yzxbService {
       select: ['mrcs'],
     });
     return frequency?.mrcs || 1;
-  }
-
-  /**
-   * 校验库存
-   * @param xmid
-   * @param xmmc
-   * @param xmgg
-   * @param ksid
-   * @param requiredQuantity
-   * @param index
-   * @returns
-   */
-  private async checkStock(
-    xmid: string,
-    xmmc: string,
-    xmgg: string,
-    ksid: string,
-    requiredQuantity: number,
-    index: number,
-  ): Promise<boolean> {
-    // 实现库存检查逻辑
-    return true; // 假设库存足够
   }
 
   async stopAdvice(

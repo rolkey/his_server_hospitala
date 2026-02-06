@@ -491,7 +491,8 @@ export class H31_kcxxService {
           .andWhere('kcxx.kcsl > 0')
           .andWhere('kcxx.sxrq < getdate()')
           .andWhere(
-            'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= 1',
+            'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= ' +
+              (request.sqsl ?? 1),
           )
           .orderBy('kcxx.scph')
           .limit(1)
@@ -517,7 +518,8 @@ export class H31_kcxxService {
             .andWhere('kcxx.yxbz = 1')
             .andWhere('kcxx.sxrq < getdate()')
             .andWhere(
-              'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= 1',
+              'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= ' +
+                (request.sqsl ?? 1),
             )
             .orderBy('kcxx.scph')
             .limit(1)
