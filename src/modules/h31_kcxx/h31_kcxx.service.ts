@@ -411,19 +411,17 @@ export class H31_kcxxService {
           gjybmc: xmzd.gjybmc,
         };
       } else {
-        // 处理药品
+        // 处理药品/材料
         const ypzd = await this.h30_ypzdRepository.findOne({
           where: { ypid: request.ypid },
         });
 
         if (!ypzd) {
-          response.success = false;
-          response.message = `未查到药品字典数据，请核对:${request.ypid}${request.ypmc}`;
-          return response;
+          throw new BadRequestException('项目字典找不到相应项目：' + request.ypid);
         }
 
-        const xs = ypzd.ysxs || 1; // ypzd.ysxs 包装系数
-        const kcgl = ypzd.jsl2 ?? 1;
+        const xs = ypzd.ysxs || 1; // ypzd.ysxs 包装系数(医生系数)？
+        const kcgl = ypzd.jsl2 ?? 1; // 库存关联，库存无关？？
 
         if (kcgl !== 0) {
           response.success = true;
