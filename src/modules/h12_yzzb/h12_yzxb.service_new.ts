@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import dayjs = require('dayjs');
+// import dayjs = require('dayjs');
+// import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import {
   DataSource,
   In,
@@ -218,17 +220,22 @@ export class h12_yzxbServiceNew {
         throw new BadRequestException('选择的医嘱中仍存在未处理的费用！！');
       }
 
+      const fhYzxb = yzxbList.map((yzxb) => {
+        const { h13_yzzxcsList, ...yzxbUpdate } = yzxb;
+        return yzxbUpdate;
+      });
+
       // 转换日期 ////
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
       // 附加信息
       const yzxbFJList: h12_yzxb[] = [];
       // 批量修改并保存
-      await this.reviewAdvices(yzxbList, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
+      await this.reviewAdvices(fhYzxb, formatZXRQ, dtoZXRQ, dto, yzhshdbz, yzauton, yzxbFJList);
 
       await this.entityManager.transaction(async (reviewManager) => {
         if (yzxbList.length > 0) {
-          await reviewManager.save(h12_yzxb, yzxbList);
+          await reviewManager.save(h12_yzxb, fhYzxb);
         }
         if (yzxbFJList.length > 0) {
           await reviewManager.save(h12_yzxb, yzxbFJList);
