@@ -600,6 +600,7 @@ export class h12_yzxbService {
       ypid: mbxb.xmid,
       ypmc: mbxb.xmmc,
       xmzl: mbxb.xmzl,
+      sqsl: 0,
       ksid1: this.g_ksid.xyksid,
       ksid2: this.g_ksid.cyksid,
       ksid3: this.g_ksid.zyksid,
@@ -734,6 +735,7 @@ export class h12_yzxbService {
           ypid: pkgItem.xmid,
           ypmc: pkgItem.xmmc,
           xmzl: pkgItem.xmzl,
+          sqsl: 0,
           ksid1: this.g_ksid.xyksid,
           ksid2: this.g_ksid.cyksid,
           ksid3: this.g_ksid.zyksid,
@@ -935,25 +937,14 @@ export class h12_yzxbService {
     //   h12_yzxbList.pop();
     // }
 
-    // 处理删除记录
-    const promises = [];
-    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
-      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
-      if (scdh && xmid === '0000000') {
-        // 只有主项删除时，关联的检查申请才能删除
-        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
-        if (deleteJcsq) promises.push(...deleteJcsq);
-      }
-      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
-    }
-    await Promise.all(promises);
-
     // 初始化变量
     // const today = new Date().getFullYear().toString();
     // const firstOrder = h12_yzxbList[0];
     // const groupFlag = firstOrder.typbz ?? '';
     // const groupId = firstOrder.yzzh || 0;
     // const orderDate = firstOrder.yzrq || new Date();
+
+    const g_ksid = await this.configReaderService.getKsids(this.departmentId);
 
     // 验证医嘱
     for (const [i, adviceRow] of h12_yzxbList.entries()) {
@@ -976,7 +967,7 @@ export class h12_yzxbService {
           throw new BadRequestException('请录入用量!');
         }
 
-        // 验证频次
+        // 验证频次，
         if (!adviceRow.syplid || adviceRow.syplid.trim() === '') {
           throw new BadRequestException('请录入次数!');
         }
@@ -1033,23 +1024,25 @@ export class h12_yzxbService {
       }
 
       // 验证库存
-      if (
-        (adviceRow.tjbz === 0 || adviceRow.tzbz === 0) &&
-        (adviceRow.xmzl === 2 || adviceRow.xmzl === 3)
-      ) {
+      if ((adviceRow.tjbz === 0 || adviceRow.tzbz === 0) && [2, 3].includes(adviceRow.xmzl)) {
         const usageFrequency = await this.getUsageFrequency(adviceRow.syplid, manager);
         const requiredQuantity = adviceRow.jfyl * usageFrequency * adviceRow.kyts;
 
-        const stockAvailable = await this.checkStock(
-          adviceRow.xmid,
-          adviceRow.xmmc,
-          adviceRow.xmgg,
-          adviceRow.ksid,
-          requiredQuantity,
-          i,
-        );
-        if (!stockAvailable) {
-          throw new BadRequestException('参数设置缺药不允许保存，请删除缺药库存，再保存！');
+        const kcjgxx = await this._getKcjgA({
+          lx: 1, // 是否跟item.mblx模板类型有关？
+          ypid: adviceRow.xmid,
+          ypmc: adviceRow.xmmc,
+          xmzl: adviceRow.xmzl,
+          sqsl: requiredQuantity,
+          ksid1: g_ksid.xyksid,
+          ksid2: g_ksid.cyksid,
+          ksid3: g_ksid.zyksid,
+          ksid4: g_ksid.clksid,
+          ksid5: g_ksid.qtksid,
+        });
+
+        if (!kcjgxx) {
+          throw new BadRequestException(`${adviceRow.xmmc}  库存不足，请修改医嘱后再保存！`);
         }
       }
 
@@ -1072,6 +1065,19 @@ export class h12_yzxbService {
     // for (let i = 0; i < h12_yzxbList.length; i++) {
     //   const adviceRow = h12_yzxbList[i];
     // await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
+
+    // 处理删除记录
+    const promises = [];
+    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
+      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
+      if (scdh && xmid === '0000000') {
+        // 只有主项删除时，关联的检查申请才能删除
+        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
+        if (deleteJcsq) promises.push(...deleteJcsq);
+      }
+      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
+    }
+    await Promise.all(promises);
 
     try {
       await manager.save(h12_yzxb, h12_yzxbList);
@@ -1295,28 +1301,6 @@ export class h12_yzxbService {
     return frequency?.mrcs || 1;
   }
 
-  /**
-   * 校验库存
-   * @param xmid
-   * @param xmmc
-   * @param xmgg
-   * @param ksid
-   * @param requiredQuantity
-   * @param index
-   * @returns
-   */
-  private async checkStock(
-    xmid: string,
-    xmmc: string,
-    xmgg: string,
-    ksid: string,
-    requiredQuantity: number,
-    index: number,
-  ): Promise<boolean> {
-    // 实现库存检查逻辑
-    return true; // 假设库存足够
-  }
-
   async stopAdvice(
     zyid: string,
     yzxh: number,
@@ -1466,7 +1450,7 @@ export class h12_yzxbService {
     return true;
   }
 
-  // 取消停嘱
+  // 撤停嘱
   async unStop(zyid: string, yzxh: number, yzlx: number, yzzh: number[]) {
     const defaultValue = {
       tzbz: 0,
@@ -1478,7 +1462,7 @@ export class h12_yzxbService {
       mrcs: null,
     };
     const yzxbs = await this.h12_yzxbRepo.find({
-      where: { yzlx, yzxh, zyid, yzzh: In(yzzh), yzzt: 5 },
+      where: { yzlx, yzxh, zyid, yzzh: In(yzzh), yzzt: In([5, 7]) },
     });
     for (const yzxb of yzxbs) {
       Object.assign(yzxb, defaultValue);
