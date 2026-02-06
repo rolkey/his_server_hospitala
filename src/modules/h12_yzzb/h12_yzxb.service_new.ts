@@ -160,7 +160,6 @@ export class h12_yzxbServiceNew {
       .createQueryBuilder('yzxb')
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
-      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
       //   .andWhere('yzxb.ysbz = 1')
       .andWhere('yzxb.tjbz = 1')
       .andWhere('yzxb.yzzt IN (1, 5)');
@@ -245,7 +244,6 @@ export class h12_yzxbServiceNew {
         .createQueryBuilder('yzxb')
         .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
         .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
-        .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
         // .andWhere('yzxb.ysbz = 1')
         .andWhere('yzxb.tjbz = 1')
         .andWhere('yzxb.yzzt IN (1, 5)');
@@ -542,7 +540,6 @@ export class h12_yzxbServiceNew {
       ])
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
-      .andWhere('(yzxb.hdbz IN (0, 1) OR yzxb.hdbz IS NULL)')
       //   .andWhere('yzxb.ysbz = 1')
       .andWhere('yzxb.tjbz = 1')
       .andWhere('yzxb.yzzt IN (1, 5)');
