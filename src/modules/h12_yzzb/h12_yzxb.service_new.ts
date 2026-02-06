@@ -158,6 +158,9 @@ export class h12_yzxbServiceNew {
   async reviewNoFee(dto: reviewDto): Promise<void> {
     const yzxbQueryBuilder = this.h12_yzxbRepo
       .createQueryBuilder('yzxb')
+      .leftJoin('yzxb.h13_yzzxcsList', 'yzzxcs')
+      .leftJoin('yzzxcs.h13YzzxcsTfList', 'yzzxcsTf')
+      .select(['yzxb', 'yzzxcs.clbz', 'yzzxcs.fybz', 'yzzxcs.fydh', 'yzzxcs.zxrq', 'yzzxcs.maxid'])
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       //   .andWhere('yzxb.ysbz = 1')
@@ -202,15 +205,16 @@ export class h12_yzxbServiceNew {
       ]);
 
       // 检查是否有未处理的费用
-      const hasUnprocessedFees = yzxbList.some(
-        (yzxb) =>
-          yzxb.yzzt === 5 &&
-          yzxb.h13_yzzxcsList.some(
-            (yzzxcs) => yzzxcs.clbz === 1 && dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day'),
-          ),
-      );
-
-      if (hasUnprocessedFees) {
+      if (
+        yzxbList.some(
+          (yzxb) =>
+            yzxb.yzzt === 5 &&
+            yzxb.h13_yzzxcsList?.some(
+              (yzzxcs) =>
+                yzzxcs.clbz === 1 && dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day'),
+            ),
+        )
+      ) {
         throw new BadRequestException('选择的医嘱中仍存在未处理的费用！！');
       }
 
@@ -230,8 +234,9 @@ export class h12_yzxbServiceNew {
           await reviewManager.save(h12_yzxb, yzxbFJList);
         }
       });
-    } catch (errror) {
-      this.logger.error(errror);
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
     }
   }
 
