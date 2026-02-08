@@ -60,7 +60,8 @@ export class h12_yzzbService {
     if (validZyidList.length === 0) return [];
     // 过略医嘱明细表  type = 1
     if (data.type === '1') {
-      const h12_yzxbQuery = this.h12_yzxbRepo.createQueryBuilder('h12_yzxb')
+      const h12_yzxbQuery = this.h12_yzxbRepo
+        .createQueryBuilder('h12_yzxb')
         .innerJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
         .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
         .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
@@ -141,7 +142,7 @@ export class h12_yzzbService {
         }
         h12_yzxbQuery.orderBy('h12_yzxb.yzrq', 'ASC')
           .addOrderBy('h12_yzxb.zxcs', 'ASC')
-          .addOrderBy('h12_yzxb.mxxh', 'ASC')
+          .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
         const [h12_yzxbList, ksidList, usidList] = await Promise.all([
           h12_yzxbQuery.getMany(),
@@ -169,7 +170,8 @@ export class h12_yzzbService {
         return h12_yzxbList;
       }
     } else {
-      const h13_yzzxcsQuery = this.h13_yzzxcsRepo.createQueryBuilder('h13_yzzxcs')
+      const h13_yzzxcsQuery = this.h13_yzzxcsRepo
+        .createQueryBuilder('h13_yzzxcs')
         .innerJoinAndSelect('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
         .leftJoin('h12_yzxb.h11_brxxEntity', 'h11_brxxEntity')
         .leftJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
@@ -247,7 +249,6 @@ export class h12_yzzbService {
       }
       h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC')
         .addOrderBy('h13_yzzxcs.maxid', 'ASC')
-
 
       const [h13_yzzxcsList, ksidList, usidList] = await Promise.all([
         h13_yzzxcsQuery.getMany(),

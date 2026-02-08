@@ -27,7 +27,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) { }
+  ) {}
 
   @Get('findAllByPatient')
   async findAllByPatient(
@@ -233,7 +233,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.5';
+    return '1.0.0.5'; // version 版本号
   }
 
   @Post('generateBaby')
