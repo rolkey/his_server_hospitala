@@ -32,7 +32,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) { }
+  ) {}
 
   async getPatientListForZyidAndReceipt(data: {
     zyidList: string[];
@@ -140,7 +140,8 @@ export class h12_yzzbService {
           );
           h12_yzxbQuery.andWhere('h13_djdy.maxid IS NULL');
         }
-        h12_yzxbQuery.orderBy('h12_yzxb.yzrq', 'ASC')
+        h12_yzxbQuery
+          .orderBy('h12_yzxb.yzrq', 'ASC')
           .addOrderBy('h12_yzxb.zxcs', 'ASC')
           .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
@@ -247,8 +248,7 @@ export class h12_yzzbService {
           xsdjssj: data.xsdjssj,
         });
       }
-      h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC')
-        .addOrderBy('h13_yzzxcs.maxid', 'ASC')
+      h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC').addOrderBy('h13_yzzxcs.maxid', 'ASC');
 
       const [h13_yzzxcsList, ksidList, usidList] = await Promise.all([
         h13_yzzxcsQuery.getMany(),

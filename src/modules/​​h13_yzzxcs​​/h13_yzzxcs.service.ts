@@ -218,7 +218,7 @@ export class h13_yzzxcsService {
       h13Yzzxcss.push(...transformedData);
     }
 
-    return h13Yzzxcss;
+    return h13Yzzxcss.filter((yzzxcs) => yzzxcs.sjtysl > 0);
   }
 
   /**

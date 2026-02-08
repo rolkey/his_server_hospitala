@@ -554,6 +554,7 @@ export class h12_yzxbServiceNew {
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       //   .andWhere('yzxb.ysbz = 1')
       .andWhere('yzxb.tjbz = 1')
+      .andWhere('yzzxcs.sjtysl > 0') // 退费数量等于0的不处理
       .andWhere('yzxb.yzzt IN (1, 5)');
 
     // 添加 OR 组合条件//
