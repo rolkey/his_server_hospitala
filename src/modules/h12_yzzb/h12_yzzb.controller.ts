@@ -233,7 +233,7 @@ export class h12_yzzbController {
 
   @Get('v-flag')
   async vFlag() {
-    return '1.0.0.5';
+    return '1.0.0.5'; // version 版本号
   }
 
   @Post('generateBaby')
