@@ -31,7 +31,7 @@ export class h12_yzzbService {
     @InjectRepository(h00_sypl)
     private h00_syplRepo: Repository<h00_sypl>,
     private readonly gyIdentityService: GyIdentityService,
-  ) { }
+  ) {}
 
   async getPatientListForZyidAndReceipt(data: {
     zyidList: string[];
@@ -260,7 +260,9 @@ export class h12_yzzbService {
       yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
       yzzb.zkksidEntity = ksmcDict[yzzb?.zkksid] || null;
       yzzb.tzridEntity = usrcatDict[yzzb?.tzrid] || null;
-      yzzb.h12_yzxbList = h12_yzxbList.filter(item => item.zyid === yzzb.zyid && item.yzlx === yzzb.yzlx && item.yzxh === yzzb.yzxh);
+      yzzb.h12_yzxbList = h12_yzxbList.filter(
+        (item) => item.zyid === yzzb.zyid && item.yzlx === yzzb.yzlx && item.yzxh === yzzb.yzxh,
+      );
 
       return yzzb;
     });
