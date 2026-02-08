@@ -52,19 +52,6 @@ export class h11_brxxService {
         { value: `%${queryDto?.value}%` },
       );
     }
-
-    if (queryDto.brxm) {
-      baseQuery.andWhere('h11_brxx.brxm LIKE :brxm', { brxm: `%${queryDto.brxm.trim()}%` });
-    }
-
-    if (queryDto.jtdh) {
-      baseQuery.andWhere('h11_brxx.jtdh LIKE :jtdh', { jtdh: `%${queryDto.jtdh.trim()}%` });
-    }
-
-    if (queryDto.zybh) {
-      baseQuery.andWhere('h11_brxx.zybh LIKE :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
-    }
-
     if (queryDto.zyzt) {
       const zyzt = Number(queryDto.zyzt);
       if ((zyzt === 1 || zyzt === 2) && queryDto.cycw !== '0') {
@@ -77,82 +64,24 @@ export class h11_brxxService {
     if (queryDto.ryksid) {
       baseQuery.andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
     }
-
-    if (queryDto.zkksid) {
-      baseQuery.andWhere(
-        'h11_brxx.zkksid LIKE :zkksid',
-        { zkksid: `%${queryDto.zkksid.trim()}%` },
-      );
-      // baseQuery.andWhere(
-      //   ' ( EXISTS (SELECT zyid FROM h13_brzkqk WHERE h13_brzkqk.zyid = h11_brxx.zyid AND h13_brzkqk.ksid LIKE :zkksid) )',
-      //   { zkksid: `%${queryDto.zkksid.trim()}%` },
-      // );
-    }
-
-    if (queryDto.mzys) {
-      baseQuery.andWhere('h11_brxx.mzys LIKE :mzys', { mzys: `%${queryDto.mzys.trim()}%` });
-    }
-
-    if (queryDto.sxys) {
-      baseQuery.andWhere('h11_brxx.sxys LIKE :sxys', { sxys: `%${queryDto.sxys.trim()}%` });
-    }
-
-    if (queryDto.rykssj && queryDto.ryjssj) {
-      baseQuery.andWhere('(h11_brxx.rysj BETWEEN :start AND :end)', {
-        start: dayjs(queryDto.rykssj).format('YYYY-MM-DD 00:00:00'),
-        end: dayjs(queryDto.ryjssj).format('YYYY-MM-DD 23:59:59'),
-      });
-    }
-
-    if (queryDto.cykssj && queryDto.cyjssj) {
-      baseQuery.andWhere('(h11_brxx.cysj BETWEEN :start AND :end)', {
-        start: dayjs(queryDto.cykssj).format('YYYY-MM-DD 00:00:00'),
-        end: dayjs(queryDto.cyjssj).format('YYYY-MM-DD 23:59:59'),
-      });
-    }
-
-    if (queryDto.ylzh) {
-      baseQuery.andWhere('h11_brxx.ylzh = :ylzh', { ylzh: queryDto.ylzh.trim() });
-    }
-
-    if (queryDto.sfzh) {
-      baseQuery.andWhere('h11_brxx.sfzh LIKE :sfzh', { sfzh: `%${queryDto.sfzh.trim()}%` });
-    }
-
-    if (queryDto.rycw) {
-      baseQuery.andWhere('h11_brxx.rycw LIKE :rycw', { rycw: `%${queryDto.rycw.trim()}%` });
-    }
-
-    if (queryDto.cycw && queryDto.cycw === '0') {
-      baseQuery.andWhere(' (h11_brxx.cycw is null or h11_brxx.cycw =:cycw) ', { cycw: '' });
-    } else if (queryDto.cycw) {
-      baseQuery.andWhere(' (h11_brxx.cycw =:cycw) ', { cycw: queryDto.cycw });
-    }
-
-    // 添加djflid(单据类型：1 口服  2 输液  3注射  4处置)字段过滤条件
-    if (queryDto.dyflid) {
-      // 使用TypeORM的QueryBuilder方式实现Exists子查询
-      baseQuery.andWhere((qb) => {
-        // 创建子查询
-        const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb');
-
-        // 当dyflid值为5或6时，只需要查询h12_yzxb表中存在该病人的数据即可
-        if (queryDto.dyflid === '5' || queryDto.dyflid === '6') {
-          // 条件：zyid匹配主查询
-          subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
-        } else {
-          // 关联h00_syff表
-          subQuery
-            .innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
-            // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
-            .where('h12_yzxb.zyid = h11_brxx.zyid')
-            .andWhere('h12_yzxb.syffid IS NOT NULL')
-            .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
-        }
-
-        return `EXISTS (${subQuery.limit(1).getQuery()})`;
-      });
-    }
+    baseQuery.andWhere((qb) => {
+      // 创建子查询
+      const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb');
+      subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
+      // 费用类别过略
+      if (queryDto.fylbid) {
+        const fylbidList = queryDto.fylbid.split(',');
+        subQuery.andWhere('h12_yzxb.fylbid IN (:...fylbidList)', { fylbidList });
+      }
+      // if(true) {
+      //   subQuery.innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
+      //     // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
+      //     .where('h12_yzxb.zyid = h11_brxx.zyid')
+      //     .andWhere('h12_yzxb.syffid IS NOT NULL')
+      //     .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
+      // }
+      return `EXISTS (${subQuery.limit(1).getQuery()})`;
+    });
 
     // 排序
     if (queryDto.ryjssj && queryDto.ryjssj) {
@@ -228,19 +157,6 @@ export class h11_brxxService {
           ELSE 0 END`,
         'istoday',
       );
-
-    // 添加打印标识字段查询，仅当dyflid存在时
-    if (queryDto.dyflid) {
-      detailQuery
-        .addSelect(
-          `CASE
-            WHEN EXISTS (SELECT 1 FROM h13_djdy WHERE zyid = h11_brxx.zyid AND pblx = :dyflid) THEN 1
-            ELSE 0 END`,
-          'dybs',
-        )
-        .setParameter('dyflid', queryDto.dyflid);
-    }
-
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 

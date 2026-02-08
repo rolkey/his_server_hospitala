@@ -12,6 +12,7 @@ import { getSqlWithParameters } from '@/utils/sql-utils';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
+import { h13_djdy } from '../h13_djdy/h13_djdy.entity';
 
 @Injectable()
 export class h12_yzzbService {
@@ -47,227 +48,215 @@ export class h12_yzzbService {
     lx?: string;
     xsdkssj?: Date;
     xsdjssj?: Date;
+    type: string;
+    dybz?: number;
   }) {
     // 1. 检查zyidlist是否为空
     if (!data.zyidList || data.zyidList.length === 0) {
       throw new BadRequestException('zyidList不能为空');
     }
-    // 2. 检查dyflid是否为空
-    if (!data.dyflid || data.dyflid.trim() === '') {
-      throw new BadRequestException('dyflid不能为空');
-    }
-
     // 过滤掉空的zyid
     const validZyidList = data.zyidList.filter((zyid) => zyid && zyid.trim());
     if (validZyidList.length === 0) return [];
+    // 过略医嘱明细表  type = 1
+    if (data.type === '1') {
+      const h12_yzxbQuery = this.h12_yzxbRepo
+        .createQueryBuilder('h12_yzxb')
+        .innerJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
+        .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
+        .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
+        .leftJoinAndSelect('h12_yzxb.h11_brxxEntity', 'h11_brxxEntity')
+        .where('h12_yzxb.zyid IN (:...zyidlist)', {
+          zyidlist: validZyidList,
+        });
 
-    const h12YzzbQuery = this.h12_yzzbRepo
-      .createQueryBuilder('h12_yzzb')
-      .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
-      .where('h12_yzzb.zyid IN (:...zyidlist)', {
-        zyidlist: validZyidList,
-      });
-    //如果yzlxlist不为空，添加yzlx过滤条件
-    if (data.yzlxList && data.yzlxList.length > 0) {
-      h12YzzbQuery.andWhere('h12_yzzb.yzlx IN (:...yzlxList)', {
-        yzlxList: data.yzlxList,
-      });
-    }
-    // 2. 查询符合条件的yzxb列表（带dyflid过滤）
-    const h12YzxbQuery = this.h12_yzxbRepo
-      .createQueryBuilder('h12_yzxb')
-      // 使用innerJoinAndSelect确保只返回syffid不为空的记录
-      .innerJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
-      .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
-      .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
-      .where('h12_yzxb.zyid IN (:...zyidlist)', {
-        zyidlist: validZyidList,
-      });
-
-    // 添加tzbz（停嘱标志）过滤条件
-    if (data.tzbz !== undefined && data.tzbz !== null) {
-      h12YzxbQuery.andWhere('h12_yzxb.tzbz = :tzbz', {
-        tzbz: data.tzbz,
-      });
-    }
-
-    // 添加xmmc（项目名称）过滤条件（包含匹配）
-    if (data.xmmc && data.xmmc.trim() !== '') {
-      h12YzxbQuery.andWhere('h12_yzxb.xmmc LIKE :xmmc', {
-        xmmc: `%${data.xmmc.trim()}%`,
-      });
-    }
-
-    // 添加医嘱时间过滤条件
-    if (data.yzkssj) {
-      h12YzxbQuery.andWhere('h12_yzxb.yzrq >= :yzkssj', {
-        yzkssj: data.yzkssj,
-      });
-    }
-    if (data.yzjssj) {
-      h12YzxbQuery.andWhere('h12_yzxb.yzrq <= :yzjssj', {
-        yzjssj: data.yzjssj,
-      });
-    }
-    const dyflidNum = Number(data.dyflid);
-    // 1、口服卡，2输液卡，3、注射卡，4、处置单，5、医嘱执行单,6、巡视卡,7、治疗单，8、康复单
-    if (!isNaN(dyflidNum) && dyflidNum < 5) {
-      // 添加dyflid过滤条件
-      h12YzxbQuery.andWhere('syffidEntity.dyflid = :dyflid', {
-        dyflid: data.dyflid,
-      });
-    }
-
-    // 处理执行单
-    if (data.dyflid === '5') {
-      // 添加fylbid过滤条件
-      if (data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
-        h12YzxbQuery.andWhere('h12_yzxb.fylbid = :fylbid', {
-          fylbid: data.fylbid.trim(),
+      if (data.yzlxList && data.yzlxList.length > 0) {
+        h12_yzxbQuery.andWhere('h12_yzxb.yzlx IN (:...yzlxList)', {
+          yzlxList: data.yzlxList,
         });
       }
-      // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
-      if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
-        //dyflid 打印分类
-        h12YzxbQuery.andWhere('syffidEntity.dyflid = :lx', {
-          lx: data.lx.trim(),
-        });
-      }
-    }
-    // 当dyflid为6时，添加h13_yzzxcs表关联及zxrq时间范围过滤 巡视卡
-    if (data.dyflid === '6') {
-      // 使用TypeORM的方式关联h13_yzzxcs表，指定连接条件
-      h12YzxbQuery.innerJoinAndSelect(
-        'h13_yzzxcs',
-        'h13_yzzxcs',
-        'h12_yzxb.yzxh = h13_yzzxcs.yzxh AND h12_yzxb.mxxh = h13_yzzxcs.mxxh AND h12_yzxb.yzlx = h13_yzzxcs.yzlx AND h12_yzxb.zyid = h13_yzzxcs.zyid',
-      );
-
-      // 添加xsdkssj时间过滤
-      if (data.xsdkssj) {
-        h12YzxbQuery.andWhere('h13_yzzxcs.zxrq >= :xsdkssj', {
-          xsdkssj: data.xsdkssj,
+      // 添加tzbz（停嘱标志）过滤条件
+      if (data.tzbz !== undefined && data.tzbz !== null) {
+        h12_yzxbQuery.andWhere('h12_yzxb.tzbz = :tzbz', {
+          tzbz: data.tzbz,
         });
       }
 
-      // 添加xsdjssj时间过滤
-      if (data.xsdjssj) {
-        h12YzxbQuery.andWhere('h13_yzzxcs.zxrq <= :xsdjssj', {
-          xsdjssj: data.xsdjssj,
+      // 添加xmmc（项目名称）过滤条件（包含匹配）
+      if (data.xmmc && data.xmmc.trim() !== '') {
+        h12_yzxbQuery.andWhere('h12_yzxb.xmmc LIKE :xmmc', {
+          xmmc: `%${data.xmmc.trim()}%`,
         });
       }
-    }
 
-    h12YzxbQuery
-      .orderBy('h12_yzxb.yzrq', 'ASC')
-      .addOrderBy('h12_yzxb.zxcs', 'ASC')
-      .addOrderBy('h12_yzxb.mxxh', 'ASC')
-      .addOrderBy('h12_yzxb.typbz', 'ASC');
+      // 添加医嘱时间过滤条件
+      if (data.yzkssj) {
+        h12_yzxbQuery.andWhere('h12_yzxb.yzrq >= :yzkssj', {
+          yzkssj: data.yzkssj,
+        });
+      }
+      if (data.yzjssj) {
+        h12_yzxbQuery.andWhere('h12_yzxb.yzrq <= :yzjssj', {
+          yzjssj: data.yzjssj,
+        });
+      }
+      // if (!isNaN(dyflidNum) && dyflidNum < 5) {
+      //   // 添加dyflid过滤条件
+      //   h12_yzxbQuery.andWhere('syffidEntity.dyflid = :dyflid', {
+      //     dyflid: data.dyflid,
+      //   });
+      // }
+      // 处理执行单
+      if (data.type === '1') {
+        // 添加fylbid过滤条件
+        if (data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
+          h12_yzxbQuery.andWhere('h12_yzxb.fylbid = :fylbid', {
+            fylbid: data.fylbid.trim(),
+          });
+        }
+        // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
+        if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
+          //dyflid 打印分类
+          h12_yzxbQuery.andWhere('syffidEntity.dyflid = :lx', {
+            lx: data.lx.trim(),
+          });
+        }
+        // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
+        if (data.dybz) {
+          h12_yzxbQuery.innerJoin(
+            h13_djdy,
+            'h13_djdy',
+            'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h12_yzxb.mxxh AND h13_djdy.zyid = h12_yzxb.zyid',
+            { djdyPblx: '1' },
+          );
+        }
+        h12_yzxbQuery
+          .orderBy('h12_yzxb.yzrq', 'ASC')
+          .addOrderBy('h12_yzxb.zxcs', 'ASC')
+          .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
-    //医嘱类型过略
-    if (data.yzlxList && data.yzlxList.length > 0) {
-      h12YzxbQuery.andWhere('h12_yzxb.yzlx IN (:...yzlxList)', {
-        yzlxList: data.yzlxList,
+        const [h12_yzxbList, ksidList, usidList] = await Promise.all([
+          h12_yzxbQuery.getMany(),
+          this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
+          this.usrcatRepo.find({ select: ['usid', 'unam'] }),
+          // getYzzxcs(),
+        ]);
+        const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
+        const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
+
+        h12_yzxbList.forEach((item) => {
+          item.ksysEntity = usrcatDict[item.ksys] || null;
+          item.kshsEntity = usrcatDict[item.kshs] || null;
+          item.jsysEntity = usrcatDict[item.jsys] || null;
+          item.lryidEntity = usrcatDict[item.lryid] || null;
+          item.hdhsEntity = usrcatDict[item.hdhs] || null;
+          item.zxhsEntity = usrcatDict[item.zxhs] || null;
+          item.kssxysEntity = usrcatDict[item.kssxys] || null;
+          item.kssxhsEntity = usrcatDict[item.kssxhs] || null;
+          item.jssxysEntity = usrcatDict[item.jssxys] || null;
+          item.jssxhsEntity = usrcatDict[item.jssxhs] || null;
+          item.ksidEntity = ksmcDict[item.ksid] || null;
+          item.jshsEntity = usrcatDict[item.jshs] || null;
+        });
+        return h12_yzxbList;
+      }
+    } else {
+      const h13_yzzxcsQuery = this.h13_yzzxcsRepo
+        .createQueryBuilder('h13_yzzxcs')
+        .innerJoinAndSelect('h13_yzzxcs.h12_yzxb', 'h12_yzxb')
+        .leftJoin('h12_yzxb.h11_brxxEntity', 'h11_brxxEntity')
+        .leftJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
+        .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
+        .addSelect([
+          'h11_brxxEntity.brxm',
+          'h11_brxxEntity.rycw',
+          // 按需增删 h11_brxx 的其它字段
+        ])
+        .where('h12_yzxb.zyid IN (:...zyidlist)', {
+          zyidlist: validZyidList,
+        });
+      if (data.yzlxList && data.yzlxList.length > 0) {
+        h13_yzzxcsQuery.andWhere('h12_yzxb.yzlx IN (:...yzlxList)', {
+          yzlxList: data.yzlxList,
+        });
+      }
+
+      // 添加tzbz（停嘱标志）过滤条件
+      if (data.tzbz !== undefined && data.tzbz !== null) {
+        h13_yzzxcsQuery.andWhere('h12_yzxb.tzbz = :tzbz', {
+          tzbz: data.tzbz,
+        });
+      }
+
+      // 添加xmmc（项目名称）过滤条件（包含匹配）
+      if (data.xmmc && data.xmmc.trim() !== '') {
+        h13_yzzxcsQuery.andWhere('h12_yzxb.xmmc LIKE :xmmc', {
+          xmmc: `%${data.xmmc.trim()}%`,
+        });
+      }
+      if (data.type == '2') {
+        if (data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
+          h13_yzzxcsQuery.andWhere('h12_yzxb.fylbid = :fylbid', {
+            fylbid: data.fylbid.trim(),
+          });
+        }
+        // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
+        if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
+          //dyflid 打印分类
+          h13_yzzxcsQuery.andWhere('syffidEntity.dyflid = :lx', {
+            lx: data.lx.trim(),
+          });
+        }
+        // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
+        if (data.dybz) {
+          h13_yzzxcsQuery.innerJoin(
+            h13_djdy,
+            'h13_djdy',
+            'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h13_yzzxcs.maxid AND h13_djdy.zyid = h13_yzzxcs.zyid',
+            { djdyPblx: '1' },
+          );
+        }
+
+        if (data.xsdkssj) {
+          h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq >= :xsdkssj', {
+            xsdkssj: data.xsdkssj,
+          });
+        }
+
+        // 添加xsdjssj时间过滤
+        if (data.xsdjssj) {
+          h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq <= :xsdjssj', {
+            xsdjssj: data.xsdjssj,
+          });
+        }
+        h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC').addOrderBy('h13_yzzxcs.maxid', 'ASC');
+      }
+
+      const [h13_yzzxcsList, ksidList, usidList] = await Promise.all([
+        h13_yzzxcsQuery.getMany(),
+        this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
+        this.usrcatRepo.find({ select: ['usid', 'unam'] }),
+        // getYzzxcs(),
+      ]);
+      const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
+      const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
+
+      (h13_yzzxcsList as any).forEach((item) => {
+        item.ksysEntity = usrcatDict[item.h12_yzxb.ksys] || null;
+        item.kshsEntity = usrcatDict[item.h12_yzxb.kshs] || null;
+        item.jsysEntity = usrcatDict[item.h12_yzxb.jsys] || null;
+        item.lryidEntity = usrcatDict[item.h12_yzxb.lryid] || null;
+        item.hdhsEntity = usrcatDict[item.h12_yzxb.hdhs] || null;
+        item.zxhsEntity = usrcatDict[item.h12_yzxb.zxhs] || null;
+        item.kssxysEntity = usrcatDict[item.h12_yzxb.kssxys] || null;
+        item.kssxhsEntity = usrcatDict[item.h12_yzxb.kssxhs] || null;
+        item.jssxysEntity = usrcatDict[item.h12_yzxb.jssxys] || null;
+        item.jssxhsEntity = usrcatDict[item.h12_yzxb.jssxhs] || null;
+        item.ksidEntity = ksmcDict[item.h12_yzxb.ksid] || null;
+        item.jshsEntity = usrcatDict[item.h12_yzxb.jshs] || null;
       });
+      return h13_yzzxcsList;
     }
-
-    if (data.yzzt == 1) {
-      h12YzxbQuery.andWhere(' (h12_yzxb.yzzt=:yzzt or h12_yzxb.ysbz=0)  ', { yzzt: data.yzzt });
-    }
-
-    // // 3. 查询yzzxcs列表
-    // const getYzzxcs = async () => {
-    //   if (data.yzzxcs === '1') {
-    //     const h13_yzzxcsqb = this.h13_yzzxcsRepo
-    //       .createQueryBuilder('h13_yzzxcs')
-    //       .leftJoinAndSelect('h13_yzzxcs.h00_fylb', 'h00_fylb')
-    //       .leftJoin('h13_yzzxcs.xmidEntity', 'xmidEntity')
-    //       .addSelect(['xmidEntity.xmid', 'xmidEntity.xmmc', 'xmidEntity.ggxh'])
-    //       .leftJoin('h13_yzzxcs.h31Lyjl', 'H31Lyjl')
-    //       .addSelect([
-    //         'H31Lyjl.djbh',
-    //         'H31Lyjl.tjbz',
-    //         'H31Lyjl.ckclbz',
-    //         'H31Lyjl.ksid',
-    //         'H31Lyjl.fhksid',
-    //       ])
-    //       .where('h13_yzzxcs.zyid IN (:...zyidlist)', {
-    //         zyidlist: validZyidList,
-    //       })
-    //       .orderBy('h13_yzzxcs.yzxh', 'ASC')
-    //       .addOrderBy('h13_yzzxcs.mxxh', 'ASC');
-
-    //     //如果yzlxList不为空，添加yzlx过滤条件
-    //     if (data.yzlxList && data.yzlxList.length > 0) {
-    //       h13_yzzxcsqb.andWhere('h13_yzzxcs.yzlx IN (:...yzlxList)', {
-    //         yzlxList: data.yzlxList,
-    //       });
-    //     }
-
-    //     return await h13_yzzxcsqb.getMany();
-    //   }
-    //   return [];
-    // };
-    // 打印完整 SQL（占位符已替换为实际参数值）
-    console.log('h12_yzzb查询完整SQL:', getSqlWithParameters(h12YzzbQuery));
-    console.log('h12_yzxb查询完整SQL:', getSqlWithParameters(h12YzxbQuery));
-    // 4. 并行执行所有查询
-    const [yzzbList, h12_yzxbList, ksidList, usidList] = await Promise.all([
-      h12YzzbQuery.getMany(),
-      h12YzxbQuery.getMany(),
-      this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
-      this.usrcatRepo.find({ select: ['usid', 'unam'] }),
-      // getYzzxcs(),
-    ]);
-
-    if (yzzbList.length === 0) return [];
-
-    // 5. 构建字典
-    const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
-    const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
-
-    // 6. 处理h13_yzzxcsList
-    // h13_yzzxcsList.forEach((item) => {
-    //   item.ksidEntity = ksmcDict[item.ksid] || null;
-    //   item.zkksidEntity = ksmcDict[item.zkksid] || null;
-    //   item.syridEntity = usrcatDict[item.syrid] || null;
-    //   item.fyridEntity = usrcatDict[item.fyrid] || null;
-    // });
-    h12_yzxbList.forEach((item) => {
-      // 找到所有匹配的 h13_yzzxcs
-      // const matchedH13 = h13_yzzxcsList.filter(
-      //   (h13) => h13.zyid === item.zyid && h13.yzxh === item.yzxh && h13.mxxh === item.mxxh,
-      // );
-      // item.h13_yzzxcsList = matchedH13;
-      // 赋值所有关联的字典
-      item.ksysEntity = usrcatDict[item.ksys] || null;
-      item.kshsEntity = usrcatDict[item.kshs] || null;
-      item.jsysEntity = usrcatDict[item.jsys] || null;
-      item.lryidEntity = usrcatDict[item.lryid] || null;
-      item.hdhsEntity = usrcatDict[item.hdhs] || null;
-      item.zxhsEntity = usrcatDict[item.zxhs] || null;
-      item.kssxysEntity = usrcatDict[item.kssxys] || null;
-      item.kssxhsEntity = usrcatDict[item.kssxhs] || null;
-      item.jssxysEntity = usrcatDict[item.jssxys] || null;
-      item.jssxhsEntity = usrcatDict[item.jssxhs] || null;
-      item.ksidEntity = ksmcDict[item.ksid] || null;
-      item.jshsEntity = usrcatDict[item.jshs] || null;
-    });
-
-    // 8. 组装最终结果
-    const result = yzzbList.map((yzzb) => {
-      // 完善yzzb的关联信息
-      yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
-      yzzb.zkksidEntity = ksmcDict[yzzb?.zkksid] || null;
-      yzzb.tzridEntity = usrcatDict[yzzb?.tzrid] || null;
-      yzzb.h12_yzxbList = h12_yzxbList.filter(
-        (item) => item.zyid === yzzb.zyid && item.yzlx === yzzb.yzlx && item.yzxh === yzzb.yzxh,
-      );
-
-      return yzzb;
-    });
-
-    return result;
   }
 
   async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: string; yzzxcs?: string }) {
