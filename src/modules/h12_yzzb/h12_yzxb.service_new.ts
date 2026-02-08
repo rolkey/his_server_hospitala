@@ -213,7 +213,9 @@ export class h12_yzxbServiceNew {
             yzxb.yzzt === 5 &&
             yzxb.h13_yzzxcsList?.some(
               (yzzxcs) =>
-                yzzxcs.clbz === 1 && dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day'),
+                yzzxcs.clbz === 1 &&
+                dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day') &&
+                yzzxcs.sjtysl > 0,
             ),
         )
       ) {
