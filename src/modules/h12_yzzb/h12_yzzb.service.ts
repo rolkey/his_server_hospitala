@@ -121,13 +121,23 @@ export class h12_yzzbService {
           });
         }
         // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
-        if (data.dybz) {
+        if (data.dybz == 1) {
           h12_yzxbQuery.innerJoin(
             h13_djdy,
             'h13_djdy',
             'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h12_yzxb.mxxh AND h13_djdy.zyid = h12_yzxb.zyid',
             { djdyPblx: '1' },
           );
+        }
+        // 打印标志=0：只保留在 h13_djdy 中未出现过的医嘱（未登记）
+        if (data.dybz == 0) {
+          h12_yzxbQuery.leftJoin(
+            h13_djdy,
+            'h13_djdy',
+            'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h12_yzxb.mxxh AND h13_djdy.zyid = h12_yzxb.zyid',
+            { djdyPblx: '1' },
+          );
+          h12_yzxbQuery.andWhere('h13_djdy.maxid IS NULL');
         }
         h12_yzxbQuery.orderBy('h12_yzxb.yzrq', 'ASC')
           .addOrderBy('h12_yzxb.zxcs', 'ASC')
@@ -191,44 +201,52 @@ export class h12_yzzbService {
           xmmc: `%${data.xmmc.trim()}%`,
         });
       }
-      if (data.type == '2') {
-        if (data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
-          h13_yzzxcsQuery.andWhere('h12_yzxb.fylbid = :fylbid', {
-            fylbid: data.fylbid.trim(),
-          });
-        }
-        // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
-        if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
-          //dyflid 打印分类
-          h13_yzzxcsQuery.andWhere('syffidEntity.dyflid = :lx', {
-            lx: data.lx.trim(),
-          });
-        }
-        // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
-        if (data.dybz) {
-          h13_yzzxcsQuery.innerJoin(
-            h13_djdy,
-            'h13_djdy',
-            'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h13_yzzxcs.maxid AND h13_djdy.zyid = h13_yzzxcs.zyid',
-            { djdyPblx: '1' },
-          );
-        }
-
-        if (data.xsdkssj) {
-          h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq >= :xsdkssj', {
-            xsdkssj: data.xsdkssj,
-          });
-        }
-
-        // 添加xsdjssj时间过滤
-        if (data.xsdjssj) {
-          h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq <= :xsdjssj', {
-            xsdjssj: data.xsdjssj,
-          });
-        }
-        h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC')
-          .addOrderBy('h13_yzzxcs.maxid', 'ASC')
+      if (data.fylbid && data.fylbid.trim() !== '' && data.fylbid !== '0') {
+        h13_yzzxcsQuery.andWhere('h12_yzxb.fylbid IN (:...fylbid)', {
+          fylbid: data.fylbid.trim().split(','),
+        });
       }
+      // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
+      if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
+        //dyflid 打印分类
+        h13_yzzxcsQuery.andWhere('syffidEntity.dyflid IN (:...lxList)', {
+          lxList: data.lx.trim().split(','),
+        });
+      }
+      // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
+      if (data.dybz == 1) {
+        h13_yzzxcsQuery.innerJoin(
+          h13_djdy,
+          'h13_djdy',
+          'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h13_yzzxcs.maxid AND h13_djdy.zyid = h13_yzzxcs.zyid',
+          { djdyPblx: '1' },
+        );
+      }
+      // 打印标志=0：只保留在 h13_djdy 中未出现过的医嘱（未登记）
+      if (data.dybz == 0) {
+        h13_yzzxcsQuery.leftJoin(
+          h13_djdy,
+          'h13_djdy',
+          'h13_djdy.pblx = :djdyPblx AND h13_djdy.maxid = h13_yzzxcs.maxid AND h13_djdy.zyid = h13_yzzxcs.zyid',
+          { djdyPblx: '1' },
+        );
+        h13_yzzxcsQuery.andWhere('h13_djdy.maxid IS NULL');
+      }
+
+      if (data.xsdkssj) {
+        h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq >= :xsdkssj', {
+          xsdkssj: data.xsdkssj,
+        });
+      }
+
+      // 添加xsdjssj时间过滤
+      if (data.xsdjssj) {
+        h13_yzzxcsQuery.andWhere('h13_yzzxcs.zxrq <= :xsdjssj', {
+          xsdjssj: data.xsdjssj,
+        });
+      }
+      h13_yzzxcsQuery.orderBy('h13_yzzxcs.zxrq', 'ASC')
+        .addOrderBy('h13_yzzxcs.maxid', 'ASC')
 
 
       const [h13_yzzxcsList, ksidList, usidList] = await Promise.all([

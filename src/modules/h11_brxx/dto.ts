@@ -406,6 +406,9 @@ export class receiptDto extends QueryDto {
 
   @Allow()
   fylbid?: string;
+
+  @Allow()
+  dyflid?: string;
 }
 
 export class UpdateDto extends CreateDto {

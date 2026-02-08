@@ -66,20 +66,18 @@ export class h11_brxxService {
     }
     baseQuery.andWhere((qb) => {
       // 创建子查询
-      const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb');
+      const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb').leftJoin('h12_yzxb.syffidEntity', 'syffidEntity');
       subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
       // 费用类别过略
       if (queryDto.fylbid) {
         const fylbidList = queryDto.fylbid.split(',');
         subQuery.andWhere('h12_yzxb.fylbid IN (:...fylbidList)', { fylbidList });
       }
-      // if(true) {
-      //   subQuery.innerJoin('h12_yzxb.syffidEntity', 'h00_syff')
-      //     // 条件：zyid匹配主查询，syffid不为空，dyflid等于传入值
-      //     .where('h12_yzxb.zyid = h11_brxx.zyid')
-      //     .andWhere('h12_yzxb.syffid IS NOT NULL')
-      //     .andWhere('h00_syff.dyflid = :dyflid', { dyflid: queryDto.dyflid });
-      // }
+
+      if (queryDto.dyflid) {
+        // 子查询中需用 JOIN 别名 syffidEntity，不能用实体属性路径 h12_yzxb.syffidEntity
+        subQuery.andWhere('syffidEntity.dyflid IN (:...dyflidList)', { dyflidList: queryDto.dyflid.split(",") });
+      }
       return `EXISTS (${subQuery.limit(1).getQuery()})`;
     });
 
