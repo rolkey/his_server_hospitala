@@ -27,7 +27,7 @@ export class h12_yzzbController {
     private readonly h12_yzxbServiceNew: h12_yzxbServiceNew,
     private readonly babyAdviceService: BabyAdviceService,
     private readonly userService: UsrcatService,
-  ) { }
+  ) {}
 
   @Get('findAllByPatient')
   async findAllByPatient(
