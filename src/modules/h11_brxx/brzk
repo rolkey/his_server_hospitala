@@ -1,0 +1,405 @@
+////////////////////////////////////////////////////////////////////////////
+//
+//  1 判断转科或出院
+//          a 出院 ：
+//                   a1 将病人住院状态 zyzt 设为 3(出院未结账)
+//                   a2 调用停止函数 停止病人病床、医嘱、租床
+//          b 转科：
+//                   b1 判断是否有科室id 没有返回
+//                   统计 
+//                   b2 a1 将病人住院状态 zyzt 设为 6(转科)
+//                   b3 记录病人转科的记录等待转科科室确认
+//
+//  2 判断是否成功
+//  3 返回
+//
+//////////////////////////////////////////////////////
+//  1 判断转科或出院
+String ls_ksid , ls_zyid ,ls_err ,ls_brxm,ls_sj,ls_rq,ls_cyqk,ls_cyksid,ls_clksid,ls_gfbh,ls_brlxid
+DateTime ldt_zksj,ldt_rysj
+long ll_zyts,ll_zt
+dw_xb.AcceptText()
+ldt_zksj = dw_xb.Object.sj[ 1 ]
+
+ll_zyts = DaysAfter( Date(f_serverdatetime()) , Date(ldt_zksj) )
+if ll_zyts > 3 then
+	messagebox('提示','办理出院日期' + string(ldt_zksj) + '，大于当前日期，请核对出院日期！')
+	return
+end if
+
+Long ll_row,li_yzzxcscount,li_rycount,li_jmcount
+Integer li_i ,li_count ,Net
+Long ll_count
+
+li_i = 0
+li_count = 0
+ll_row = w_h13cyzklr.dw_xb.GetRow()
+ls_zyid = w_h13cyzklr.dw_xb.Object.h11_brxx_zyid[ ll_row ]
+ls_gfbh = w_h13cyzklr.dw_xb.Object.gfbh[ ll_row ]
+
+IF cbx_1.Checked = FALSE THEN
+	if gs_cxsz.zxyptx = '1' then
+		IF wf_vidify(ls_zyid) = -1 THEN
+			MessageBox('提示','该病人有未发药，请发药后，再办出院！')
+			OpenWithParm(w_h11brcy,ls_zyid)
+			RETURN
+		END IF
+	end if
+	
+	if gs_cxsz.zxxmtx = '1' then
+		if dw_xm.retrieve(ls_zyid,gs_cxsz.hl[],gs_cxsz.bc[],gs_cxsz.xg[],gs_cxsz.qt[],gs_cxsz.zy[],gs_cxsz.mr[],gs_cxsz.ct[],gs_cxsz.xd[]) > 0 then
+		   MessageBox('提示','该病人有项目未执行，请医技科室执行后，再办出院！')
+			OpenWithParm(w_h11brcy,ls_zyid)
+			//parent.height = 2080
+			return
+		end if
+	end if
+END IF
+
+
+
+CHOOSE CASE is_zt
+	CASE '出院'
+		
+		ls_cyqk = dw_xb.GetItemString(dw_xb.GetRow(),'cyqk')
+		IF ls_cyqk = '' OR IsNull(ls_cyqk) THEN
+			MessageBox('提示','请选择出院情况，方便数据统计!')
+			dw_xb.SetFocus()
+			dw_xb.SetColumn('cyqk')
+			RETURN
+		END IF
+		
+		//校验
+		IF wf_vidifynew(ls_zyid) = -1 THEN RETURN
+		
+		//		SELECT count(*) INTO :li_rycount FROM h13_yzzxcs WHERE zyid = :ls_zyid AND
+		//			ksid = :gstr_ainf.u_ksid  AND  convert(Char(10),zxrq,102) < :ls_rq ;
+		//		IF li_rycount > 0 THEN
+		//			MessageBox('提示','执行的时间小于入院日期"'+String(ls_rq)+'"，请删除多余的次数，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//		SELECT count(*) INTO :li_yzzxcscount FROM h13_yzzxcs WHERE zyid = :ls_zyid AND
+		//			ksid = :gstr_ainf.u_ksid  AND  convert(Char(10),zxrq,102) > :ls_sj;
+		//		IF li_yzzxcscount > 0 THEN
+		//			MessageBox('提示','执行的时间大于出院时间，请删除多余的次数，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//      SELECT count(*) INTO :li_jmcount FROM h12_yzxb WHERE zyid = :ls_zyid AND
+		//			(yzlx=1 or yzlx=2)  AND ysbz=1 and jsbz<>1 and (ksys='' or ksys is null) ;
+		//		IF li_jmcount > 0 THEN
+		//			MessageBox('提示','实习医生未签名，请医生签名后，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//		//查询缺药的
+		//		select count(*) into :ll_count from c00_fbxx where zyid=:ls_zyid;
+		//		if ll_count>0 then
+		//			messagebox('提示','有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！')
+		//			io_Parmzx.stringparm[1] = ls_zyid
+		//			io_Parmzx.longparm[1]   = 1  // 1 住院 ，2 药品 ，3门诊收费 ， 4门诊医生
+		//			io_Parmzx.longparm[2]   = 1  // 1 单个病人 , 2 全部病人
+		//			OpenWithParm(w_mess,io_Parmzx)
+		//			return
+		//		end if
+		//
+		//		//删除次数
+		//		//delete h13_yzzxcs where zyid=:ls_zyid and mxxh not in (select mxxh from h12_yzxb and )
+		//		delete  h13_yzzxcs where  zyid=:ls_zyid and  not exists (select * from h12_yzxb
+		//		                         where  h13_yzzxcs.zyid =h12_yzxb.zyid
+		//                           and h13_yzzxcs.mxxh =h12_yzxb.mxxh   and h13_yzzxcs.yzlx =h12_yzxb.yzlx) ;
+		
+		
+		// 判断是否停止床位
+		SELECT count( * ) INTO :li_count FROM h13_cwsyxx WHERE
+			ksid = :gstr_ainf.u_ksid AND zyid = :ls_zyid ;
+		IF li_count > 0 THEN
+			IF MessageBox('提示','该病人的床位未停止，是否自动停止！',question!,yesno!,1) = 1 THEN
+				//update h11_brxx set cycw='',cybs='' where zyid= :ls_zyid;
+				UPDATE h13_cwsyxx Set zyid = '',cwfpxx = '' Where zyid = :ls_zyid;
+			ELSE
+				ROLLBACK USING 	sqlca;
+				// Process CANCEL.
+				MessageBox('提示','请将病人的床位停止后，再出院')
+				SetFocus( cb_tc )
+				RETURN
+			END IF
+		END IF
+		
+		li_i = li_i + 1
+		ls_zyid = w_h13cyzklr.dw_xb.Object.h11_brxx_zyid[ ll_row ]
+		ls_brxm = w_h13cyzklr.dw_xb.Object.h11_brxx_brxm[ ll_row ]
+		DELETE h11_jshztzd1 Where  zyid = :ls_zyid;
+		
+		// a1 将病人住院状态 zyzt 设为 3(出院未结账)
+		UPDATE h11_brxx
+			SET zyzt = 3 ,cysj = :ldt_zksj,bz2 = :ls_cyqk,cycw = '' //,rybqid=:gstr_ainf.u_userid
+			WHERE ( h11_brxx.cyksid = :gstr_ainf.u_ksid ) AND
+			( h11_brxx.zyzt < 3 ) AND
+			( h11_brxx.zyid = :ls_zyid )
+			USING 	sqlca;
+		f_h13setcyzk( ldt_zksj , ls_zyid )
+		
+		//首页更改出院日期
+		update n04_21 set cysj = :ldt_zksj where zyid = :ls_zyid;
+		
+		//写入日志
+		//as_jzid,as_brxm,as_xmid,as_xmmc,as_je,as_bzxx,as_ltyp
+		f_userlog_zf(ls_zyid,ls_brxm,gstr_ainf.u_ksid,gstr_ainf.u_ksmc,0,'办理出院','1')
+		
+		//养老
+		if pos(gs_cxsz.ylybksid,gstr_ainf.u_ksid) <= 0  and  gs_cxsz.ylmbbz = '1' then
+			//点餐作废
+			UPDATE yw_dcmx Set yxbz = 0 Where zyh = :ls_gfbh;
+			
+			//更新接待状态
+			IF ls_cyqk = '1' OR ls_cyqk = '2' THEN
+				ll_zt = 4
+			ELSEIF ls_cyqk = '3' THEN
+				ll_zt = 6
+			ELSEIF ls_cyqk = '4' THEN
+				ll_zt = 7
+			ELSEIF ls_cyqk = '5' THEN
+				ll_zt = 5
+			END IF
+			IF ls_gfbh <> '' AND NOT IsNull(ls_gfbh) THEN
+				UPDATE dict_oldie Set status = :ll_zt,workdate = :ldt_zksj Where id = :ls_gfbh;
+				UPDATE work_consult Set status = :ll_zt  Where id = :ls_gfbh;
+			END IF
+			
+			IF SQLCA.SQLCode = -1 THEN
+				MessageBox("dict_oldie", SQLCA.SQLErrText)
+				rollback using sqlca;
+			else
+				COMMIT USING 	sqlca;
+				Open( w_mesg_updsuc );
+			END IF
+		END IF
+		
+		//				END IF
+		//		  NEXT
+	CASE '转科'
+		//          b 转科：
+		//                   b1 判断是否有科室id 没有返回
+		
+		ls_ksid = dw_xb.Object.zkksid[1]
+		IF IsNull(ls_ksid)  THEN
+			MessageBox('错误','请输入要转的科室!')
+			dw_xb.SetColumn( 1 )
+			SetFocus(dw_xb)
+			RETURN
+		END IF
+		
+		//校验
+		IF wf_vidifynew(ls_zyid) = -1 THEN RETURN
+		
+		//		if gs_xtcs.cyyzbz = '1' then //启用出院停嘱判断
+		//   ll_count=0
+		//		 SELECT isnull(count(*),0) into :ll_count  FROM h12_yzxb WHERE zyid =:ls_zyid AND
+		//	         ysbz = 1 AND jsbz <> 1 and sjbz = 1 and yzlx <> 6 And
+		//         	(yzlx = 1 and (tzrq is null or tzrq='') )  and xmid<>'0000000' ;
+		//			if ll_count>0 then
+		//				  messagebox('提示','有未停医嘱，不允许转科，请让医师停医嘱再转科!')
+		//						RETURN
+		//			end if
+		//end if
+		
+		//		SELECT count(*) INTO :li_rycount FROM h13_yzzxcs WHERE zyid = :ls_zyid AND
+		//			ksid = :gstr_ainf.u_ksid  AND  convert(Char(10),zxrq,102) < :ls_rq ;
+		//		IF li_rycount > 0 THEN
+		//			MessageBox('提示','执行的时间小于入院日期"'+String(ls_rq)+'"，请删除多余的次数，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//		SELECT count(*) INTO :li_yzzxcscount FROM h13_yzzxcs WHERE zyid = :ls_zyid AND
+		//			ksid = :gstr_ainf.u_ksid  AND  convert(Char(10),zxrq,102) > :ls_sj;
+		//		IF li_yzzxcscount > 0 THEN
+		//			MessageBox('提示','执行的时间大于出院时间，请删除多余的次数，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//      SELECT count(*) INTO :li_jmcount FROM h12_yzxb WHERE zyid = :ls_zyid AND
+		//			(yzlx=1 or yzlx=2)  AND ysbz=1 and jsbz<>1 and (ksys='' or ksys is null) ;
+		//		IF li_jmcount > 0 THEN
+		//			MessageBox('提示','实习医生未签名，请医生签名后，再出院!')
+		//			SetFocus( cb_tc )
+		//			RETURN
+		//		END IF
+		//
+		//		//查询缺药的
+		//		select count(*) into :ll_count from c00_fbxx where zyid=:ls_zyid;
+		//		if ll_count>0 then
+		//			messagebox('提示','有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！')
+		//			io_Parmzx.stringparm[1] = ls_zyid
+		//			io_Parmzx.longparm[1]   = 1  // 1 住院 ，2 药品 ，3门诊收费 ， 4门诊医生
+		//			io_Parmzx.longparm[2]   = 1  // 1 单个病人 , 2 全部病人
+		//			OpenWithParm(w_mess,io_Parmzx)
+		//			return
+		//		end if
+		//
+		//		//删除次数
+		//		//delete h13_yzzxcs where zyid=:ls_zyid and mxxh not in (select mxxh from h12_yzxb and )
+		//		delete  h13_yzzxcs where  zyid=:ls_zyid and  not exists (select * from h12_yzxb
+		//		                         where  h13_yzzxcs.zyid =h12_yzxb.zyid
+		//                           and h13_yzzxcs.mxxh =h12_yzxb.mxxh   and h13_yzzxcs.yzlx =h12_yzxb.yzlx) ;
+		
+		// 判断是否停止床位
+		SELECT count( * ) INTO :li_count FROM h13_cwsyxx WHERE
+			ksid = :gstr_ainf.u_ksid AND zyid = :ls_zyid ;
+		IF li_count > 0 THEN
+			//WDF修改自动停止床位
+			//messagebox('提示','请将病人的床位停止后，再转科')
+			IF MessageBox('提示','该病人的床位未停止，是否自动停止！',question!,yesno!,1) = 1 THEN
+				UPDATE h11_brxx Set rycw = '',cycw = '',cybs = '' Where zyid = :ls_zyid;
+				UPDATE h13_cwsyxx Set zyid = '',cwfpxx = '' Where zyid = :ls_zyid;
+			ELSE
+				ROLLBACK USING 	sqlca;
+				// Process CANCEL.
+				SetFocus( cb_tc )
+				RETURN
+			END IF
+		END IF
+		
+		//统计是否已经结账
+		ls_cyksid = w_h13cyzklr.dw_xb.Object.cyksid[ ll_row ]
+		ls_zyid = w_h13cyzklr.dw_xb.Object.h11_brxx_zyid[ ll_row ]
+		SELECT count( * ) INTO :li_count FROM h13_yzzxcs WHERE
+			zyid = :ls_zyid AND jsbz = 0 AND sfbz = 1 ;
+		IF li_count > 0 THEN
+			ls_brxm = w_h13cyzklr.dw_xb.Object.h11_brxx_brxm[ ll_row ]
+			Net = MessageBox("提示", "病人" + ls_brxm + &
+				"没有结账，是否允许转科?" , &
+				Exclamation!, OKCancel!, 2)
+			IF Net <> 1 THEN
+				ROLLBACK USING 	sqlca;
+				// Process CANCEL.
+				RETURN
+			END IF
+		END IF
+		
+		ls_zyid = w_h13cyzklr.dw_xb.Object.h11_brxx_zyid[ ll_row ]
+		li_i = li_i + 1
+		UPDATE h11_brxx
+			SET zyzt = 6
+			WHERE ( h11_brxx.cyksid = :gstr_ainf.u_ksid ) AND
+			( h11_brxx.zyzt < 3 ) AND
+			( h11_brxx.zyid = :ls_zyid );
+		//                   b3 记录病人转科的记录等待转科科室确认
+		INSERT INTO h13_brzkqk
+			( zkksid,
+			zksj,
+			zyid,
+			lrsj,
+			lryid,
+			ksid)
+			VALUES (  :ls_ksid,
+			:ldt_zksj,
+			:ls_zyid,
+			getdate(),
+			:gstr_ainf.u_userid,
+			:gstr_ainf.u_ksid)
+			USING 	sqlca;
+		
+		IF gf_getpara(13,"yjkzk","0","转科同时转押金") = '1' THEN
+			UPDATE h11_yjk Set ksid = :ls_ksid Where zyid = :ls_zyid ;
+			//转科科室
+		END IF
+		IF gs_cxsz.zkjl = '1' THEN //原来的，转科前与转科后分开
+			UPDATE h12_yzzb set ksid = :ls_ksid where zyid = :ls_zyid;
+			update h12_yzxb set ksid = :ls_ksid,qt1='1' where zyid = :ls_zyid and ksid = :gstr_ainf.u_ksid;
+			update h13_yzzxcs set ksid = :ls_ksid where zyid = :ls_zyid;
+			UPDATE h11_yjk Set ksid = :ls_ksid Where zyid = :ls_zyid;
+			update h12_blzb set ksid = :ls_ksid where zyid = :ls_zyid;
+			update h15_sszb set ksid = :ls_ksid where zyid = :ls_zyid;
+			update h15_ssxb set ksid = :ls_ksid where zyid = :ls_zyid;
+			update BQ_HLJL_NEW set BRKS = :ls_ksid where zyh = :ls_zyid;
+			
+			ls_clksid = gf_getpara(13,'cl' + ls_ksid ,'0603','材料' + ls_ksid)
+			
+			update  h13_yzzxcs set zkksid = :ls_clksid where zyid = :ls_zyid and  isnull(fybz,0) = 0 and fylbid = '15' and zkksid = :ls_cyksid;
+			update  h12_yzxb set ksid = :ls_clksid where zyid = :ls_zyid and fylbid = '15' and ksid = :ls_cyksid ;
+			
+			update bQ_xtjc  set brks = :ls_ksid where zyh = :ls_zyid ;
+		else
+			UPDATE h12_yzzb
+				SET tzbz = 1,
+				tzsj = :gstr_ainf.s_datetime,
+				tzrid = :gstr_ainf.u_userid
+				WHERE h12_yzzb.zyid = :ls_zyid;
+		end if
+		
+		DELETE h11_jshztzd1 Where  zyid = :ls_zyid;
+		
+		//转科科室编号 养老
+		IF ls_gfbh <> '' AND NOT IsNull(ls_gfbh) and  gs_cxsz.ylmbbz = '1'  THEN
+			UPDATE dict_oldie Set zkksid = :ls_ksid  Where id = :ls_gfbh;
+			//update work_consult set status=:ll_zt  where id=:ls_gfbh;
+			//点餐明细
+			update yw_dcmx set ks = :ls_ksid where zyh = :ls_gfbh;
+		END IF
+		
+		
+		IF sqlca.SQLCode < 0 THEN
+			ls_err = sqlca.SQLErrText
+			ROLLBACK USING 	sqlca;
+			MessageBox('错误0','因为网络故障发生' + ls_err + '错误')
+			SetFocus( cb_tc )
+			RETURN
+		END IF
+END CHOOSE
+IF li_i > 0 THEN
+	IF is_zt = '出院' THEN //原来的，转科前与转科后分开
+		//出院或转科时把医嘱停止 梁国维 2001.11.15
+		UPDATE h12_yzzb
+			SET tzbz = 1,
+			tzsj = :gstr_ainf.s_datetime,
+			tzrid = :gstr_ainf.u_userid
+			WHERE h12_yzzb.zyid = :ls_zyid;
+	END IF
+	
+	//删除提示
+	DELETE h11_jshztzd1 Where zyid = :ls_zyid  AND ksid = :gstr_ainf.u_ksid;
+	IF SQLCA.SQLCode = -1 THEN
+		MessageBox("h11_jshztzd1", SQLCA.SQLErrText)
+	END IF
+	
+	COMMIT USING 	sqlca;
+	
+	delete dbo.YW_SF_BRXX where zyid = :ls_zyid using sqlca;
+	COMMIT USING 	sqlca;
+	
+	//插入随访
+	insert dbo.YW_SF_BRXX(ID, zyid, ZYH, ZYHM, XINGM, XINGB, LINXDH, LINXR, LINXRDH, LINXRGX,
+		RYRQ, CYRQ, RYZD, CYZD, RYFS, ZLFS, ZGYS, SFZT, BZ, KSDM, CREATEDATE,
+		SUODZT, KEFHFZT, NL, CSRQ,  DZ,sfzh,ylzh,zycs,sxys)
+		select CONVERT(int,zyid),zyid,zybh,bahm,brxm,xbid,jtdh,lxrm,lxdh,gxid,
+		rysj,cysj,ryzd,cyzd,ryff,'' zlqs,mzys,'0',bzxx,cyksid,GETDATE(),
+		'0','0',rtrim(brnl)+ltrim(nldw),csrq,csddmc,sfzh,ylzh,zycs,sxys from h11_brxx where zyid = :ls_zyid using sqlca;
+	IF SQLCA.SQLCode = -1 THEN
+		MessageBox("YW_SF_BRXX", SQLCA.SQLErrText)
+		rollback using sqlca;
+	else
+		COMMIT USING 	sqlca;
+		Open( w_mesg_updsuc );
+	END IF
+	
+	//出院登记
+	if gs_cxsz.ybjkauto = '1' then
+		n_yibao_monitor monitor;monitor = create n_yibao_monitor
+		monitor.uf_init( "1")
+		monitor.uf_login( )
+		monitor.uf_discharge( ls_zyid)
+		destroy monitor
+	end if
+	
+	
+	CloseWithReturn(PARENT,'成功')
+ELSE
+	CloseWithReturn(PARENT,'')
+END IF

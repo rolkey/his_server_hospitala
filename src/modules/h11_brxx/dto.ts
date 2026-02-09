@@ -505,3 +505,28 @@ export class ForciblyDeleteDto {
   @IsString()
   ghbh?: string;
 }
+
+export class TransferDepartmentDto {
+  @IsNotEmpty({ message: '住院ID不能为空' })
+  @IsString()
+  zyid: string;
+
+  @IsNotEmpty({ message: '转科科室ID不能为空' })
+  @IsString()
+  zkksid: string;
+
+  @IsNotEmpty({ message: '转科时间不能为空' })
+  zksj: Date | string;
+
+  @IsNotEmpty({ message: '当前科室ID不能为空' })
+  @IsString()
+  ksid: string;
+
+  @IsNotEmpty({ message: '操作人ID不能为空' })
+  @IsString()
+  userid: string;
+
+  @IsOptional()
+  @IsString()
+  gfbh?: string; // 工费编号(养老使用)
+}

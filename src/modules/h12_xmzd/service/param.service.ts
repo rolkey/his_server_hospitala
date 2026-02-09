@@ -13,13 +13,13 @@ export class ParamService {
     private readonly sysparRepository: Repository<Syspar>,
     @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
-  ) {}
+  ) { }
 
   async gfGetPara(
-    liXtsb: number,
-    lsCsmc: string,
-    lsDefault: string,
-    lsBz: string,
+    liXtsb: number, // 系统编号
+    lsCsmc: string, // 参数名称
+    lsDefault: string, // 默认值
+    lsBz: string, //备注
   ): Promise<string> {
     const lsXtsb = liXtsb.toString();
     const upperLsBz = lsBz.toUpperCase();
@@ -28,7 +28,7 @@ export class ParamService {
     const existingParam = await this.sysparRepository.findOne({
       where: {
         syid: lsXtsb,
-        pnam: upperLsBz,
+        prid: lsCsmc,
       },
     });
 
