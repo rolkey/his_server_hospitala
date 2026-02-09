@@ -223,7 +223,7 @@ export class h12_yzxbServiceNew {
               (yzzxcs) =>
                 yzzxcs.clbz === 1 &&
                 dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day') &&
-                (yzzxcs.sjtysl ?? 0) > 0,
+                yzzxcs.zxcs - yzxb.mrcs > 0, // TODO：可能有精度问题?
             ),
         )
       ) {
@@ -565,7 +565,7 @@ export class h12_yzxbServiceNew {
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       //   .andWhere('yzxb.ysbz = 1')
       .andWhere('yzxb.tjbz = 1')
-      .andWhere('yzzxcs.sjtysl > 0') // 退费数量等于0的不处理
+      //.andWhere('yzzxcs.sjtysl > 0') // 退费数量等于0的不处理
       .andWhere('yzxb.yzzt IN (1, 5)');
 
     // 添加 OR 组合条件//
@@ -624,17 +624,21 @@ export class h12_yzxbServiceNew {
         let tfsl = 0;
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
           if (h13Yzzxcs.zxrq.getDate() >= tzrq.getDate()) {
-            await this.reviewFee(
-              yzxb,
-              tzrq,
-              h13Yzzxcs,
-              lysjYzzxcss,
-              refundFydhs,
-              refundYzzxcss,
-              deleteYzzxcss,
-              deleteYzzxcsTfs,
-              updateYzzxcss,
-            );
+            if (h13Yzzxcs.zxcs - yzxb.mrcs > 0) {
+              await this.reviewFee(
+                yzxb,
+                tzrq,
+                h13Yzzxcs,
+                lysjYzzxcss,
+                refundFydhs,
+                refundYzzxcss,
+                deleteYzzxcss,
+                deleteYzzxcsTfs,
+                updateYzzxcss,
+              );
+            } else {
+              throw new BadRequestException('实际退费数量有问题！！');
+            }
             tfsl++;
           }
         }
