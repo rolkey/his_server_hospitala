@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, In } from 'typeorm';
+import { Repository, MoreThan, In, Brackets } from 'typeorm';
 import { H31_kcxx } from './h31_kcxx.entity';
 import { H30_ypzd } from '../h30_ypzd/h30_ypzd.entity';
 import { H00_xmzd } from '../h00_xmzd/h00_xmzd.entity';
@@ -120,12 +120,11 @@ export class H31_kcxxService {
   ): Promise<KcxxResultDto> {
     const resultDto = new KcxxResultDto();
 
-    try {
-      // 第一步：查询库存信息
-      const kcxxResult = await this.h31_kcxxRepository
-        .createQueryBuilder('kcxx')
-        .select([
-          `kcxx.xsl - COALESCE(kcxx.mzdfsl, 0) - COALESCE(kcxx.dfsl, 0) -
+    // 第一步：查询库存信息
+    const kcxxResult = await this.h31_kcxxRepository
+      .createQueryBuilder('kcxx')
+      .select([
+        `kcxx.xsl - COALESCE(kcxx.mzdfsl, 0) - COALESCE(kcxx.dfsl, 0) -
                 COALESCE(kcxx.ssdfsl, 0) as kcsl,
           COALESCE(kcxx.lsjg, 0) as lsjg,
           COALESCE(kcxx.pfjg, 0) as pfjg,
@@ -133,83 +132,73 @@ export class H31_kcxxService {
           kcxx.gsid as gsid,
           kcxx.cjid as cjid,
           COALESCE(kcxx.ypid, '') as ypidn`,
-        ])
-        .where('kcxx.ksid IN (:asKsid)', { asKsid })
-        .andWhere('kcxx.yxbz = 1')
-        .andWhere(
-          `kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) +
+      ])
+      .where('kcxx.ksid IN (:asKsid)', { asKsid })
+      .andWhere('kcxx.yxbz = 1')
+      .andWhere('kcxx.sxrq >= :asSxrq', { asSxrq: new Date() })
+      .andWhere(
+        `kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) +
                 COALESCE(kcxx.ssdfsl, 0)) - :adSl >= 0`,
-          { adSl },
-        )
-        .andWhere(
-          'kcxx.ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = :asYpmc AND ypgg = :asYpgg)',
-          { asYpmc, asYpgg },
-        )
-        .orderBy('kcxx.scph')
-        .limit(1)
-        .getRawOne();
+        { adSl },
+      )
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where(
+            'kcxx.ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = :asYpmc AND ypgg = :asYpgg)',
+            { asYpmc, asYpgg },
+          ).orWhere('kcxx.ypid IN (SELECT glypid FROM h30_ypgl WHERE ypid = :as_ypid)', {
+            asYpid,
+          });
+        }),
+      )
+      .orderBy('kcxx.scph')
+      .limit(1)
+      .getRawOne();
 
-      if (!kcxxResult) {
-        resultDto.success = false;
-        resultDto.message = `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}|规格${asYpgg}|编号${asYpid}`;
-        return resultDto;
-      }
+    if (!kcxxResult) {
+      throw new BadRequestException(
+        `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}|规格${asYpgg}|编号${asYpid}`,
+      );
+    }
 
-      // 第二步：查询药品字典信息
-      const ypzdInfo = await this.h30_ypzdRepository.findOne({
-        where: { ypid: kcxxResult.ypidn },
-        select: ['ysxs', 'jsl2'],
-      });
+    // 第二步：查询药品字典信息
+    const ypzdInfo = await this.h30_ypzdRepository.findOne({
+      where: { ypid: kcxxResult.ypidn },
+      select: ['ysxs', 'jsl2'],
+    });
 
-      if (!ypzdInfo) {
-        resultDto.success = false;
-        resultDto.message = `未查到药品字典数据，请核对: ${kcxxResult.ypidn}${asYpmc}`;
-        return resultDto;
-      }
-
-      const xs = ypzdInfo.ysxs || 1;
-      const kcgl = ypzdInfo.jsl2 || 1;
-
-      // 如果kcgl不为0，直接返回成功
-      if (kcgl !== 0) {
-        resultDto.success = true;
-        resultDto.data = {
-          lsjg: kcxxResult.lsjg,
-          pfjg: kcxxResult.pfjg,
-          scph: kcxxResult.scph,
-          cjid: kcxxResult.cjid,
-          gsid: kcxxResult.gsid,
-          ypidn: kcxxResult.ypidn,
-          kcsl: kcxxResult.kcsl,
-          xs,
-          kcgl,
-        };
-        return resultDto;
-      }
-
-      // 计算价格
-      const lsjg = Number((kcxxResult.lsjg / xs).toFixed(4));
-      const pfjg = Number((kcxxResult.pfjg / xs).toFixed(4));
-
-      resultDto.success = true;
-      resultDto.data = {
-        lsjg,
-        pfjg,
-        scph: kcxxResult.scph,
-        cjid: kcxxResult.cjid,
-        gsid: kcxxResult.gsid,
-        ypidn: kcxxResult.ypidn,
-        kcsl: kcxxResult.kcsl,
-        xs,
-        kcgl,
-      };
-
-      return resultDto;
-    } catch (error) {
+    if (!ypzdInfo) {
       resultDto.success = false;
-      resultDto.message = `查询药品库存信息时出错: ${error.message}`;
+      resultDto.message = `未查到药品字典数据，请核对: ${kcxxResult.ypidn}${asYpmc}`;
       return resultDto;
     }
+
+    const xs = ypzdInfo.ysxs || 1;
+    const kcgl = ypzdInfo.jsl2 || 1;
+
+    // 如果kcgl不为0，直接返回成功
+    if (kcgl === 0) {
+      throw new BadRequestException('没有可替代同名/同规格的药品！！');
+    }
+
+    // 计算价格
+    const lsjg = Number((kcxxResult.lsjg / xs).toFixed(4));
+    const pfjg = Number((kcxxResult.pfjg / xs).toFixed(4));
+
+    resultDto.success = true;
+    resultDto.data = {
+      lsjg,
+      pfjg,
+      scph: kcxxResult.scph,
+      cjid: kcxxResult.cjid,
+      gsid: kcxxResult.gsid,
+      ypidn: kcxxResult.ypidn,
+      kcsl: kcxxResult.kcsl,
+      xs,
+      kcgl,
+    };
+
+    return resultDto;
   }
 
   async ueReadKsidMz(
@@ -367,9 +356,9 @@ export class H31_kcxxService {
         });
 
         if (!xmzd) {
-          response.success = false;
-          response.message = `未查到项目字典数据，请核对 [${request.ypid}: ${request.ypmc}]`;
-          return response;
+          throw new BadRequestException(
+            `未查到项目字典数据，请核对 [${request.ypid}: ${request.ypmc}]`,
+          );
         }
 
         // 处理价格
@@ -489,7 +478,7 @@ export class H31_kcxxService {
           .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
           .andWhere('kcxx.yxbz = 1')
           .andWhere('kcxx.kcsl > 0')
-          .andWhere('kcxx.sxrq < getdate()')
+          .andWhere('kcxx.sxrq >= :asSxrq', { asSxrq: new Date() })
           .andWhere(
             'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= ' +
               (request.sqsl ?? 1),
@@ -516,7 +505,7 @@ export class H31_kcxxService {
             .where('kcxx.ksid = :lsKsid', { lsKsid })
             .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
             .andWhere('kcxx.yxbz = 1')
-            .andWhere('kcxx.sxrq < getdate()')
+            .andWhere('kcxx.sxrq >= :asSxrq', { asSxrq: new Date() })
             .andWhere(
               'kcxx.xsl - ABS(COALESCE(kcxx.mzdfsl, 0) + COALESCE(kcxx.dfsl, 0) + COALESCE(kcxx.ssdfsl, 0)) >= ' +
                 (request.sqsl ?? 1),
@@ -525,10 +514,6 @@ export class H31_kcxxService {
             .limit(1)
             .getRawOne();
         }
-
-        // if (kcxx?.sxrq < new Date()) {
-        //   throw new Error(`药品${ypzd.zwmc}已过期，请重新选择`);
-        // }
 
         // 处理医保分类
         let ybfl = ypzd.abcfl?.toString() || '0';
@@ -543,7 +528,7 @@ export class H31_kcxxService {
           .where('kcxx.ksid = :lsKsid', { lsKsid })
           .andWhere('kcxx.ypid = :ypid', { ypid: request.ypid })
           .andWhere('kcxx.yxbz = 1')
-          //   .andWhere('kcxx.sxrq > getdate()')
+          .andWhere('kcxx.sxrq >= :asSxrq', { asSxrq: new Date() })
           .getRawOne();
 
         const kcsl = totalKcsl?.totalKcsl || 0;
