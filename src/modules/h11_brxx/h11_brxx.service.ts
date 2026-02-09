@@ -35,7 +35,7 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -66,7 +66,11 @@ export class h11_brxxService {
     }
     baseQuery.andWhere((qb) => {
       // 创建子查询
-      const subQuery = qb.subQuery().select('1').from('h12_yzxb', 'h12_yzxb').leftJoin('h12_yzxb.syffidEntity', 'syffidEntity');
+      const subQuery = qb
+        .subQuery()
+        .select('1')
+        .from('h12_yzxb', 'h12_yzxb')
+        .leftJoin('h12_yzxb.syffidEntity', 'syffidEntity');
       subQuery.where('h12_yzxb.zyid = h11_brxx.zyid');
       // 费用类别过略
       if (queryDto.fylbid) {
@@ -76,7 +80,9 @@ export class h11_brxxService {
 
       if (queryDto.dyflid) {
         // 子查询中需用 JOIN 别名 syffidEntity，不能用实体属性路径 h12_yzxb.syffidEntity
-        subQuery.andWhere('syffidEntity.dyflid IN (:...dyflidList)', { dyflidList: queryDto.dyflid.split(",") });
+        subQuery.andWhere('syffidEntity.dyflid IN (:...dyflidList)', {
+          dyflidList: queryDto.dyflid.split(','),
+        });
       }
       return `EXISTS (${subQuery.limit(1).getQuery()})`;
     });
@@ -227,7 +233,9 @@ export class h11_brxxService {
           { zkksid: `%${queryDto.zkksid.trim()}%` },
         );
       } else {
-        baseQuery.andWhere('h11_brxx.zkksid LIKE :zkksid', { zkksid: `%${queryDto.zkksid.trim()}%` });
+        baseQuery.andWhere('h11_brxx.zkksid LIKE :zkksid', {
+          zkksid: `%${queryDto.zkksid.trim()}%`,
+        });
       }
     }
 
@@ -538,9 +546,9 @@ export class h11_brxxService {
 
   async update(dto: UpdateDto) {
     const h11_brxx = await this.h11_brxxRepo.findOne({ where: { zyid: dto.zyid } });
-    const newH11_brxx = this.h11_brxxRepo.merge(h11_brxx, dto)
+    const newH11_brxx = this.h11_brxxRepo.merge(h11_brxx, dto);
     await this.h11_brxxRepo.save(newH11_brxx);
-    return newH11_brxx
+    return newH11_brxx;
   }
 
   async costDetails(queryCostDetailDto: QueryCostDetailDto) {
@@ -644,7 +652,8 @@ export class h11_brxxService {
       )`,
         { zkksid: `%${zkksid.trim()}%` },
       )
-      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange).andWhere('h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL');
+      .andWhere('h11_brxx.rysj BETWEEN :start AND :end', rysjRange)
+      .andWhere('h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL');
 
     // 3. inQuery (在院)
     const inQuery = qb()
