@@ -59,6 +59,17 @@ export const ERR = {
   ERR_40900: { code: 40901, message: '手术明细保存失败！！' },
   ERR_40901: { code: 40901, message: '提交手术明细失败！！' },
   ERR_40902: { code: 40902, message: '手术费用撤回失败！！' },
+
+  // 转科相关
+  ERR_41001: { code: 41001, message: '请输入要转的科室!' },
+  ERR_41002: { code: 41002, message: '该病人的床位未停止，请先停止床位后再转科!' },
+  ERR_41003: { code: 41003, message: '病人有未结账费用，请结账后再转科!' },
+  ERR_41004: { code: 41004, message: '转科操作失败!' },
+  ERR_41005: { code: 41005, message: '该病人有未发药，请发药后，再办转科！' },
+  ERR_41006: { code: 41006, message: '该病人有项目未执行，请医技科室执行后，再办转科！' },
+
+  // 通用错误
+  ERR_500: { code: 5000, message: '服务器错误' },
 } as const;
 
 export type ErrInfo = ValueOf<typeof ERR>;
