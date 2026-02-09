@@ -844,13 +844,16 @@ export class h11_brxxService {
 
       if (jsbz === 4) {
         await queryRunner.rollbackTransaction();
-        throw new CustomException(ERR.ERR_500, '该病人已报销，请联系医保科或收费取消医保结算，再作废出院！');
+        throw new CustomException(
+          ERR.ERR_500,
+          '该病人已报销，请联系医保科或收费取消医保结算，再作废出院！',
+        );
       }
 
       // 2. 更新病人状态：将住院状态改为2（在院），清空出院时间
       await queryRunner.query(
-        `UPDATE h11_brxx 
-         SET zyzt = 2, cysj = NULL 
+        `UPDATE h11_brxx
+         SET zyzt = 2, cysj = NULL
          WHERE zyzt = 3 AND zyid = @0`,
         [zyid],
       );
@@ -861,18 +864,15 @@ export class h11_brxxService {
       const ksid = dto.ksid || ''; // 需要根据实际情况调整
       if (ksid) {
         await queryRunner.query(
-          `UPDATE h12_yzzb 
-           SET tzbz = 0 
+          `UPDATE h12_yzzb
+           SET tzbz = 0
            WHERE zyid = @0 AND ksid = @1`,
           [zyid, ksid],
         );
       }
 
       // 4. 删除随访记录
-      await queryRunner.query(
-        `DELETE FROM YW_SF_BRXX WHERE zyid = @0`,
-        [zyid],
-      );
+      await queryRunner.query(`DELETE FROM YW_SF_BRXX WHERE zyid = @0`, [zyid]);
 
       // 5. 处理养老相关（如果启用了养老管理系统）
       // const ylmbbz = await this.paramService.gfGetPara(
@@ -924,10 +924,7 @@ export class h11_brxxService {
     } catch (error) {
       // 回滚事务
       await queryRunner.rollbackTransaction();
-      throw new CustomException(
-        ERR.ERR_500,
-        `作废出院失败: ${error.message}`,
-      );
+      throw new CustomException(ERR.ERR_500, `作废出院失败: ${error.message}`);
     } finally {
       // 释放查询运行器
       await queryRunner.release();
@@ -965,12 +962,7 @@ export class h11_brxxService {
       const cyksid = brxxInfo.cyksid;
 
       // 3. 前置校验：检查是否有未发药（根据系统参数判断）
-      const zxyptxParam = await this.paramService.gfGetPara(
-        13,
-        'zxyptx',
-        '0',
-        '执行药品提醒',
-      );
+      const zxyptxParam = await this.paramService.gfGetPara(13, 'zxyptx', '0', '执行药品提醒');
 
       if (zxyptxParam === '1') {
         // 检查是否有未发药的药品
@@ -980,18 +972,16 @@ export class h11_brxxService {
         }
       }
       // 4. 前置校验：检查是否有项目未执行（根据系统参数判断）
-      const zxxmtxParam = await this.paramService.gfGetPara(
-        13,
-        'zxxmtx',
-        '0',
-        '执行项目提醒',
-      );
+      const zxxmtxParam = await this.paramService.gfGetPara(13, 'zxxmtx', '0', '执行项目提醒');
 
       if (zxxmtxParam === '1') {
         // 检查是否有未执行的项目
         const unexecutedCount = await this.checkUnExecutedItems(queryRunner, zyid);
         if (unexecutedCount > 0) {
-          throw new CustomException(ERR.ERR_41006, '该病人有项目未执行，请医技科室执行后，再办转科！');
+          throw new CustomException(
+            ERR.ERR_41006,
+            '该病人有项目未执行，请医技科室执行后，再办转科！',
+          );
         }
       }
       // 5. 检查床位是否停止
@@ -1006,10 +996,9 @@ export class h11_brxxService {
           `UPDATE h11_brxx SET rycw = '', cycw = '', cybs = '' WHERE zyid = @0`,
           [zyid],
         );
-        await queryRunner.query(
-          `UPDATE h13_cwsyxx SET zyid = '', cwfpxx = '' WHERE zyid = @0`,
-          [zyid],
-        );
+        await queryRunner.query(`UPDATE h13_cwsyxx SET zyid = '', cwfpxx = '' WHERE zyid = @0`, [
+          zyid,
+        ]);
       }
       // 6. 统计是否已经结账 - 如果有未结账费用，需要确认
       const jsbzCount = await queryRunner.query(
@@ -1024,8 +1013,8 @@ export class h11_brxxService {
       }
       // 7. 更新病人状态为转科状态(zyzt = 6)
       await queryRunner.query(
-        `UPDATE h11_brxx 
-         SET zyzt = 6 
+        `UPDATE h11_brxx
+         SET zyzt = 6
          WHERE cyksid = @0 AND zyzt < 3 AND zyid = @1`,
         [ksid, zyid],
       );
@@ -1038,74 +1027,37 @@ export class h11_brxxService {
       );
 
       // 7. 转移押金（根据系统参数判断）
-      const yjkzkParam = await this.paramService.gfGetPara(
-        13,
-        'yjkzk',
-        '0',
-        '转科同时转押金',
-      );
+      const yjkzkParam = await this.paramService.gfGetPara(13, 'yjkzk', '0', '转科同时转押金');
 
       if (yjkzkParam === '1') {
-        await queryRunner.query(
-          `UPDATE h11_yjk SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h11_yjk SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
       }
 
       // 8. 处理医嘱数据（根据zkjl参数）
-      const zkjlParam = await this.paramService.gfGetPara(
-        13,
-        'zkjl',
-        '0',
-        '转科前与转科后分开',
-      );
+      const zkjlParam = await this.paramService.gfGetPara(13, 'zkjl', '0', '转科前与转科后分开');
 
       if (zkjlParam === '1') {
         // 直接更新医嘱等表的科室ID到新科室
-        await queryRunner.query(
-          `UPDATE h12_yzzb SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h12_yzzb SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
         await queryRunner.query(
           `UPDATE h12_yzxb SET ksid = @0, qt1 = '1' WHERE zyid = @1 AND ksid = @2`,
           [zkksid, zyid, ksid],
         );
 
-        await queryRunner.query(
-          `UPDATE h13_yzzxcs SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h13_yzzxcs SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE h11_yjk SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h11_yjk SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE h12_blzb SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h12_blzb SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE h15_sszb SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h15_sszb SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE h15_ssxb SET ksid = @0 WHERE zyid = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE h15_ssxb SET ksid = @0 WHERE zyid = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE BQ_HLJL_NEW SET BRKS = @0 WHERE zyh = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE BQ_HLJL_NEW SET BRKS = @0 WHERE zyh = @1`, [zkksid, zyid]);
 
-        await queryRunner.query(
-          `UPDATE bQ_xtjc SET brks = @0 WHERE zyh = @1`,
-          [zkksid, zyid],
-        );
+        await queryRunner.query(`UPDATE bQ_xtjc SET brks = @0 WHERE zyh = @1`, [zkksid, zyid]);
 
         // 处理材料科室
         const clksid = await this.paramService.gfGetPara(
@@ -1116,31 +1068,28 @@ export class h11_brxxService {
         );
 
         await queryRunner.query(
-          `UPDATE h13_yzzxcs SET zkksid = @0 
+          `UPDATE h13_yzzxcs SET zkksid = @0
            WHERE zyid = @1 AND ISNULL(fybz, 0) = 0 AND fylbid = '15' AND zkksid = @2`,
           [clksid, zyid, cyksid],
         );
 
         await queryRunner.query(
-          `UPDATE h12_yzxb SET ksid = @0 
+          `UPDATE h12_yzxb SET ksid = @0
            WHERE zyid = @1 AND fylbid = '15' AND ksid = @2`,
           [clksid, zyid, cyksid],
         );
       } else {
         // 只标记医嘱停止标志
         await queryRunner.query(
-          `UPDATE h12_yzzb 
-           SET tzbz = 1, tzsj = GETDATE(), tzrid = @0 
+          `UPDATE h12_yzzb
+           SET tzbz = 1, tzsj = GETDATE(), tzrid = @0
            WHERE zyid = @1`,
           [userid, zyid],
         );
       }
 
       // 9. 删除结算提示记录
-      await queryRunner.query(
-        `DELETE FROM h11_jshztzd1 WHERE zyid = @0`,
-        [zyid],
-      );
+      await queryRunner.query(`DELETE FROM h11_jshztzd1 WHERE zyid = @0`, [zyid]);
 
       // 10. 处理养老系统相关（如果启用）
       // const ylmbbz = await this.paramService.gfGetPara(
@@ -1178,11 +1127,7 @@ export class h11_brxxService {
     } catch (error) {
       // 回滚事务
       await queryRunner.rollbackTransaction();
-      throw new CustomException(
-        ERR.ERR_500,
-        `${error.message}`,
-        200
-      );
+      throw new CustomException(ERR.ERR_500, `${error.message}`, 200);
     } finally {
       // 释放查询运行器
       await queryRunner.release();
@@ -1205,13 +1150,13 @@ export class h11_brxxService {
     const zjksid = await this.paramService.gfGetPara(13, 'zjksid', '', '制剂科室');
     // 1. 检查h13_yzzxcs表中未发药的药品
     const result1 = await queryRunner.query(
-      `SELECT ISNULL(COUNT(*), 0) as count 
-       FROM h13_yzzxcs 
-       INNER JOIN h12_yzxb ON h13_yzzxcs.yzxh = h12_yzxb.yzxh 
-         AND h13_yzzxcs.yzlx = h12_yzxb.yzlx 
-         AND h13_yzzxcs.zyid = h12_yzxb.zyid 
+      `SELECT ISNULL(COUNT(*), 0) as count
+       FROM h13_yzzxcs
+       INNER JOIN h12_yzxb ON h13_yzzxcs.yzxh = h12_yzxb.yzxh
+         AND h13_yzzxcs.yzlx = h12_yzxb.yzlx
+         AND h13_yzzxcs.zyid = h12_yzxb.zyid
          AND h13_yzzxcs.mxxh = h12_yzxb.mxxh
-       WHERE ISNULL(h13_yzzxcs.fybz, 0) <> 1 
+       WHERE ISNULL(h13_yzzxcs.fybz, 0) <> 1
          AND (h12_yzxb.xmzl = 2 OR h12_yzxb.xmzl = 3)
          AND (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) > 0
          AND h13_yzzxcs.jfyl > 0
@@ -1227,13 +1172,13 @@ export class h11_brxxService {
 
     // 2. 检查h13_yzzxcs_tf表中未发药的退费药品
     const result2 = await queryRunner.query(
-      `SELECT ISNULL(COUNT(*), 0) as count 
-       FROM h13_yzzxcs_tf 
-       INNER JOIN h12_yzxb ON h13_yzzxcs_tf.yzxh = h12_yzxb.yzxh 
-         AND h13_yzzxcs_tf.yzlx = h12_yzxb.yzlx 
-         AND h13_yzzxcs_tf.zyid = h12_yzxb.zyid 
+      `SELECT ISNULL(COUNT(*), 0) as count
+       FROM h13_yzzxcs_tf
+       INNER JOIN h12_yzxb ON h13_yzzxcs_tf.yzxh = h12_yzxb.yzxh
+         AND h13_yzzxcs_tf.yzlx = h12_yzxb.yzlx
+         AND h13_yzzxcs_tf.zyid = h12_yzxb.zyid
          AND h13_yzzxcs_tf.mxxh = h12_yzxb.mxxh
-       WHERE ISNULL(h13_yzzxcs_tf.fybz, 0) <> 1 
+       WHERE ISNULL(h13_yzzxcs_tf.fybz, 0) <> 1
          AND (h12_yzxb.xmzl = 2 OR h12_yzxb.xmzl = 3)
          AND ABS(h13_yzzxcs_tf.zxcs - h13_yzzxcs_tf.bzxcs) > 0
          AND h13_yzzxcs_tf.jfyl > 0
@@ -1253,9 +1198,9 @@ export class h11_brxxService {
     const hlksid = await this.paramService.gfGetPara(13, 'hlksid', '', '护理科室');
 
     const result3 = await queryRunner.query(
-      `SELECT ISNULL(COUNT(*), 0) as count 
-       FROM h15_sszb 
-       INNER JOIN h15_ssxb ON h15_ssxb.zyid = h15_sszb.zyid 
+      `SELECT ISNULL(COUNT(*), 0) as count
+       FROM h15_sszb
+       INNER JOIN h15_ssxb ON h15_ssxb.zyid = h15_sszb.zyid
          AND h15_ssxb.ssid = h15_sszb.ssid
        INNER JOIN h11_brxx ON h15_sszb.zyid = h11_brxx.zyid
        WHERE h15_sszb.zyid = @0
@@ -1292,7 +1237,10 @@ export class h11_brxxService {
     // 将逗号分隔的字符串拆分成数组并过滤空值
     const splitAndFilter = (str: string): string[] => {
       if (!str || str.trim() === '') return [];
-      return str.split(',').map(s => s.trim()).filter(s => s !== '');
+      return str
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s !== '');
     };
 
     // 拆分各个费用类别
@@ -1318,12 +1266,12 @@ export class h11_brxxService {
     const result = await queryRunner.query(
       `SELECT COUNT(*) as count
        FROM h13_yzzxcs
-       INNER JOIN h12_yzxb ON h13_yzzxcs.yzxh = h12_yzxb.yzxh 
-         AND h13_yzzxcs.yzlx = h12_yzxb.yzlx 
-         AND h13_yzzxcs.zyid = h12_yzxb.zyid 
+       INNER JOIN h12_yzxb ON h13_yzzxcs.yzxh = h12_yzxb.yzxh
+         AND h13_yzzxcs.yzlx = h12_yzxb.yzlx
+         AND h13_yzzxcs.zyid = h12_yzxb.zyid
          AND h13_yzzxcs.mxxh = h12_yzxb.mxxh
-       INNER JOIN h12_yzzb ON h12_yzzb.yzxh = h12_yzxb.yzxh 
-         AND h12_yzzb.yzlx = h12_yzxb.yzlx 
+       INNER JOIN h12_yzzb ON h12_yzzb.yzxh = h12_yzxb.yzxh
+         AND h12_yzzb.yzlx = h12_yzxb.yzlx
          AND h12_yzzb.zyid = h12_yzxb.zyid
        WHERE (ISNULL(h13_yzzxcs.sfbz, 0) <> 1 OR ISNULL(h13_yzzxcs.clbz, 0) <> 1)
          AND h12_yzxb.xmzl = 1
