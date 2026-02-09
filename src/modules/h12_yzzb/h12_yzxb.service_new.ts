@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-// import dayjs = require('dayjs');
+import dayjs = require('dayjs');
 // import * as dayjs from 'dayjs';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
 import {
   DataSource,
   In,
@@ -162,7 +162,15 @@ export class h12_yzxbServiceNew {
       .createQueryBuilder('yzxb')
       .leftJoin('yzxb.h13_yzzxcsList', 'yzzxcs')
       .leftJoin('yzzxcs.h13YzzxcsTfList', 'yzzxcsTf')
-      .select(['yzxb', 'yzzxcs.clbz', 'yzzxcs.fybz', 'yzzxcs.fydh', 'yzzxcs.zxrq', 'yzzxcs.maxid'])
+      .select([
+        'yzxb',
+        'yzzxcs.clbz',
+        'yzzxcs.fybz',
+        'yzzxcs.fydh',
+        'yzzxcs.zxrq',
+        'yzzxcs.maxid',
+        'yzzxcs.sjtysl',
+      ])
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       //   .andWhere('yzxb.ysbz = 1')
@@ -215,7 +223,7 @@ export class h12_yzxbServiceNew {
               (yzzxcs) =>
                 yzzxcs.clbz === 1 &&
                 dayjs(yzzxcs.zxrq) >= dayjs(yzxb.tzrq).startOf('day') &&
-                yzzxcs.sjtysl > 0,
+                (yzzxcs.sjtysl ?? 0) > 0,
             ),
         )
       ) {
@@ -245,6 +253,7 @@ export class h12_yzxbServiceNew {
       });
     } catch (error) {
       this.logger.error(error);
+      console.error(error);
       throw error;
     }
   }
