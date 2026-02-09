@@ -1341,7 +1341,7 @@ export class h12_yzxbService {
         'h00_sypl.mrcs',
       ])
       .where('h12_yzxb.zyid = :zyid', { zyid })
-      .andWhere('h12_yzxb.yzxh = :yzxh', { yzxh: 1 })
+      .andWhere('h12_yzxb.yzxh = :yzxh', { yzxh })
       .andWhere('h12_yzxb.yzlx = :yzlx', { yzlx })
       .andWhere('h12_yzxb.yzzh IN (:...yzzh)', { yzzh })
       //.andWhere('h12_yzxb.tjbz = 1')
@@ -1367,7 +1367,28 @@ export class h12_yzxbService {
       }
     });
     await this.dataSource.transaction(async (manager) => {
-      await manager.save(h12_yzxb, h12_yzxbs);
+      //   await manager.save(h12_yzxb, h12_yzxbs);
+      await Promise.all(
+        h12_yzxbs.map((h12Yzxb) =>
+          manager.update(
+            h12_yzxb,
+            {
+              zyid: h12Yzxb.zyid,
+              yzxh: h12Yzxb.yzxh,
+              yzlx: h12Yzxb.yzlx,
+              mxxh: h12Yzxb.mxxh,
+            },
+            {
+              mrcs: h12Yzxb.mrcs,
+              tzrq: h12Yzxb.tzrq,
+              yzzt: h12Yzxb.yzzt,
+              tzbz: h12Yzxb.tzbz,
+              jsys: h12Yzxb.jsys,
+              jssxys: h12Yzxb.jssxys,
+            },
+          ),
+        ),
+      );
 
       // 处理库存
       //   const zxrq = DateFormater.formatDate1(tzsj);
