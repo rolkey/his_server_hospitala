@@ -492,6 +492,7 @@ export class h12_yzxbServiceNew {
     const step42 = () => {
       if (tzrq.getDate() === h13Yzzxcs.zxrq.getDate()) {
         if (h12Yzxb.mrcs === 0) {
+          h13Yzzxcs.bzxcs = h13Yzzxcs.zxcs;
           refundYzzxcss.push(h13Yzzxcs);
           deleteYzzxcss.push(h13Yzzxcs);
         } else {
@@ -702,7 +703,7 @@ export class h12_yzxbServiceNew {
             );
           }),
         );
-        // 退费单，
+        // 退费单
         await reviewManager.insert(H13YzzxcsTf, tfListToInsertAll);
         if (refundYzzxcss.length > 0 || lysjYzzxcss.length > 0) {
           await reviewManager.query(
@@ -1554,6 +1555,8 @@ export class h12_yzxbServiceNew {
         bzxcs: 0,
         tyrid: dto.zxhs,
         tysj: new Date(),
+        fysj: null,
+        fyrid: null,
         sysj: null,
         clbz: 0,
         fybz: 0,
