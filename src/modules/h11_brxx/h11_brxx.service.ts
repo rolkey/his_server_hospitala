@@ -62,7 +62,7 @@ export class h11_brxxService {
     }
 
     if (queryDto.ryksid) {
-      baseQuery.andWhere('h11_brxx.ryksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
+      baseQuery.andWhere('h11_brxx.cyksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
     }
     baseQuery.andWhere((qb) => {
       // 创建子查询
