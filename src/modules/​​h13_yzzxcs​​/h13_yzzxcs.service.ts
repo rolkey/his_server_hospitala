@@ -130,6 +130,7 @@ export class h13_yzzxcsService {
     const fhdys = h13YzzxcsTfList.map((item) => item.fydh);
     await this.dataSource.transaction(async (manager) => {
       await Promise.all([
+        manager.update(h13_yzzxcs, { zyid: data.zyid, fydh: In(fhdys) }, { clbz: 0, fydh: null }),
         manager.update(H13YzzxcsTf, { zyid: data.zyid, fydh: In(fhdys) }, { clbz: 0, fydh: null }),
         manager.delete('h31_lyjl', { zyid: data.zyid, djbh: In(fhdys) }),
         manager.delete('h31_lymx', { zyid: data.zyid, djbh: In(fhdys) }),
