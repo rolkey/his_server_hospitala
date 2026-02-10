@@ -11,9 +11,13 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
+import { SfxmModule } from '../h12_xmzd/sfxm.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([h11_lsh, h11_brxx, H11Jszb, h00_fylb, Syspar, SysparNew])],
+  imports: [
+    TypeOrmModule.forFeature([h11_lsh, h11_brxx, H11Jszb, h00_fylb, Syspar, SysparNew]),
+    SfxmModule,
+  ],
   providers: [h11_lshService, h11_brxxService, h00_fylbService, ParamService],
   controllers: [h11_lshController], // 确保h11_lshController被导入
   exports: [h11_lshService],

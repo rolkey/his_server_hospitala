@@ -24,6 +24,8 @@ import { ERR } from '@/common/exceptions/error-code';
 import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
+import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
+import e = require('express');
 @Injectable()
 export class h11_brxxService {
   constructor(
@@ -34,7 +36,8 @@ export class h11_brxxService {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+    private readonly configReaderService: ConfigReaderService,
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -965,9 +968,10 @@ export class h11_brxxService {
 
       if (zxyptxParam === '1') {
         // 检查是否有未发药的药品
-        const unfyCount = await this.checkUnDispensedMedicine(queryRunner, zyid);
+        const unfyCount = await this.checkUnDispensedMedicine(queryRunner, zyid, ksid);
         if (unfyCount > 0) {
-          throw new CustomException(ERR.ERR_41005, '该病人有未发药，请发药后，再办转科！');
+          const fees = await this.getUnpaidFees(zyid);
+          throw new CustomException(ERR.ERR_41005, ERR.ERR_41005.message, 400, fees);
         }
       }
       // 4. 前置校验：检查是否有项目未执行（根据系统参数判断）
@@ -977,10 +981,8 @@ export class h11_brxxService {
         // 检查是否有未执行的项目
         const unexecutedCount = await this.checkUnExecutedItems(queryRunner, zyid);
         if (unexecutedCount > 0) {
-          throw new CustomException(
-            ERR.ERR_41006,
-            '该病人有项目未执行，请医技科室执行后，再办转科！',
-          );
+          const fees = await this.getUnXmList(zyid);
+          throw new CustomException(ERR.ERR_41006, ERR.ERR_41006.message, null, fees);
         }
       }
       // 5. 检查床位是否停止
@@ -1004,7 +1006,6 @@ export class h11_brxxService {
         `SELECT COUNT(*) as count FROM h13_yzzxcs WHERE zyid = @0 AND jsbz = 0 AND sfbz = 1`,
         [zyid],
       );
-
       // 注意：这里在实际应用中可能需要前端确认，暂时允许转科
       const hasUnpaidFees = jsbzCount[0]?.count > 0;
       if (hasUnpaidFees) {
@@ -1125,8 +1126,14 @@ export class h11_brxxService {
       };
     } catch (error) {
       // 回滚事务
+      console.log(error);
       await queryRunner.rollbackTransaction();
-      throw new CustomException(ERR.ERR_500, `${error.message}`, 200);
+      throw new CustomException(
+        error,
+        `${error.message}`,
+        400,
+        error.data
+      );
     } finally {
       // 释放查询运行器
       await queryRunner.release();
@@ -1139,14 +1146,10 @@ export class h11_brxxService {
    * @param zyid 住院ID
    * @returns 未发药数量
    */
-  private async checkUnDispensedMedicine(queryRunner: any, zyid: string): Promise<number> {
+  private async checkUnDispensedMedicine(queryRunner: any, zyid: string, ksid: string): Promise<number> {
     // 获取相关科室参数
-    const xyksid = await this.paramService.gfGetPara(13, 'xyksid', '', '西药科室');
-    const cyksid = await this.paramService.gfGetPara(13, 'cyksid', '', '草药科室');
-    const zyksid = await this.paramService.gfGetPara(13, 'zyksid', '', '中药科室');
-    const clksid = await this.paramService.gfGetPara(13, 'clksid', '', '材料科室');
-    const qtksid = await this.paramService.gfGetPara(13, 'qtksid', '', '其他科室');
-    const zjksid = await this.paramService.gfGetPara(13, 'zjksid', '', '制剂科室');
+    const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid } =
+      await this.configReaderService.readYfCxsz(ksid);
     // 1. 检查h13_yzzxcs表中未发药的药品
     const result1 = await queryRunner.query(
       `SELECT ISNULL(COUNT(*), 0) as count
@@ -1192,10 +1195,6 @@ export class h11_brxxService {
     }
 
     // 3. 检查手术医嘱未发药
-    const ssclksid = await this.paramService.gfGetPara(13, 'ssclksid', '', '手术材料科室');
-    const jpksid = await this.paramService.gfGetPara(13, 'jpksid', '', '精品科室');
-    const hlksid = await this.paramService.gfGetPara(13, 'hlksid', '', '护理科室');
-
     const result3 = await queryRunner.query(
       `SELECT ISNULL(COUNT(*), 0) as count
        FROM h15_sszb
@@ -1283,5 +1282,220 @@ export class h11_brxxService {
     );
 
     return result[0]?.count || 0;
+  }
+
+  private async getUnpaidFees(zyid: string) {
+    const result = await this.dataSource.query(
+      `SELECT h12_yzxb.xmmc,      
+         h12_yzxb.xmdw,   
+         h12_yzxb.xmgg,     
+         h12_yzxb.cjid,   
+         h12_yzxb.scph,   
+         h12_yzxb.pfjg,    
+         h12_yzxb.xmid,  
+         h12_yzxb.zflx, 
+         h12_yzxb.sjyl, h12_yzxb.sjyl1,
+         h12_yzxb.syffid,
+         h12_yzxb.syplid,
+         h12_yzxb.jldw,
+         h12_yzxb.ksrq,
+         h12_yzxb.kssj,
+         h13_yzzxcs.yzxh,   
+         h13_yzzxcs.mxxh,   
+         h13_yzzxcs.yzlx,   
+         h13_yzzxcs.zyid,   
+         h13_yzzxcs.zxrq,   
+         h13_yzzxcs.jfyl,   
+         h13_yzzxcs.xmdj,   
+         h13_yzzxcs.zxcs,   
+         h13_yzzxcs.zxhs,   
+         h13_yzzxcs.zxsj,   
+         h13_yzzxcs.bzxcs,   
+         h13_yzzxcs.syrid,   
+         h13_yzzxcs.kyts,   
+         h13_yzzxcs.fybz,   
+         h13_yzzxcs.fyrid,   
+         h13_yzzxcs.fysj,   
+         h12_yzxb.dw_grade ,h13_yzzxcs.fydh,h13_yzzxcs.maxid,  
+         h12_yzxb.dw_xs,   
+         h12_yzxb.ypid,   
+         h13_yzzxcs.clbz,   
+         h12_yzxb.fylbid,   
+         h13_yzzxcs.zybh,   
+         h13_yzzxcs.ksid,
+         h12_yzzb.cwid,
+         h12_yzzb.brxm,h12_yzxb.bzxx
+    FROM h13_yzzxcs,   
+         h12_yzxb ,h12_yzzb  
+   WHERE ( h13_yzzxcs.yzxh = h12_yzxb.yzxh ) and  
+         ( h13_yzzxcs.yzlx = h12_yzxb.yzlx ) and  
+         ( h13_yzzxcs.zyid = h12_yzxb.zyid ) and  
+         ( h13_yzzxcs.mxxh = h12_yzxb.mxxh ) and
+         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and  
+         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and  
+         ( h12_yzzb.zyid = h12_yzxb.zyid ) and     
+         ( isnull(h13_yzzxcs.fybz,0)<>1 ) and
+         ( h12_yzxb.xmzl=2 or h12_yzxb.xmzl=3) and
+         (( h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)>0 ) AND
+         (h13_yzzxcs.fylbid = '01' OR  
+         h13_yzzxcs.fylbid = '02' OR   h13_yzzxcs.fylbid = '90' OR
+         h13_yzzxcs.fylbid = '03' or 
+         h13_yzzxcs.fylbid = '15')  and    h12_yzzb.zyid=@0
+union all
+
+SELECT h12_yzxb.xmmc,      
+         h12_yzxb.xmdw,   
+         h12_yzxb.xmgg,    
+         h12_yzxb.cjid,   
+         h12_yzxb.scph,   
+         h12_yzxb.pfjg,    
+         h12_yzxb.xmid,  
+         h12_yzxb.zflx, 
+         h12_yzxb.sjyl, h12_yzxb.sjyl1,
+         h12_yzxb.syffid,
+         h12_yzxb.syplid,
+         h12_yzxb.jldw,
+         h12_yzxb.ksrq,
+         h12_yzxb.kssj,
+         h13_yzzxcs_tf.yzxh,   
+         h13_yzzxcs_tf.mxxh,   
+         h13_yzzxcs_tf.yzlx,   
+         h13_yzzxcs_tf.zyid,   
+         h13_yzzxcs_tf.zxrq,   
+         h13_yzzxcs_tf.jfyl,   
+         h13_yzzxcs_tf.xmdj,   
+         h13_yzzxcs_tf.zxcs,   
+         h13_yzzxcs_tf.zxhs,   
+         h13_yzzxcs_tf.zxsj,   
+         h13_yzzxcs_tf.bzxcs,   
+         h13_yzzxcs_tf.syrid,   
+         h13_yzzxcs_tf.kyts,   
+         h13_yzzxcs_tf.fybz,   
+         h13_yzzxcs_tf.fyrid,   
+         h13_yzzxcs_tf.fysj,   
+         h12_yzxb.dw_grade ,h13_yzzxcs_tf.fydh,h13_yzzxcs_tf.maxid,  
+         h12_yzxb.dw_xs,   
+         h12_yzxb.ypid,   
+         h13_yzzxcs_tf.clbz,   
+         h12_yzxb.fylbid,   
+         h13_yzzxcs_tf.zybh,   
+         h13_yzzxcs_tf.ksid,
+         h12_yzzb.cwid,
+         h12_yzzb.brxm,h12_yzxb.bzxx
+    FROM h13_yzzxcs_tf,   
+         h12_yzxb ,h12_yzzb  
+   WHERE ( h13_yzzxcs_tf.yzxh = h12_yzxb.yzxh ) and  
+         ( h13_yzzxcs_tf.yzlx = h12_yzxb.yzlx ) and  
+         ( h13_yzzxcs_tf.zyid = h12_yzxb.zyid ) and  
+         ( h13_yzzxcs_tf.mxxh = h12_yzxb.mxxh ) and
+         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and  
+         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and  
+         ( h12_yzzb.zyid = h12_yzxb.zyid ) and     
+         ( isnull(h13_yzzxcs_tf.fybz,0)<>1 ) and
+         ( h12_yzxb.xmzl=2 or h12_yzxb.xmzl=3) and
+         (abs( h13_yzzxcs_tf.zxcs - h13_yzzxcs_tf.bzxcs)>0 ) AND
+         (h13_yzzxcs_tf.fylbid = '01' OR  
+         h13_yzzxcs_tf.fylbid = '02' OR   h13_yzzxcs_tf.fylbid = '90' OR
+         h13_yzzxcs_tf.fylbid = '03' or 
+         h13_yzzxcs_tf.fylbid = '15')  and    h12_yzzb.zyid=@0`,
+      [zyid],
+    );
+
+    return result;
+  }
+
+  /**
+   * 获取未执行项目列表（检查类项目，按费用类别参数过滤）
+   * @param zyid 住院ID
+   */
+  private async getUnXmList(zyid: string) {
+    const hlfylbid = await this.paramService.gfGetPara(40, 'hlfylbid', '08', '化验费用类别');
+    const bcfylbid = await this.paramService.gfGetPara(40, 'bcfylbid', '', 'B超费用类别');
+    const xgfylbid = await this.paramService.gfGetPara(40, 'xgfylbid', '', 'X光费用类别');
+    const qtfylbid = await this.paramService.gfGetPara(40, 'qtfylbid', '', '其他费用类别');
+    const mrfylbid = await this.paramService.gfGetPara(40, 'mrfylbid', '', 'MR费用类别');
+    const zyfylbid = await this.paramService.gfGetPara(40, 'zyfylbid', '', '中医费用类别');
+    const ctfylbid = await this.paramService.gfGetPara(40, 'ctfylbid', '', 'CT费用类别');
+    const xdfylbid = await this.paramService.gfGetPara(40, 'xdfylbid', '', '心电费用类别');
+
+    const splitAndFilter = (str: string): string[] => {
+      if (!str || str.trim() === '') return [];
+      return str.split(',').map(s => s.trim()).filter(s => s !== '');
+    };
+
+    const hl = splitAndFilter(hlfylbid);
+    const bc = splitAndFilter(bcfylbid);
+    const xg = splitAndFilter(xgfylbid);
+    const qt = splitAndFilter(qtfylbid);
+    const mr = splitAndFilter(mrfylbid);
+    const zy = splitAndFilter(zyfylbid);
+    const ct = splitAndFilter(ctfylbid);
+    const xd = splitAndFilter(xdfylbid);
+
+    const fylbList = [...hl, ...bc, ...xg, ...qt, ...mr, ...zy, ...ct, ...xd];
+    if (fylbList.length === 0) {
+      return [];
+    }
+
+    const fylbPlaceholders = fylbList.map((_, i) => `@${i + 1}`).join(',');
+    const result = await this.dataSource.query(
+      `SELECT h12_yzxb.xmmc,
+         h12_yzxb.xmdw,
+         h12_yzxb.xmgg,
+         h12_yzxb.cjid,
+         h12_yzxb.scph,
+         h12_yzxb.pfjg,
+         h12_yzxb.xmid,
+         h12_yzxb.zflx,
+         h12_yzxb.sjyl, h12_yzxb.sjyl1,
+         h12_yzxb.syffid,
+         h12_yzxb.syplid,
+         h12_yzxb.jldw,
+         h12_yzxb.ksrq,
+         h12_yzxb.kssj,
+         h13_yzzxcs.yzxh,
+         h13_yzzxcs.mxxh,
+         h13_yzzxcs.yzlx,
+         h13_yzzxcs.zyid,
+         h13_yzzxcs.zxrq,
+         h13_yzzxcs.jfyl,
+         h13_yzzxcs.xmdj,
+         h13_yzzxcs.zxcs,
+         h13_yzzxcs.zxhs,
+         h13_yzzxcs.zxsj,
+         h13_yzzxcs.bzxcs,
+         h13_yzzxcs.syrid,
+         h13_yzzxcs.kyts,
+         h13_yzzxcs.fybz,
+         h13_yzzxcs.fyrid,
+         h13_yzzxcs.fysj,
+         h12_yzxb.dw_grade, h13_yzzxcs.fydh, h13_yzzxcs.maxid,
+         h12_yzxb.dw_xs,
+         h12_yzxb.ypid,
+         h13_yzzxcs.clbz,
+         h12_yzxb.fylbid,
+         h13_yzzxcs.zybh,
+         h13_yzzxcs.ksid,
+         h12_yzzb.cwid,
+         h12_yzzb.brxm, h12_yzxb.bzxx
+    FROM h13_yzzxcs,
+         h12_yzxb, h12_yzzb
+   WHERE (h13_yzzxcs.yzxh = h12_yzxb.yzxh) AND
+         (h13_yzzxcs.yzlx = h12_yzxb.yzlx) AND
+         (h13_yzzxcs.zyid = h12_yzxb.zyid) AND
+         (h13_yzzxcs.mxxh = h12_yzxb.mxxh) AND
+         (h12_yzzb.yzxh = h12_yzxb.yzxh) AND
+         (h12_yzzb.yzlx = h12_yzxb.yzlx) AND
+         (h12_yzzb.zyid = h12_yzxb.zyid) AND
+         (ISNULL(h13_yzzxcs.sfbz, 0) <> 1 OR ISNULL(h13_yzzxcs.clbz, 0) <> 1) AND
+         (h12_yzxb.xmzl = 1) AND
+         ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) > 0) AND
+         h13_yzzxcs.jfyl <> 0 AND
+         (h13_yzzxcs.xmdj > 0) AND
+         h13_yzzxcs.fylbid IN (${fylbPlaceholders}) AND
+         h12_yzzb.zyid = @0`,
+      [zyid, ...fylbList],
+    );
+    return result;
   }
 }

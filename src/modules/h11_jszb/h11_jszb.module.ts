@@ -25,6 +25,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
+import { SfxmModule } from '../h12_xmzd/sfxm.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
       Syspar,
       SysparNew,
     ]),
+    SfxmModule,
   ],
   controllers: [H11JszbController],
   providers: [
