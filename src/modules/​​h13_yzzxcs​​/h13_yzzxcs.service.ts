@@ -126,6 +126,7 @@ export class h13_yzzxcsService {
     const h13YzzxcsTfList = await this.h13YzzxcsTfRepository.find({
       where: { zyid: data.zyid, zxcs2: In(data.maxids), clbz: 0 },
     });
+    if (h13YzzxcsTfList.length === 0) return; // 没有退费单
     // 删除领药单与领药明细
     const fhdys = h13YzzxcsTfList.map((item) => item.fydh);
     await this.dataSource.transaction(async (manager) => {
