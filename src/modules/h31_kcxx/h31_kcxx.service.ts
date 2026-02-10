@@ -157,7 +157,7 @@ export class H31_kcxxService {
 
     if (!kcxxResult) {
       throw new BadRequestException(
-        `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}，规格${asYpgg}，编号${asYpid}`,
+        `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}，规格 ${asYpgg}，编号 ${asYpid}，科室 ${asKsid}`,
       );
     }
 
