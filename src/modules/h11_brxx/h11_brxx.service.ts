@@ -39,6 +39,7 @@ export class h11_brxxService {
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
     const pageNo = queryDto.pageNo || 1;
+    const today = dayjs().format('YYYY-MM-DD');
 
     // 1️⃣ 基础查询（不含关联表）
     const baseQuery = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
@@ -46,8 +47,8 @@ export class h11_brxxService {
     // --- 动态查询条件 ---
     if (queryDto?.value) {
       baseQuery.andWhere(
-        `(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value
-        OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)`,
+        '(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value ' +
+          'OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
         { value: `%${queryDto?.value}%` },
       );
     }
@@ -61,7 +62,7 @@ export class h11_brxxService {
     }
 
     if (queryDto.ryksid) {
-      baseQuery.andWhere('h11_brxx.cyksid LIKE :ryksid', { ryksid: `%${queryDto.ryksid.trim()}%` });
+      baseQuery.andWhere('h11_brxx.cyksid = :ryksid', { ryksid: queryDto.ryksid.trim() });
     }
     baseQuery.andWhere((qb) => {
       // 创建子查询
@@ -110,15 +111,15 @@ export class h11_brxxService {
     // 3️⃣ 第二次查询 — 详情 + Join + 计算字段
     const detailQuery = this.h11_brxxRepo
       .createQueryBuilder('h11_brxx')
-      .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
-      .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
-      .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
-      .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
-      .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
-      .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
-      .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
-      .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
-      .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
+      .leftJoin('h11_brxx.brlxidEntity', 'brlxidEntity')
+      .leftJoin('h11_brxx.rycwEntity', 'rycwEntity')
+      .leftJoin('h11_brxx.cycwEntity', 'cycwEntity')
+      .leftJoin('h11_brxx.mzysEntity', 'mzysEntity')
+      .leftJoin('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoin('h11_brxx.zrhsEntity', 'zrhsEntity')
+      .leftJoin('h11_brxx.zkbqidEntity', 'zkbqidEntity')
+      .leftJoin('h11_brxx.rybqidEntity', 'rybqidEntity')
+      .leftJoin('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .addSelect([
@@ -134,30 +135,28 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .whereInIds(ids)
       .addSelect(
-        `CASE
-          WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())
-          ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)
-        END`,
+        'CASE' +
+          '  WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())' +
+          '  ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)' +
+          ' END',
         'zyts1',
       )
       .addSelect('0', 'isfinish')
       .addSelect(
-        `(SELECT CASE
-            WHEN ISNULL(y.kshs, '0') = '0' THEN 1
-            WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2
-            ELSE 0 END
-          FROM (
-            SELECT h12_yzxb.yzrq, h12_yzxb.kshs,
-            ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp
-            FROM h12_yzxb
-            WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid
-          ) AS y WHERE y.fsp = 1)`,
+        '(SELECT CASE' +
+          "  WHEN ISNULL(y.kshs, '0') = '0' THEN 1" +
+          '  WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2' +
+          '  ELSE 0 END' +
+          ' FROM (' +
+          '  SELECT h12_yzxb.yzrq, h12_yzxb.kshs,' +
+          '  ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp' +
+          '  FROM h12_yzxb' +
+          '  WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid' +
+          ') AS y WHERE y.fsp = 1)',
         'isexecute',
       )
       .addSelect(
-        `CASE
-          WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1
-          ELSE 0 END`,
+        'CASE WHEN CONVERT(VARCHAR(10), h11_brxx.rysj, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 1 ELSE 0 END',
         'istoday',
       );
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
