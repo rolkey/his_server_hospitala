@@ -1319,6 +1319,9 @@ export class h12_yzxbService {
     if (!brxx) {
       throw new BadRequestException('病人信息未找到，不能停嘱!');
     }
+    if (!u_zcid) {
+      throw new BadRequestException('医生职称或科室人员未配置，无法进行工作！！');
+    }
 
     const zybh = brxx.zybh;
     const brxm = brxx.brxm;
