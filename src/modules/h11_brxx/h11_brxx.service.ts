@@ -37,7 +37,7 @@ export class h11_brxxService {
     private readonly paramService: ParamService,
     private dataSource: DataSource,
     private readonly configReaderService: ConfigReaderService,
-  ) { }
+  ) {}
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -1128,12 +1128,7 @@ export class h11_brxxService {
       // 回滚事务
       console.log(error);
       await queryRunner.rollbackTransaction();
-      throw new CustomException(
-        error,
-        `${error.message}`,
-        400,
-        error.data
-      );
+      throw new CustomException(error, `${error.message}`, 400, error.data);
     } finally {
       // 释放查询运行器
       await queryRunner.release();
@@ -1146,7 +1141,11 @@ export class h11_brxxService {
    * @param zyid 住院ID
    * @returns 未发药数量
    */
-  private async checkUnDispensedMedicine(queryRunner: any, zyid: string, ksid: string): Promise<number> {
+  private async checkUnDispensedMedicine(
+    queryRunner: any,
+    zyid: string,
+    ksid: string,
+  ): Promise<number> {
     // 获取相关科室参数
     const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid } =
       await this.configReaderService.readYfCxsz(ksid);
@@ -1286,117 +1285,117 @@ export class h11_brxxService {
 
   private async getUnpaidFees(zyid: string) {
     const result = await this.dataSource.query(
-      `SELECT h12_yzxb.xmmc,      
-         h12_yzxb.xmdw,   
-         h12_yzxb.xmgg,     
-         h12_yzxb.cjid,   
-         h12_yzxb.scph,   
-         h12_yzxb.pfjg,    
-         h12_yzxb.xmid,  
-         h12_yzxb.zflx, 
+      `SELECT h12_yzxb.xmmc,
+         h12_yzxb.xmdw,
+         h12_yzxb.xmgg,
+         h12_yzxb.cjid,
+         h12_yzxb.scph,
+         h12_yzxb.pfjg,
+         h12_yzxb.xmid,
+         h12_yzxb.zflx,
          h12_yzxb.sjyl, h12_yzxb.sjyl1,
          h12_yzxb.syffid,
          h12_yzxb.syplid,
          h12_yzxb.jldw,
          h12_yzxb.ksrq,
          h12_yzxb.kssj,
-         h13_yzzxcs.yzxh,   
-         h13_yzzxcs.mxxh,   
-         h13_yzzxcs.yzlx,   
-         h13_yzzxcs.zyid,   
-         h13_yzzxcs.zxrq,   
-         h13_yzzxcs.jfyl,   
-         h13_yzzxcs.xmdj,   
-         h13_yzzxcs.zxcs,   
-         h13_yzzxcs.zxhs,   
-         h13_yzzxcs.zxsj,   
-         h13_yzzxcs.bzxcs,   
-         h13_yzzxcs.syrid,   
-         h13_yzzxcs.kyts,   
-         h13_yzzxcs.fybz,   
-         h13_yzzxcs.fyrid,   
-         h13_yzzxcs.fysj,   
-         h12_yzxb.dw_grade ,h13_yzzxcs.fydh,h13_yzzxcs.maxid,  
-         h12_yzxb.dw_xs,   
-         h12_yzxb.ypid,   
-         h13_yzzxcs.clbz,   
-         h12_yzxb.fylbid,   
-         h13_yzzxcs.zybh,   
+         h13_yzzxcs.yzxh,
+         h13_yzzxcs.mxxh,
+         h13_yzzxcs.yzlx,
+         h13_yzzxcs.zyid,
+         h13_yzzxcs.zxrq,
+         h13_yzzxcs.jfyl,
+         h13_yzzxcs.xmdj,
+         h13_yzzxcs.zxcs,
+         h13_yzzxcs.zxhs,
+         h13_yzzxcs.zxsj,
+         h13_yzzxcs.bzxcs,
+         h13_yzzxcs.syrid,
+         h13_yzzxcs.kyts,
+         h13_yzzxcs.fybz,
+         h13_yzzxcs.fyrid,
+         h13_yzzxcs.fysj,
+         h12_yzxb.dw_grade ,h13_yzzxcs.fydh,h13_yzzxcs.maxid,
+         h12_yzxb.dw_xs,
+         h12_yzxb.ypid,
+         h13_yzzxcs.clbz,
+         h12_yzxb.fylbid,
+         h13_yzzxcs.zybh,
          h13_yzzxcs.ksid,
          h12_yzzb.cwid,
          h12_yzzb.brxm,h12_yzxb.bzxx
-    FROM h13_yzzxcs,   
-         h12_yzxb ,h12_yzzb  
-   WHERE ( h13_yzzxcs.yzxh = h12_yzxb.yzxh ) and  
-         ( h13_yzzxcs.yzlx = h12_yzxb.yzlx ) and  
-         ( h13_yzzxcs.zyid = h12_yzxb.zyid ) and  
+    FROM h13_yzzxcs,
+         h12_yzxb ,h12_yzzb
+   WHERE ( h13_yzzxcs.yzxh = h12_yzxb.yzxh ) and
+         ( h13_yzzxcs.yzlx = h12_yzxb.yzlx ) and
+         ( h13_yzzxcs.zyid = h12_yzxb.zyid ) and
          ( h13_yzzxcs.mxxh = h12_yzxb.mxxh ) and
-         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and  
-         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and  
-         ( h12_yzzb.zyid = h12_yzxb.zyid ) and     
+         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and
+         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and
+         ( h12_yzzb.zyid = h12_yzxb.zyid ) and
          ( isnull(h13_yzzxcs.fybz,0)<>1 ) and
          ( h12_yzxb.xmzl=2 or h12_yzxb.xmzl=3) and
          (( h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)>0 ) AND
-         (h13_yzzxcs.fylbid = '01' OR  
+         (h13_yzzxcs.fylbid = '01' OR
          h13_yzzxcs.fylbid = '02' OR   h13_yzzxcs.fylbid = '90' OR
-         h13_yzzxcs.fylbid = '03' or 
+         h13_yzzxcs.fylbid = '03' or
          h13_yzzxcs.fylbid = '15')  and    h12_yzzb.zyid=@0
 union all
 
-SELECT h12_yzxb.xmmc,      
-         h12_yzxb.xmdw,   
-         h12_yzxb.xmgg,    
-         h12_yzxb.cjid,   
-         h12_yzxb.scph,   
-         h12_yzxb.pfjg,    
-         h12_yzxb.xmid,  
-         h12_yzxb.zflx, 
+SELECT h12_yzxb.xmmc,
+         h12_yzxb.xmdw,
+         h12_yzxb.xmgg,
+         h12_yzxb.cjid,
+         h12_yzxb.scph,
+         h12_yzxb.pfjg,
+         h12_yzxb.xmid,
+         h12_yzxb.zflx,
          h12_yzxb.sjyl, h12_yzxb.sjyl1,
          h12_yzxb.syffid,
          h12_yzxb.syplid,
          h12_yzxb.jldw,
          h12_yzxb.ksrq,
          h12_yzxb.kssj,
-         h13_yzzxcs_tf.yzxh,   
-         h13_yzzxcs_tf.mxxh,   
-         h13_yzzxcs_tf.yzlx,   
-         h13_yzzxcs_tf.zyid,   
-         h13_yzzxcs_tf.zxrq,   
-         h13_yzzxcs_tf.jfyl,   
-         h13_yzzxcs_tf.xmdj,   
-         h13_yzzxcs_tf.zxcs,   
-         h13_yzzxcs_tf.zxhs,   
-         h13_yzzxcs_tf.zxsj,   
-         h13_yzzxcs_tf.bzxcs,   
-         h13_yzzxcs_tf.syrid,   
-         h13_yzzxcs_tf.kyts,   
-         h13_yzzxcs_tf.fybz,   
-         h13_yzzxcs_tf.fyrid,   
-         h13_yzzxcs_tf.fysj,   
-         h12_yzxb.dw_grade ,h13_yzzxcs_tf.fydh,h13_yzzxcs_tf.maxid,  
-         h12_yzxb.dw_xs,   
-         h12_yzxb.ypid,   
-         h13_yzzxcs_tf.clbz,   
-         h12_yzxb.fylbid,   
-         h13_yzzxcs_tf.zybh,   
+         h13_yzzxcs_tf.yzxh,
+         h13_yzzxcs_tf.mxxh,
+         h13_yzzxcs_tf.yzlx,
+         h13_yzzxcs_tf.zyid,
+         h13_yzzxcs_tf.zxrq,
+         h13_yzzxcs_tf.jfyl,
+         h13_yzzxcs_tf.xmdj,
+         h13_yzzxcs_tf.zxcs,
+         h13_yzzxcs_tf.zxhs,
+         h13_yzzxcs_tf.zxsj,
+         h13_yzzxcs_tf.bzxcs,
+         h13_yzzxcs_tf.syrid,
+         h13_yzzxcs_tf.kyts,
+         h13_yzzxcs_tf.fybz,
+         h13_yzzxcs_tf.fyrid,
+         h13_yzzxcs_tf.fysj,
+         h12_yzxb.dw_grade ,h13_yzzxcs_tf.fydh,h13_yzzxcs_tf.maxid,
+         h12_yzxb.dw_xs,
+         h12_yzxb.ypid,
+         h13_yzzxcs_tf.clbz,
+         h12_yzxb.fylbid,
+         h13_yzzxcs_tf.zybh,
          h13_yzzxcs_tf.ksid,
          h12_yzzb.cwid,
          h12_yzzb.brxm,h12_yzxb.bzxx
-    FROM h13_yzzxcs_tf,   
-         h12_yzxb ,h12_yzzb  
-   WHERE ( h13_yzzxcs_tf.yzxh = h12_yzxb.yzxh ) and  
-         ( h13_yzzxcs_tf.yzlx = h12_yzxb.yzlx ) and  
-         ( h13_yzzxcs_tf.zyid = h12_yzxb.zyid ) and  
+    FROM h13_yzzxcs_tf,
+         h12_yzxb ,h12_yzzb
+   WHERE ( h13_yzzxcs_tf.yzxh = h12_yzxb.yzxh ) and
+         ( h13_yzzxcs_tf.yzlx = h12_yzxb.yzlx ) and
+         ( h13_yzzxcs_tf.zyid = h12_yzxb.zyid ) and
          ( h13_yzzxcs_tf.mxxh = h12_yzxb.mxxh ) and
-         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and  
-         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and  
-         ( h12_yzzb.zyid = h12_yzxb.zyid ) and     
+         ( h12_yzzb.yzxh = h12_yzxb.yzxh ) and
+         ( h12_yzzb.yzlx = h12_yzxb.yzlx ) and
+         ( h12_yzzb.zyid = h12_yzxb.zyid ) and
          ( isnull(h13_yzzxcs_tf.fybz,0)<>1 ) and
          ( h12_yzxb.xmzl=2 or h12_yzxb.xmzl=3) and
          (abs( h13_yzzxcs_tf.zxcs - h13_yzzxcs_tf.bzxcs)>0 ) AND
-         (h13_yzzxcs_tf.fylbid = '01' OR  
+         (h13_yzzxcs_tf.fylbid = '01' OR
          h13_yzzxcs_tf.fylbid = '02' OR   h13_yzzxcs_tf.fylbid = '90' OR
-         h13_yzzxcs_tf.fylbid = '03' or 
+         h13_yzzxcs_tf.fylbid = '03' or
          h13_yzzxcs_tf.fylbid = '15')  and    h12_yzzb.zyid=@0`,
       [zyid],
     );
@@ -1420,7 +1419,10 @@ SELECT h12_yzxb.xmmc,
 
     const splitAndFilter = (str: string): string[] => {
       if (!str || str.trim() === '') return [];
-      return str.split(',').map(s => s.trim()).filter(s => s !== '');
+      return str
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s !== '');
     };
 
     const hl = splitAndFilter(hlfylbid);
