@@ -124,7 +124,7 @@ export class h13_yzzxcsService {
   async revokeRefundMedicineReceipt(data: { zyid: string; maxids: number[] }): Promise<void> {
     // 撤回发药单号
     const h13YzzxcsTfList = await this.h13YzzxcsTfRepository.find({
-      where: { zyid: data.zyid, zxcs2: In(data.maxids) },
+      where: { zyid: data.zyid, zxcs2: In(data.maxids), clbz: 0 },
     });
     // 删除领药单与领药明细
     const fhdys = h13YzzxcsTfList.map((item) => item.fydh);
