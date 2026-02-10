@@ -1,5 +1,5 @@
 // src/services/config-reader.service.ts
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ParamService } from './param.service';
@@ -402,6 +402,10 @@ export class ConfigReaderService {
           gstr_ainfDto.ksfl = '0';
         }
       }
+    } else {
+      throw new BadRequestException(
+        userId + ' 在科室人员表中没有配置！！请在维护系统中配置后才能正常工作！！',
+      );
     }
 
     return {

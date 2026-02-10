@@ -146,7 +146,7 @@ export class H31_kcxxService {
           qb.where(
             'kcxx.ypid IN (SELECT ypid FROM h30_ypzd WHERE zwmc = :asYpmc AND ypgg = :asYpgg)',
             { asYpmc, asYpgg },
-          ).orWhere('kcxx.ypid IN (SELECT glypid FROM h30_ypgl WHERE ypid = :as_ypid)', {
+          ).orWhere('kcxx.ypid IN (SELECT glypid FROM h30_ypgl WHERE ypid = :asYpid)', {
             asYpid,
           });
         }),
@@ -157,7 +157,7 @@ export class H31_kcxxService {
 
     if (!kcxxResult) {
       throw new BadRequestException(
-        `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}|规格${asYpgg}|编号${asYpid}`,
+        `未查到药品字典同名同规格库存数据，请核对: ${asYpmc}，规格${asYpgg}，编号${asYpid}`,
       );
     }
 

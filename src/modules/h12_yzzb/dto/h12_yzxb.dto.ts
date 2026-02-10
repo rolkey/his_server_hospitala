@@ -1,3 +1,4 @@
+import { IsOptional, IsString, Length } from 'class-validator';
 import { h12_yzxb } from './../h12_yzxb.entity';
 export class H12_yzxbDto {
   yzlx: number;
@@ -40,6 +41,9 @@ export class H12_yzxbDto {
   hdbz?: number;
   hdsj?: string;
   zxcs?: number;
+  @IsOptional()
+  @IsString()
+  @Length(10, 10, { message: 'zxrq 字段长度必须为 10 个字符' })
   zxrq?: string;
   tpbz?: number;
   zflx?: string;
