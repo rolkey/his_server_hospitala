@@ -76,6 +76,7 @@ import { emr_jcsqModule } from './modules/emr_jcsq/emr_jcsq.module';
 import { emr_jcxmModule } from './modules/emr_jcxm/emr_jcxm.module';
 import { emr_xmflModule } from './modules/emr_xmfl/emr_xmfl.module';
 import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
+import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
 
 @Module({
   imports: [
@@ -154,6 +155,7 @@ import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
     emr_jcxmModule,
     emr_xmflModule,
     H15SsxbTfModule,
+    H13BrzkqkModule,
   ],
 })
 export class AppModule {}

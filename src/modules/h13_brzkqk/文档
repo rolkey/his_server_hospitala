@@ -1,0 +1,157 @@
+确认按钮
+
+
+///////////////////////////////////////////////////////
+//
+// 功能：确认或放弃转科
+//
+//  1 如确认人不空返回
+//  2 确认转科
+//     1a 在转科记录中写上确认时间和护士
+//     2a 在病人信息表中出院科室写上转科科室，住院状态变为1(住院)
+//     3a 设置转科后的操作(停止病床、医嘱、租床)
+//  3 放弃转科
+//     1b 将转科记录插入转科记录作废表
+//     2b 住院状态变为1(住院)
+//     3b 删除
+//
+////////////////////////////////////////////////////////////////////
+boolean ib_zt
+IF dw_xb.RowCount() < 1  THEN RETURN
+long ll_row
+Int li_zyzt
+DateTime ldt_zksj , ldt_lrsj
+String ls_zkksid ,ls_zyid ,ls_lryid
+ll_row = dw_xb.GetRow()
+IF ll_row < 1 or isnull( ll_row ) THEN RETURN
+ls_zyid = dw_xb.object.zyid[ ll_row ]
+//  1 如确认人不空返回
+IF dw_xb.object.qrrid[ ll_row ] <> ''  THEN RETURN
+IF not ib_zf THEN
+	//  2 确认转科
+	//     1a 在转科记录中写上确认时间和护士
+	dw_xb.object.qrrid[ ll_row ] = gstr_ainf.u_userid
+	dw_xb.object.qrsj[ ll_row ] = f_serverdatetime()
+	ls_zyid = dw_xb.object.zyid[ ll_row ]
+	ldt_zksj = dw_xb.object.zksj[ ll_row ]
+	ls_zkksid = dw_xb.object.zkksid[ ll_row ]
+	ldt_lrsj = dw_xb.object.lrsj[ ll_row ]
+	//     2a 在病人信息表中出院科室写上转科科室，住院状态变为1(住院)
+	UPDATE h11_brxx
+		SET cyksid = :gstr_ainf.u_ksid,
+		cyksmc = :gstr_ainf.u_ksmc,
+		ryksid = :gstr_ainf.u_ksid,
+		ryksmc = :gstr_ainf.u_ksmc,
+		zkksid = :gstr_ainf.u_ksid,/*费用科室*/
+		zyzt = 1
+		WHERE h11_brxx.zyid = :ls_zyid
+		USING 	sqlca;
+	
+	//接受科室，确认，医嘱主表标志改成  wdfadd050830
+	UPDATE h12_yzzb
+		SET    tzbz = 0
+		WHERE  zyid = :ls_zyid and ksid = :gstr_ainf.u_ksid ;
+	
+	//     3a 设置转科后的操作(停止病床、医嘱、租床)
+	f_h13setcyzk( ldt_zksj ,ls_zyid  )
+	IF dw_xb.UPDATE() = -1 THEN
+		ROLLBACK USING 	sqlca;
+		OPEN( w_mesg_updfal )
+	ELSE
+		COMMIT USING 	sqlca;
+		OPEN( w_mesg_updsuc )
+		dw_xb.Retrieve()
+	END IF
+ELSE
+	//  3 放弃转科
+	//     1b 将转科记录插入转科记录作废表
+	INSERT INTO h13_brzkqk_zf
+		( zkksid,
+		zksj,
+		zyid,
+		lrsj,
+		zfsj,
+		zflryid,
+		lryid )
+		VALUES( :ls_zkksid ,
+		:ldt_zksj,
+		:ls_zyid,
+		:ldt_lrsj,
+		getdate(),
+		:gstr_ainf.u_userid,
+		:ls_lryid);
+	
+	
+	//     2b 住院状态变为1(住院)
+	//messagebox('',ls_zyid)
+	UPDATE h11_brxx SET h11_brxx.zyzt = 1 ,cyzd = ''		WHERE h11_brxx.zyid = :ls_zyid ;
+	
+	//	//wdf 屏蔽，然后有增加在后面  wdfadd050830
+	//		/*--------------------------------------------*/
+	//   //放弃转科时把最新的医嘱恢复为未停止0 梁国维 2001.11.15
+	//	 UPDATE h12_yzzb
+	//		  SET tzbz = 0
+	//		WHERE h12_yzzb.zyid = :ls_zyid AND
+	//				h12_yzzb.yzlx = 1 AND
+	//				h12_yzzb.yzxh = (SELECT MAX(yzxh) FROM h12_yzzb
+	//											WHERE zyid = :ls_zyid AND
+	//											      yzlx = 1)//长期
+	//				  ;
+	//	  UPDATE h12_yzzb
+	//		  SET tzbz = 0
+	//		WHERE h12_yzzb.zyid = :ls_zyid AND
+	//				h12_yzzb.yzlx = 2 AND
+	//				h12_yzzb.yzxh = (SELECT MAX(yzxh) FROM h12_yzzb
+	//											WHERE zyid = :ls_zyid AND
+	//													yzlx = 2)//临时
+	//				  ;
+	//	UPDATE h12_yzzb
+	//		  SET tzbz = 0
+	//		WHERE h12_yzzb.zyid = :ls_zyid AND
+	//				h12_yzzb.yzlx = 5 AND
+	//				h12_yzzb.yzxh = (SELECT MAX(yzxh) FROM h12_yzzb
+	//											WHERE zyid = :ls_zyid AND
+	//													yzlx = 5)//临时
+	//				  ;
+	//   /*--------------------------------------------*/
+	
+	
+	//接受科室，确认，医嘱主表标志改成  wdfadd050830
+	UPDATE h12_yzzb
+		SET    tzbz = 0
+		WHERE  zyid = :ls_zyid and ksid = :gstr_ainf.u_ksid ;
+	
+	if gf_getpara(13,"yjkzk","0","转科同时转押金") = '1' then
+		update h11_yjk set ksid = :gstr_ainf.u_ksid  where zyid = :ls_zyid ;	 //转科科室
+			end if
+			
+			IF gs_cxsz.zkjl = '1' THEN //0原来的，转科前与转科后分开, 1跟转科走
+			UPDATE h12_yzzb set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		update h13_yzzxcs set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		update h13_yzzxcs_tf set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		UPDATE h11_yjk Set ksid = :gstr_ainf.u_ksid Where zyid = :ls_zyid;
+		update h12_blzb set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		update h15_sszb set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		update h15_ssxb set ksid = :gstr_ainf.u_ksid where zyid = :ls_zyid;
+		update BQ_HLJL_NEW set BRKS = :gstr_ainf.u_ksid where zyh = :ls_zyid;
+	end if
+	
+	COMMIT USING 	sqlca;
+	Select h11_brxx.zyzt INTO :li_zyzt
+		FROM h11_brxx
+		WHERE h11_brxx.zyid = :ls_zyid ;
+	IF li_zyzt <> 1 THEN
+		OPEN( w_mesg_updfal )
+		RETURN
+	END IF
+	//     3b 删除
+	dw_xb.DeleteRow( ll_row )
+	IF dw_xb.UPDATE() = -1 THEN
+		ROLLBACK USING 	sqlca;
+		OPEN( w_mesg_updfal )
+	ELSE
+		COMMIT USING 	sqlca;
+		OPEN( w_mesg_updsuc )
+	END IF
+	
+END IF
