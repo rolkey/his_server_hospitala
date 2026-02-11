@@ -47,6 +47,8 @@ export class emr_jcsqService {
         yzxb.xmid = item.xmid;
         yzxb.xmmc = item.xmmc;
         yzxb.xmgg = item.gg;
+        // yzxb.xmdj = item.dj;
+        yzxb.xmdj = (item as any).sfdj;
         yzxb.tpbz = 0;
         yzxb.tcbz = 1;
         yzxb.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');

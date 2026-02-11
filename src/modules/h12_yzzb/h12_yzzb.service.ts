@@ -55,6 +55,9 @@ export class h12_yzzbService {
     if (!data.zyidList || data.zyidList.length === 0) {
       throw new BadRequestException('zyidList不能为空');
     }
+    if (data.lx) {
+      data.lx = data.lx.replaceAll(' ', ''); // 把内部空格去掉
+    }
     // 过滤掉空的zyid
     const validZyidList = data.zyidList.filter((zyid) => zyid && zyid.trim());
     if (validZyidList.length === 0) return [];
@@ -192,7 +195,7 @@ export class h12_yzzbService {
       }
 
       // 添加tzbz（停嘱标志）过滤条件
-      if (data.tzbz !== undefined && data.tzbz !== null) {
+      if (data.tzbz) {
         h13_yzzxcsQuery.andWhere('h12_yzxb.tzbz = :tzbz', {
           tzbz: data.tzbz,
         });
@@ -210,10 +213,10 @@ export class h12_yzzbService {
         });
       }
       // 当lx不为空且不为0时，用lx去匹配过滤h12_yzxb的syffidEntity.dyflid  lx为用法
-      if (data.lx && data.lx.trim() !== '' && data.lx !== '0') {
+      if (data.lx) {
         //dyflid 打印分类
         h13_yzzxcsQuery.andWhere('syffidEntity.dyflid IN (:...lxList)', {
-          lxList: data.lx.trim().split(','),
+          lxList: data.lx.split(','),
         });
       }
       // 打印标志过滤：只保留在 h13_djdy 中已登记过的医嘱（pblx='1'，maxid = h12_yzxb.mxxh，zyid 一致）
