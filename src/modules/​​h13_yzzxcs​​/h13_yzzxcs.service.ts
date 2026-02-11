@@ -124,17 +124,15 @@ export class h13_yzzxcsService {
   async revokeRefundMedicineReceipt(data: { zyid: string; maxids: number[] }): Promise<void> {
     // 撤回发药单号
     const h13YzzxcsTfList = await this.h13YzzxcsTfRepository.find({
-      where: { zyid: data.zyid, zxcs2: In(data.maxids) },
+      where: { zyid: data.zyid, zxcs2: In(data.maxids), clbz: 0 },
     });
+    if (h13YzzxcsTfList.length === 0) return; // 没有退费单
     // 删除领药单与领药明细
     const fhdys = h13YzzxcsTfList.map((item) => item.fydh);
     await this.dataSource.transaction(async (manager) => {
       await Promise.all([
-        manager.update(
-          H13YzzxcsTf,
-          { zyid: data.zyid, zxcs2: In(data.maxids) },
-          { clbz: 0, fydh: null },
-        ),
+        manager.update(h13_yzzxcs, { zyid: data.zyid, fydh: In(fhdys) }, { clbz: 0, fydh: null }),
+        manager.update(H13YzzxcsTf, { zyid: data.zyid, fydh: In(fhdys) }, { clbz: 0, fydh: null }),
         manager.delete('h31_lyjl', { zyid: data.zyid, djbh: In(fhdys) }),
         manager.delete('h31_lymx', { zyid: data.zyid, djbh: In(fhdys) }),
       ]);

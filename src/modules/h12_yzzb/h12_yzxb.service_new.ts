@@ -1430,7 +1430,18 @@ export class h12_yzxbServiceNew {
           h13_yzzxcs,
           {
             zyid: fydh.zyid,
-            // ksid: fydh.ksid,
+            fydh: fydh.djbh,
+          },
+          {
+            fydh: null,
+          },
+        ),
+      );
+      promisses.push(
+        manager.update(
+          H13YzzxcsTf,
+          {
+            zyid: fydh.zyid,
             fydh: fydh.djbh,
           },
           {
