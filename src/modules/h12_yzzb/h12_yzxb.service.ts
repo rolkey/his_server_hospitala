@@ -11,6 +11,7 @@ import {
   MoreThanOrEqual,
 } from 'typeorm';
 import DateFormater from '@/utils/DateFormater';
+import dayjs = require('dayjs');
 // import { h12_yzzb } from './h12_yzzb.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { H12_yzxbOpeDto } from './dto/h12_yzxbOpe.dto';
@@ -1339,9 +1340,11 @@ export class h12_yzxbService {
     const h12_yzxbs = await this.h12_yzxbRepo
       .createQueryBuilder('h12_yzxb')
       .leftJoin('h12_yzxb.syplidEntity', 'h00_sypl')
+      .leftJoin('h12_yzxb.h13_yzzxcsList', 'yzzxcs')
       .select([
         'h12_yzxb', // 选择 h12_yzxb 的所有字段
         'h00_sypl.mrcs',
+        'yzzxcs.zxrq',
       ])
       .where('h12_yzxb.zyid = :zyid', { zyid })
       .andWhere('h12_yzxb.yzxh = :yzxh', { yzxh })
@@ -1357,8 +1360,17 @@ export class h12_yzxbService {
     // 如果开嘱日期等于停嘱日期，末日次数取首日次数与末日次数大的那个
     // 如果频次是Q1H,则取停止时间对应的小时数作为末日次数，大于30分钟就多加一次
     // 更新：停止医生，停止时间，末日次数，停止状态
-    h12_yzxbs.forEach((h12_yzxb) => {
+    for (const h12_yzxb of h12_yzxbs) {
       h12_yzxb.mrcs = mrcs > h12_yzxb.syplidEntity.mrcs ? h12_yzxb.syplidEntity.mrcs : mrcs;
+      if (
+        h12_yzxb.h13_yzzxcsList?.some(
+          (yzzxcs) =>
+            dayjs(yzzxcs.zxrq).startOf('day') > dayjs(h12_yzxb.tzrq).startOf('day') &&
+            yzzxcs.bzxcs > 0,
+        )
+      ) {
+        throw new BadRequestException('超过停嘱时间已经有过退费！不允许停到该时间之前！！');
+      }
       h12_yzxb.tzrq = tzsj;
       h12_yzxb.yzzt = 5;
       h12_yzxb.tzbz = 1;
@@ -1368,7 +1380,7 @@ export class h12_yzxbService {
       } else {
         h12_yzxb.jsys = userId;
       }
-    });
+    }
     await this.dataSource.transaction(async (manager) => {
       //   await manager.save(h12_yzxb, h12_yzxbs);
       await Promise.all(
