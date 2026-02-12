@@ -47,6 +47,9 @@ export class emr_jcsqService {
         yzxb.xmid = item.xmid;
         yzxb.xmmc = item.xmmc;
         yzxb.xmgg = item.gg;
+        yzxb.gjybbm = item.gjybbm;
+        yzxb.gjybmc = item.gjybmc;
+        yzxb.fylbid = item.fylbid;
         // yzxb.xmdj = item.dj;
         yzxb.xmdj = (item as any).sfdj;
         yzxb.tpbz = 0;
