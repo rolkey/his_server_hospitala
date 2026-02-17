@@ -907,36 +907,14 @@ export class h12_yzxbService {
       throw new BadRequestException('请录入医嘱内容!');
     }
 
-    // TODO: 转到前端处理
-    // if (!lastOrder.xmmc || lastOrder.xmmc.trim() === '') {
-    //   // 判断是否已执行
-    //   if (lastOrder.zxbz === 1) {
-    //     // 这里可以添加询问逻辑，前端处理确认
-    //     // 假设用户选择删除
-    //     await this.deleteExecutedOrder(
-    //       lastOrder.yzxh,
-    //       lastOrder.zyid,
-    //       lastOrder.yzlx,
-    //       lastOrder.mxxh,
-    //     );
-    //   }
+    // TODO: 验证床位信息
+    const h11Brxx = await this.h11_brxxRepo.findOne({
+      where: { zyid: h12_yzzbOpe.zyid },
+    });
 
-    //   // 检查同组情况
-    //   if (
-    //     h12_yzxbList.length > 1 &&
-    //     lastOrder.yzzh === h12_yzxbList[h12_yzxbList.length - 2].yzzh
-    //   ) {
-    //     lastOrder.yzzh = 0;
-    //   }
-
-    //   // 删除附加信息
-    //   if (xxData && xxData.length > 0) {
-    //     xxData = xxData.filter((mbxb) => mbxb.yzzh !== lastOrder.yzzh);
-    //   }
-
-    //   // 删除最后一条
-    //   h12_yzxbList.pop();
-    // }
+    if (!h11Brxx.rycw) {
+      throw new BadRequestException('没有分配床位，不允许保存医嘱！！');
+    }
 
     // 初始化变量
     // const today = new Date().getFullYear().toString();
@@ -1046,18 +1024,6 @@ export class h12_yzxbService {
           throw new BadRequestException(`${adviceRow.xmmc}  库存不足，请修改医嘱后再保存！`);
         }
       }
-
-      // TODO: 校验库存
-
-      // 对子数据重新排序执行次数
-      //   for (let i = 0; i < adviceRow.additional?.length; i++) {
-      //     adviceRow.zxcs = i + 1;
-
-      //     adviceRow.additional.forEach((mbxb) => {
-      //       mbxb.zxcs = i + 1;
-      //       mbxb.ksys = adviceRow.ksys;
-      //     });
-      //   }
     }
 
     // 2. 保存数据
