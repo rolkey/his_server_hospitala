@@ -29,10 +29,14 @@ export class emr_jcsqService {
   ) {}
 
   // 更新医嘱明细
-  async updateAdvices(h12Yzxb: h12_yzxb, saveDto: SaveDto, manager: EntityManager) {
+  async updateAdvices(h12Yzxb: h12_yzxb, saveDto: SaveDto, xmid: string, manager: EntityManager) {
     // 删除同组明细，新增明细
     const yzxbs = [];
     for (const [index, item] of saveDto.zlxmList.entries()) {
+      // 如果有项目ID限制，则只处理该项目数据
+      if (xmid && xmid !== item.xmid) {
+        continue;
+      }
       if (item.xmid.startsWith('T')) {
         const advices = await this.h12YzxbService.getPackageItems({
           advice: h12Yzxb,
@@ -60,29 +64,33 @@ export class emr_jcsqService {
       }
     }
     return [
-      manager.delete(h12_yzxb, {
-        zyid: h12Yzxb.zyid,
-        yzzh: h12Yzxb.yzzh,
-        mxxh: Not(h12Yzxb.mxxh),
-      }),
+      //   manager.delete(h12_yzxb, {
+      //     zyid: h12Yzxb.zyid,
+      //     yzzh: h12Yzxb.yzzh,
+      //     mxxh: Not(h12Yzxb.mxxh),
+      //   }),
       manager.save(h12_yzxb, yzxbs),
     ];
   }
 
-  async updateAdvice(saveDto: SaveDto, manager: EntityManager) {
-    // 更新医嘱信息
-    const h12Yzxb = await manager.findOne(h12_yzxb, {
-      where: { zyid: saveDto.mzid, scdh: saveDto.sqdh.toString(), xmid: '0000000' },
+  // 更新医嘱
+  async updateAdvice(saveDto: SaveDto, jcsq: emr_jcsq, manager: EntityManager) {
+    // 删除之后重新addAdvice
+    const h12Yzxb = await this.h12YzxbRepo.findOne({
+      where: { zyid: saveDto.mzid, scdh: saveDto.sqdh },
     });
-    const promises: Promise<any>[] = [
-      manager.update(
-        h12_yzxb,
-        { zyid: saveDto.mzid, scdh: saveDto.sqdh.toString(), xmid: '0000000' },
-        { xmmc: this.createYzmc(saveDto) },
-      ),
-    ];
-    promises.push(...(await this.updateAdvices(h12Yzxb, saveDto, manager)));
-    return Promise.all(promises);
+    // 删除旧数据
+    await manager.delete(h12_yzxb, {
+      zyid: h12Yzxb.zyid,
+      scdh: saveDto.sqdh,
+    });
+    await this.addAdvice(jcsq, saveDto, manager);
+    // 把开嘱时间更新为旧的时间
+    await manager.update(
+      h12_yzxb,
+      { zyid: saveDto.mzid, scdh: saveDto.sqdh },
+      { yzrq: h12Yzxb.yzrq },
+    );
   }
 
   async addAdvice(jcsq: emr_jcsq, saveDto: SaveDto, manager: EntityManager) {
@@ -91,6 +99,24 @@ export class emr_jcsqService {
     const h11_brxx = await this.h11BrxxRepo.findOne({
       where: { zyid: jcsq.mzid },
     });
+    const tcs = saveDto.zlxmList.map((item) => (item.xmid.startsWith('T') ? item : null));
+    if (tcs.length > 0) {
+      // 按组套来处理
+      for (const tc of tcs) {
+        await this.createAdvice(jcsq, h11_brxx, tc.xmid, tc.xmmc, currentTime, manager, saveDto);
+      }
+    } else await this.createAdvice(jcsq, h11_brxx, '0000000', xmmc, currentTime, manager, saveDto);
+  }
+
+  private async createAdvice(
+    jcsq: emr_jcsq,
+    h11_brxx: h11_brxx,
+    xmid: string,
+    xmmc: string,
+    currentTime: string,
+    manager: EntityManager,
+    saveDto: SaveDto,
+  ) {
     const h12Yzxb = await this.h12YzxbService.createAdvice({
       zyid: jcsq.mzid,
       yzlx: 2,
@@ -101,7 +127,7 @@ export class emr_jcsqService {
     // 创建第一条医嘱
     Object.assign(h12Yzxb, {
       zybh: h11_brxx.zybh,
-      xmid: '0000000',
+      xmid: xmid,
       xmmc: xmmc,
       jfyl: 1,
       sjyl: 1,
@@ -132,7 +158,7 @@ export class emr_jcsqService {
       tybz: 0,
       kyts: 1,
       clbz: 0,
-      ypid: '0000000',
+      ypid: xmid,
       //   ksid: jcsq.sqks,
       ysbz: 1,
       srcs: 0,
@@ -146,7 +172,7 @@ export class emr_jcsqService {
 
     await Promise.all([
       manager.save(h12Yzxb),
-      ...(await this.updateAdvices(h12Yzxb, saveDto, manager)),
+      ...(await this.updateAdvices(h12Yzxb, saveDto, xmid, manager)),
     ]);
   }
 
@@ -182,7 +208,7 @@ export class emr_jcsqService {
         });
         if (existingJcsq && data.sqdh) {
           // 这里实现生成医嘱逻辑
-          await this.updateAdvice(saveDto, manager);
+          await this.updateAdvice(saveDto, existingJcsq, manager);
 
           return await this.updateJcsq(existingJcsq, data, jcbwList, jcffList, manager);
         } else {
