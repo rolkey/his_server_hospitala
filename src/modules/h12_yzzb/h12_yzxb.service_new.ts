@@ -932,97 +932,108 @@ export class h12_yzxbServiceNew {
       const { zxhs, zyid, beginDate, endDate, newYear = '', medicine = '', yzzh } = dto;
 
       if (!zyid) throw new CustomException(ERR.ERR_10000, '缺少住院ID');
-      const patient = await this.h11BrxxRepo.findOne({ where: { zyid } });
-      const zxks = patient.cyksid ?? patient.ryksid;
 
-      const executeType: string | number | [] = dto.executeType;
-      let zxbz = Zxbz.DEFAULT;
-      let yzlx: number | string;
-
-      // 加载必要的数据用于校验
-      if (executeType === '0') {
-        yzlx = '%';
-      } else if (executeType === '2') {
-        yzlx = '2';
-      } else if (executeType === '5') {
-        yzlx = '5';
-      } else if (executeType === '7') {
-        yzlx = '7';
-      } else if (executeType === '102') {
-        yzlx = '%';
-        zxbz = Zxbz.CHINESE_MEDICINE;
-      } else if (executeType === '103') {
-        yzlx = '%';
-        zxbz = Zxbz.AUTO_ITEMS;
-      }
+      // 将zyid统一转换为数组处理
+      const zyidArray = Array.isArray(zyid) ? zyid : [zyid];
       const errorList = [];
-      if (executeType === '104') {
-        zxbz = Zxbz.WITH_GROUP;
-        for (const yzzhItem of dto.yzzh.split(',')) {
-          // 执行存储过程
-          try {
-            await this.dataSource.query(
-              `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
-                    @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
-              [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzzhItem],
-            );
-          } catch (error) {
-            console.error('医嘱执行错误', error);
-            errorList.push(error.message);
-          }
-        }
-        if (errorList.length > 0) {
-          throw new BadRequestException(errorList.join(','));
-        }
-      } else {
-        // 执行存储过程
-        await this.dataSource.query(
-          `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
-          @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
-          [zxbz, zyid, zxks, beginDate, endDate, zxhs, yzlx],
-        );
-      }
 
-      // 如果需要生成发药记录，检查并设置并发标志（示例）
-      if (medicine === '1') {
-        // 尝试加锁（使用 service 的 manager 版本以支持事务，如果你的 syspar_newService 支持 manager 传参）
-        const syspar = await this.syspar_newService.findNewOne(
-          this.SYSPAR_KEY.type,
-          this.SYSPAR_KEY.key,
-        );
-        if (syspar?.pval === '1') {
-          throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
-        }
-
-        // 建议：原子设置标志位（依赖 syspar_newService.updateNew 的实现能在同一事务中工作）
-        // 下面示例仅做逻辑演示：设置标志 -> 调用存储过程 -> 清除标志
+      // 处理每个zyid
+      for (const currentZyid of zyidArray) {
         try {
-          lockAcquired = await this.tryAcquireSysparLock();
+          const patient = await this.h11BrxxRepo.findOne({ where: { zyid: currentZyid } });
+          const zxks = patient.cyksid ?? patient.ryksid;
 
-          await this.dataSource.query(
-            `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
-            [zxks, zyid, zxhs, 0],
-          );
-        } finally {
-          if (lockAcquired)
-            await this.releaseSysparLock().catch((e) => this.logger.warn('释放syspar锁失败', e));
+          const executeType: string | number | [] = dto.executeType;
+          let zxbz = Zxbz.DEFAULT;
+          let yzlx: number | string;
+
+          // 加载必要的数据用于校验
+          if (executeType === '0') {
+            yzlx = '%';
+          } else if (executeType === '2') {
+            yzlx = '2';
+          } else if (executeType === '5') {
+            yzlx = '5';
+          } else if (executeType === '7') {
+            yzlx = '7';
+          } else if (executeType === '102') {
+            yzlx = '%';
+            zxbz = Zxbz.CHINESE_MEDICINE;
+          } else if (executeType === '103') {
+            yzlx = '%';
+            zxbz = Zxbz.AUTO_ITEMS;
+          }
+
+          if (executeType === '104') {
+            zxbz = Zxbz.WITH_GROUP;
+            for (const yzzhItem of dto.yzzh.split(',')) {
+              try {
+                await this.dataSource.query(
+                  `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+                      @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
+                  [zxbz, currentZyid, zxks, beginDate, endDate, zxhs, yzzhItem],
+                );
+              } catch (error) {
+                console.error('医嘱执行错误', error);
+                errorList.push(`住院ID ${currentZyid}: ${error.message}`);
+              }
+            }
+          } else {
+            // 执行存储过程
+            await this.dataSource.query(
+              `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
+            @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
+              [zxbz, currentZyid, zxks, beginDate, endDate, zxhs, yzlx],
+            );
+          }
+
+          // 如果需要生成发药记录，检查并设置并发标志
+          if (medicine === '1') {
+            const syspar = await this.syspar_newService.findNewOne(
+              this.SYSPAR_KEY.type,
+              this.SYSPAR_KEY.key,
+            );
+            if (syspar?.pval === '1') {
+              throw new CustomException(ERR.ERR_10000, '正在执行生成发药，请稍等！');
+            }
+
+            try {
+              lockAcquired = await this.tryAcquireSysparLock();
+
+              await this.dataSource.query(
+                `EXEC sp_h13zxcs_fyjl  @as_ksid = @0, @li_para = @1, @ls_usid = @2, @yzlx = @3`,
+                [zxks, currentZyid, zxhs, 0],
+              );
+            } finally {
+              if (lockAcquired)
+                await this.releaseSysparLock().catch((e) =>
+                  this.logger.warn('释放syspar锁失败', e),
+                );
+            }
+          }
+
+          const c00FbxxList = await this.c00FbxxRepo.find({
+            where: {
+              fksid: zxks,
+              zyid: currentZyid,
+            },
+          });
+          if (c00FbxxList && c00FbxxList.length > 0) {
+            throw new CustomException(
+              ERR.ERR_40001,
+              `住院ID ${currentZyid}: 有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！`,
+              undefined,
+              c00FbxxList,
+            );
+          }
+        } catch (error) {
+          errorList.push(`住院ID ${currentZyid}: ${error.message}`);
         }
       }
 
-      const c00FbxxList = await this.c00FbxxRepo.find({
-        where: {
-          fksid: zxks,
-          //   sksid: Like('%'),
-          zyid,
-        },
-      });
-      if (c00FbxxList && c00FbxxList.length > 0) {
-        throw new CustomException(
-          ERR.ERR_40001,
-          '有药品缺药，不能执行，请退回医生或提醒医生停嘱重开！',
-          undefined,
-          c00FbxxList,
-        );
+      // 如果有错误，统一抛出
+      if (errorList.length > 0) {
+        throw new BadRequestException(errorList.join('; '));
       }
     } catch (error: any) {
       this.logger.error('执行医嘱失败', error);

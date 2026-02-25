@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { And, DataSource, Repository } from 'typeorm';
+import { And, Brackets, DataSource, Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
 import {
   Queryh11_brxxDto,
@@ -214,8 +214,72 @@ export class h11_brxxService {
       baseQuery.andWhere('h11_brxx.zybh LIKE :zybh', { zybh: `%${queryDto.zybh.trim()}%` });
     }
 
-    if (queryDto.zyzt) {
-      const zyzt = Number(queryDto.zyzt);
+    const zyzt = Number(queryDto.zyzt);
+    if (queryDto.checkAdvice) {
+      baseQuery
+        .andWhere('h11_brxx.zyzt = :zyzt', { zyzt })
+        .andWhere("h11_brxx.rycw IS NOT NULL and h11_brxx.rycw != ''");
+
+      // 医嘱过滤条件
+
+      // 所有医嘱
+      baseQuery.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from('h12_yzxb', 'h12_yzxb')
+          .where('h12_yzxb.zyid = h11_brxx.zyid')
+          .andWhere('h12_yzxb.hdbz = 1') // 核对标志
+          .andWhere('h12_yzxb.sfbz = 1') // 收费标志
+          .andWhere('h12_yzxb.sjbz = 1') // 不作废
+          .andWhere('h12_yzxb.xmdj <> 0') // 项目单价
+          .andWhere('h12_yzxb.xmid NOT IN (SELECT xmid FROM h00_xmzd_hszx)');
+        if (queryDto.executeType === '0') {
+          // 所有可执行医嘱
+          // 所有可执行医嘱：结合临时医嘱(2)和长期医嘱(5)的OR条件
+          subQuery.andWhere(
+            new Brackets((qb) => {
+              // 条件1：临时医嘱 (executeType === '2')
+              qb.orWhere(
+                new Brackets((subQb) => {
+                  subQb.where('h12_yzxb.yzlx = 2');
+                  subQb.andWhere('h12_yzxb.zxbz = 0');
+                }),
+              );
+
+              // 条件2：长期医嘱 (executeType === '5')
+              qb.orWhere(
+                new Brackets((subQb) => {
+                  subQb.where('h12_yzxb.yzlx = 1');
+                  subQb.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
+                  subQb.andWhere('(h12_yzxb.tzbz = 0 or h12_yzxb.tzrq > :tzrq)', {
+                    tzrq: queryDto.zxrq,
+                  });
+                }),
+              );
+            }),
+          );
+        } else if (queryDto.executeType === '2') {
+          // 临时医嘱
+          subQuery.andWhere('h12_yzxb.yzlx = 2');
+          subQuery.andWhere('h12_yzxb.zxbz = 0');
+        } else if (queryDto.executeType === '5') {
+          // 长期医嘱
+          subQuery.andWhere('h12_yzxb.yzlx = 1');
+          subQuery.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
+          subQuery.andWhere('(h12_yzxb.tzbz = 0 or h12_yzxb.tzrq > :tzrq)', {
+            tzrq: queryDto.zxrq,
+          });
+        } else if (queryDto.executeType === '7') {
+          // 临时处置
+        } else if (queryDto.executeType === '102') {
+          // 中药医嘱
+        } else if (queryDto.executeType === '103') {
+          // 自动项目
+        }
+        return `EXISTS ${subQuery.getQuery()}`;
+      });
+    } else if (queryDto.zyzt) {
       if ((zyzt === 1 || zyzt === 2) && queryDto.cycw !== '0') {
         baseQuery.andWhere('(h11_brxx.zyzt <= 2 OR h11_brxx.zyzt IS NULL)');
       } else {

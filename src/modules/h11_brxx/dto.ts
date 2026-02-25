@@ -384,6 +384,15 @@ export class Queryh11_brxxDto extends QueryDto {
 
   @Allow()
   fyksid?: string;
+
+  @Allow()
+  checkAdvice?: boolean;
+
+  @Allow()
+  executeType?: string;
+
+  @Allow()
+  zxrq?: string;
 }
 
 export class receiptDto extends QueryDto {
