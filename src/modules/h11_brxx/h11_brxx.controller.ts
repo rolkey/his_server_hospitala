@@ -19,7 +19,7 @@ export class h11_brxxController {
   constructor(
     private readonly h11_brxxService: h11_brxxService,
     private readonly h11_brxxService_new: h11_brxxService_new,
-  ) { }
+  ) {}
 
   @Get('findAll')
   async findAll(@Query() queryDto: Queryh11_brxxDto) {
@@ -96,10 +96,7 @@ export class h11_brxxController {
 
   // 作废未确认出院
   @Post('cancelUnconfirmedDischarge')
-  async cancelUnconfirmedDischarge(@Body() dto: {
-    zyid: string;
-    ksid: string;
-  }) {
+  async cancelUnconfirmedDischarge(@Body() dto: { zyid: string; ksid: string }) {
     return await this.h11_brxxService.cancelUnconfirmedDischarge(dto);
   }
 
