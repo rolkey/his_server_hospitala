@@ -252,8 +252,19 @@ export class h11_brxxService {
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
                   subQb.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
-                  subQb.andWhere('(h12_yzxb.tzbz = 0 or h12_yzxb.tzrq > :tzrq)', {
-                    tzrq: queryDto.zxrq,
+                  subQb.andWhere((qb) => {
+                    const existsQuery = qb
+                      .subQuery()
+                      .select('1')
+                      .from('h13_yzzxcs', 'h13')
+                      .where('h13.zxrq = :zxrq', { zxrq: queryDto.zxrq })
+                      .andWhere('h13.mxxh = h12_yzxb.mxxh')
+                      // 添加其他需要关联的字段，例如：
+                      .andWhere('h13.zyid = h12_yzxb.zyid')
+                      .andWhere('h13.yzxh = h12_yzxb.yzxh')
+                      .andWhere('h13.yzlx = h12_yzxb.yzlx');
+
+                    return `NOT EXISTS ${existsQuery.getQuery()}`;
                   });
                 }),
               );
@@ -267,8 +278,20 @@ export class h11_brxxService {
           // 长期医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 1');
           subQuery.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
-          subQuery.andWhere('(h12_yzxb.tzbz = 0 or h12_yzxb.tzrq > :tzrq)', {
-            tzrq: queryDto.zxrq,
+          // 添加mxxh不在h13_yzzxcs.mxxh中的条件
+          subQuery.andWhere((qb) => {
+            const existsQuery = qb
+              .subQuery()
+              .select('1')
+              .from('h13_yzzxcs', 'h13')
+              .where('h13.zxrq = :zxrq', { zxrq: queryDto.zxrq })
+              .andWhere('h13.mxxh = h12_yzxb.mxxh')
+              // 添加其他需要关联的字段，例如：
+              .andWhere('h13.zyid = h12_yzxb.zyid')
+              .andWhere('h13.yzxh = h12_yzxb.yzxh')
+              .andWhere('h13.yzlx = h12_yzxb.yzlx');
+
+            return `NOT EXISTS ${existsQuery.getQuery()}`;
           });
         } else if (queryDto.executeType === '7') {
           // 临时处置
