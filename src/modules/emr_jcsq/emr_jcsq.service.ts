@@ -103,9 +103,19 @@ export class emr_jcsqService {
     if (tcs.length > 0) {
       // 按组套来处理
       for (const tc of tcs) {
-        await this.createAdvice(jcsq, h11_brxx, tc.xmid, tc.xmmc, currentTime, manager, saveDto);
+        await this.createAdvice(
+          jcsq,
+          h11_brxx,
+          tc.xmid,
+          tc.xmmc,
+          tc.fylbid,
+          currentTime,
+          manager,
+          saveDto,
+        );
       }
-    } else await this.createAdvice(jcsq, h11_brxx, '0000000', xmmc, currentTime, manager, saveDto);
+    } else
+      await this.createAdvice(jcsq, h11_brxx, '0000000', xmmc, '11', currentTime, manager, saveDto);
   }
 
   private async createAdvice(
@@ -113,6 +123,7 @@ export class emr_jcsqService {
     h11_brxx: h11_brxx,
     xmid: string,
     xmmc: string,
+    fylbid: string,
     currentTime: string,
     manager: EntityManager,
     saveDto: SaveDto,
@@ -140,7 +151,7 @@ export class emr_jcsqService {
       ksid: h11_brxx.cyksid ?? h11_brxx.ryksid,
       ksys: jcsq.sqys,
       kshs: null,
-      fylbid: '11',
+      fylbid: fylbid,
       sfje: 0,
       sjbz: 0,
       sfbz: 1,

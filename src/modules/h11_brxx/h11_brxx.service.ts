@@ -252,8 +252,9 @@ export class h11_brxxService {
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
                   subQb.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
-                  subQb.andWhere((qb) => {
-                    const existsQuery = qb
+                  subQb.andWhere('(h12_yzxb.tzrq = 0 or tzrq >= :ksrq)', { ksrq: queryDto.zxrq });
+                  subQb.andWhere((qbZxcs) => {
+                    const existsQuery = qbZxcs
                       .subQuery()
                       .select('1')
                       .from('h13_yzzxcs', 'h13')
@@ -278,6 +279,7 @@ export class h11_brxxService {
           // 长期医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 1');
           subQuery.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
+          subQuery.andWhere('(h12_yzxb.tzrq = 0 or tzrq >= :ksrq)', { ksrq: queryDto.zxrq });
           // 添加mxxh不在h13_yzzxcs.mxxh中的条件
           subQuery.andWhere((qb) => {
             const existsQuery = qb
