@@ -1,7 +1,9 @@
-import { Entity, Column, JoinColumn, OneToOne, OneToMany } from 'typeorm';
+import { Entity, Column, JoinColumn, OneToOne, OneToMany, ManyToOne } from 'typeorm';
 
 import { emr_jcsqmx } from './emr_jcsqmx.entity';
 import { DateTransformer } from '@/common/transformers/date.transformer';
+import { h21_brxx } from '../h21_brxx/h21-brxx.entity';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 
 @Entity('emr_jcsq', { schema: 'dbo' })
 export class emr_jcsq {
@@ -91,6 +93,16 @@ export class emr_jcsq {
   // @OneToOne(() => h23_cfzb, (h23_cfzb) => h23_cfzb.emr_jcsq)
   // @JoinColumn({ name: "cfid", referencedColumnName: 'cfid' })
   // h23_cfzb: h23_cfzb;
+
+  // 关联 h12_brxx（门诊患者）
+  @ManyToOne(() => h21_brxx, { nullable: true, cascade: false })
+  @JoinColumn({ name: 'mzid', referencedColumnName: 'mzid' })
+  h12Brxx?: h21_brxx | null;
+
+  // 关联 h11_brxx（住院患者）
+  @ManyToOne(() => h11_brxx, { nullable: true, cascade: false })
+  @JoinColumn({ name: 'mzid', referencedColumnName: 'zyid' })
+  h11Brxx?: h11_brxx | null;
 
   @OneToMany(() => emr_jcsqmx, (mx) => mx.jcsq, { cascade: true })
   jcsqmxList: emr_jcsqmx[];
