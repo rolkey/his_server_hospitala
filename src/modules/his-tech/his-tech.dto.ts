@@ -22,3 +22,20 @@ export class QueryParamsDto {
   @Allow()
   jssj: string;
 }
+
+export class ConfigDto {
+  @Allow()
+  hlfylbid0: string;
+
+  @Allow()
+  hlfylbid1: string;
+
+  @Allow()
+  hlfylbid2: string;
+
+  @Allow()
+  hlfylbid3: string;
+
+  @Allow()
+  hlfylbid4: string;
+}
