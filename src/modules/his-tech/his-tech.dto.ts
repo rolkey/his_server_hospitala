@@ -8,17 +8,17 @@ export class QueryParamsDto {
   @IsOptional()
   value?: string;
 
+  @Transform(({ value }) => parseInt(value))
   @IsNumber()
   pageNo: number;
 
+  @Transform(({ value }) => parseInt(value))
   @IsNumber()
   pageSize: number;
 
-  @IsArray()
-  @IsString({ each: true })
+  @Allow()
   kssj: string;
 
-  @IsArray()
-  @IsString({ each: true })
+  @Allow()
   jssj: string;
 }
