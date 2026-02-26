@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { UsrcatService } from './usrcat.service';
 
 @Controller('usrcat')
@@ -23,5 +23,10 @@ export class UsrcatNewController {
   @Get('findTollCollectorMZZY')
   findTollCollectorMZZY() {
     return this.userService.findTollCollectorMZZY();
+  }
+
+  @Get('sysDepts')
+  getSysDepts(@Query() data: { userId: string; sysId: string }) {
+    return this.userService.getSysDepts(data);
   }
 }

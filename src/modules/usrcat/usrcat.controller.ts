@@ -127,4 +127,11 @@ export class UsrcatController {
   resetPassword(@Param('userId') userId: string, @Body() dto: UpdatePasswordDto) {
     return this.userService.resetPassword(userId, dto.pwrd);
   }
+
+  //   @Get('sysDepts')
+  //   @UseGuards(PreviewGuard)
+  //   //   @Roles()
+  //   getSysDepts(@Query() data: { userId: string; sysId: string }) {
+  //     return this.userService.getSysDepts(data);
+  //   }
 }
