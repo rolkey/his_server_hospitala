@@ -7,5 +7,6 @@ export class HisTechService {
 
   async queryBrxxs(queryDto: QueryDto) {
     // 查询患者
+    console.log('患者信息', queryDto);
   }
 }
