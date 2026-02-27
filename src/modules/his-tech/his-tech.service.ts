@@ -18,11 +18,11 @@ export class HisTechService {
   async getConfig(ip: string): Promise<ConfigDto> {
     // 读取配置
     const [hlfylbid0, hlfylbid1, hlfylbid2, hlfylbid3, hlfylbid4] = await Promise.all([
+      this.paramService.gfGetPara(40, 'fylb0_' + ip, '', '医技费用类型0'),
       this.paramService.gfGetPara(40, 'fylb1_' + ip, '', '医技费用类型1'),
       this.paramService.gfGetPara(40, 'fylb2_' + ip, '', '医技费用类型2'),
       this.paramService.gfGetPara(40, 'fylb3_' + ip, '', '医技费用类型3'),
       this.paramService.gfGetPara(40, 'fylb4_' + ip, '', '医技费用类型4'),
-      this.paramService.gfGetPara(40, 'fylb5_' + ip, '', '医技费用类型5'),
     ]);
     return { hlfylbid0, hlfylbid1, hlfylbid2, hlfylbid3, hlfylbid4 };
   }
@@ -31,33 +31,33 @@ export class HisTechService {
     await Promise.all([
       this.paramService.saveParam({
         xtsb: 40,
-        csmc: 'fylb1_' + ip,
+        csmc: 'fylb0_' + ip,
         default: saveDto.hlfylbid0,
+        bz: '医技费用类型0',
+      }),
+      this.paramService.saveParam({
+        xtsb: 40,
+        csmc: 'fylb1_' + ip,
+        default: saveDto.hlfylbid1,
         bz: '医技费用类型1',
       }),
       this.paramService.saveParam({
         xtsb: 40,
         csmc: 'fylb2_' + ip,
-        default: saveDto.hlfylbid0,
+        default: saveDto.hlfylbid2,
         bz: '医技费用类型2',
       }),
       this.paramService.saveParam({
         xtsb: 40,
         csmc: 'fylb3_' + ip,
-        default: saveDto.hlfylbid0,
+        default: saveDto.hlfylbid3,
         bz: '医技费用类型3',
       }),
       this.paramService.saveParam({
         xtsb: 40,
         csmc: 'fylb4_' + ip,
-        default: saveDto.hlfylbid0,
+        default: saveDto.hlfylbid4,
         bz: '医技费用类型4',
-      }),
-      this.paramService.saveParam({
-        xtsb: 40,
-        csmc: 'fylb5_' + ip,
-        default: saveDto.hlfylbid0,
-        bz: '医技费用类型5',
       }),
     ]);
   }
