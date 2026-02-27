@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
 import { HisTechService } from './his-tech.service';
-import { ConfigDto, QueryParamsDto } from './his-tech.dto';
+import { ConfigDto, QueryParamsDto, YzDetailDto } from './his-tech.dto';
 import { Request } from 'express';
 
 @Controller('his-tech')
@@ -8,12 +8,28 @@ export class HisTechController {
   constructor(private readonly hisTechService: HisTechService) {}
 
   private getIp(request: Request): string {
-    return (
-      request.headers['x-forwarded-for'] ||
+    let ip =
+      (request.headers['x-forwarded-for'] as string) ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
-      (request.connection as any).socket?.remoteAddress
-    );
+      (request.connection as any).socket?.remoteAddress;
+
+    // 如果是IPv4映射的IPv6地址，转换为IPv4
+    if (ip && ip.substr(0, 7) === '::ffff:') {
+      ip = ip.substr(7);
+    }
+
+    // 如果是localhost或::1，转换为127.0.0.1
+    if (ip === '::1' || ip === 'localhost') {
+      ip = '127.0.0.1';
+    }
+
+    // 如果有多个代理IP，取第一个
+    if (ip && ip.includes(',')) {
+      ip = ip.split(',')[0].trim();
+    }
+
+    return ip || '127.0.0.1';
   }
 
   @Get('config')
@@ -29,5 +45,15 @@ export class HisTechController {
   @Get('brxxs')
   queryBrxxs(@Req() request: Request, @Query() queryDto: QueryParamsDto) {
     return this.hisTechService.queryBrxxs(this.getIp(request), queryDto);
+  }
+
+  @Get('detail0')
+  async queryDetail0(@Req() request: Request, @Query() queryDto: QueryParamsDto) {
+    return this.hisTechService.queryDetail0(this.getIp(request), queryDto);
+  }
+
+  @Get('detail1')
+  async queryDetail1(@Req() request: Request, @Query() queryDto: QueryParamsDto) {
+    return this.hisTechService.queryDetail1(this.getIp(request), queryDto);
   }
 }
