@@ -34,7 +34,7 @@ export class emr_jcsqService {
     const yzxbs = [];
     for (const [index, item] of saveDto.zlxmList.entries()) {
       // 如果有项目ID限制，则只处理该项目数据
-      if (xmid && xmid !== item.xmid) {
+      if (xmid && xmid.startsWith('T') && xmid !== item.xmid) {
         continue;
       }
       if (item.xmid.startsWith('T')) {
