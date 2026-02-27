@@ -99,7 +99,9 @@ export class emr_jcsqService {
     const h11_brxx = await this.h11BrxxRepo.findOne({
       where: { zyid: jcsq.mzid },
     });
-    const tcs = saveDto.zlxmList.map((item) => (item.xmid.startsWith('T') ? item : null));
+    const tcs = saveDto.zlxmList
+      .map((item) => (item.xmid.startsWith('T') ? item : null))
+      .filter((item) => item);
     if (tcs.length > 0) {
       // 按组套来处理
       for (const tc of tcs) {
