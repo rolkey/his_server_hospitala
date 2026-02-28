@@ -44,6 +44,16 @@ export class HisTechService {
       throw new BadRequestException('没有配置当前工作站的费用类别！！');
     }
 
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === 0) {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+    }
+
     // 将fylbs数组转换为字符串，用逗号分隔
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
 
@@ -112,7 +122,7 @@ export class HisTechService {
          WHERE h13_yzzxcs.zyid = h11_brxx.zyid
            and h13_yzzxcs.zxrq >= @2
            and h13_yzzxcs.zxrq <= @3
-           and isnull(h13_yzzxcs.clbz, 0) = 0
+           ${clbzFilters.zy}
          ORDER BY zxrq) as zxsj,   -- 执行时间
         sxys as ysid,              -- 医生ID（门诊医生）
         -- 科室ID处理
@@ -149,7 +159,7 @@ export class HisTechService {
                where h13_yzzxcs.zyid = h11_brxx.zyid
                  and h13_yzzxcs.zxrq >= @4
                  and h13_yzzxcs.zxrq <= @5
-                 and isnull(h13_yzzxcs.clbz, 0) = 0
+                 ${clbzFilters.zy}
                  and h13_yzzxcs.fylbid in (${fylbString}))
       ORDER BY ywlx, zxsj
     `;
