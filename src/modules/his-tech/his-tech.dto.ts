@@ -108,6 +108,7 @@ export class YzDetailDto {
   yzlx: string; // 医嘱类型
   yzxh: number; // 医嘱序号
   mxxh: number; // 明细序号
+  yzzh: number; // 医嘱组号
   xmid: string; // 项目ID
   xmmc: string; // 项目名称
   jfyl: number; // 计费用量
@@ -116,20 +117,20 @@ export class YzDetailDto {
   xmdj: number; // 项目单价
   xmdw: string; // 项目单位
   xmgg: string; // 项目规格
-  yzzh: string; // 医嘱组号
   clbz: number; // 处理标志
   ksid: string; // 科室ID
   szbz: number; // 收费标志
   bzxx: string; // 备注信息
   zxhs: string; // 执行护士
-  zxsj: Date; // 执行时间
+  zxsj: string; // 执行时间
   cjid: string; // 采集ID
   maxid: number; // 最大ID
   yjry: string; // 检验人员
-  yjrq: Date; // 检验日期
-  zxrq: Date; // 执行日期
-  yzrq: Date; // 医嘱日期
-  tzrq: Date; // 停止日期
+  yjrq: string; // 检验日期
+  zxrq: string; // 执行日期
+  yzrq: string; // 医嘱日期
+  tzrq: string; // 停止日期
+  scdh: string; // 申请单号
 }
 
 export class CfDetailDto {
@@ -147,4 +148,29 @@ export class CfDetailDto {
   yjrq: Date;
   jcbw: string;
   jcmd: string;
+}
+
+export class Execute0Dto {
+  @Allow()
+  mzid: string;
+
+  @Allow()
+  scdh: number;
+}
+
+export class Execute1Dto {
+  @Allow()
+  userId: string;
+
+  @Allow()
+  zyid: string;
+
+  @Allow()
+  yzlx: number;
+
+  @Allow()
+  yzzh: number;
+
+  @Allow()
+  scdh: number;
 }

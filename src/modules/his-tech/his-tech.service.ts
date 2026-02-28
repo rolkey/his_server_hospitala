@@ -4,12 +4,16 @@ import dayjs = require('dayjs');
 import {
   CfDetailDto,
   ConfigDto,
+  Execute0Dto,
+  Execute1Dto,
   PatientInfoDto,
   QueryParamsDto,
   YzDetailDto,
 } from './his-tech.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { DataSource } from 'typeorm';
+import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
+import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 
 @Injectable()
 export class HisTechService {
@@ -110,7 +114,7 @@ export class HisTechService {
            and h13_yzzxcs.zxrq <= @3
            and isnull(h13_yzzxcs.clbz, 0) = 0
          ORDER BY zxrq) as zxsj,   -- 执行时间
-        mzys as ysid,              -- 医生ID（门诊医生）
+        sxys as ysid,              -- 医生ID（门诊医生）
         -- 科室ID处理
         cyksid as ksid, -- 科室ID
         ryzd as icd11,             -- 诊断
@@ -249,7 +253,8 @@ export class HisTechService {
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
 
     const query = `
-    SELECT h12_yzxb.zyid,
+    SELECT distinct
+           h12_yzxb.zyid,
            h12_yzxb.yzlx,
            h12_yzxb.yzxh,
            h12_yzxb.mxxh,
@@ -275,7 +280,8 @@ export class HisTechService {
            h13_yzzxcs.yjrq,
            h13_yzzxcs.zxrq,
            h12_yzxb.yzrq,
-           h12_yzxb.tzrq
+           h12_yzxb.tzrq,
+           h12_yzxb.scdh
       FROM h12_yzxb
       join h13_yzzxcs on h12_yzxb.zyid = h13_yzzxcs.zyid
                      and h12_yzxb.yzlx = h13_yzzxcs.yzlx
@@ -291,9 +297,10 @@ export class HisTechService {
     const params = [queryDto.brid];
 
     try {
-      const result = await this.dataSource.query(query, params);
+      const result = await this.dataSource.query<YzDetailDto[]>(query, params);
       return result.map((item: YzDetailDto) => ({
         ...item,
+        zyid: queryDto.brid,
         zxsj: item.zxsj ? dayjs(item.zxsj).format('YYYY-MM-DD HH:mm:ss') : null,
         yjrq: item.yjrq ? dayjs(item.yjrq).format('YYYY-MM-DD HH:mm:ss') : null,
         zxrq: item.zxrq ? dayjs(item.zxrq).format('YYYY-MM-DD HH:mm:ss') : null,
@@ -366,5 +373,26 @@ export class HisTechService {
     } catch (error) {
       throw new Error(`查询处方详情失败: ${error.message}`);
     }
+  }
+
+  async execute0(execDto: Execute0Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      //   manager.update(h12_yzxb, {zyid:exe}, {})
+    });
+  }
+
+  async execute1(execDto: Execute1Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.update(
+        h12_yzxb,
+        { zyid: execDto.zyid, yzlx: execDto.yzlx, scdh: execDto.scdh },
+        { clbz: 1 },
+      );
+      await manager.update(
+        h13_yzzxcs,
+        { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
+        { clbz: 1, sfbz: 1, yjry: execDto.userId },
+      );
+    });
   }
 }

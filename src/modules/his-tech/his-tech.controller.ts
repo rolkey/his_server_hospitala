@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, Put } from '@nestjs/common';
 import { HisTechService } from './his-tech.service';
-import { ConfigDto, QueryParamsDto, YzDetailDto } from './his-tech.dto';
+import { ConfigDto, Execute0Dto, Execute1Dto, QueryParamsDto, YzDetailDto } from './his-tech.dto';
 import { Request } from 'express';
 
 @Controller('his-tech')
@@ -55,5 +55,15 @@ export class HisTechController {
   @Get('detail1')
   async queryDetail1(@Req() request: Request, @Query() queryDto: QueryParamsDto) {
     return this.hisTechService.queryDetail1(this.getIp(request), queryDto);
+  }
+
+  @Put('execute0')
+  async execute0(@Body() queryDto: Execute0Dto) {
+    return this.hisTechService.execute0(queryDto);
+  }
+
+  @Put('execute1')
+  async execute1(@Body() queryDto: Execute1Dto) {
+    return this.hisTechService.execute1(queryDto);
   }
 }
