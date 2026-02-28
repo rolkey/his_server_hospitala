@@ -51,12 +51,14 @@ export class emr_jcsqService {
         yzxb.ypid = item.xmid;
         yzxb.xmid = item.xmid;
         yzxb.xmmc = item.xmmc;
-        yzxb.xmgg = item.gg;
         yzxb.gjybbm = item.gjybbm;
         yzxb.gjybmc = item.gjybmc;
         yzxb.fylbid = item.fylbid;
         yzxb.jldw = (item as any).jldw;
         yzxb.xmdj = (item as any).sfdj;
+        yzxb.xmgg = (item as any).ggxh;
+        yzxb.xmdw = (item as any).jldw;
+        yzxb.jssj = item.ypfl;
         yzxb.tpbz = 0;
         yzxb.tcbz = 1;
         yzxb.sfbz = 1;
@@ -73,7 +75,7 @@ export class emr_jcsqService {
       //     yzzh: h12Yzxb.yzzh,
       //     mxxh: Not(h12Yzxb.mxxh),
       //   }),
-      manager.save(h12_yzxb, yzxbs),
+      manager.insert(h12_yzxb, yzxbs),
     ];
   }
 
@@ -184,6 +186,7 @@ export class emr_jcsqService {
       yzzt: 0,
       apbz: 0,
       zfbz: 0,
+      zfbl: 1,
       ksnf: '07',
     });
 
