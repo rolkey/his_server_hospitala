@@ -48,16 +48,20 @@ export class emr_jcsqService {
         const yzxb = new h12_yzxb();
         Object.assign(yzxb, h12Yzxb);
         // 处理检查明细
+        yzxb.ypid = item.xmid;
         yzxb.xmid = item.xmid;
         yzxb.xmmc = item.xmmc;
         yzxb.xmgg = item.gg;
         yzxb.gjybbm = item.gjybbm;
         yzxb.gjybmc = item.gjybmc;
         yzxb.fylbid = item.fylbid;
-        // yzxb.xmdj = item.dj;
+        yzxb.jldw = (item as any).jldw;
         yzxb.xmdj = (item as any).sfdj;
         yzxb.tpbz = 0;
         yzxb.tcbz = 1;
+        yzxb.sfbz = 1;
+        yzxb.sjbz = 1;
+        yzxb.srcs = 1;
         yzxb.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
 
         yzxbs.push(yzxb);
@@ -155,7 +159,7 @@ export class emr_jcsqService {
       kshs: null,
       fylbid: fylbid,
       sfje: 0,
-      sjbz: 0,
+      sjbz: 1, // 必须全部=1
       sfbz: 1,
       jsbz: 1,
       zxbz: 0,
