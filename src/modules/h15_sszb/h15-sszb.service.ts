@@ -97,6 +97,16 @@ export class H15SszbService {
     // 获取手术统计信息
   }
 
+  async findOneBySqdhAndZyid(sqdh: number, zyid: string): Promise<H15Sszb> {
+    // 关联病人信息。使用 relationLoadStrategy: 'query' 避免多 relation JOIN 时
+    // 出现列重复（如 smSssqEntity.ssdm）导致的 distinctAlias 报错
+    return this.repository.findOne({
+      where: { sqdh, zyid },
+      relations: ['h11BrxxEntity', 'smSssqEntity'],
+      relationLoadStrategy: 'query',
+    });
+  }
+
   //   async updateSurgeryStatus(
   //     ssid: string,
   //     zyid: string,

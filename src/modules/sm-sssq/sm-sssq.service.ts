@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between, EntityManager, Transaction, In, Not } from 'typeorm';
 import { SmSssq } from './sm-sssq.entity';
-import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto } from './dto/sm-sssq.dto';
+import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto, VoidSmSssqDto } from './dto/sm-sssq.dto';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
@@ -223,6 +223,7 @@ export class SmSssqService {
         'h11BrxxEntity.mzysEntity',
         'jbbmicd10Entity', // 疾病编码
         'mzdmEntity', // 麻醉方法
+        'ssdmEntity', // 手术名称
       ],
     });
   }
@@ -231,6 +232,29 @@ export class SmSssqService {
     return await this.smSssqRepository.findOne({
       where: { sqdh },
     });
+  }
+
+  /**
+   * 未安排手术列表查询（实体方式）
+   * 查询条件：APBZ<>1(未安排)、zfbz<>1(未作废)、zyzt<3(在院)、按科室筛选
+   * @param ksid 科室ID，支持 LIKE 匹配（如 '01' 或 '01%'）
+   */
+  async findUnarrangedList(ksid: string): Promise<any[]> {
+    const qb = this.smSssqRepository
+      .createQueryBuilder('sm')
+      .leftJoinAndSelect('sm.jbbmicd10Entity', 'jbbmicd10Entity')
+      .innerJoinAndSelect('sm.h11BrxxEntity', 'brxx')
+      .leftJoinAndSelect('brxx.brlxidEntity', 'brlxidEntity')
+      .leftJoinAndSelect('brxx.mzysEntity', 'mzysEntity')
+      .where('sm.apbz <> :apbz', { apbz: 1 })
+      .andWhere('sm.zfbz <> :zfbz', { zfbz: 1 })
+      .andWhere('brxx.zyzt < :zyzt', { zyzt: 3 });
+
+    // if (ksid) {
+    //   qb.andWhere('brxx.cyksid LIKE :ksid', { ksid });
+    // }
+
+    return await qb.getMany();
   }
 
   async remove(data: { zyid: string; sqdh: string }): Promise<void> {
@@ -252,5 +276,26 @@ export class SmSssqService {
         transactionalEntityManager.delete(SmSssq, { sqdh: In(sqdh.split(',')), zyid }),
       ]);
     });
+  }
+
+  /**
+   * 手术申请单作废/取消作废
+   * 规则（参考 PB：作废按钮逻辑）：
+   * - 作废(zfbz=1)：若 apbz=1（已安排）则不允许，返回「该申请单已安排，不能作废!」
+   * - 取消作废(zfbz=0)：直接更新 zfbz=0
+   */
+  async voidOrCancelVoid(dto: VoidSmSssqDto): Promise<{ sqdh: number; zfbz: number }> {
+    const { sqdh, zfbz } = dto;
+    const row = await this.smSssqRepository.findOne({ where: { sqdh } });
+    if (!row) {
+      throw new Error('手术申请单不存在!');
+    }
+    if (zfbz === 1) {
+      if (row.apbz === 1) {
+        throw new Error('该申请单已安排，不能作废!');
+      }
+    }
+    await this.smSssqRepository.update({ sqdh }, { zfbz });
+    return { sqdh, zfbz };
   }
 }

@@ -1,0 +1,1495 @@
+//==============================================================================
+// 手术安排通知单窗口 (w_ss_gxmk_ssap)
+// 功能：查看/新增/修改/急诊 手术安排，对应表 SM_SSAP、SM_SSSQ
+//==============================================================================
+forward
+global type w_ss_gxmk_ssap from w_master
+end type
+type cb_default from commandbutton within w_ss_gxmk_ssap
+end type
+type uo_1 from vu_public_select within w_ss_gxmk_ssap
+end type
+type cbx_lxlr from checkbox within w_ss_gxmk_ssap
+end type
+type cb_print from commandbutton within w_ss_gxmk_ssap
+end type
+type em_srdm from editmask within w_ss_gxmk_ssap
+end type
+type cb_close from commandbutton within w_ss_gxmk_ssap
+end type
+type cb_save from commandbutton within w_ss_gxmk_ssap
+end type
+type cb_copy from commandbutton within w_ss_gxmk_ssap
+end type
+type dw_1 from datawindow within w_ss_gxmk_ssap
+end type
+type st_srdm from statictext within w_ss_gxmk_ssap
+end type
+type cb_blankout from commandbutton within w_ss_gxmk_ssap
+end type
+end forward
+
+global type w_ss_gxmk_ssap from w_master
+integer y = 264
+integer width = 3547
+integer height = 2048
+windowtype windowtype = response!
+boolean center = true
+event ue_getitem01 ( )
+cb_default cb_default
+uo_1 uo_1
+cbx_lxlr cbx_lxlr
+cb_print cb_print
+em_srdm em_srdm
+cb_close cb_close
+cb_save cb_save
+cb_copy cb_copy
+dw_1 dw_1
+st_srdm st_srdm
+cb_blankout cb_blankout
+end type
+global w_ss_gxmk_ssap w_ss_gxmk_ssap
+
+//-------- 实例变量 --------
+type variables
+boolean  ib_RowModified = False   // 当前行是否有未保存的修改
+boolean	ib_jzss = False           // 是否急诊手术
+boolean	ib_bz                     // 日期校验用标志（itemerror 中区分接受/拒绝）
+integer  ii_ReturnValue            // 关闭窗口返回值：0异常 1新增保存 2修改保存 3作废保存
+string 	is_colname,is_error       // 当前列名；错误信息
+long 		il_ssks                  // 手术科室（手术系统传入时使用）
+Boolean  ib_EditChanged            // 数据窗口当前单元格是否被编辑过（用于人员选择）
+string 	is_Parameter              // 模块参数
+Boolean	ib_zfbz = False           // 当前是否为“作废”状态
+
+//nvo_hrpmodule_ss_main	iu_xtcs	//系统参数
+
+s_Exchange	istru_Exchange        // 打开窗口时传入的参数（含模式、手术编号等）
+stru_brxx istr_brxx                // 病人信息结构
+end variables
+
+//-------- 窗口函数声明 --------
+forward prototypes
+public subroutine wf_ssbr (double adbl_zyh)     // 按住院号带出病人到安排单
+public function boolean wf_save ()             // 保存手术安排
+public function integer wf_fill_sssq ()        // 无申请单时补写 SM_SSSQ
+public function integer wf_informdoctor ()     // 通知医生（当前未实现）
+public function boolean wf_init ()             // 按模式初始化窗口
+public subroutine wf_copy_source (long as_sqdh) // 从申请单复制到安排单
+end prototypes
+
+//-------- 事件：从手术选择控件(uo_1)回填手术信息到 dw_1 --------
+event ue_getitem01();long ll_row,ll_return,ll_ssnm
+string ls_ssmc
+any lany_1[]
+
+ll_row=dw_1.getrow()
+ll_return=uo_1.getselected(lany_1)
+IF ll_return>0 THEN
+	ll_ssnm=lany_1[1]
+   IF ll_ssnm > 0 THEN
+      // 从手术字典取手术名称，写入安排单并定位到手术医师列
+      SELECT SSMC INTO :ls_ssmc FROM GY_SSDM WHERE SSNM = :ll_ssnm USING sqlca;
+      dw_1.object.ssnm[1] = ll_ssnm
+      dw_1.object.ssmc[1] = ls_ssmc	
+		dw_1.setcolumn('ssys')
+	else
+		// 选择为空则清空手术编码/名称，焦点到手术名称
+		setnull(ll_ssnm)
+		setnull(ls_ssmc)
+		dw_1.setitem(1,'ssnm',ll_ssnm)
+		dw_1.setitem(1,'ssmc',ls_ssmc)
+		dw_1.setcolumn('ssmc')
+   END IF
+else
+	// 未选择则清空
+	setnull(ll_ssnm)
+	setnull(ls_ssmc)
+	dw_1.setitem(1,'ssnm',ll_ssnm)
+	dw_1.setitem(1,'ssmc',ls_ssmc)
+	dw_1.setcolumn('ssmc')
+END IF
+dw_1.setfocus()
+
+end event
+
+//-------- 根据住院号带出手术病人信息并填入 dw_1 第1行 --------
+public subroutine wf_ssbr (double adbl_zyh);/* 定义数据存储对象 lds_ssbr 用以选择手术病人 */
+Long ll_zyh,ll_brxb,ll_brks,ll_brbq,ll_brxz
+Long ll_nl,ll_sqdh,ll_ssnm,ll_mzdm,ll_sqks
+String ls_zyid,ls_zyhm,ls_brxm,ls_brch,ls_ssmc,ls_ssys_2
+String ls_xshs,ls_xhhs,ls_xshs_2,ls_xhhs_2
+String ls_mzys_2,ls_ssyq,ls_zysx,ls_czgh
+String ls_ssys,ls_ssyz,ls_ssez,ls_sssz,ls_mzys,ls_shbz
+DateTime ldt_csny
+DateTime	ldt_date
+DataStore lds_ssbr
+
+ldt_date = f_serverdatetime()
+
+lds_ssbr = Create DataStore
+lds_ssbr.DataObject = "d_ss_gxmk_sssq_ssbr"
+lds_ssbr.SetTransObject(sqlca)
+
+If lds_ssbr.Retrieve(adbl_zyh) = 0 Then
+	MessageBox("提示信息","病人不存在，请重新输入!")
+	em_srdm.SetFocus()
+Else
+	// 从检索结果取病人及申请单信息
+	ll_sqdh= lds_ssbr.GetItemNumber(1,'sqdh')
+	ll_zyh  = lds_ssbr.GetItemNumber(1,'zyh')
+	ls_zyhm = lds_ssbr.GetItemString(1,'zyhm')
+	ls_brxm = lds_ssbr.GetItemString(1,'brxm')
+	ll_brxb = lds_ssbr.GetItemNumber(1,'brxb')
+	ldt_csny = lds_ssbr.GetItemDateTime(1,'csny')
+	ll_brks = lds_ssbr.GetItemNumber(1,'brks')
+	ll_brbq = lds_ssbr.GetItemNumber(1,'brbq')
+	ls_brch = lds_ssbr.GetItemString(1,'brch')
+	ll_brxz = lds_ssbr.GetItemNumber(1,'brxz')
+	ls_shbz = lds_ssbr.GetItemString(1,'shbz')
+	ls_zyid = lds_ssbr.GetItemString(1,'zyid')
+	if isnull(ls_shbz) then ls_shbz='0'
+	
+	SetNull(ll_sqdh)
+	SetNull(ll_ssnm)
+	SetNull(ls_ssmc)
+	SetNull(ls_ssys)
+	SetNull(ls_ssyz)
+	SetNull(ls_ssez)
+	SetNull(ls_sssz)
+	SetNull(ll_mzdm)
+	SetNull(ls_mzys)
+	SetNull(ls_xshs)
+	SetNull(ls_xhhs)
+	SetNull(ls_xshs_2)
+	SetNull(ls_xhhs_2)
+	SetNull(ls_ssys_2)
+	SetNull(ls_mzys_2)
+	SetNull(ls_ssyq)
+	SetNull(ls_zysx)
+	ls_czgh = gstr_ainf.u_userid
+	// 病人信息、申请单号写入 dw_1，手术相关字段先置空
+	dw_1.Object.sqdh[1] = ll_sqdh
+	dw_1.Object.zyid[1]  = ls_zyid
+	dw_1.Object.zyh[1]  = ll_zyh
+	dw_1.Object.zyhm[1] = ls_zyhm
+	dw_1.Object.brxm[1] = ls_brxm
+	dw_1.Object.brxb[1] = ll_brxb
+	dw_1.Object.csny[1] = ldt_csny
+	dw_1.Object.brks[1] = ll_brks
+	dw_1.Object.brbq[1] = ll_brbq
+	dw_1.Object.brch[1] = ls_brch
+	dw_1.Object.brxz[1] = ll_brxz
+	dw_1.object.ssrq[1] = ldt_date
+	dw_1.Object.ssnm[1] = ll_ssnm
+	dw_1.Object.ssmc[1] = ls_ssmc
+	dw_1.Object.ssys[1] = ls_ssys
+	dw_1.Object.ssyz[1] = ls_ssyz
+	dw_1.Object.ssez[1] = ls_ssez
+	dw_1.Object.sssz[1] = ls_sssz
+	dw_1.Object.mzdm[1] = ll_mzdm
+	dw_1.Object.mzys[1] = ls_mzys
+	dw_1.Object.ssbh[1] = 0
+	dw_1.Object.xshs[1] = ls_xshs
+	dw_1.Object.xhhs[1] = ls_xhhs
+	dw_1.Object.xshs_2[1] = ls_xshs_2
+	dw_1.Object.xhhs_2[1] = ls_xhhs_2
+	dw_1.Object.ssys_2[1] = ls_ssys_2
+	dw_1.Object.mzys_2[1] = ls_mzys_2
+	dw_1.object.aprq[1] = ldt_date
+	dw_1.Object.jzbz[1] = 0
+	dw_1.Object.hzbz[1] = 0
+	dw_1.Object.thbz[1] = 0
+	dw_1.Object.mzbz[1] = 0
+	dw_1.Object.qxbz[1] = 0
+	dw_1.Object.ssbz[1] = 0
+	dw_1.Object.zfbz[1] = 0
+	dw_1.Object.jfbz[1] = 0
+	dw_1.Object.wcbz[1] = 0
+	dw_1.Object.shbz[1] = 0
+	dw_1.Object.ssyq[1] = ls_ssyq
+	dw_1.Object.zysx[1] = ls_zysx
+	dw_1.Object.czgh[1] = ls_czgh
+	dw_1.Object.shbz[1] = long(ls_shbz)
+	
+	// 手术系统中使用此模块时传入手术科室
+	If Not IsNull(il_ssks) And il_ssks > 0 Then
+		dw_1.Object.ssks[1] = il_ssks
+	End If
+	
+	If ib_jzss Then dw_1.Object.jzbz[1] = 1  // 急诊模式则勾选急诊标志
+	dw_1.SetFocus()
+End If
+
+Destroy lds_ssbr
+
+
+end subroutine
+
+//-------- 保存手术安排：校验 → 新增/修改/作废 处理申请单 → Update --------
+public function boolean wf_save ();Long 		ll_zfbz
+Double 	ldbl_ssbh , ldbl_sqdh
+String  	ls_Error,ls_col,ls_Brch,ls_Brxm
+string ls_zybh,ls_Brbq,ls_Brks
+
+// 1. 接受当前编辑并校验
+IF dw_1.AcceptText() < 0 THEN
+	MessageBox('提示','当前数据录入不正确，请重新录入!')
+	dw_1.SetFocus()
+	RETURN False
+END IF
+
+if dw_1.Object.ssrq[1] < dw_1.Object.aprq[1] then
+	MessageBox('提示','手术日期不能小于通知日期!')
+	dw_1.SetFocus()
+	dw_1.SetColumn('ssrq')
+	RETURN False
+END IF
+	
+
+ls_Brch = dw_1.Object.rycw[1]
+ls_Brxm = dw_1.Object.brxm[1]
+ls_zybh  = dw_1.Object.zybh[1]
+ls_Brbq = dw_1.Object.cyksid[1]
+ls_Brks = dw_1.Object.zkksid[1]
+
+ldbl_ssbh = dw_1.Object.ssbh[1]
+ldbl_sqdh = dw_1.Object.sqdh[1]
+
+// 2. 必填项校验：手术医师、手术名称
+IF IsNull(dw_1.Object.ssys[1]) And Not IsNull(dw_1.Object.ssys_2[1])THEN
+ls_Error += "主治医师、"
+ls_col = 'ssys'
+END IF
+IF IsNull(dw_1.Object.ssys[1]) And IsNull(dw_1.Object.ssys_2[1])THEN
+ls_Error += "手术医师、"
+ls_col = 'ssys'
+END IF
+IF dw_1.Object.ssdm[1] = ''  Or IsNull(dw_1.Object.ssdm[1]) THEN
+	ls_Error += "手术名称、"
+	ls_col = 'ssmc'
+END IF
+IF Len(ls_Error) > 0 THEN
+	ls_Error = Left(ls_Error , Len(ls_Error) - 2)
+	MessageBox("提示信息",ls_Error + "不能为空，请重新输入!",Exclamation!)
+	dw_1.SetFocus()
+	dw_1.SetColumn(ls_col)
+	RETURN False
+END IF
+
+// 3. 新增：取手术编号，并更新/插入申请单状态
+/* 若为新增记录，则从SS_SSAP中取最大SSBH(手术编号) */
+IF ldbl_ssbh = 0 THEN
+	ldbl_ssbh = gf_get_max(sqlca,"SM_SSAP",1)
+	IF ldbl_ssbh < 0 THEN GOTO Process_Error
+	
+	dw_1.Object.ssbh[1] = ldbl_ssbh
+	dw_1.Object.czgh[1] = gstr_ainf.u_userid
+	/* 有申请单：将 SM_SSSQ.APBZ 置 1 表示已安排；无申请单则调用 wf_fill_sssq 补一条 */
+	IF ldbl_sqdh > 0 THEN
+		gf_begin_transaction(sqlca)
+		UPDATE SM_SSSQ Set APBZ = 1 Where SQDH = :ldbl_sqdh Using sqlca;
+		IF sqlca.SQLCode <> 0 THEN GOTO Process_Error
+	ELSE //没有申请单则新增一条记录
+		IF wf_fill_sssq() < 0 THEN GOTO Process_Error
+	END IF
+	ii_ReturnValue = 1
+ELSE
+	// 4. 修改：若作废则把申请单 APBZ 改回 0
+	gf_begin_transaction(sqlca)
+	ll_zfbz = dw_1.Object.zfbz[1]
+	IF ll_zfbz = 1 THEN
+		UPDATE SM_SSSQ Set APBZ = 0 Where SQDH = :ldbl_sqdh Using sqlca;
+		IF sqlca.SQLCode <> 0 THEN GOTO Process_Error
+		ii_ReturnValue = 3
+	ELSE
+		ii_ReturnValue = 2
+	END IF
+END IF
+
+////麻醉完成标志
+//IF IsNull(dw_1.Object.mzwcbz[1]) THEN
+//	dw_1.SetItem(1,"MZWCBZ",0)
+//END IF
+//
+// 5. 写库并提交
+IF dw_1.Update() <> 1 THEN GOTO Process_Error
+
+gf_commit_transaction(sqlca)
+ib_RowModified = False
+cb_save.Enabled = False
+
+IF IsNull(ls_Brch) THEN ls_Brch = '未知'
+IF IsNull(ls_Brxm) THEN ls_Brxm = '未知'
+IF IsNull(ls_Brbq) THEN ls_Brbq = ''
+IF IsNull(ls_zybh)  THEN ls_zybh = ''
+IF IsNull(ls_Brks) THEN ls_Brks = ''
+
+//gf_support_MsgSend('804('+ls_Brch+','+ls_Brxm+',)|'+String(ll_Zyh)+'|8,11|'+String(ll_Brbq)+','+String(ll_Brks)+'|0|0')
+
+RETURN True
+
+Process_Error:
+// 保存失败：回滚并记录错误
+is_error = sqlca.SQLERRTEXT
+gf_rollback_transaction(sqlca)
+//gf_inserterrlog(0,is_error,'w_ss_gxmk_ssap','wf_save','wf_save',0)
+ii_ReturnValue = 0
+is_error = '位置：w_ss_gxmk_ssap ：wf_save() ' + is_error
+//	gf_his_share_errorinfo('数据保存错误，请修改!',is_error)
+RETURN False
+end function
+
+//-------- 无申请单时往 SM_SSSQ 补一条申请记录并回写 sqdh（INSERT 当前被注释） --------
+public function integer wf_fill_sssq ();Long 		ll_sqdh,ll_zyh,ll_sqks,ll_ssnm,ll_mzdm,ll_tjbz,ll_apbz,ll_zfbz,ll_ssks
+String 	ls_sqys,ls_czgh,ls_ssyz,ls_ssez,ls_sssz,ls_mzys,ls_ssys
+DateTime ldt_sqrq,ldt_ssrq
+DateTime	ldt_date
+
+ldt_date = f_serverdatetime()
+//ll_sqdh = gf_ss_gxmk_max_dh('sqdh') //取单号并在SM_IDENTITY中填值
+ll_sqdh = gf_get_max(sqlca,"SM_SSSQ",1) 
+If ll_sqdh < 0 Then Return -1
+ll_zyh = dw_1.Object.zyh[1]
+ll_sqks = dw_1.Object.sqks[1]
+ll_ssks = dw_1.Object.ssks[1]
+ll_ssnm = dw_1.Object.ssnm[1]
+ll_mzdm = dw_1.Object.mzdm[1]
+ll_tjbz = 9
+ll_apbz = 1
+ll_zfbz = 0
+SetNull(ls_sqys)
+ls_czgh = gstr_ainf.u_userid
+ls_ssyz = dw_1.Object.ssyz[1]
+ls_ssez = dw_1.Object.ssez[1]
+ls_sssz = dw_1.Object.sssz[1]
+ls_mzys = dw_1.Object.mzys[1]
+ls_ssys = dw_1.object.ssys[1]
+ldt_sqrq= ldt_date
+ldt_ssrq = dw_1.Object.ssrq[1]
+
+gf_begin_transaction(sqlca)
+//INSERT INTO SM_SSSQ(SQDH,ZYH,SQKS,SQYS,SQRQ,SSKS,SSRQ,SSNM,SSYZ,SSEZ,SSSZ,MZDM,MZYS,TJBZ,APBZ,ZFBZ,CZGH,SSYS,TXKS)
+//	VALUES(:ll_sqdh,:ll_zyh,:ll_sqks,:ls_sqys,:ldt_sqrq,:ll_ssks,:ldt_ssrq,:ll_ssnm,:ls_ssyz,:ls_ssez,
+//	:ls_sssz,:ll_mzdm,:ls_mzys,:ll_tjbz,:ll_apbz,:ll_zfbz,:ls_czgh,:ls_ssys,:iu_xtcs.il_sssdm)
+//	USING sqlca;
+	
+If sqlca.SQLCode <> 0 Then
+	is_error = sqlca.SQLERRTEXT
+	gf_rollback_transaction(sqlca)
+	//gf_inserterrlog(0,is_error,'w_ss_gxmk_ssap','wf_fill_sssq','wf_fill_sssq',0)
+	is_error = '位置：w_ss_gxmk_ssap ：wf_fill_sssq() ' + is_error
+	//gf_his_share_errorinfo('数据库更新失败!',is_error)
+	Return -1
+Else
+	gf_commit_transaction(sqlca)
+	dw_1.Object.SQDH[1] = ll_sqdh
+	Return 1
+End If
+
+
+end function
+
+//-------- 将手术安排通知医生（当前实现为空，原逻辑已注释） --------
+public function integer wf_informdoctor ();//====================================================================
+// Function: wf_informdoctor()
+//--------------------------------------------------------------------
+// Description: 将手术安排通知医生
+//--------------------------------------------------------------------
+// Arguments: 无
+//--------------------------------------------------------------------
+// Returns:  integer 发送标志 
+//                   -1 不成功 1 成功
+//--------------------------------------------------------------------
+// Author:	叶国华		Date: 2004.07.14
+//--------------------------------------------------------------------
+// Modify History: 
+//	
+//====================================================================
+Int li_Ret  //返回值
+
+//u_ss_gxmk_adapter_opt_doctor adapter
+//
+//adapter = CREATE u_ss_gxmk_adapter_opt_doctor
+//
+//li_Ret = adapter.ArrangeOpt(Long(dw_1.Object.sqdh[1]), Long(dw_1.Object.ssbh[1]))
+//
+//DESTROY adapter
+
+RETURN li_Ret
+
+
+end function
+
+//-------- 窗口初始化：按 LongParm[1] 模式(0查看/1新增/2修改/3急诊) 设置界面并加载数据 --------
+public function boolean wf_init ();Double ldbl_ssbh // 手术编号（LongParm[6]）
+Long   ll_row
+DateTime ldt_csny
+DateTime ldt_date
+datawindowchild child1
+
+ldt_date = f_serverdatetime()
+
+dw_1.SetTransObject(sqlca)
+dw_1.GetChild('xshs',child1)
+//gf_ss_gxmk_hs(child1)
+dw_1.GetChild('xshs_2',child1)
+//gf_ss_gxmk_hs(child1)
+dw_1.GetChild('xhhs',child1)
+//gf_ss_gxmk_hs(child1)
+dw_1.GetChild('xhhs_2',child1)
+//gf_ss_gxmk_hs(child1)
+//uo_1.Initialize(sqlca,"SSMC,SSNM,ZJDM","GY_SSDM","1,3","730,220","2","ue_getitem01")
+
+ldbl_ssbh = istru_Exchange.LongParm[6] //Double(Mid(is_Parameter,2))
+Choose Case string(istru_Exchange.LongParm[1]) //Left(is_Parameter,1)
+	Case "0"
+		// 模式0：仅查看，隐藏录入区
+		This.Title = "查看手术安排通知单"
+		st_srdm.Visible     = False
+		em_srdm.Visible     = False
+		cbx_lxlr.Visible    = False
+		cb_blankout.Visible = False
+		//dw_1.Enabled        = False
+	Case "1"
+		// 模式1：新增；LongParm[6]>0 表示从申请单复制（传的是申请单号 sqdh）
+		This.Title = "手术安排"
+		dw_1.InsertRow(0)
+		ll_row = istru_Exchange.LongParm[6] //Long(Mid(is_Parameter,2))
+		If ll_row > 0 Then
+			st_srdm.Visible = False
+			em_srdm.Visible = False
+			cbx_lxlr.Visible = False
+			cbx_lxlr.Checked = False
+			cb_blankout.Visible = False
+			//dw_1.DeleteRow(1) 屏蔽该行否则不能正常显示窗口
+			wf_copy_source(ldbl_ssbh)  // 从申请单复制到安排单
+			dw_1.SetFocus()
+			dw_1.ScrollToRow(1)
+			cb_save.Enabled = True
+		Else
+			// 纯新增：不复制，焦点到住院号输入
+			cb_blankout.Visible = False
+			//dw_1.Enabled = False
+			em_srdm.SetFocus()
+		End If
+		Return True
+	Case "2"
+		// 模式2：修改，下面统一按 ssbh 检索
+		This.Title = "修改手术安排通知单"
+		st_srdm.Visible = False
+		em_srdm.Visible = False
+		cbx_lxlr.Visible = False
+		cbx_lxlr.Checked = False
+	Case "3"
+		// 模式3：急诊手术安排，锁定急诊标志
+		This.Title = "急诊手术安排"
+		il_ssks = Long(Mid(is_Parameter,2)) //手术室代码,有手术系统中使用
+		ib_jzss = True
+		cb_blankout.Visible = False
+		dw_1.InsertRow(0)
+		dw_1.Modify("jzbz.protect='1'")
+		dw_1.Object.jzbz[1] = 1
+		em_srdm.SetFocus()
+		Return True
+	Case Else
+End Choose
+
+// 按手术编号检索安排单（查看/修改时）
+dw_1.Retrieve(ldbl_ssbh)  //,ldt_date
+If dw_1.RowCount() = 0 Then
+	MessageBox("提示信息", "手术安排单【" + String(ldbl_ssbh) + "】不存在!",stopsign!)
+	cb_blankout.Enabled = False
+	CloseWithReturn(This,0)
+	Return False
+Else
+	ib_zfbz = False	//手术申请作废标志
+	If dw_1.Object.zfbz[1] = 1 Then
+		cb_blankout.Text = "取消作废"
+		ib_zfbz = True	//手术申请作废标志
+	End If
+//	If Not IsNull(dw_1.Object.ssnm[1]) Then
+//		dw_1.Object.ssmc.protect = '1'
+//	End If
+End If
+
+Return True
+
+end function
+
+//-------- 从手术申请表按申请单号复制到安排单 dw_1，安排单标志位清零 --------
+public subroutine wf_copy_source (long as_sqdh);Long 			ll_nl,al_row
+String 		ls_xshs,ls_xhhs,ls_xshs_2,ls_xhhs_2,ls_ssys_2,ls_czgh,ls_mzys_2
+String 		ls_ssyq,ls_zysx
+DateTime 	ldt_date
+DataStore 	dw_source
+
+//If IsValid(w_ss_gxmk_ssap_sssq) Then
+//	dw_source = w_ss_gxmk_ssap_sssq.dw_1
+//Else
+//	Return
+//End If
+dw_source = Create DataStore
+dw_source.DataObject='d_ss_gxmk_sssq'
+dw_source.settransobject(sqlca)
+al_row=dw_source.retrieve(as_SQDH)
+if dw_source.rowcount()<=0 then
+	  return
+end if
+ldt_date = f_serverdatetime()
+
+// 病人、手术、科室、日期等从申请单拷贝到安排单第1行
+dw_1.Object.sqdh[1] = dw_source.Object.sqdh[al_row]
+dw_1.Object.zyh[1]  = dw_source.Object.zyh[al_row]
+dw_1.Object.zybh[1] = dw_source.Object.zybh[al_row]
+dw_1.Object.brxm[1] = dw_source.Object.brxm[al_row]
+dw_1.Object.xbid[1] = dw_source.Object.xbid[al_row]
+dw_1.Object.brnl[1] = dw_source.Object.brnl[al_row]
+dw_1.Object.nldw[1] = dw_source.Object.nldw[al_row]
+dw_1.Object.csrq[1] = dw_source.Object.csrq[al_row]
+dw_1.Object.cyksid[1] = dw_source.Object.cyksid[al_row]
+dw_1.Object.zkksid[1] = dw_source.Object.zkksid[al_row]
+dw_1.Object.rycw[1] = dw_source.Object.rycw[al_row]
+dw_1.Object.brlxid[1] = dw_source.Object.brlxid[al_row]
+dw_1.Object.ssks[1] = dw_source.Object.ssks[al_row]
+dw_1.Object.aprq[1] = dw_source.Object.sqrq[al_row]  //申请日期
+dw_1.Object.ssrq[1] = dw_source.Object.ssrq[al_row]  //手术日期
+dw_1.Object.sqks[1] = dw_source.Object.sqks[al_row]
+dw_1.Object.ssdm[1] = dw_source.Object.ssdm[al_row]
+dw_1.Object.ssnm[1] = dw_source.Object.ssnm[al_row]
+//dw_1.Object.ssmc[1] = dw_source.Object.ssmc[al_row]
+dw_1.Object.ssys[1] = dw_source.Object.ssys[al_row]
+dw_1.Object.ssyz[1] = dw_source.Object.ssyz[al_row]
+dw_1.Object.ssez[1] = dw_source.Object.ssez[al_row]
+dw_1.Object.sssz[1] = dw_source.Object.sssz[al_row]
+dw_1.Object.mzdm[1] = dw_source.Object.mzdm[al_row]
+dw_1.Object.mzys[1] = dw_source.Object.mzys[al_row]
+dw_1.Object.zyid[1] = dw_source.Object.zyid[al_row]
+
+SetNull(ls_xshs)
+SetNull(ls_xhhs)
+SetNull(ls_xshs_2)
+SetNull(ls_xhhs_2)
+SetNull(ls_ssys_2)
+SetNull(ls_mzys_2)
+SetNull(ls_ssyq)
+SetNull(ls_zysx)
+ls_czgh = gstr_ainf.u_userid
+dw_1.Object.ssbh[1] = 0   // 安排单为新单，手术编号后续保存时生成
+dw_1.Object.xshs[1] = ls_xshs
+dw_1.Object.xhhs[1] = ls_xhhs
+dw_1.Object.xshs_2[1] = ls_xshs_2
+dw_1.Object.xhhs_2[1] = ls_xhhs_2
+dw_1.Object.ssys_2[1] = ls_ssys_2
+dw_1.Object.mzys_2[1] = ls_mzys_2
+//dw_1.Object.aprq[1] = ldt_date
+dw_1.Object.jzbz[1] = 0
+dw_1.Object.hzbz[1] = 0
+dw_1.Object.thbz[1] = 0
+dw_1.Object.mzbz[1] = 0
+dw_1.Object.qxbz[1] = 0
+dw_1.Object.ssbz[1] = 0
+dw_1.Object.zfbz[1] = 0
+dw_1.Object.jfbz[1] = 0
+dw_1.Object.wcbz[1] = 0
+dw_1.Object.shbz[1] = 0
+dw_1.Object.ssyq[1] = ls_ssyq
+dw_1.Object.zysx[1] = ls_zysx
+dw_1.Object.czgh[1] = ls_czgh
+dw_1.Object.mzwcbz[1] = 0
+
+If Not IsNull(dw_1.Object.ssnm[1]) Then
+	//dw_1.Object.ssmc.protect = '1'
+End If
+
+end subroutine
+
+//-------- 窗口创建：动态创建各控件并加入 Control 数组 --------
+on w_ss_gxmk_ssap.create
+int iCurrent
+call super::create
+this.cb_default=create cb_default
+this.uo_1=create uo_1
+this.cbx_lxlr=create cbx_lxlr
+this.cb_print=create cb_print
+this.em_srdm=create em_srdm
+this.cb_close=create cb_close
+this.cb_save=create cb_save
+this.cb_copy=create cb_copy
+this.dw_1=create dw_1
+this.st_srdm=create st_srdm
+this.cb_blankout=create cb_blankout
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.cb_default
+this.Control[iCurrent+2]=this.uo_1
+this.Control[iCurrent+3]=this.cbx_lxlr
+this.Control[iCurrent+4]=this.cb_print
+this.Control[iCurrent+5]=this.em_srdm
+this.Control[iCurrent+6]=this.cb_close
+this.Control[iCurrent+7]=this.cb_save
+this.Control[iCurrent+8]=this.cb_copy
+this.Control[iCurrent+9]=this.dw_1
+this.Control[iCurrent+10]=this.st_srdm
+this.Control[iCurrent+11]=this.cb_blankout
+end on
+
+//-------- 窗口销毁：释放动态创建的控件 --------
+on w_ss_gxmk_ssap.destroy
+call super::destroy
+destroy(this.cb_default)
+destroy(this.uo_1)
+destroy(this.cbx_lxlr)
+destroy(this.cb_print)
+destroy(this.em_srdm)
+destroy(this.cb_close)
+destroy(this.cb_save)
+destroy(this.cb_copy)
+destroy(this.dw_1)
+destroy(this.st_srdm)
+destroy(this.cb_blankout)
+end on
+
+//-------- 关闭前询问：有未保存修改时提示保存/放弃/取消 --------
+event closequery;Integer li_rtn
+
+If ib_RowModified Then
+	li_rtn = MessageBox("提示信息","数据已改变，需要保存吗?",Question!,YesNoCancel!,1)
+	If li_rtn = 1 Then       // 是：保存后关闭
+		If wf_save() Then
+			CloseWithReturn(This,ii_ReturnValue)
+			Return 1
+		Else
+			Return 1
+		End If
+	ElseIf li_rtn = 2 Then  // 否：不保存直接关
+		Return 0
+	Else                     // 取消：不关闭
+		Return 1
+	End If
+End If
+
+end event
+
+//-------- 打开：接收传入参数，异步执行初始化 --------
+event open;//注释父代码
+istru_Exchange = Message.PowerObjectParm
+istr_brxx=istru_Exchange.objectparm[1]
+
+
+// 5.调用当前窗口的初始化函数
+this.post wf_init()
+end event
+
+type cb_default from commandbutton within w_ss_gxmk_ssap
+boolean visible = false
+integer x = 1280
+integer y = 1676
+integer width = 247
+integer height = 108
+integer taborder = 70
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+boolean enabled = false
+string text = "default"
+boolean default = true
+end type
+
+type uo_1 from vu_public_select within w_ss_gxmk_ssap
+boolean visible = false
+integer x = 1061
+integer y = 1856
+integer taborder = 90
+boolean border = true
+long backcolor = 33550303
+borderstyle borderstyle = styleraised!
+end type
+
+on uo_1.destroy
+call vu_public_select::destroy
+end on
+
+type cbx_lxlr from checkbox within w_ss_gxmk_ssap
+integer x = 1221
+integer y = 1784
+integer width = 393
+integer height = 76
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+long textcolor = 33554432
+long backcolor = 33550303
+string text = "连续录入"
+end type
+
+type cb_print from commandbutton within w_ss_gxmk_ssap
+integer x = 2784
+integer y = 1768
+integer width = 338
+integer height = 100
+integer taborder = 50
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+string text = "打印(&P)"
+end type
+
+// 打印：接受当前数据后打开打印设置窗口
+event clicked;dw_1.AcceptText()
+OpenWithParm(w_print_setup,dw_1)
+dw_1.SetFocus()
+
+
+
+end event
+
+// 住院号或 .床号 输入框（mask 限制为字符串）
+type em_srdm from editmask within w_ss_gxmk_ssap
+event ue_key pbm_keydown
+integer x = 617
+integer y = 1772
+integer width = 521
+integer height = 92
+integer taborder = 80
+integer textsize = -11
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+string facename = "宋体"
+long textcolor = 33554432
+borderstyle borderstyle = stylelowered!
+maskdatatype maskdatatype = stringmask!
+string mask = "!!!!!!!!!!"
+end type
+
+event getfocus;This.SelectText(1,Len(This.text))
+
+end event
+
+//-------- 住院号/床号输入：. 开头按床号查 ZY_CWSZ，否则按住院号查 ZY_BRRY，带出病人 --------
+event modified;Double ldbl_zyh
+String ls_srdm // 输入代码
+String ls_Message
+
+If ib_RowModified Then
+	If MessageBox('提示','当前手术安排是否保存?',question!,yesno!,1) = 1 Then
+		If Not wf_save() Then
+			This.Text = ''
+			Return
+		End If
+	End If
+End If
+
+ls_srdm = em_srdm.Text
+If Len(ls_srdm) = 0 Then Return
+
+If Left(ls_srdm,1) = "." Then
+	// 以点开头：按床号查床位表得住院号
+	ls_srdm = Mid(ls_srdm,2)
+	ls_Message = "病人床号"
+	SELECT ZYH Into :ldbl_zyh From ZY_CWSZ Where BRCH = :ls_srdm USING sqlca;
+Else
+	// 否则按住院号查在院病人
+	ls_Message = "住院号码"
+	SELECT ZYH  Into :ldbl_zyh From ZY_BRRY Where ZYHM = :ls_srdm And CYPB < 2 USING sqlca;
+End If
+
+If ldbl_zyh > 0 Then
+	dw_1.Enabled = True
+	wf_ssbr(ldbl_zyh)
+Else
+	MessageBox("提示信息",ls_Message + "为【" + ls_srdm + "】的病人不存在，请重新输入住院号码!")
+	This.SetFocus()
+End If
+
+
+end event
+
+type cb_close from commandbutton within w_ss_gxmk_ssap
+integer x = 3127
+integer y = 1768
+integer width = 338
+integer height = 100
+integer taborder = 60
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+string text = "退出(&X)"
+boolean cancel = true
+end type
+
+// 退出：返回当前 ii_ReturnValue 给调用方
+event clicked;CloseWithReturn(Parent,ii_ReturnValue)
+
+end event
+
+type cb_save from commandbutton within w_ss_gxmk_ssap
+integer x = 2098
+integer y = 1768
+integer width = 338
+integer height = 100
+integer taborder = 20
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+string text = "保存(&S)"
+end type
+
+// 保存成功：若勾选连续录入则清空 dw_1 继续录下一条，否则仅保存不关窗
+event clicked;If wf_save() Then
+//	//==============================================================================
+//	// Script - clicked for cb_save 
+//	// Reason: 为医生站发送通知（根据手麻系统参数来判断医生站是否存在！）
+//	//------------------------------------------------------------------------------
+//	// Modified By: 研发中心--郝双和		Date: 2009.07.14
+//	//------------------------------------------------------------------------------
+//	If gf_getpara("ZYYSQY",'0','已上医生站标志(0未上1已上)') = '1' Then
+//		If wf_InformDoctor() < 1 Then
+//			MessageBox("提示", "给医生的通知单发送失败!")
+//		End If
+//	End If
+//	//====================================================================
+	
+//	//==============================================================================
+//	//采集质控系统的手术安排的数据 Add By: 研发中心--郝双和	Date: 2009.07.21
+//	//==============================================================================
+//	s_Exchange ls_Exchange
+//	nvo_HrpModule lu_Acquisition
+//	If gf_getpara("START_MRQC","0","病历书写质控系统是否已启用") = "1" Then
+//		If gw_main.Dynamic wf_Check_Obj("u_mrqc_wbjk_dataacquisition",0) Then //判断u_mrqc_wbjk_dataacquisition是否存在
+//			If go_AppEx.GetObject("u_mrqc_wbjk_dataacquisition",lu_Acquisition) = -1 Then
+//				//为了不影响业务处理，这里不直接返回失败
+//			Else
+//				If Not ib_zfbz Then	//手术安排
+//					ls_Exchange.LongParm[1] = dw_1.Object.ZYH [1]   //住院号
+//					ls_Exchange.LongParm[2] = dw_1.Object.SQDH[1]  	//申请单号
+//					ls_Exchange.LongParm[3] = dw_1.Object.SSBH[1]  	//手术编号
+//					ls_Exchange.LongParm[4] = dw_1.Object.MZDM[1]  	//麻醉方法
+//					ls_Exchange.DateTimeParm[1] = DateTime(dw_1.Object.SSRQ[1])  //手术日期
+//					lu_Acquisition.uf_Call("uf_operationarrange", ls_Exchange)
+//				Else	//作废手术安排
+//					ls_Exchange.LongParm[1] = dw_1.Object.ZYH [1] 	//住院号
+//					ls_Exchange.LongParm[2] = dw_1.Object.SSBH[1]  	//手术编号
+//					ls_Exchange.LongParm[3] = dw_1.Object.MZDM[1]  	//麻醉方法
+//					ls_Exchange.DateTimeParm[1] = f_serverdatetime()  //作废时间
+//					lu_Acquisition.uf_Call("uf_operationarrangecancel", ls_Exchange)
+//				End If
+//			End If
+//		Else
+//			MessageBox("提示","采集质控数据程序未安装,请与管理员联系!")
+//		End If
+//	End If
+	
+	If cbx_lxlr.Checked Then
+		// 连续录入：清空数据窗口，焦点回到住院号输入
+		dw_1.SetRedraw(False)
+		dw_1.Reset()
+		dw_1.InsertRow(0)
+		dw_1.SetRedraw(True)
+		dw_1.Enabled = False
+		em_srdm.Text = ''
+		em_srdm.SetFocus()
+	Else
+		//CloseWithReturn(Parent,ii_ReturnValue)
+	End If
+End If
+
+
+end event
+
+type cb_copy from commandbutton within w_ss_gxmk_ssap
+integer x = 2441
+integer y = 1768
+integer width = 338
+integer height = 100
+integer taborder = 30
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+boolean enabled = false
+string text = "复制(&C)"
+end type
+
+// 复制：根据当前列(ssyq手术要求 / zysx注意事项)从弹窗取内容追加到当前单元格
+event clicked;Long ll_row,ll_lb
+String ls_1,ls_ssyq,ls_zysx,ls_col
+
+ll_row = dw_1.GetRow()
+If dw_1.AcceptText() < 0 Then Return
+If ll_row <= 0 Then Return
+ls_col = Lower(dw_1.GetColumnName())
+Choose Case ls_col
+	Case 'ssyq'
+		ll_lb = 1
+	Case 'zysx'
+		ll_lb = 2
+	Case Else
+		Return
+End Choose
+//OpenWithParm(w_ss_gxmk_copy,ll_lb)
+ls_1 = Message.StringParm
+If IsNull(ls_1) Then ls_1 = ''
+If ls_1 <> '' Then
+	Choose Case ll_lb
+		Case 1
+			ls_ssyq = dw_1.GetItemString(1,'ssyq')
+			If IsNull(ls_ssyq) Then ls_ssyq = ''
+			dw_1.SetItem(ll_row,'ssyq',ls_ssyq+ls_1)
+			dw_1.SetFocus()
+			dw_1.SetColumn('ssyq')
+			dw_1.SelectText(Len(ls_ssyq+ls_1)+1,1)
+		Case 2
+			ls_zysx = dw_1.GetItemString(1,'zysx')
+			If IsNull(ls_zysx) Then ls_zysx = ''
+			dw_1.SetItem(ll_row,'zysx',ls_zysx+ls_1)
+			dw_1.SetFocus()
+			dw_1.SetColumn('zysx')
+			dw_1.SelectText(Len(ls_zysx+ls_1)+1,1)
+	End Choose
+	cb_save.Enabled = True
+	ib_RowModified  = True
+End If
+
+
+end event
+
+// 手术安排主数据窗口，数据对象 d_ss_gxmk_ssap
+type dw_1 from datawindow within w_ss_gxmk_ssap
+event keyenter pbm_dwnkey
+integer x = 133
+integer y = 48
+integer width = 3346
+integer height = 1680
+integer taborder = 10
+string dataobject = "d_ss_gxmk_ssap"
+boolean livescroll = true
+borderstyle borderstyle = styleraised!
+end type
+
+// 回车转 Tab，便于连续录入
+event keyenter;if key<>keyenter! then return
+post(Handle(This),256,9,0)
+
+end event
+
+//-------- 数据项变更：校验病人已带出；安排/手术日期关系；手术名称触发选择；医师/护士弹选择窗 --------
+event itemchanged;String ls_zjdm,ls_col,ls_ssys,ls_ys,ls_hs,ls_data
+Long   ll_ssnm,ll_count,ll_row,ll_mzdm
+String ls_ssmc,ls_zybh
+Date ld_rq
+DateTime ldt_aprq,ldt_ssrq
+DateTime	ldt_date
+
+ldt_date = f_serverdatetime()
+
+ll_row = This.GetRow()
+ls_zybh = This.GetItemstring(1,'zybh')
+If ls_zybh = '' Or IsNull(ls_zybh) Then
+	MessageBox('提示',"请先输入病人信息!")
+	This.SetText('')
+	em_srdm.SetFocus()
+	Return 1
+End If
+ib_RowModified  = True
+cb_save.Enabled = True
+ls_col = Lower(This.GetColumnName())
+Choose Case ls_col
+	Case 'aprq'   // 通知日期：不能早于2000，且不能大于手术日期
+		ls_data = Left(GetText(),10)
+		ld_rq = Date(ls_data)
+		If ld_rq <= Date('2000.01.01') Then
+			This.SetItem(1,'aprq',ldt_date)
+			ib_bz = True //itemerror中用
+			Return 1
+		End If
+		ldt_ssrq = This.GetItemDateTime(ll_row,'ssrq')
+		ldt_aprq = DateTime(Date(Left(This.GetText(),10)),Time(Mid(This.GetText(),11,10)))
+		If ldt_aprq > ldt_ssrq Then
+			MessageBox('提示','安排日期不能大于手术日期!')
+			ib_bz = False //itemerror中用
+			Return 1
+		End If
+	Case 'ssrq'   // 手术日期：不能早于2000，且不能小于通知日期
+		ls_data = Left(GetText(),10)
+		ld_rq = Date(ls_data)
+		If ld_rq <= Date('2000.01.01') Then
+			This.SetItem(1,'ssrq',ldt_date)
+			ib_bz = True //itemerror中用
+			Return 1
+		End If
+		ldt_aprq = This.GetItemDateTime(ll_row,'aprq')
+		ldt_ssrq = DateTime(Date(Left(This.GetText(),10)),Time(Mid(This.GetText(),11,10)))
+		If ldt_aprq > ldt_ssrq Then
+			MessageBox('提示','手术日期不能小于安排日期!')
+			ib_bz = False //itemerror中用
+			Return 1
+		End If
+	Case 'ssmc'   // 手术名称：弹出手术选择列表，选择后由 ue_getitem01 回填
+		ls_zjdm = Trim(This.GetText())
+	//	If IsNull(ls_zjdm) Or (Not gf_public_string_true(ls_zjdm)) Then Return 1
+		uo_1.ShowList("ZJDM LIKE '"+ls_zjdm+"%' ORDER BY ZJDM")
+		//	case 'ssys'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>'' then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+		//	case 'ssys_2'	
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			 if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+		//	case 'ssyz'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			 if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+		//	case 'mzys'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			If ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+		//	case 'mzys_2'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//	      if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+		//	case 'ssez'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE ( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+//	Case 'xshs'
+//		ls_hs = This.GetText()
+//		If Not IsNull(ls_hs) And ls_hs <> ''  Then
+//			SELECT COUNT(*) INTO :ll_count
+//				FROM GY_YGDM
+//				WHERE ( YGDM = :ls_hs)
+//				Using sqlca;
+//			If ll_count = 0 Then
+//				This.SetText('')
+//				Return 1
+//			End If
+//		End If
+//	Case 'xshs_2'
+//		ls_hs = This.GetText()
+//		If Not IsNull(ls_hs) And ls_hs <> ''  Then
+//			SELECT COUNT(*) INTO :ll_count
+//				FROM GY_YGDM
+//				WHERE ( KSDM = :iu_xtcs.il_sssdm) AND
+//				( YGDM = :ls_hs)
+//				Using sqlca;
+//			If ll_count = 0 Then
+//				This.SetText('')
+//				Return 1
+//			End If
+//		End If
+		//	case 'sssz'
+		//		ls_ys=this.gettext()
+		//		if not isnull(ls_ys) and ls_ys<>''  then
+		//			SELECT COUNT(*) INTO :ll_count 
+		//			 FROM GY_YGDM  
+		//			WHERE( YGDM=:ls_ys)
+		//			USING sqlca;
+		//			 if ll_count=0 then 
+		//				this.settext('')
+		//				return 1
+		//			end if	
+		//		end if	
+//	Case 'xhhs'
+//		ls_hs = This.GetText()
+//		If Not IsNull(ls_hs) And ls_hs <> ''  Then
+//			SELECT COUNT(*) INTO :ll_count
+//				FROM GY_YGDM
+//				WHERE ( KSDM = :iu_xtcs.il_sssdm) AND
+//				( YGDM = :ls_hs)
+//				Using sqlca;
+//			If ll_count = 0 Then
+//				This.SetText('')
+//				Return 1
+//			End If
+//		End If
+//	Case 'xhhs_2'
+//		ls_hs = This.GetText()
+//		If Not IsNull(ls_hs) And ls_hs <> ''  Then
+//			SELECT COUNT(*) INTO :ll_count
+//				FROM GY_YGDM
+//				WHERE ( KSDM = :iu_xtcs.il_sssdm) AND
+//				( YGDM = :ls_hs)
+//				Using sqlca;
+//			If ll_count = 0 Then
+//				This.SetText('')
+//				Return 1
+//			End If
+//		End If
+	Case 'mzdm'
+//		ll_mzdm = Long(This.GetText())
+//		If Not IsNull(ll_mzdm) And This.GetText() <> ''  Then
+//			SELECT COUNT(*) INTO :ll_count
+//				FROM GY_DMZD
+//				WHERE DMLB = 28 AND
+//				DMSB = :ll_mzdm
+//				Using sqlca;
+//			If ll_count = 0 Then
+//				This.SetText('')
+//				Return  1
+//			End If
+//		End If
+	Case Else
+End Choose
+
+
+//-------- 医师/护士列：输入后弹出人员选择窗(GY_YGDM)，回填工号 --------
+//=============================================================================
+// Added By Sunlf 2001.12.13
+//=============================================================================
+String   ls_ColumnName
+String   ls_ColumnText
+st_public_Select lstr_Select
+
+ls_ColumnName = Upper(dwo.Name)
+ls_ColumnText = Trim(Data)
+
+Choose Case ls_ColumnName
+	Case "SSYS" , "SSYZ" , "SSEZ" , "SSSZ" , "MZYS" , "SSYS_2" , "MZYS_2"
+		// 手术/麻醉医师：科室分配=Y，按工号/拼音模糊查
+		If Not ib_EditChanged Then Return 0
+		
+		ib_EditChanged = False
+		
+		If IsNull(ls_ColumnText) Or Len(ls_ColumnText) = 0 Then
+			Return 0
+		End If
+		
+		If Pos(ls_ColumnText,"'") > 0 Or &
+			Pos(ls_ColumnText,'"') > 0 Or &
+			Pos(ls_ColumnText,"%") > 0 Then
+			MessageBox("提示信息","数据录入错误，请修改!",Exclamation!)
+			This.SetText("")
+			Return 1
+		End If
+		
+		lstr_Select.CoList      = " GY_YGDM.YGDM  , GY_YGDM.YGXM , GY_YGDM.PYDM "
+		lstr_Select.TabList     = " GY_YGDM "
+		lstr_Select.WhereClause = "  ( GY_YGDM.KCFQ = 'Y' ) AND " + &
+			" (( GY_YGDM.YGDM LIKE '" + ls_ColumnText + "%' ) OR " + &
+			"  ( GY_YGDM.PYDM LIKE '" + ls_ColumnText + "%' ) )  " + &
+			" ORDER BY GY_YGDM.YGDM "
+		lstr_Select.DispCols    = "1,2,3"
+		lstr_Select.DispWidths  = "260,300,300"
+		lstr_Select.ReturnCols  = "1"
+		
+		
+		lstr_Select.trans = sqlca
+		OpenWithParm(w_public_select,lstr_Select)
+		
+		lstr_Select = Message.PowerObjectParm
+		
+		If lstr_Select.Suceed < 1 Then
+			This.SetText("")
+			Return 1 // 选择失败
+		End If
+		This.SetItem(row,ls_ColumnName,lstr_Select.ReturnValue[1])
+//		This.SetText(lstr_Select.ReturnValue[1])
+//		Post Send(Handle(This),256,9,0)
+		Return 1 // 由于重新赋值，所以不接受当前值Data
+	Case "XSHS","XSHS_2","XHHS","XHHS_2"
+		// 洗手/巡回护士：未作废人员，按工号/拼音模糊查
+		If Not ib_EditChanged Then Return 0
+		
+		ib_EditChanged = False
+		
+		If IsNull(ls_ColumnText) Or Len(ls_ColumnText) = 0 Then
+			Return 0
+		End If
+		
+		If Pos(ls_ColumnText,"'") > 0 Or &
+			Pos(ls_ColumnText,'"') > 0 Or &
+			Pos(ls_ColumnText,"%") > 0 Then
+			MessageBox("提示信息","数据录入错误，请修改!",Exclamation!)
+			This.SetText("")
+			Return 1
+		End If
+		
+		lstr_Select.CoList      = " GY_YGDM.YGDM  , GY_YGDM.YGXM , GY_YGDM.PYDM "
+		lstr_Select.TabList     = " GY_YGDM "
+		lstr_Select.WhereClause = "  ( GY_YGDM.ZFPB <> '1' ) AND " + &
+			" (( GY_YGDM.YGDM LIKE '" + ls_ColumnText + "%' ) OR " + &
+			"  ( GY_YGDM.PYDM LIKE '" + ls_ColumnText + "%' ) )  " + &
+			" ORDER BY GY_YGDM.YGDM "
+		lstr_Select.DispCols    = "1,2,3"
+		lstr_Select.DispWidths  = "260,300,300"
+		lstr_Select.ReturnCols  = "1"
+		
+		
+		lstr_Select.trans = sqlca
+		OpenWithParm(w_public_select,lstr_Select)
+		
+		lstr_Select = Message.PowerObjectParm
+		
+		If lstr_Select.Suceed < 1 Then
+			This.SetText("")
+			Return 1 // 选择失败
+		End If
+		This.SetItem(row,ls_ColumnName,lstr_Select.ReturnValue[1])
+//		This.SetText(lstr_Select.ReturnValue[1])
+//		Post Send(Handle(This),256,9,0)
+		Return 1 // 由于重新赋值，所以不接受当前值Data
+	Case Else
+End Choose
+
+ib_EditChanged = False
+
+Return 0
+//=============================================================================
+
+
+
+end event
+
+// 项错误处理：日期列根据 ib_bz 决定接受(3)或拒绝(1)
+event itemerror;String ls_col
+
+ls_col = Lower(This.GetColumnName())
+If ls_col = 'aprq' Or ls_col = 'ssrq' Then
+	If ib_bz Then
+		Return 3   // 接受默认值
+	Else
+		Return 1   // 拒绝
+	End If
+Else
+	Return 1
+End If
+
+end event
+
+event dberror;//if gl_state=1 then    //调试状态
+//	messagebox('',sqlerrtext+"~t"+sqlsyntax)
+//end if	
+RETURN 1
+
+
+end event
+
+// 焦点切换：进入 ssyq/zysx 时启用复制按钮；处理 ssyq/zysx 的换行等
+event itemfocuschanged;string ls_col,ls_1
+
+ls_col=dw_1.getcolumnname()
+if ls_col='zysx' or ls_col='ssyq' then
+	cb_copy.enabled=true
+else
+	cb_copy.enabled=false
+end if	
+if is_colname='ssyq' then
+	ls_1=this.getitemstring(1,'ssyq')
+	//ls_1=gf_ss_gxmk_insert_enter(ls_1,74)
+	this.setitem(1,'ssyq',ls_1)
+else
+	if ls_col='ssyq' then
+		ls_1=this.getitemstring(1,'ssyq')
+		//ls_1=gf_ss_gxmk_delete_enter(ls_1,'~n')
+		this.setitem(1,'ssyq',ls_1)
+	end if	
+end if	
+if is_colname='zysx' then
+	ls_1=this.getitemstring(1,'zysx')
+	//ls_1=gf_ss_gxmk_insert_enter(ls_1,74)
+	this.setitem(1,'zysx',ls_1)
+else
+	if ls_col='zysx' then
+		ls_1=this.getitemstring(1,'zysx')
+		//ls_1=gf_ss_gxmk_delete_enter(ls_1,'~n')
+		this.setitem(1,'zysx',ls_1)
+	end if	
+end if	
+is_colname=ls_col
+end event
+
+// 右键：等同于点“复制”按钮
+event rbuttondown;cb_copy.postevent(clicked!)
+end event
+
+// 失焦时对 ssyq/zysx 做一次 AcceptText 并回写（原换行处理已注释）
+event losefocus;String ls_col,ls_ssgc
+
+ls_col = This.GetColumnName()
+If ls_col = 'ssyq' Then
+	This.AcceptText()
+	ls_ssgc = This.GetItemString(1,'ssyq')
+	//ls_ssgc = gf_ss_gxmk_insert_enter(ls_ssgc,74)
+	This.SetItem(1,'ssyq',ls_ssgc)
+End If
+If ls_col = 'zysx' Then
+	This.AcceptText()
+	ls_ssgc = This.GetItemString(1,'zysx')
+	//ls_ssgc = gf_ss_gxmk_insert_enter(ls_ssgc,74)
+	This.SetItem(1,'zysx',ls_ssgc)
+End If
+
+
+end event
+
+// 单元格内容被编辑时置位，供 itemchanged 中人员选择判断
+event editchanged;
+ib_EditChanged = True
+
+
+
+
+end event
+
+// 点击麻醉完成标志时：若取消勾选则清空麻醉方式、麻醉医师
+event clicked;//dw_1的clicked事件触发时还没有获取数据窗口的改变值，
+//故判断条件应该是相反的
+//张伟2 2010.1.18
+String ls_columnname ,ls_null
+string ll_null
+SetNull(ll_null)
+SetNull(ls_null)
+
+ls_columnname = Upper(dwo.Name)
+
+IF  ls_columnname = "MZWCBZ" THEN
+	IF This.Object.mzwcbz[row] = 0 THEN
+		This.Object.mzdm[row] = ll_null
+		This.Object.mzys[row] = ls_null
+		This.Object.mzys_2[row] = ls_null
+	END IF
+END IF
+
+
+
+
+
+
+
+
+
+end event
+
+// 标签：住院号(.床号) 提示
+type st_srdm from statictext within w_ss_gxmk_ssap
+integer x = 160
+integer y = 1784
+integer width = 608
+integer height = 72
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+long textcolor = 33554432
+long backcolor = 33550303
+boolean enabled = false
+string text = "住院号(.床号)"
+boolean focusrectangle = false
+end type
+
+// 作废/取消作废 按钮
+type cb_blankout from commandbutton within w_ss_gxmk_ssap
+boolean visible = false
+integer x = 1755
+integer y = 1768
+integer width = 338
+integer height = 100
+integer taborder = 40
+boolean bringtotop = true
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = gb2312charset!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "微软雅黑"
+string text = "作废(&B)"
+end type
+
+// 作废/取消作废：若作废则检查是否已有会诊/谈话/麻醉/器械/手术/费用/术后等记录，有则不允许作废
+event clicked;String ls_Message
+
+If This.Text = "作废(&B)" Then
+	/* 检查是否已录入其它记录 */
+	If dw_1.Object.hzbz[1] = 1 Then ls_Message += "会诊记录、"
+	If dw_1.Object.thbz[1] = 1 Then ls_Message += "谈话记录、"
+	If	dw_1.Object.mzbz[1] = 1 Then ls_Message += "麻醉记录、"
+	If	dw_1.Object.qxbz[1] = 1 Then ls_Message += "器械准备、"
+	If	dw_1.Object.ssbz[1] = 1 Then ls_Message += "手术记录、"
+	If	dw_1.Object.jfbz[1] = 1 Then ls_Message += "手术费用、"
+	If	dw_1.Object.shbz[1] = 1 Then ls_Message += "术后信息、"
+	If Len(ls_Message) > 0 Then
+		ls_Message = Left(ls_Message,Len(ls_Message) - 2)
+		MessageBox("提示","该通知单已录入" + ls_Message + "，不能作废!",Exclamation!)
+		Return
+	End If
+	This.Text = "取消作废"
+	dw_1.Object.zfbz[1] = 1
+	ib_zfbz = True		//手术申请作废标志
+Else
+	This.Text = "作废(&B)"
+	dw_1.Object.zfbz[1] = 0
+	ib_zfbz = False	//手术申请作废标志
+End If
+ib_RowModified  = True
+cb_save.Enabled = True
+
+end event
+

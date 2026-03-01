@@ -70,12 +70,14 @@ import { BasOprModule } from './modules/bas-opr/bas-opr.module';
 import { N0423Module } from './modules/n04-23/n04-23.module';
 import { MzffModule } from './modules/mzff/mzff.module';
 import { SmSssqModule } from './modules/sm-sssq/sm-sssq.module';
+import { SmSsapModule } from './modules/sm-ssap/sm-ssap.module';
 import { emr_jcbwModule } from './modules/emr_jcbw/emr_jcbw.module';
 import { emr_jcffModule } from './modules/emr_jcff/emr_jcff.module';
 import { emr_jcsqModule } from './modules/emr_jcsq/emr_jcsq.module';
 import { emr_jcxmModule } from './modules/emr_jcxm/emr_jcxm.module';
 import { emr_xmflModule } from './modules/emr_xmfl/emr_xmfl.module';
 import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
+import { H15SsjxxbModule } from './modules/h15_ssjxxb/h15-ssjxxb.module';
 import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
 
 @Module({
@@ -149,12 +151,14 @@ import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
     N0423Module,
     MzffModule,
     SmSssqModule,
+    SmSsapModule,
     emr_jcsqModule,
     emr_jcbwModule,
     emr_jcffModule,
     emr_jcxmModule,
     emr_xmflModule,
     H15SsxbTfModule,
+    H15SsjxxbModule,
     H13BrzkqkModule,
   ],
 })

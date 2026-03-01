@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { SmSssq } from '../sm-sssq/sm-sssq.entity';
 
 @Entity({ name: 'h15_sszb', schema: 'dbo' })
 export class H15Sszb {
@@ -246,4 +248,12 @@ export class H15Sszb {
     nullable: true,
   })
   zqksid: string;
+
+  @ManyToOne(() => h11_brxx, { cascade: false })
+  @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
+  h11BrxxEntity: h11_brxx;
+
+  @ManyToOne(() => SmSssq, { cascade: false })
+  @JoinColumn({ name: 'sqdh', referencedColumnName: 'sqdh' })
+  smSssqEntity: SmSssq;
 }

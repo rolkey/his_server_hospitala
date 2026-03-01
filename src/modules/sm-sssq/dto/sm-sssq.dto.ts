@@ -141,3 +141,13 @@ export class SmSssqResponseDto extends SmSssqBaseDto {
   // 继承所有基础字段
   // 可以添加响应特有的字段或转换
 }
+
+/** 手术申请单作废/取消作废：zfbz 1=作废，0=取消作废 */
+export class VoidSmSssqDto {
+  @Allow()
+  sqdh: number;
+
+  /** 1=作废，0=取消作废 */
+  @Allow()
+  zfbz: 0 | 1;
+}

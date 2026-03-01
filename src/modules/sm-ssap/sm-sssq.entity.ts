@@ -2,7 +2,6 @@ import { Entity, Column, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 import { Mzff } from '../mzff/mzff.entity';
-import { BasOpr } from '../bas-opr/bas-opr.entity';
 
 @Entity({ name: 'SM_SSSQ', schema: 'dbo' })
 export class SmSssq {
@@ -253,10 +252,4 @@ export class SmSssq {
   })
   @JoinColumn({ name: 'mzdm', referencedColumnName: 'mzid' })
   mzdmEntity: Mzff;
-
-  @ManyToOne(() => BasOpr, {
-    cascade: false, // 禁用级联操作
-  })
-  @JoinColumn({ name: 'ssdm', referencedColumnName: 'icdcm' })
-  ssdmEntity: BasOpr;
 }
