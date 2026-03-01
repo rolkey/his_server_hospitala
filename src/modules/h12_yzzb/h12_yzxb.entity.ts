@@ -174,7 +174,7 @@ export class h12_yzxb {
   zxcs: number | null;
 
   @Column('varchar', { name: 'zxrq', nullable: true, length: 10 })
-  @DateTransformer()
+  //   @DateTransformer()
   zxrq: string | null;
 
   @Column('smallint', { name: 'tpbz', nullable: true })
@@ -267,7 +267,7 @@ export class h12_yzxb {
   @Column('decimal', { name: 'dw_xs', nullable: true, precision: 16, scale: 4 })
   dw_xs: number | '';
 
-  @Column('varchar', { name: 'ypid', nullable: true, length: 12 })
+  @Column('varchar', { name: 'ypid', nullable: true, length: 50 })
   ypid: string | null;
 
   @Column('varchar', { name: 'ksid', nullable: true, length: 8 })

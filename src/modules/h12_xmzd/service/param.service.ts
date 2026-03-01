@@ -13,7 +13,7 @@ export class ParamService {
     private readonly sysparRepository: Repository<Syspar>,
     @InjectRepository(SysparNew)
     private readonly sysparNewRepository: Repository<SysparNew>,
-  ) { }
+  ) {}
 
   async gfGetPara(
     liXtsb: number, // 系统编号
@@ -55,7 +55,7 @@ export class ParamService {
   }
 
   async saveParam(sysparDto: SysparDto) {
-    const syspar = this.sysparRepository.findOne({
+    const syspar = await this.sysparRepository.findOne({
       where: {
         syid: String(sysparDto.xtsb),
         prid: sysparDto.csmc.toUpperCase(),

@@ -34,6 +34,7 @@ import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { Mzff } from '../mzff/mzff.entity';
 import { h12_yzzbModule } from '../h12_yzzb/h12_yzzb.module';
+import { h21_brxx } from '../h21_brxx/h21-brxx.entity';
 
 @Global()
 @Module({
@@ -42,6 +43,7 @@ import { h12_yzzbModule } from '../h12_yzzb/h12_yzzb.module';
       emr_jcsq,
       emr_jcsqmx,
       h11_brxx,
+      h21_brxx,
       GyIdentity,
       h12_yzxb,
       h00_sypl,

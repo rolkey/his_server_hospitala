@@ -496,7 +496,6 @@ export class h11_brxx {
       this.rybqid = this.rybqid.trim();
     }
 
-
     this.zyts = this.cysj
       ? dayjs(this.cysj).diff(this.rysj, 'day')
       : dayjs(new Date()).diff(this.rysj, 'day');

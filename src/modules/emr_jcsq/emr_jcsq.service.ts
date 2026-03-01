@@ -34,7 +34,7 @@ export class emr_jcsqService {
     const yzxbs = [];
     for (const [index, item] of saveDto.zlxmList.entries()) {
       // 如果有项目ID限制，则只处理该项目数据
-      if (xmid && xmid !== item.xmid) {
+      if (xmid && xmid.startsWith('T') && xmid !== item.xmid) {
         continue;
       }
       if (item.xmid.startsWith('T')) {
@@ -48,16 +48,22 @@ export class emr_jcsqService {
         const yzxb = new h12_yzxb();
         Object.assign(yzxb, h12Yzxb);
         // 处理检查明细
+        yzxb.ypid = item.xmid;
         yzxb.xmid = item.xmid;
         yzxb.xmmc = item.xmmc;
-        yzxb.xmgg = item.gg;
         yzxb.gjybbm = item.gjybbm;
         yzxb.gjybmc = item.gjybmc;
         yzxb.fylbid = item.fylbid;
-        // yzxb.xmdj = item.dj;
+        yzxb.jldw = (item as any).jldw;
         yzxb.xmdj = (item as any).sfdj;
+        yzxb.xmgg = (item as any).ggxh;
+        yzxb.xmdw = (item as any).jldw;
+        yzxb.jssj = item.ypfl;
         yzxb.tpbz = 0;
         yzxb.tcbz = 1;
+        yzxb.sfbz = 1;
+        yzxb.sjbz = 1;
+        yzxb.srcs = 1;
         yzxb.mxxh = await this.gyIdentityService.getMax('h12_yzxbn');
 
         yzxbs.push(yzxb);
@@ -69,7 +75,7 @@ export class emr_jcsqService {
       //     yzzh: h12Yzxb.yzzh,
       //     mxxh: Not(h12Yzxb.mxxh),
       //   }),
-      manager.save(h12_yzxb, yzxbs),
+      manager.insert(h12_yzxb, yzxbs),
     ];
   }
 
@@ -99,7 +105,9 @@ export class emr_jcsqService {
     const h11_brxx = await this.h11BrxxRepo.findOne({
       where: { zyid: jcsq.mzid },
     });
-    const tcs = saveDto.zlxmList.map((item) => (item.xmid.startsWith('T') ? item : null));
+    const tcs = saveDto.zlxmList
+      .map((item) => (item.xmid.startsWith('T') ? item : null))
+      .filter((item) => item);
     if (tcs.length > 0) {
       // 按组套来处理
       for (const tc of tcs) {
@@ -153,7 +161,7 @@ export class emr_jcsqService {
       kshs: null,
       fylbid: fylbid,
       sfje: 0,
-      sjbz: 0,
+      sjbz: 1, // 必须全部=1
       sfbz: 1,
       jsbz: 1,
       zxbz: 0,
@@ -178,6 +186,7 @@ export class emr_jcsqService {
       yzzt: 0,
       apbz: 0,
       zfbz: 0,
+      zfbl: 1,
       ksnf: '07',
     });
 

@@ -6,6 +6,7 @@ import { usrcat } from './usrcat.entity';
 import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 import { Role } from '../role/role.entity';
 import { Ksry } from '../ksry/ksry.entity';
+import { ksmc } from '../ksmc/ksmc.entity';
 
 @Injectable()
 export class UsrcatService {
@@ -215,5 +216,18 @@ export class UsrcatService {
       ])
       .orderBy('usrcat.usid', 'ASC')
       .getMany();
+  }
+
+  async getSysDepts(data: { userId: string; sysId: string }) {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .innerJoin(Ksry, 'ksry', 'usrcat.usid = ksry.usid')
+      .innerJoin(ksmc, 'ksmc', 'ksmc.ksid = ksry.ksid')
+      .where('usrcat.zhjy <> 1')
+      .andWhere('ksry.syid = :syid', { syid: data.sysId })
+      .andWhere('usrcat.usid = :usid', { usid: data.userId })
+      .select(['ksmc.ksmc AS ksmc', 'ksry.ksid AS ksid', '0 AS szbz'])
+      .orderBy('ksry.ksid', 'ASC')
+      .distinct(true)
+      .getRawMany();
   }
 }

@@ -79,6 +79,7 @@ import { emr_xmflModule } from './modules/emr_xmfl/emr_xmfl.module';
 import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
 import { H15SsjxxbModule } from './modules/h15_ssjxxb/h15-ssjxxb.module';
 import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
+import { HisTechModule } from './modules/his-tech/his-tech.module';
 
 @Module({
   imports: [
@@ -160,6 +161,7 @@ import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
     H15SsxbTfModule,
     H15SsjxxbModule,
     H13BrzkqkModule,
+    HisTechModule,
   ],
 })
 export class AppModule {}
