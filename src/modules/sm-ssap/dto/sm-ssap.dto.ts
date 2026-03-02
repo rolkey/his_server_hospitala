@@ -158,7 +158,7 @@ export class CancelSmSsapDto {
   ssbh?: string;
 }
 
-/** 费用列表查询条件（可选） */
+/** 费用列表查询条件（可选），与旧版 PB 查询条件对应 */
 export class FeeListQueryDto {
   @Allow()
   zyid?: string;
@@ -174,4 +174,38 @@ export class FeeListQueryDto {
   /** 作废标志，默认 0 未作废 */
   @Allow()
   zfbz?: number;
+
+  /** 开始日期（入院日期范围），对应 em_sta，格式 YYYY-MM-DD */
+  @Allow()
+  @Transform(({ value }) => (value ? new Date(value) : null))
+  dateStart?: Date;
+
+  /** 结束日期（入院日期范围），对应 em_end，格式 YYYY-MM-DD */
+  @Allow()
+  @Transform(({ value }) => (value ? new Date(value) : null))
+  dateEnd?: Date;
+
+  /** 是否按入院日期范围筛选，对应 cbx_rq.checked */
+  @Allow()
+  @Transform(({ value }) => value === 'true' || value === true)
+  rqcx?: boolean;
+
+  /**
+   * 在院状态：0=全部, 1=在院(zyzt<=2), 3=待办(zyzt=3), 4=出院(zyzt=4)，对应 zt
+   */
+  @Allow()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  zt?: number;
+
+  /** 检索关键字：住院号或姓名，对应 sle_cx；含中文按姓名模糊，否则按住院号前缀 */
+  @Allow()
+  cx?: string;
+
+  /** 科室 ID，'0' 或空表示全部，对应 ddlb_ksid */
+  @Allow()
+  ksid?: string;
+
+  /** 病人类型 ID，'0' 或空表示全部，对应 ddlb_brlx */
+  @Allow()
+  brlx?: string;
 }
