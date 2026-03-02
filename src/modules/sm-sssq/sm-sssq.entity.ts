@@ -130,7 +130,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'TXKS',
+    name: 'txks',
     length: 30,
     nullable: true,
   })
@@ -138,16 +138,16 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'CZGH',
+    name: 'czgh',
     length: 10,
     nullable: true,
   })
   czgh: string;
 
-  @Column({ type: 'decimal', name: 'SQTL', precision: 1, scale: 0, nullable: true })
+  @Column({ type: 'decimal', name: 'sqtl', precision: 1, scale: 0, nullable: true })
   sqtl: number;
 
-  @Column({ type: 'decimal', name: 'SQZD', precision: 10, scale: 0, nullable: true })
+  @Column({ type: 'decimal', name: 'sqzd', precision: 10, scale: 0, nullable: true })
   sqzd: number;
 
   @Column({
@@ -158,7 +158,7 @@ export class SmSssq {
   })
   bzxx: string;
 
-  @Column({ type: 'decimal', name: 'SQLX', precision: 1, scale: 0, nullable: true })
+  @Column({ type: 'decimal', name: 'sqlx', precision: 1, scale: 0, nullable: true })
   sqlx: number;
 
   @Column({ type: 'datetime', name: 'ssapsj', nullable: true })
