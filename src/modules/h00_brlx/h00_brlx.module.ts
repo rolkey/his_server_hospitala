@@ -7,7 +7,7 @@ import { h00_brlxController } from './h00_brlx.controller';
 @Global()
 @Module({
   imports: [TypeOrmModule.forFeature([h00_brlx])],
-  // controllers: [h00_brlxController],
+  controllers: [h00_brlxController],
   providers: [h00_brlxService],
   exports: [h00_brlxService],
 })
