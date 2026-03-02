@@ -11,8 +11,8 @@ import {
   Put,
 } from '@nestjs/common';
 import { SmSssqService } from './sm-sssq.service';
-import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto } from './dto/sm-sssq.dto';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { CreateSmSssqDto, UpdateSmSssqDto, QuerySmSssqDto, VoidSmSssqDto } from './dto/sm-sssq.dto';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('手术申请管理')
 @Controller('sm-sssq')
@@ -23,6 +23,13 @@ export class SmSssqController {
   @ApiOperation({ summary: '创建手术申请' })
   async create(@Body() createDto: CreateSmSssqDto) {
     return await this.smSssqService.create(createDto);
+  }
+
+  @Get('unarranged-list')
+  @ApiOperation({ summary: '未安排手术列表查询' })
+  @ApiQuery({ name: 'ksid', required: true, description: '科室ID，支持 LIKE 匹配（如 01 或 01%）' })
+  async findUnarrangedList(@Query('ksid') ksid: string) {
+    return await this.smSssqService.findUnarrangedList(ksid);
   }
 
   @Get()
@@ -39,6 +46,16 @@ export class SmSssqController {
   @ApiOperation({ summary: '更新手术申请' })
   async update(@Body() updateDto: UpdateSmSssqDto) {
     return await this.smSssqService.updateSmSssq(updateDto);
+  }
+
+  @Post('void')
+  @ApiOperation({ summary: '手术申请单作废/取消作废' })
+  @ApiBody({
+    type: VoidSmSssqDto,
+    description: 'sqdh: 申请单号；zfbz: 1=作废，0=取消作废。作废时若已安排(apbz=1)会报错。',
+  })
+  async voidOrCancelVoid(@Body() dto: VoidSmSssqDto) {
+    return await this.smSssqService.voidOrCancelVoid(dto);
   }
 
   @Delete()

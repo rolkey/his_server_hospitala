@@ -66,4 +66,9 @@ export class H15SszbController {
   getSurgeryStatistics(@Body() statisticsDto: SurgeryStatisticsDto) {
     return this.h15SszbService.getSurgeryStatistics(statisticsDto);
   }
+
+  @Get('findOneBySqdh')
+  findOneBySqdhAndZyid(@Query('sqdh') sqdh: number, @Query('zyid') zyid: string): Promise<H15Sszb> {
+    return this.h15SszbService.findOneBySqdhAndZyid(sqdh, zyid);
+  }
 }
