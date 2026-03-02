@@ -11,9 +11,11 @@ import {
   YzDetailDto,
 } from './his-tech.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { H23Cfxb } from '../h23_cfxb/h23_cfxb.entity';
+import { H23Cfmx } from '../h23_cfmx/h23_cfmx.entity';
 
 @Injectable()
 export class HisTechService {
@@ -49,8 +51,10 @@ export class HisTechService {
       zy: '',
     };
     if (queryDto.clbz === '0') {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 0';
       clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
     } else {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 1';
       clbzFilters.zy = 'and h13_yzzxcs.clbz = 1';
     }
 
@@ -104,7 +108,7 @@ export class HisTechService {
                      h23_cfxb
                where h21_brxx.mzid = h23_cfzb.mzid
                  and h23_cfzb.cfid = h23_cfxb.cfid
-                 and h23_cfxb.yzcs = 0
+                 ${clbzFilters.mz}
                  and isnull(h23_cfzb.zfrid, '') = ''
                  and (h21_brxx.qtid = '2' or isnull(h21_brxx.bz, '') = '5' or h21_brxx.ywlx = '体检' or (h23_cfzb.cfzt = 1))
                  and h23_cfxb.fylbid in (${fylbString}))
@@ -164,7 +168,6 @@ export class HisTechService {
       ORDER BY ywlx, zxsj
     `;
 
-    // queryDto.jssj += ' 23:59:59';
     const params = [
       queryDto.kssj,
       queryDto.jssj,
@@ -363,8 +366,10 @@ export class HisTechService {
       zy: '',
     };
     if (queryDto.clbz === '0') {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 0';
       clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
     } else {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 1';
       clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
     }
 
@@ -386,7 +391,7 @@ export class HisTechService {
       FROM h23_cfxb,
            h23_cfzb
      WHERE (h23_cfxb.cfid = h23_cfzb.cfid)
-       and h23_cfxb.yzcs = 0
+       ${clbzFilters.mz}
        and h23_cfzb.mzid = @0
        and h23_cfxb.fylbid in (${fylbString})
        and h23_cfzb.xjfpid not in (select fpid
@@ -408,7 +413,36 @@ export class HisTechService {
 
   async execute0(execDto: Execute0Dto): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
-      //   manager.update(h12_yzxb, {zyid:exe}, {})
+      try {
+        await manager.update(
+          H23Cfxb,
+          { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+          { ksid: execDto.ksid, yzcs: 1, yjry: execDto.userId, yjrq: new Date() },
+        );
+        await manager.update(
+          H23Cfmx,
+          { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+          { ksid: execDto.ksid, yzcs: 1, yjry: execDto.userId, yjrq: new Date() },
+        );
+      } catch (error) {
+        console.error('执行医技失败:', error);
+        throw error;
+      }
+    });
+  }
+
+  async deExecute0(execDto: Execute0Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.update(
+        H23Cfxb,
+        { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+        { ksid: null, yzcs: 0, yjry: null, yjrq: null },
+      );
+      await manager.update(
+        H23Cfmx,
+        { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+        { ksid: null, yzcs: 0, yjry: null, yjrq: null },
+      );
     });
   }
 
@@ -422,7 +456,22 @@ export class HisTechService {
       await manager.update(
         h13_yzzxcs,
         { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
-        { clbz: 1, sfbz: 1, yjry: execDto.userId },
+        { clbz: 1, sfbz: 1, yjry: execDto.userId, zxhs: execDto.userId },
+      );
+    });
+  }
+
+  async deExecute1(execDto: Execute1Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.update(
+        h12_yzxb,
+        { zyid: execDto.zyid, yzlx: execDto.yzlx, scdh: execDto.scdh },
+        { clbz: 0 },
+      );
+      await manager.update(
+        h13_yzzxcs,
+        { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
+        { clbz: 0, sfbz: 0, yjry: null, zxhs: null },
       );
     });
   }

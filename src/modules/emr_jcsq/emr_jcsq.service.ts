@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
 import { emr_jcsq } from './emr_jcsq.entity';
@@ -335,7 +335,13 @@ export class emr_jcsqService {
       .leftJoinAndMapOne('mx.jcff', 'emr_jcff', 'ff', 'ff.ffid = mx.ffid')
       .leftJoinAndMapOne('mx.jcxm', 'emr_jcxm', 'xm', 'xm.jcxmid = mx.jcxmid')
       .leftJoinAndSelect('bw.zlxmList', 'zlxmList');
-    queryBuilder.andWhere('jcsq.sqdh = :sqdh', { sqdh: queryDto.sqdh });
+    if (queryDto.sqdh) {
+      queryBuilder.andWhere('jcsq.sqdh = :sqdh', { sqdh: queryDto.sqdh });
+    } else if (queryDto.cfid) {
+      queryBuilder.andWhere('jcsq.cfid = :cfid', { cfid: queryDto.cfid });
+    } else {
+      throw new BadRequestException('sqdh或cfid没有数值！！');
+    }
 
     return queryBuilder.getOne();
   }

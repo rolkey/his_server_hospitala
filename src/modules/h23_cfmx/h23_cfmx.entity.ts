@@ -3,7 +3,7 @@ import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { H30_ypzd } from '@/modules/h30_ypzd/h30_ypzd.entity';
 import { h00_syff } from '@/modules/h00_syff/h00_syff.entity';
 
-@Entity('h23_cfmx')
+@Entity('h23_cfmx', { schema: 'dbo' })
 export class H23Cfmx {
   @PrimaryColumn({ name: 'cfid', type: 'varchar', length: 12 })
   cfid: string;

@@ -152,10 +152,16 @@ export class CfDetailDto {
 
 export class Execute0Dto {
   @Allow()
-  mzid: string;
+  mxxh: number[];
 
   @Allow()
-  scdh: number;
+  cfid: string;
+
+  @Allow()
+  ksid: string;
+
+  @Allow()
+  userId: string;
 }
 
 export class Execute1Dto {
