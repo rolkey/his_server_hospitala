@@ -57,7 +57,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSDM',
+    name: 'ssdm',
     length: 30,
     nullable: true,
   })
@@ -65,7 +65,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSNM',
+    name: 'ssnm',
     length: 200,
     nullable: true,
   })
@@ -73,7 +73,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSYS',
+    name: 'ssys',
     length: 10,
     nullable: true,
   })
@@ -81,7 +81,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSYZ',
+    name: 'ssyz',
     length: 10,
     nullable: true,
   })
@@ -89,7 +89,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSEZ',
+    name: 'ssez',
     length: 10,
     nullable: true,
   })
@@ -97,7 +97,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'SSSZ',
+    name: 'sssz',
     length: 10,
     nullable: true,
   })
@@ -113,7 +113,7 @@ export class SmSssq {
 
   @Column({
     type: 'varchar',
-    name: 'MZYS',
+    name: 'mzys',
     length: 10,
     nullable: true,
   })
