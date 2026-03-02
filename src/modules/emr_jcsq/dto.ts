@@ -193,9 +193,11 @@ export class Jcff {
   jcxmid?: string;
 }
 export class QueryDto {
-  @IsNotEmpty({ message: 'sqdh不能为空' })
   @IsOptional()
   sqdh?: string;
+
+  @IsOptional()
+  cfid?: string;
 }
 
 export class CreateDto {

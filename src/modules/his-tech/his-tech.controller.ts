@@ -62,8 +62,18 @@ export class HisTechController {
     return this.hisTechService.execute0(queryDto);
   }
 
+  @Put('de-execute0')
+  async deExecute0(@Body() queryDto: Execute0Dto) {
+    return this.hisTechService.deExecute0(queryDto);
+  }
+
   @Put('execute1')
   async execute1(@Body() queryDto: Execute1Dto) {
     return this.hisTechService.execute1(queryDto);
+  }
+
+  @Put('de-execute1')
+  async deExecute1(@Body() queryDto: Execute1Dto) {
+    return this.hisTechService.deExecute1(queryDto);
   }
 }

@@ -11,9 +11,11 @@ import {
   YzDetailDto,
 } from './his-tech.dto';
 import { ParamService } from '../h12_xmzd/service/param.service';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
+import { H23Cfxb } from '../h23_cfxb/h23_cfxb.entity';
+import { H23Cfmx } from '../h23_cfmx/h23_cfmx.entity';
 
 @Injectable()
 export class HisTechService {
@@ -42,6 +44,18 @@ export class HisTechService {
 
     if (fylbs.length === 0) {
       throw new BadRequestException('没有配置当前工作站的费用类别！！');
+    }
+
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === '0') {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 0';
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 1';
+      clbzFilters.zy = 'and h13_yzzxcs.clbz = 1';
     }
 
     // 将fylbs数组转换为字符串，用逗号分隔
@@ -94,7 +108,7 @@ export class HisTechService {
                      h23_cfxb
                where h21_brxx.mzid = h23_cfzb.mzid
                  and h23_cfzb.cfid = h23_cfxb.cfid
-                 and h23_cfxb.yzcs = 0
+                 ${clbzFilters.mz}
                  and isnull(h23_cfzb.zfrid, '') = ''
                  and (h21_brxx.qtid = '2' or isnull(h21_brxx.bz, '') = '5' or h21_brxx.ywlx = '体检' or (h23_cfzb.cfzt = 1))
                  and h23_cfxb.fylbid in (${fylbString}))
@@ -112,7 +126,7 @@ export class HisTechService {
          WHERE h13_yzzxcs.zyid = h11_brxx.zyid
            and h13_yzzxcs.zxrq >= @2
            and h13_yzzxcs.zxrq <= @3
-           and isnull(h13_yzzxcs.clbz, 0) = 0
+           ${clbzFilters.zy}
          ORDER BY zxrq) as zxsj,   -- 执行时间
         sxys as ysid,              -- 医生ID（门诊医生）
         -- 科室ID处理
@@ -149,7 +163,7 @@ export class HisTechService {
                where h13_yzzxcs.zyid = h11_brxx.zyid
                  and h13_yzzxcs.zxrq >= @4
                  and h13_yzzxcs.zxrq <= @5
-                 and isnull(h13_yzzxcs.clbz, 0) = 0
+                 ${clbzFilters.zy}
                  and h13_yzzxcs.fylbid in (${fylbString}))
       ORDER BY ywlx, zxsj
     `;
@@ -252,6 +266,16 @@ export class HisTechService {
     // 将fylbs数组转换为字符串，用逗号分隔
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
 
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === '0') {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+    }
+
     const query = `
     SELECT distinct
            h12_yzxb.zyid,
@@ -289,7 +313,7 @@ export class HisTechService {
                      and h12_yzxb.yzxh = h13_yzzxcs.yzxh
      where h12_yzxb.zyid = @0
        and h12_yzxb.fylbid in (${fylbString})
-       and isnull(h13_yzzxcs.clbz, 0) = 0
+       ${clbzFilters.zy}
        and isnull(h12_yzxb.sjbz, 0) = 1
        and h12_yzxb.xmzl = 1
   `;
@@ -337,6 +361,18 @@ export class HisTechService {
     // 将fylbs数组转换为字符串，用逗号分隔
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
 
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === '0') {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 0';
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.mz = 'and h23_cfxb.yzcs = 1';
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+    }
+
     const query = `
     SELECT h23_cfzb.mzid,
            h23_cfxb.cfid,
@@ -355,7 +391,7 @@ export class HisTechService {
       FROM h23_cfxb,
            h23_cfzb
      WHERE (h23_cfxb.cfid = h23_cfzb.cfid)
-       and h23_cfxb.yzcs = 0
+       ${clbzFilters.mz}
        and h23_cfzb.mzid = @0
        and h23_cfxb.fylbid in (${fylbString})
        and h23_cfzb.xjfpid not in (select fpid
@@ -377,22 +413,91 @@ export class HisTechService {
 
   async execute0(execDto: Execute0Dto): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
-      //   manager.update(h12_yzxb, {zyid:exe}, {})
+      try {
+        await manager.update(
+          H23Cfxb,
+          { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+          { ksid: execDto.ksid, yzcs: 1, yjry: execDto.userId, yjrq: new Date() },
+        );
+        await manager.update(
+          H23Cfmx,
+          { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+          { ksid: execDto.ksid, yzcs: 1, yjry: execDto.userId, yjrq: new Date() },
+        );
+      } catch (error) {
+        console.error('执行医技失败:', error);
+        throw error;
+      }
+    });
+  }
+
+  async deExecute0(execDto: Execute0Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.update(
+        H23Cfxb,
+        { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+        { ksid: null, yzcs: 0, yjry: null, yjrq: null },
+      );
+      await manager.update(
+        H23Cfmx,
+        { mxxh: In(execDto.mxxh), cfid: execDto.cfid },
+        { ksid: null, yzcs: 0, yjry: null, yjrq: null },
+      );
     });
   }
 
   async execute1(execDto: Execute1Dto): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
-      await manager.update(
-        h12_yzxb,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, scdh: execDto.scdh },
-        { clbz: 1 },
-      );
-      await manager.update(
-        h13_yzzxcs,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
-        { clbz: 1, sfbz: 1, yjry: execDto.userId },
-      );
+      await manager.update(h12_yzxb, { zyid: execDto.zyid, scdh: execDto.scdh }, { clbz: 1 });
+
+      const subQuery = manager
+        .createQueryBuilder()
+        .select('1')
+        .from(h12_yzxb, 'h12_yzxb')
+        .where('h12_yzxb.zyid = h13_yzzxcs.zyid')
+        .andWhere('h12_yzxb.mxxh = h13_yzzxcs.mxxh')
+        .andWhere(`h12_yzxb.zyid = '${execDto.zyid}'`)
+        .andWhere(`h12_yzxb.scdh = '${execDto.scdh}'`)
+        .getQuery();
+      await manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({
+          clbz: 1,
+          sfbz: 1,
+          yjry: execDto.userId,
+          zxhs: execDto.userId,
+        })
+        .where(`EXISTS (${subQuery})`)
+        .execute();
+    });
+  }
+
+  async deExecute1(execDto: Execute1Dto): Promise<void> {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.update(h12_yzxb, { zyid: execDto.zyid, scdh: execDto.scdh }, { clbz: 0 });
+
+      const subQuery = manager
+        .createQueryBuilder()
+        .select('1')
+        .from(h12_yzxb, 'h12_yzxb')
+        .where('h12_yzxb.zyid = h13_yzzxcs.zyid')
+        .andWhere('h12_yzxb.mxxh = h13_yzzxcs.mxxh')
+        .andWhere(`h12_yzxb.zyid = '${execDto.zyid}'`)
+        .andWhere(`h12_yzxb.scdh = '${execDto.scdh}'`)
+        .getQuery();
+
+      await manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({
+          clbz: 0,
+          sfbz: 0,
+          yjry: null,
+          zxhs: null,
+        })
+        .where(`EXISTS (${subQuery})`)
+        .execute();
     });
   }
 }

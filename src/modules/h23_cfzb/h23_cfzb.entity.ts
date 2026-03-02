@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, JoinColumn, ManyToOne } from 'typeorm';
 
-@Entity('h23_cfzb')
+@Entity('h23_cfzb', { schema: 'dbo' })
 export class H23Cfzb {
   @PrimaryColumn({ name: 'cfid', type: 'varchar', length: 12 })
   cfid: string;

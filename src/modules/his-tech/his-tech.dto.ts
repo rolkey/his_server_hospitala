@@ -14,7 +14,7 @@ export class QueryParamsDto {
    * 处理标志：是否已经被处理，0未处理 1已处理
    */
   @Allow()
-  clbz: number;
+  clbz: string;
 
   @IsOptional()
   value?: string;
@@ -152,10 +152,16 @@ export class CfDetailDto {
 
 export class Execute0Dto {
   @Allow()
-  mzid: string;
+  mxxh: number[];
 
   @Allow()
-  scdh: number;
+  cfid: string;
+
+  @Allow()
+  ksid: string;
+
+  @Allow()
+  userId: string;
 }
 
 export class Execute1Dto {
@@ -166,11 +172,5 @@ export class Execute1Dto {
   zyid: string;
 
   @Allow()
-  yzlx: number;
-
-  @Allow()
-  yzzh: number;
-
-  @Allow()
-  scdh: number;
+  scdh: string;
 }
