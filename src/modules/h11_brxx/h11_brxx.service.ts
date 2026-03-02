@@ -253,7 +253,7 @@ export class h11_brxxService {
                   subQb.where('h12_yzxb.yzlx = 1');
                   subQb.andWhere('h12_yzxb.yzrq <= :ksrq', { ksrq: queryDto.zxrq });
                   subQb.andWhere('(h12_yzxb.tzbz = 0 or tzrq >= :tzrq)', {
-                    tzrq: dayjs(queryDto.zxrq).add(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
+                    tzrq: queryDto.zxrq,
                   });
                   subQb.andWhere((qbZxcs) => {
                     const existsQuery = qbZxcs
