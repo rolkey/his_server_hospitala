@@ -48,10 +48,10 @@ export class HisTechService {
       mz: '',
       zy: '',
     };
-    if (queryDto.clbz === 0) {
+    if (queryDto.clbz === '0') {
       clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
     } else {
-      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+      clbzFilters.zy = 'and h13_yzzxcs.clbz = 1';
     }
 
     // 将fylbs数组转换为字符串，用逗号分隔
@@ -164,6 +164,7 @@ export class HisTechService {
       ORDER BY ywlx, zxsj
     `;
 
+    // queryDto.jssj += ' 23:59:59';
     const params = [
       queryDto.kssj,
       queryDto.jssj,
@@ -262,6 +263,16 @@ export class HisTechService {
     // 将fylbs数组转换为字符串，用逗号分隔
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
 
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === '0') {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+    }
+
     const query = `
     SELECT distinct
            h12_yzxb.zyid,
@@ -299,7 +310,7 @@ export class HisTechService {
                      and h12_yzxb.yzxh = h13_yzzxcs.yzxh
      where h12_yzxb.zyid = @0
        and h12_yzxb.fylbid in (${fylbString})
-       and isnull(h13_yzzxcs.clbz, 0) = 0
+       ${clbzFilters.zy}
        and isnull(h12_yzxb.sjbz, 0) = 1
        and h12_yzxb.xmzl = 1
   `;
@@ -346,6 +357,16 @@ export class HisTechService {
 
     // 将fylbs数组转换为字符串，用逗号分隔
     const fylbString = fylbs.map((item) => `'${item}'`).join(',');
+
+    const clbzFilters = {
+      mz: '',
+      zy: '',
+    };
+    if (queryDto.clbz === '0') {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 0) = 0';
+    } else {
+      clbzFilters.zy = 'and isnull(h13_yzzxcs.clbz, 1) = 1';
+    }
 
     const query = `
     SELECT h23_cfzb.mzid,

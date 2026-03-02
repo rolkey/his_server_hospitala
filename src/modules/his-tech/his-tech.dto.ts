@@ -14,7 +14,7 @@ export class QueryParamsDto {
    * 处理标志：是否已经被处理，0未处理 1已处理
    */
   @Allow()
-  clbz: number;
+  clbz: string;
 
   @IsOptional()
   value?: string;
