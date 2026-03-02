@@ -448,31 +448,56 @@ export class HisTechService {
 
   async execute1(execDto: Execute1Dto): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
-      await manager.update(
-        h12_yzxb,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, scdh: execDto.scdh },
-        { clbz: 1 },
-      );
-      await manager.update(
-        h13_yzzxcs,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
-        { clbz: 1, sfbz: 1, yjry: execDto.userId, zxhs: execDto.userId },
-      );
+      await manager.update(h12_yzxb, { zyid: execDto.zyid, scdh: execDto.scdh }, { clbz: 1 });
+
+      const subQuery = manager
+        .createQueryBuilder()
+        .select('1')
+        .from(h12_yzxb, 'h12_yzxb')
+        .where('h12_yzxb.zyid = h13_yzzxcs.zyid')
+        .andWhere('h12_yzxb.mxxh = h13_yzzxcs.mxxh')
+        .andWhere(`h12_yzxb.zyid = '${execDto.zyid}'`)
+        .andWhere(`h12_yzxb.scdh = '${execDto.scdh}'`)
+        .getQuery();
+      await manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({
+          clbz: 1,
+          sfbz: 1,
+          yjry: execDto.userId,
+          zxhs: execDto.userId,
+        })
+        .where(`EXISTS (${subQuery})`)
+        .execute();
     });
   }
 
   async deExecute1(execDto: Execute1Dto): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
-      await manager.update(
-        h12_yzxb,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, scdh: execDto.scdh },
-        { clbz: 0 },
-      );
-      await manager.update(
-        h13_yzzxcs,
-        { zyid: execDto.zyid, yzlx: execDto.yzlx, yzzh: execDto.yzzh },
-        { clbz: 0, sfbz: 0, yjry: null, zxhs: null },
-      );
+      await manager.update(h12_yzxb, { zyid: execDto.zyid, scdh: execDto.scdh }, { clbz: 0 });
+
+      const subQuery = manager
+        .createQueryBuilder()
+        .select('1')
+        .from(h12_yzxb, 'h12_yzxb')
+        .where('h12_yzxb.zyid = h13_yzzxcs.zyid')
+        .andWhere('h12_yzxb.mxxh = h13_yzzxcs.mxxh')
+        .andWhere(`h12_yzxb.zyid = '${execDto.zyid}'`)
+        .andWhere(`h12_yzxb.scdh = '${execDto.scdh}'`)
+        .getQuery();
+
+      await manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({
+          clbz: 0,
+          sfbz: 0,
+          yjry: null,
+          zxhs: null,
+        })
+        .where(`EXISTS (${subQuery})`)
+        .execute();
     });
   }
 }

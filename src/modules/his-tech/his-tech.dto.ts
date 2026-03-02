@@ -172,11 +172,5 @@ export class Execute1Dto {
   zyid: string;
 
   @Allow()
-  yzlx: number;
-
-  @Allow()
-  yzzh: number;
-
-  @Allow()
-  scdh: number;
+  scdh: string;
 }
