@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { SmSsap } from './sm-ssap.entity';
@@ -277,8 +277,8 @@ export class SmSsapService {
   }
 
   /**
-   * 费用列表查询（依据提供的 SQL 逻辑）
-   * 关联 h11_brxx 与 SM_SSAP，并计算预交款、欠费结算金额、省结合计、医保合计等
+   * 费用列表查询（与旧版 PB 条件一致）
+   * 关联 h11_brxx 与 SM_SSAP，支持：日期范围、在院状态、科室、病人类型、住院号/姓名检索等
    */
   async findFeeList(query?: FeeListQueryDto): Promise<any[]> {
     const conditions: string[] = ['h11_brxx.zyid = SM_SSAP.zyid'];
@@ -300,12 +300,69 @@ export class SmSsapService {
       params.push(query.ssrqEnd);
       paramIndex++;
     }
+
+    // 在院状态 zt：0/1=全部/在院(zyzt<=2), 3=待办(zyzt=3), 4=出院(zyzt=4)
+    const zt = query?.zt !== undefined ? Number(query.zt) : 0;
+    if (zt === 0 || zt === 1) {
+      conditions.push('h11_brxx.zyzt <= 2');
+    } else if (zt === 3) {
+      conditions.push('h11_brxx.zyzt = 3');
+    } else if (zt === 4) {
+      conditions.push('h11_brxx.zyzt = 4');
+    }
+
+    // 检索关键字 cx：含中文按姓名模糊，否则按住院号前缀
+    const cx = query?.cx?.trim();
+    if (cx) {
+      const hasChinese = [...cx].some((c) => c.charCodeAt(0) > 160);
+      if (hasChinese) {
+        conditions.push(`h11_brxx.brxm LIKE @${paramIndex}`);
+        params.push(`%${cx}%`);
+        paramIndex++;
+      } else {
+        conditions.push(`h11_brxx.zybh LIKE @${paramIndex}`);
+        params.push(`${cx}%`);
+        paramIndex++;
+      }
+    }
+    if (query?.dateStart != null && query?.dateEnd != null) {
+      conditions.push(`h11_brxx.rysj > @${paramIndex}`);
+      params.push(query.dateStart);
+      paramIndex++;
+      conditions.push(`h11_brxx.rysj < @${paramIndex}`);
+      params.push(query.dateEnd);
+      paramIndex++;
+    }
+
+    // 科室 ksid：'0' 或空表示全部(like '%')
+    const ksid = query?.ksid?.trim() || '0';
+    if (ksid === '0') {
+      conditions.push("UPPER(h11_brxx.cyksid) LIKE '%'");
+    } else {
+      conditions.push(`UPPER(h11_brxx.cyksid) LIKE UPPER(@${paramIndex})`);
+      params.push(ksid);
+      paramIndex++;
+    }
+
+    // 病人类型 brlx + 作废标志
+    const brlx = query?.brlx?.trim() || '0';
+    if (brlx === '0') {
+      conditions.push("UPPER(h11_brxx.brlxid) LIKE '%'");
+    } else {
+      conditions.push(`UPPER(h11_brxx.brlxid) LIKE UPPER(@${paramIndex})`);
+      params.push(brlx);
+      paramIndex++;
+    }
     const zfbz = query?.zfbz !== undefined ? query.zfbz : 0;
     conditions.push(`SM_SSAP.ZFBZ = @${paramIndex}`);
     params.push(zfbz);
     paramIndex++;
 
+    // 基础条件：入院时间 > 2014.01.03
+    conditions.push("h11_brxx.rysj > '2014-01-03'");
+
     const whereClause = conditions.join(' AND ');
+    const orderClause = zt === 4 ? ' ORDER BY h11_brxx.cysj' : '';
 
     const sql = `
 SELECT h11_brxx.zyid,
@@ -329,6 +386,7 @@ SELECT h11_brxx.zyid,
        h11_brxx.rysj,
        h11_brxx.cycw,
        h11_brxx.mzys,
+       h11_brxx.cyksid,
        0 AS fybz,
        0 AS tjbz,
        h11_brxx.bz4,
@@ -345,6 +403,8 @@ SELECT h11_brxx.zyid,
        SM_SSAP.ssbh AS ssbh,
        SM_SSAP.ssbz AS ssbz,
        SM_SSAP.qxbz AS qxbz,
+       SM_SSAP.ssrq AS ssrq,
+       SM_SSAP.ssys AS ssys,
        (CASE WHEN LEN(ISNULL(h11_brxx.lsh1,'')) > 0 THEN '1' ELSE '0' END) AS lsh1,
        h11_brxx.bahm,
        h11_brxx.bzxx,
@@ -371,7 +431,7 @@ SELECT h11_brxx.zyid,
         FROM H11_xnh WHERE h11_brxx.zyid = H11_xnh.zyid AND ISNULL(bz1, '1') = '1') AS ybhj
 FROM h11_brxx,
      SM_SSAP
-WHERE ${whereClause}
+WHERE ${whereClause}${orderClause}
 `;
     return await this.entityManager.query(sql, params);
   }
