@@ -13,6 +13,8 @@ import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h13_djdy } from '../h13_djdy/h13_djdy.entity';
+import { h11_brxxService } from '../h11_brxx/h11_brxx.service';
+import { receiptDto } from '../h11_brxx/dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -29,9 +31,10 @@ export class h12_yzzbService {
     private usrcatRepo: Repository<usrcat>,
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
-    @InjectRepository(h00_sypl)
-    private h00_syplRepo: Repository<h00_sypl>,
-    private readonly gyIdentityService: GyIdentityService,
+    // @InjectRepository(h00_sypl)
+    // private h00_syplRepo: Repository<h00_sypl>,
+    // private readonly gyIdentityService: GyIdentityService,
+    // private readonly h11BrxxService: h11_brxxService,
   ) {}
 
   async getPatientListForZyidAndReceipt(data: {
@@ -173,6 +176,13 @@ export class h12_yzzbService {
         });
         return h12_yzxbList;
       }
+    } else if (data.type === '6') {
+      // 每日清单
+      const baseQuery = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+      baseQuery.andWhere('h11_brxx.zyid IN (:...zyidlist)', {
+        zyidlist: validZyidList,
+      });
+      return baseQuery.getMany();
     } else {
       const h13_yzzxcsQuery = this.h13_yzzxcsRepo
         .createQueryBuilder('h13_yzzxcs')

@@ -44,7 +44,7 @@ export class H15SszbController {
     return this.h15SszbService.findOne(ssid, zyid, xh, ksid);
   }
 
-  @Patch()
+  @Post('update')
   @HttpCode(HttpStatus.OK)
   update(@Body() updateDto: UpdateH15SszbDto): Promise<H15Sszb> {
     return this.h15SszbService.update(updateDto);

@@ -146,7 +146,7 @@ export class SmSsapService {
     if (ap.jfbz === 1) parts.push('手术费用');
     if (ap.shbz === 1) parts.push('术后信息');
     if (parts.length > 0) {
-      throw new Error(`该通知单已录入${parts.join('、')}，不能作废!`);
+      throw new Error(`该通知单已录入${parts.join('、')}，不能取消安排!`);
     }
 
     await this.entityManager.transaction(async (manager) => {
@@ -162,7 +162,7 @@ export class SmSsapService {
    * 查询条件：ZFBZ=0(未作废)、zyzt<3(在院)
    * 附带 sl：h15_ssxb 中 kshs 为空的条数；sjbz：h15_sszb 首条 bz1
    */
-  async findArrangedList(): Promise<any[]> {
+  async findArrangedList(ksid: string): Promise<any[]> {
     const qb = this.smSsapRepository
       .createQueryBuilder('ap')
       .innerJoinAndSelect('ap.h11BrxxEntity', 'brxx')
@@ -173,6 +173,9 @@ export class SmSsapService {
       .leftJoinAndSelect('ap.mzdmEntity', 'mzdmEntity')
       .where('brxx.zyzt < :zyzt', { zyzt: 3 })
       .andWhere('ap.zfbz = :zfbz', { zfbz: 0 });
+    if (ksid) {
+      qb.andWhere('brxx.cyksid LIKE :ksid', { ksid: `%${ksid}%` });
+    }
 
     const list = await qb.getMany();
     if (list.length === 0) return list;
