@@ -74,8 +74,8 @@ export class H15SszbService {
     updateDto: UpdateH15SszbDto,
   ): Promise<H15Sszb> {
     // 实现更新逻辑
-    const { ssid, zyid, xh, ksid, ...updateValue } = updateDto;
-    const entity = await this.repository.findOne({ where: { ssid, zyid, xh, ksid } });
+    const { sqdh, ...updateValue } = updateDto;
+    const entity = await this.repository.findOne({ where: { sqdh: sqdh } });
     if (!entity) {
       throw new NotFoundException('未找到对应的手术记录');
     }

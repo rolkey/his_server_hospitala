@@ -250,9 +250,9 @@ export class SmSssqService {
       .andWhere('sm.zfbz <> :zfbz', { zfbz: 1 })
       .andWhere('brxx.zyzt < :zyzt', { zyzt: 3 });
 
-    // if (ksid) {
-    //   qb.andWhere('brxx.cyksid LIKE :ksid', { ksid });
-    // }
+    if (ksid) {
+      qb.andWhere('brxx.ryksid LIKE :ksid', { ksid });
+    }
 
     return await qb.getMany();
   }
