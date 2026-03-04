@@ -173,6 +173,11 @@ export class BaseH15SszbDto {
   @IsString()
   @MaxLength(10)
   zqksid?: string;
+
+  @Allow()
+  @IsOptional()
+  @IsInt()
+  sqdh?: number;
 }
 
 /**

@@ -23,8 +23,13 @@ export class SmSsapController {
 
   @Get('arranged-list')
   @ApiOperation({ summary: '已安排手术列表查询' })
-  async findArrangedList() {
-    return await this.smSsapService.findArrangedList();
+  @ApiQuery({
+    name: 'ksid',
+    required: false,
+    description: '科室ID，支持 LIKE 匹配（如 01 或 01%）',
+  })
+  async findArrangedList(@Query('ksid') ksid: string) {
+    return await this.smSsapService.findArrangedList(ksid);
   }
 
   @Get('detail/:sqdh')

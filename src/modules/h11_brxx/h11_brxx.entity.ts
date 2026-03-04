@@ -20,6 +20,10 @@ export class h11_brxx {
   @Column('varchar', { name: 'mzbh', nullable: true, length: 12 })
   mzbh: string | null;
 
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: 'mzbh', referencedColumnName: 'usid' })
+  mzbhEntity: usrcat;
+
   @Column('int', { name: 'zycs', nullable: true })
   zycs: number | null;
 
