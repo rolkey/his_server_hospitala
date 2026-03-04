@@ -37,7 +37,7 @@ export class h11_brxxService {
     private readonly paramService: ParamService,
     private dataSource: DataSource,
     private readonly configReaderService: ConfigReaderService,
-  ) {}
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -51,7 +51,7 @@ export class h11_brxxService {
     if (queryDto?.value) {
       baseQuery.andWhere(
         '(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value ' +
-          'OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
+        'OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
         { value: `%${queryDto?.value}%` },
       );
     }
@@ -139,23 +139,23 @@ export class h11_brxxService {
       .whereInIds(ids)
       .addSelect(
         'CASE' +
-          '  WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())' +
-          '  ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)' +
-          ' END',
+        '  WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())' +
+        '  ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)' +
+        ' END',
         'zyts1',
       )
       .addSelect('0', 'isfinish')
       .addSelect(
         '(SELECT CASE' +
-          "  WHEN ISNULL(y.kshs, '0') = '0' THEN 1" +
-          '  WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2' +
-          '  ELSE 0 END' +
-          ' FROM (' +
-          '  SELECT h12_yzxb.yzrq, h12_yzxb.kshs,' +
-          '  ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp' +
-          '  FROM h12_yzxb' +
-          '  WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid' +
-          ') AS y WHERE y.fsp = 1)',
+        "  WHEN ISNULL(y.kshs, '0') = '0' THEN 1" +
+        '  WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2' +
+        '  ELSE 0 END' +
+        ' FROM (' +
+        '  SELECT h12_yzxb.yzrq, h12_yzxb.kshs,' +
+        '  ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp' +
+        '  FROM h12_yzxb' +
+        '  WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid' +
+        ') AS y WHERE y.fsp = 1)',
         'isexecute',
       )
       .addSelect(
@@ -549,15 +549,16 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
       .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
       .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .leftJoin('h11_brxx.mzzdEntity', 'mzzdEntity')
-      .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
-      .addSelect(['cyzdEntity.icd11', 'cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
-      .addSelect(['mzzdEntity.icd11', 'mzzdEntity.icd11mc', 'mzzdEntity.ybbm', 'mzzdEntity.ybmc'])
+      .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc', 'ryzdEntity.bzbm', 'ryzdEntity.bzmc'])
+      .addSelect(['cyzdEntity.icd11', 'cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc', 'cyzdEntity.bzbm', 'cyzdEntity.bzmc'])
+      .addSelect(['mzzdEntity.icd11', 'mzzdEntity.icd11mc', 'mzzdEntity.ybbm', 'mzzdEntity.ybmc', 'mzzdEntity.bzbm', 'mzzdEntity.bzmc'])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .where('h11_brxx.zyid = :zyid', { zyid })
       .getOne();
