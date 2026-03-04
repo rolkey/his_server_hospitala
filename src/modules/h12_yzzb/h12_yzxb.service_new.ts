@@ -2182,7 +2182,7 @@ export class h12_yzxbServiceNew {
 
       // 未发药校验 - 获取系统参数
       const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid } =
-        await this.configReaderService.readYfCxsz(brxx.cyksid);
+        await this.configReaderService.readYfCxsz(brxx.cyksid, 13);
 
       // 1. 校验h13_yzzxcs和h12_yzxb表中未发药记录
       const wfylist = await this.h13_yzzxcsRepo

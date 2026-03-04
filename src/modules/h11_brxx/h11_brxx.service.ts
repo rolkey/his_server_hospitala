@@ -1240,7 +1240,7 @@ export class h11_brxxService {
   ): Promise<number> {
     // 获取相关科室参数
     const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid } =
-      await this.configReaderService.readYfCxsz(ksid);
+      await this.configReaderService.readYfCxsz(ksid, 13);
     // 1. 检查h13_yzzxcs表中未发药的药品
     const result1 = await queryRunner.query(
       `SELECT ISNULL(COUNT(*), 0) as count
