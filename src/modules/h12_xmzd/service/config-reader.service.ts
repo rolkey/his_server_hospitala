@@ -8,6 +8,7 @@ import { usrcat as Usrcat } from '@/modules/usrcat/usrcat.entity';
 import { ksmc as Ksmc } from '@/modules/ksmc/ksmc.entity';
 import { Gstr_ainfDto } from '../dto/gstr_ainf.dto';
 import { Gs_cxszDto } from '../dto/gs_cxsz.dto';
+import { Gs_cxsz_ssDto } from '../dto/gs_cssz_ss.dto';
 
 @Injectable()
 export class ConfigReaderService {
@@ -464,6 +465,107 @@ export class ConfigReaderService {
       gs_cxsz,
       gstr_ainf,
       g_configs,
+    };
+  }
+
+  // src/services/config-reader.service.ts
+  // ... 其他代码保持不变 ...
+
+  // 读取手术模块配置
+  async readGsCxsz_ss(): Promise<Gs_cxsz_ssDto> {
+    const [
+      ssvb,
+      ssksid,
+      ssclksid,
+      yzlsfybz,
+      yxbzauto,
+      kcpdhb,
+      cfyymc,
+      zycfgs,
+      yppfjgbz,
+      ypzsmbz,
+      zsmscpcbz,
+      zsmysxsbz,
+      ykzsmyf,
+    ] = await Promise.all([
+      this.paramService.gfGetParaNew(15, 'ssvb', '0', '手术模板版本(0旧版,1新版)'),
+      this.paramService.gfGetPara(15, 'ssksid', '', '手术科室'),
+      this.paramService.gfGetPara(15, 'sscl', '', '手术材料'),
+      this.paramService.gfGetParaNew(30, 'yzlsfybz', '0', '启用临时医嘱发药包括出院带药(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'yxbzauto', '0', '启用手工控制库存有效标志(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'kcpdhb', '0', '库存盘点是否合并数量(1合并，0分批次)'),
+      this.paramService.gfGetParaNew(0, 'cfyymc', '', '处方显示医院名称'),
+      this.paramService.gfGetParaNew(
+        30,
+        'zycfgs',
+        '0',
+        '门诊中药处方格式(0默认,1四行,其他格式数字)',
+      ),
+      this.paramService.gfGetParaNew(30, 'yppfjgbz', '1', '启用进货价格显示(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'ypzsmbz', '0', '启用药品追溯码数量自动计算(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'zsmscpcbz', '0', '启用追溯码关联批次(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'zsmysxsbz', '0', '启用追溯码只扫最小包装(1是，0否)'),
+      this.paramService.gfGetParaNew(30, 'ykzsmyf', '0', '启用追溯码领用免扫码(1是，0否)'),
+    ]);
+
+    return {
+      ssvb,
+      ssksid,
+      ssclksid,
+      yzlsfybz,
+      yxbzauto,
+      kcpdhb,
+      cfyymc,
+      zycfgs,
+      yppfjgbz,
+      ypzsmbz,
+      zsmscpcbz,
+      zsmysxsbz,
+      ykzsmyf,
+    };
+  }
+
+  // 读取用户信息
+  async readGstrAinf_ss({ userId, systemId }): Promise<Gstr_ainfDto> {
+    // 复用现有的readGstrAinf方法
+    return this.readGstrAinf({ userId, systemId });
+  }
+
+  // 读取系统配置
+  async readGConfigs_ss(): Promise<any> {
+    const [gl_djws, gs_hskcbz, gs_hsgl, gs_ckfs, gs_yksl] = await Promise.all([
+      this.paramService.gfGetPara(13, 'yzyxsj', '4', '医嘱单价位数'),
+      this.paramService.gfGetPara(13, 'hskcbz', '0', '录医嘱提示库存'),
+      this.paramService.gfGetPara(13, 'hsgl', '1', '医嘱库存标志(1,关联;0不关联)'),
+      this.paramService.gfGetPara(30, 'cksl', '1', '是否允许出库数量'),
+      this.paramService.gfGetPara(30, 'yksl', '0', '启用药品预扣数量'),
+    ]);
+
+    return {
+      gl_djws,
+      gs_hskcbz,
+      gs_hsgl,
+      gs_ckfs,
+      gs_yksl,
+    };
+  }
+
+  // 修改ssapConfigs方法
+  async ssapConfigs({ userId, systemId }): Promise<any> {
+    const [gs_cxsz, gstr_ainf, g_configs] = await Promise.all([
+      this.readGsCxsz_ss(), // 使用新的手术配置方法
+      this.readGstrAinf_ss({ userId, systemId }),
+      this.readGConfigs_ss(),
+    ]);
+
+    // 获取各类药品和材料的ksid
+    const ksids = await this.getKsids(gstr_ainf.u_ksid);
+
+    return {
+      gs_cxsz,
+      gstr_ainf,
+      g_configs,
+      ...ksids, // 展开ksids对象
     };
   }
 

@@ -242,8 +242,8 @@ export class h11_brxxService {
               // 条件1：临时医嘱 (executeType === '2')
               qb.orWhere(
                 new Brackets((subQb) => {
-                  subQb.where('h12_yzxb.yzlx = 2');
-                  subQb.andWhere('h12_yzxb.zxbz = 0');
+                  subQb.where('h12_yzxb.yzlx = 1');
+                  //   subQb.andWhere('h12_yzxb.zxbz in (0, 1)');
                 }),
               );
 
@@ -251,8 +251,10 @@ export class h11_brxxService {
               qb.orWhere(
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
-                  subQb.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
-                  subQb.andWhere('(h12_yzxb.tzrq = 0 or tzrq >= :ksrq)', { ksrq: queryDto.zxrq });
+                  subQb.andWhere('h12_yzxb.yzrq <= :ksrq', { ksrq: queryDto.zxrq });
+                  subQb.andWhere('(h12_yzxb.tzbz = 0 or tzrq >= :tzrq)', {
+                    tzrq: queryDto.zxrq,
+                  });
                   subQb.andWhere((qbZxcs) => {
                     const existsQuery = qbZxcs
                       .subQuery()
@@ -274,6 +276,7 @@ export class h11_brxxService {
         } else if (queryDto.executeType === '2') {
           // 临时医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 2');
+          subQuery.andWhere('h12_yzxb.hdbz = 1');
           subQuery.andWhere('h12_yzxb.zxbz = 0');
         } else if (queryDto.executeType === '5') {
           // 长期医嘱

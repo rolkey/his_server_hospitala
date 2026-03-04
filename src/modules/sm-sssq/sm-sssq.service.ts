@@ -42,6 +42,8 @@ export class SmSssqService {
 
     // 设置病人基本信息
     smSssq.zyh = patientInfo.zybh;
+    smSssq.apbz = 0;
+    smSssq.zfbz = 0;
 
     // 验证必填字段
     this.validateRequiredFields(smSssq);

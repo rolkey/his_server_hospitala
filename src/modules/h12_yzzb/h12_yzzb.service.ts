@@ -13,6 +13,8 @@ import { GyIdentityService } from '../gy_identity/gy-identity.service';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
 import { h13_djdy } from '../h13_djdy/h13_djdy.entity';
+import { h11_brxxService } from '../h11_brxx/h11_brxx.service';
+import { receiptDto } from '../h11_brxx/dto';
 
 @Injectable()
 export class h12_yzzbService {
@@ -29,9 +31,10 @@ export class h12_yzzbService {
     private usrcatRepo: Repository<usrcat>,
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
-    @InjectRepository(h00_sypl)
-    private h00_syplRepo: Repository<h00_sypl>,
-    private readonly gyIdentityService: GyIdentityService,
+    // @InjectRepository(h00_sypl)
+    // private h00_syplRepo: Repository<h00_sypl>,
+    // private readonly gyIdentityService: GyIdentityService,
+    // private readonly h11BrxxService: h11_brxxService,
   ) {}
 
   async getPatientListForZyidAndReceipt(data: {
@@ -173,6 +176,13 @@ export class h12_yzzbService {
         });
         return h12_yzxbList;
       }
+    } else if (data.type === '6') {
+      // 每日清单
+      const baseQuery = this.h11_brxxRepo.createQueryBuilder('h11_brxx');
+      baseQuery.andWhere('h11_brxx.zyid IN (:...zyidlist)', {
+        zyidlist: validZyidList,
+      });
+      return baseQuery.getMany();
     } else {
       const h13_yzzxcsQuery = this.h13_yzzxcsRepo
         .createQueryBuilder('h13_yzzxcs')
@@ -280,7 +290,12 @@ export class h12_yzzbService {
     }
   }
 
-  async findAllByPatient(data: { zyid: string; yzlx: string; yzzt?: string; yzzxcs?: string }) {
+  async findAllByPatient(data: {
+    zyid: string;
+    yzlx: string;
+    yzzt?: string;
+    yzzxcs?: string;
+  }): Promise<h12_yzzb> {
     const h12YzzbQuery = this.h12_yzzbRepo
       .createQueryBuilder('h12_yzzb')
       .leftJoinAndSelect('h12_yzzb.cwidEntity', 'cwidEntity')
@@ -291,9 +306,21 @@ export class h12_yzzbService {
 
     const h12YzxbQuery = this.h12_yzxbRepo
       .createQueryBuilder('h12_yzxb')
-      .leftJoinAndSelect('h12_yzxb.syffidEntity', 'syffidEntity')
-      .leftJoinAndSelect('h12_yzxb.syplidEntity', 'syplidEntity')
-      .leftJoinAndSelect('h12_yzxb.fylbidEntity', 'fylbidEntity')
+      .leftJoin('h12_yzxb.ypzdEntity', 'ypzdEntity')
+      .leftJoin('h12_yzxb.syffidEntity', 'syffidEntity')
+      .leftJoin('h12_yzxb.syplidEntity', 'syplidEntity')
+      .leftJoin('h12_yzxb.fylbidEntity', 'fylbidEntity')
+      .select([
+        'h12_yzxb',
+        'ypzdEntity.ypid',
+        'ypzdEntity.zysx',
+        'ypzdEntity.mzbz',
+        'syffidEntity.syffid',
+        'syffidEntity.syffmc',
+        'syplidEntity.syplid',
+        'syplidEntity.syplmc',
+        'syplidEntity.mrcs',
+      ])
       .where('h12_yzxb.zyid = :zyid and h12_yzxb.yzlx = :yzlx', {
         zyid: data.zyid,
         yzlx: data.yzlx || '',

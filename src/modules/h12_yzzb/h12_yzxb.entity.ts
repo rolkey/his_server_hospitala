@@ -9,6 +9,7 @@ import { h00_sypl } from '../h00_sypl/h00_sypl.entity';
 import { varcharNumberTransformer } from '@/utils/varchar-number.transformer'; // 引入 transformer
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
+import { H30_ypzd } from '../h30_ypzd/h30_ypzd.entity';
 
 @Index('h12_yzxb_mxxh', ['zyid', 'mxxh'], {})
 @Index('h12_yzxb_x', ['zyid', 'yzlx', 'yzxh', 'mxxh'], { unique: true })
@@ -269,6 +270,10 @@ export class h12_yzxb {
 
   @Column('varchar', { name: 'ypid', nullable: true, length: 50 })
   ypid: string | null;
+
+  @ManyToOne(() => H30_ypzd)
+  @JoinColumn({ name: 'ypid', referencedColumnName: 'ypid' })
+  ypzdEntity: H30_ypzd;
 
   @Column('varchar', { name: 'ksid', nullable: true, length: 8 })
   ksid: string | null;
