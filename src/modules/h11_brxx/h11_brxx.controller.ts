@@ -58,6 +58,12 @@ export class h11_brxxController {
     return await this.h11_brxxService.costDetails(queryCostDetailDto);
   }
 
+  @Get('getUnSettleFee')
+  async getUnSettleFee(@Query() data: { zyid: string }) {
+    return await this.h11_brxxService_new.getUnSettleFee(data.zyid);
+  }
+
+
   // 费用明细
   @Get('costCategory')
   async costCategory(@Query() queryCostCategoryDto: QueryCostCategoryDto) {

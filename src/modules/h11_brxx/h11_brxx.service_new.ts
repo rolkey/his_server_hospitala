@@ -1,30 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { And, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { h11_brxx } from './h11_brxx.entity';
-import {
-  Queryh11_brxxDto,
-  CreateDto,
-  UpdateDto,
-  QueryCostDetailDto,
-  QueryCostCategoryDto,
-  bedAllocationDto,
-  QueryDto,
-  ForciblyDeleteDto,
-  receiptDto,
-} from './dto';
 import dayjs = require('dayjs');
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { h11_zybhService } from '../h11_zybh/h11_zybh.service';
 import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
 import { ParamService } from '../h12_xmzd/service/param.service';
-import DateFormater from '@/utils/DateFormater';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
-import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
-import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
-import { h00_syff } from '../h00_syff/h00_syff.entity';
-import { log } from 'console';
+
 @Injectable()
 export class h11_brxxService_new {
   constructor(
@@ -35,7 +20,7 @@ export class h11_brxxService_new {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async updateBedAllocation(data: {
     cwid: string;
@@ -87,4 +72,320 @@ export class h11_brxxService_new {
       }
     });
   }
+
+  /**
+ * 获取未结算费用
+ */
+  async getUnSettleFee(zyid: string) {
+
+    const [yzList, ssList] = await Promise.all([
+      this.getYzExecuteList(zyid),
+      this.getSsList(zyid)
+    ])
+
+    const yzResult = this.buildYzResult(yzList)
+    const ssResult = this.buildSsResult(ssList)
+
+    return [...yzResult, ...ssResult]
+  }
+  /**
+     * 查询医嘱执行原始数据
+     */
+  async getYzExecuteList(zyid: string) {
+
+    return this.dataSource
+      .createQueryBuilder()
+      .from("h13_yzzxcs", "zx")
+      .innerJoin(
+        "h12_yzxb",
+        "yz",
+        `
+        zx.zyid = yz.zyid
+        AND zx.yzlx = yz.yzlx
+        AND zx.yzxh = yz.yzxh
+        AND zx.mxxh = yz.mxxh
+        `
+      )
+      .leftJoin("h30_ypzd", "yp", "zx.xmid = yp.ypid")
+      .leftJoin("h00_xmzd", "xmzd", "xmzd.xmid = zx.xmid")
+      .leftJoin("G00_dyzd", "dyzd", "dyzd.xmid = zx.xmid")
+      .select([
+        "yz.yzlx as yzlx",
+        "yz.yzxh as yzxh",
+        "yz.mxxh as mxxh",
+        "yz.xmmc as xmmc",
+        "yz.xmgg as xmgg",
+        "yz.jldw as jldw",
+        "yz.fylbid as yz_fylbid",
+        "yz.syffid as syffid",
+        "yz.syplid as syplid",
+        "yz.yzrq as yzrq",
+        "yz.xmdw as xmdw",
+        "yz.ybbz as ybbz",
+        "yz.bzxx as bzxx",
+        "yz.xmzl as xmzl",
+
+        "zx.xmid as xmid",
+        "zx.jfyl as jfyl",
+        "zx.zxcs as zxcs",
+        "zx.bzxcs as bzxcs",
+        "zx.kyts as kyts",
+        "zx.xmdj as xmdj",
+        "zx.zyid as zyid",
+        "zx.maxid as maxid",
+        "zx.zxrq as zxrq",
+        "zx.xnhbz as xnhbz",
+        "zx.fylbid as zx_fylbid",
+
+        "yp.qt3 as qt3",
+        "yp.qt8 as qt8",
+        "yp.gjybbm as yp_gjybbm",
+        "yp.gjybmc as yp_gjybmc",
+
+        "dyzd.gjybbm as dyzd_gjybbm",
+        "dyzd.gjybmc as dyzd_gjybmc",
+
+        "xmzd.gjybbm as xmzd_gjybbm",
+        "xmzd.gjybmc as xmzd_gjybmc",
+      ])
+      .where("yz.zyid = :zyid", { zyid })
+      .andWhere("zx.xmdj > 0")
+      .andWhere("(zx.zxcs - zx.bzxcs) <> 0")
+      .andWhere("zx.jsbz = 0")
+      .andWhere("COALESCE(zx.xnhbz,0) = 0")
+      .andWhere("zx.sfbz = 1")
+      .getRawMany()
+
+  }
+
+
+  /**
+   * 查询手术原始数据
+   */
+  async getSsList(zyid: string) {
+
+    return this.dataSource
+      .createQueryBuilder()
+      .from("h15_ssxb", "ss")
+      .leftJoin("h30_ypzd", "yp", "ss.xmid = yp.ypid")
+      .leftJoin("h00_xmzd", "xmzd", "xmzd.xmid = ss.xmid")
+      .leftJoin("G00_dyzd", "dyzd", "dyzd.xmid = ss.xmid")
+      .select([
+        "ss.xmid as xmid",
+        "ss.xmmc as xmmc",
+        "ss.xmgg as xmgg",
+        "ss.xmdw as xmdw",
+        "ss.jfyl as jfyl",
+        "ss.xmdj as xmdj",
+        "ss.zyid as zyid",
+        "ss.fylbid as fylbid",
+        "ss.maxid as maxid",
+        "ss.ssrq as ssrq",
+        "ss.xnhbz as xnhbz",
+        "ss.ybbz as ybbz",
+        "ss.xmzl as xmzl",
+
+        "yp.qt3 as qt3",
+        "yp.qt8 as qt8",
+        "yp.gjybbm as yp_gjybbm",
+        "yp.gjybmc as yp_gjybmc",
+
+        "dyzd.gjybbm as dyzd_gjybbm",
+        "dyzd.gjybmc as dyzd_gjybmc",
+
+        "xmzd.gjybbm as xmzd_gjybbm",
+        "xmzd.gjybmc as xmzd_gjybmc",
+      ])
+      .where("ss.zyid = :zyid", { zyid })
+      .andWhere("ss.jsbz = 0")
+      .andWhere("COALESCE(ss.xnhbz,0) = 0")
+      .andWhere("ss.jfyl <> 0")
+      .getRawMany()
+
+  }
+  /**
+   * 医嘱费用组装
+   */
+
+  private buildYzResult(list: any[]) {
+
+    const map = new Map()
+
+    for (const r of list) {
+      const sl =
+        Number(r.jfyl) *
+        (Number(r.zxcs) - Number(r.bzxcs)) *
+        Number(r.kyts)
+
+      const je = this.safeMoney(sl * Number(r.xmdj))
+
+      const key = [
+        r.zyid,
+        r.yzlx,
+        r.maxid
+      ].join("_")
+
+      if (!map.has(key)) {
+
+        map.set(key, {
+          lx: r.yzlx,
+          xh: r.yzxh,
+          mxxh: r.mxxh,
+          xmid: r.xmid,
+          xmmc: r.xmmc,
+          xmgg: r.xmgg,
+          jldw: r.jldw,
+          sl: 0,
+          xmdj: Number(r.xmdj),
+          je: 0,
+          zyid: r.zyid,
+          ybid: "",
+          kyts: r.kyts || '',
+          fylbid: r.yz_fylbid,
+          syffid: r.syffid,
+          syplid: r.syplid,
+          maxid: r.maxid,
+          yzrq: dayjs(r.yzrq).format('YYYY-MM-DD HH:mm:ss'),
+          jb: "",
+          zflx: "",
+          zfje: 0,
+          czfje: 0,
+          yzlx: r.yzlx === 1 || r.yzlx === 5 ? "1" : "2",
+          zxrq: dayjs(r.zxrq).format('YYYY-MM-DD HH:mm:ss'),
+          xnhbz: r.xnhbz ?? 0,
+          xmdw: r.xmdw,
+          mxid: "Y" + r.maxid,
+          ybbz: r.ybbz,
+          cydy: r.bzxx?.includes("出院") ? 1 : 0,
+          ypsl: 0,
+          clsl: 0,
+          gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : r.xmzd_gjybbm ?? r.yp_gjybbm,
+          gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : r.xmzd_gjybmc ?? r.yp_gjybmc,
+        })
+      }
+
+      const row = map.get(key)
+
+      row.sl += sl
+      row.je = this.safeMoney(row.je + je)
+
+      row.ypsl += this.calcYpsl(r, sl)
+      row.clsl += this.calcClsl(r, sl)
+    }
+
+    return Array.from(map.values())
+  }
+
+  /**
+   * 手术费用组装
+   */
+
+  private buildSsResult(list: any[]) {
+
+    const map = new Map()
+
+    for (const r of list) {
+
+      const sl = Number(r.jfyl)
+      const je = this.safeMoney(sl * Number(r.xmdj))
+
+      const key = [
+        r.zyid,
+        r.xmid,
+        r.maxid,
+      ].join("_")
+
+      if (!map.has(key)) {
+
+        map.set(key, {
+          lx: 10,
+          xh: 0,
+          mxxh: 0,
+          xmid: r.xmid,
+          xmmc: r.xmmc,
+          xmgg: r.xmgg,
+          jldw: r.xmdw,
+          sl: 0,
+          xmdj: Number(r.xmdj),
+          je: 0,
+          zyid: r.zyid,
+          kyts: r.kyts || '',
+          ybid: "",
+          fylbid: r.fylbid,
+          syffid: "",
+          syplid: "QD",
+          maxid: r.maxid,
+          yzrq: dayjs(r.ssrq).format('YYYY-MM-DD HH:mm:ss'),
+          jb: "",
+          zflx: "",
+          zfje: 0,
+          czfje: 0,
+          yzlx: "10",
+          zxrq: dayjs(r.ssrq).format('YYYY-MM-DD HH:mm:ss'),
+          xnhbz: r.xnhbz ?? 0,
+          xmdw: r.xmdw,
+          mxid: "S" + r.maxid,
+          ybbz: r.ybbz,
+          cydy: 0,
+          ypsl: 0,
+          clsl: 0,
+          gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : r.xmzd_gjybbm ?? r.yp_gjybbm,
+          gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : r.xmzd_gjybmc ?? r.yp_gjybmc,
+        })
+      }
+
+      const row = map.get(key)
+
+      row.sl += sl
+      row.je = this.safeMoney(row.je + je)
+
+      row.ypsl += this.calcYpsl(r, sl)
+      row.clsl += this.calcClsl(r, sl)
+    }
+
+    return Array.from(map.values())
+  }
+
+  /**
+   * 药品数量计算
+   */
+  private calcYpsl(r: any, sl: number) {
+
+    if (
+      r.xmzl === 2 &&
+      r.qt3 === 0 &&
+      r.qt8 > 0 &&
+      ["01", "03", "72"].includes(r.fylbid)
+    ) {
+      return Math.floor(sl / r.qt8)
+    }
+
+    return 0
+  }
+
+
+  /**
+   * 材料数量计算
+   */
+  private calcClsl(r: any, sl: number) {
+
+    if (
+      r.xmzl === 3 &&
+      r.qt3 === 0 &&
+      r.qt8 > 0 &&
+      ["15"].includes(r.fylbid)
+    ) {
+      return Math.floor(sl / r.qt8)
+    }
+
+    return 0
+  }
+
+  /**
+   * 金额安全计算
+   */
+  private safeMoney(v: number) {
+    return Math.round(v * 100) / 100
+  }
+
 }
