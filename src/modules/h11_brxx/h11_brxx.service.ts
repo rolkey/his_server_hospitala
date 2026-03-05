@@ -412,6 +412,7 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
       .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
+      .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
@@ -425,10 +426,14 @@ export class h11_brxxService {
         'ryzdEntity.icd11mc',
         'ryzdEntity.ybbm',
         'ryzdEntity.ybmc',
+        'ryzdEntity.bzbm',
+        'ryzdEntity.bzmc',
         'cyzdEntity.icd11',
         'cyzdEntity.icd11mc',
         'cyzdEntity.ybbm',
         'cyzdEntity.ybmc',
+        'cyzdEntity.bzbm',
+        'cyzdEntity.bzmc',
       ])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .whereInIds(ids)
