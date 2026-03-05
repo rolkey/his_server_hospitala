@@ -89,7 +89,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  iptPatnDisediag: string;
+  ipt_patn_disediag: string;
 
   @Column({
     name: 'maindiag_flag',
@@ -97,7 +97,7 @@ export class N0422 {
     length: 3,
     nullable: true,
   })
-  maindiagFlag: string;
+  maindiag_flag: string;
 
   @Column({
     name: 'inhosp_diag_code',
@@ -105,7 +105,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  inhospDiagCode: string;
+  inhosp_diag_code: string;
 
   @Column({
     name: 'adm_dise_cond_code',
@@ -113,7 +113,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  admDiseCondCode: string;
+  adm_dise_cond_code: string;
 
   @Column({
     name: 'adm_cond_code',
@@ -121,7 +121,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  admCondCode: string;
+  adm_cond_code: string;
 
   @Column({
     name: 'high_diag_evid',
@@ -129,7 +129,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  highDiagEvid: string;
+  high_diag_evid: string;
 
   @Column({
     name: 'bkup_deg_code',
@@ -137,7 +137,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  bkupDegCode: string;
+  bkup_deg_code: string;
 
   @Column({
     name: 'vali_flag',
@@ -145,7 +145,7 @@ export class N0422 {
     length: 3,
     nullable: true,
   })
-  valiFlag: string;
+  vali_flag: string;
 
   @Column({
     name: 'bzxx2',
