@@ -81,7 +81,7 @@ export class N0422 {
     length: 30,
     nullable: true,
   })
-  palgNo: string;
+  palg_no: string;
 
   @Column({
     name: 'ipt_patn_disediag',
