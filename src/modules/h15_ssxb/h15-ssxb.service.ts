@@ -272,7 +272,7 @@ export class H15SsxbService {
    * 更新收费明细
    */
   async update(updateDto: UpdateH15SsxbDto, manager: EntityManager): Promise<void> {
-    const { maxid, h15SsxbTfs, ...updateData } = updateDto;
+    const { maxid, syplmc, h15SsxbTfs, ...updateData } = updateDto as any;
     await manager.update(H15Ssxb, { maxid }, updateData);
   }
 
