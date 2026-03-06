@@ -19,7 +19,7 @@ export class h11_brxxController {
   constructor(
     private readonly h11_brxxService: h11_brxxService,
     private readonly h11_brxxService_new: h11_brxxService_new,
-  ) {}
+  ) { }
 
   @Get('findAll')
   async findAll(@Query() queryDto: Queryh11_brxxDto) {
@@ -28,8 +28,8 @@ export class h11_brxxController {
 
   @Get('findOne')
   async findOne(@Query() data: { zyid: string }) {
-    const brxx = await this.h11_brxxService.findOne(data.zyid);
-    return { record: brxx };
+    const record = await this.h11_brxxService.findOne(data.zyid);
+    return { record };
   }
 
   @Get('findPatientTotal')
@@ -57,6 +57,12 @@ export class h11_brxxController {
   async costDetails(@Query() queryCostDetailDto: QueryCostDetailDto) {
     return await this.h11_brxxService.costDetails(queryCostDetailDto);
   }
+
+  @Get('getUnSettleFee')
+  async getUnSettleFee(@Query() data: { zyid: string }) {
+    return await this.h11_brxxService_new.getUnSettleFee(data.zyid);
+  }
+
 
   // 费用明细
   @Get('costCategory')

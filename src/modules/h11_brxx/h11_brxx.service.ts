@@ -217,7 +217,7 @@ export class h11_brxxService {
     const zyzt = Number(queryDto.zyzt);
     if (queryDto.checkAdvice) {
       baseQuery
-        .andWhere('h11_brxx.zyzt = :zyzt', { zyzt })
+        // .andWhere('h11_brxx.zyzt = :zyzt', { zyzt })
         .andWhere("h11_brxx.rycw IS NOT NULL and h11_brxx.rycw != ''");
 
       // 医嘱过滤条件
@@ -242,8 +242,8 @@ export class h11_brxxService {
               // 条件1：临时医嘱 (executeType === '2')
               qb.orWhere(
                 new Brackets((subQb) => {
-                  subQb.where('h12_yzxb.yzlx = 1');
-                  //   subQb.andWhere('h12_yzxb.zxbz in (0, 1)');
+                  subQb.where('h12_yzxb.yzlx = 2');
+                  subQb.andWhere('h12_yzxb.yzzt = 2');
                 }),
               );
 
@@ -251,7 +251,10 @@ export class h11_brxxService {
               qb.orWhere(
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
-                  subQb.andWhere('h12_yzxb.yzrq <= :ksrq', { ksrq: queryDto.zxrq });
+                  subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
+                  subQb.andWhere('h12_yzxb.yzrq <= :ksrq', {
+                    ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+                  });
                   subQb.andWhere('(h12_yzxb.tzbz = 0 or tzrq >= :tzrq)', {
                     tzrq: queryDto.zxrq,
                   });
@@ -276,12 +279,14 @@ export class h11_brxxService {
         } else if (queryDto.executeType === '2') {
           // 临时医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 2');
-          subQuery.andWhere('h12_yzxb.hdbz = 1');
-          subQuery.andWhere('h12_yzxb.zxbz = 0');
+          subQuery.andWhere('h12_yzxb.yzzt = 2');
         } else if (queryDto.executeType === '5') {
           // 长期医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 1');
-          subQuery.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
+          subQuery.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
+          subQuery.andWhere('h12_yzxb.yzrq < :ksrq', {
+            ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+          });
           subQuery.andWhere('(h12_yzxb.tzrq = 0 or tzrq >= :ksrq)', { ksrq: queryDto.zxrq });
           // 添加mxxh不在h13_yzzxcs.mxxh中的条件
           subQuery.andWhere((qb) => {
@@ -412,6 +417,7 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.brlxidEntity', 'brlxidEntity')
       .leftJoinAndSelect('h11_brxx.rycwEntity', 'rycwEntity')
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
+      .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
@@ -425,10 +431,14 @@ export class h11_brxxService {
         'ryzdEntity.icd11mc',
         'ryzdEntity.ybbm',
         'ryzdEntity.ybmc',
+        'ryzdEntity.bzbm',
+        'ryzdEntity.bzmc',
         'cyzdEntity.icd11',
         'cyzdEntity.icd11mc',
         'cyzdEntity.ybbm',
         'cyzdEntity.ybmc',
+        'cyzdEntity.bzbm',
+        'cyzdEntity.bzmc',
       ])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .whereInIds(ids)
@@ -549,15 +559,37 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
       .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
       .leftJoinAndSelect('h11_brxx.rybqidEntity', 'rybqidEntity')
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .leftJoin('h11_brxx.mzzdEntity', 'mzzdEntity')
-      .addSelect(['ryzdEntity.icd11', 'ryzdEntity.icd11mc', 'ryzdEntity.ybbm', 'ryzdEntity.ybmc'])
-      .addSelect(['cyzdEntity.icd11', 'cyzdEntity.icd11mc', 'cyzdEntity.ybbm', 'cyzdEntity.ybmc'])
-      .addSelect(['mzzdEntity.icd11', 'mzzdEntity.icd11mc', 'mzzdEntity.ybbm', 'mzzdEntity.ybmc'])
+      .addSelect([
+        'ryzdEntity.icd11',
+        'ryzdEntity.icd11mc',
+        'ryzdEntity.ybbm',
+        'ryzdEntity.ybmc',
+        'ryzdEntity.bzbm',
+        'ryzdEntity.bzmc',
+      ])
+      .addSelect([
+        'cyzdEntity.icd11',
+        'cyzdEntity.icd11mc',
+        'cyzdEntity.ybbm',
+        'cyzdEntity.ybmc',
+        'cyzdEntity.bzbm',
+        'cyzdEntity.bzmc',
+      ])
+      .addSelect([
+        'mzzdEntity.icd11',
+        'mzzdEntity.icd11mc',
+        'mzzdEntity.ybbm',
+        'mzzdEntity.ybmc',
+        'mzzdEntity.bzbm',
+        'mzzdEntity.bzmc',
+      ])
       .leftJoinAndSelect('h11_brxx.yishEntity', 'yish', `yish.lx='饮食'`)
       .where('h11_brxx.zyid = :zyid', { zyid })
       .getOne();
@@ -1240,7 +1272,7 @@ export class h11_brxxService {
   ): Promise<number> {
     // 获取相关科室参数
     const { xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid } =
-      await this.configReaderService.readYfCxsz(ksid);
+      await this.configReaderService.readYfCxsz(ksid, 13);
     // 1. 检查h13_yzzxcs表中未发药的药品
     const result1 = await queryRunner.query(
       `SELECT ISNULL(COUNT(*), 0) as count

@@ -309,18 +309,18 @@ export class ConfigReaderService {
       kssz,
     };
   }
-  async readYfCxsz(as_ksid: string) {
+  async readYfCxsz(as_ksid: string, systemId: number): Promise<YfCsszDto> {
     const [xyksid, cyksid, zyksid, clksid, qtksid, zjksid, ssclksid, jpksid, hlksid] =
       await Promise.all([
-        this.paramService.gfGetPara(13, 'xy' + as_ksid, '0603', '西药' + as_ksid),
-        this.paramService.gfGetPara(13, 'cy' + as_ksid, '0603', '成药' + as_ksid),
-        this.paramService.gfGetPara(13, 'zy' + as_ksid, '0604', '中药' + as_ksid),
-        this.paramService.gfGetPara(13, 'cl' + as_ksid, '0603', '材料' + as_ksid),
-        this.paramService.gfGetPara(13, 'qt' + as_ksid, '0603', '其他' + as_ksid),
-        this.paramService.gfGetPara(13, 'zj' + as_ksid, '0603', '针剂' + as_ksid),
-        this.paramService.gfGetPara(13, 'sscl' + as_ksid, as_ksid, '手术材料' + as_ksid),
-        this.paramService.gfGetPara(13, 'jp' + as_ksid, '0603', '放射材料' + as_ksid),
-        this.paramService.gfGetPara(13, 'hl' + as_ksid, '0603', '检验材料' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'xy' + as_ksid, '0603', '西药' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'cy' + as_ksid, '0603', '成药' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'zy' + as_ksid, '0604', '中药' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'cl' + as_ksid, '0603', '材料' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'qt' + as_ksid, '0603', '其他' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'zj' + as_ksid, '0603', '针剂' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'sscl' + as_ksid, as_ksid, '手术材料' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'jp' + as_ksid, '0603', '放射材料' + as_ksid),
+        this.paramService.gfGetPara(systemId, 'hl' + as_ksid, '0603', '检验材料' + as_ksid),
       ]);
 
     return {
@@ -333,6 +333,8 @@ export class ConfigReaderService {
       ssclksid,
       jpksid,
       hlksid,
+      // 添加新的字段到返回值
+      //   cssz,
     };
   }
 
@@ -565,7 +567,7 @@ export class ConfigReaderService {
       gs_cxsz,
       gstr_ainf,
       g_configs,
-      ...ksids, // 展开ksids对象
+      g_ksid: ksids, // 展开ksids对象
     };
   }
 

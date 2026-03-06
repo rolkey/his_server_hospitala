@@ -43,7 +43,13 @@ export class SfxmController {
 
   @Get('ssap-configs')
   async ssapConfigs(@Query() data: { userId: string; systemId: string }) {
-    return this.configReaderService.readAllConfigs(data);
+    return this.configReaderService.ssapConfigs(data);
+  }
+
+  @Get('read-yf-cxsz')
+  readYfCxsz(@Query() data: { ksid: string; systemId: number }) {
+    const { ksid, systemId } = data;
+    return this.configReaderService.readYfCxsz(ksid, systemId);
   }
 
   @Get('querySfxm')
