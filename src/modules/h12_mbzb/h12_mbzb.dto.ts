@@ -45,6 +45,9 @@ export class UpdateH12_mbzbDto extends H12_mbzbBaseDto {
 
 export class QueryH12_mbzbDto extends H12_mbzbBaseDto {
   @Allow()
+  xtsb?: number;
+
+  @Allow()
   value?: string;
   // 查询参数通常所有字段都是可选的
   // 可以添加分页、排序等查询特有参数

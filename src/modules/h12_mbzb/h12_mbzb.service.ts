@@ -2,7 +2,7 @@ import { H12_mbSaveDto } from './h12_mbzb.dto';
 // src/h12_mbzb/h12_mbzb.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets } from 'typeorm';
+import { Repository, Brackets, DataSource } from 'typeorm';
 import { H12_mbzb } from './h12_mbzb.entity';
 import {
   CreateH12_mbzbDto,
@@ -24,7 +24,7 @@ export class H12_mbzbService {
     // @InjectRepository(H00TcxbZyfj)
     // private readonly h00TcxbZyfjRepository: Repository<H00TcxbZyfj>,
     // private readonly gyIdentityService: GyIdentityService,
-    // private dataSource: DataSource,
+    private dataSource: DataSource,
   ) {}
 
   async findAll(queryDto: QueryH12_mbzbDto) {
@@ -32,6 +32,12 @@ export class H12_mbzbService {
       .createQueryBuilder('h12_mbzb')
       .leftJoinAndSelect('h12_mbzb.ksidEntity', 'ksidEntity')
       .leftJoinAndSelect('h12_mbzb.ysidEntity', 'ysidEntity');
+
+    // 费用类别
+    if (queryDto.xtsb) {
+      // 按费用类型查询
+      queryBuilder.andWhere('h12_mbzb.bz1 = :xtsb', { xtsb: queryDto.xtsb });
+    }
 
     // 费用类别
     if (queryDto.mbfl !== '0') {
@@ -120,7 +126,9 @@ export class H12_mbzbService {
   //  保存模板
   async saveMb(h12_mbSaveDto: H12_mbSaveDto) {
     const newItem = this.h12MbzbRepository.create(h12_mbSaveDto);
-    newItem.mbid = await this._getMaxMbid();
+    if (!newItem.mbid) {
+      newItem.mbid = await this._getMaxMbid();
+    }
     const savedItem = await this.h12MbzbRepository.save(newItem);
     await Promise.all(
       h12_mbSaveDto.h12mbxb.map(async (item, index) => {
@@ -146,7 +154,10 @@ export class H12_mbzbService {
   }
 
   async delete(mbid: string, mblx: number): Promise<void> {
-    await this.h12MbzbRepository.delete({ mbid, mblx });
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.delete(H12_mbxb, { mbid, mblx });
+      await manager.delete(H12_mbzb, { mbid, mblx });
+    });
   }
 
   private toResponseDto(item: H12_mbzb): H12_mbzbResponseDto {

@@ -45,8 +45,9 @@ export class H12_mbzbController {
     return this.h12MbzbService.update(mbid, mblx, updateDto);
   }
 
-  @Delete(':mbid/:mblx')
-  async delete(@Param('mbid') mbid: string, @Param('mblx') mblx: number): Promise<void> {
+  @Delete()
+  async delete(@Query() data: { mbid: string; mblx: number }): Promise<void> {
+    const { mbid, mblx } = data;
     return this.h12MbzbService.delete(mbid, mblx);
   }
 }
