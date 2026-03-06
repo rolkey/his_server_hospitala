@@ -146,6 +146,15 @@ export class CreateSmSsapDto extends SmSsapBaseDto {}
 
 export class UpdateSmSsapDto extends PartialType(SmSsapBaseDto) {}
 
+/** 手术安排修改：主键 zyid、sqdh 必传，其余为可修改字段（只更新传入的字段） */
+export class UpdateSmSsapBodyDto extends UpdateSmSsapDto {
+  @Allow()
+  zyid: string;
+
+  @Allow()
+  sqdh: number;
+}
+
 /** 取消手术安排：按住院标识 + 申请单号定位安排单 */
 export class CancelSmSsapDto {
   @Allow()

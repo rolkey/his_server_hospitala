@@ -2,7 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { SmSsap } from './sm-ssap.entity';
-import { CancelSmSsapDto, CreateSmSsapDto, FeeListQueryDto } from './dto/sm-ssap.dto';
+import {
+  CancelSmSsapDto,
+  CreateSmSsapDto,
+  FeeListQueryDto,
+  UpdateSmSsapBodyDto,
+} from './dto/sm-ssap.dto';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { SmSssq } from '../sm-sssq/sm-sssq.entity';
 import { GyIdentityService } from '../gy_identity/gy-identity.service';
@@ -155,6 +160,15 @@ export class SmSsapService {
     });
 
     return { zyid, sqdh };
+  }
+
+  /**
+   * 手术安排修改
+   */
+  async update(dto: UpdateSmSsapBodyDto): Promise<{ ssbh: string }> {
+    const { ssbh, ...updateValue } = dto;
+    await this.smSsapRepository.update({ ssbh }, updateValue);
+    return { ssbh };
   }
 
   /**

@@ -1,7 +1,12 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { SmSsapService } from './sm-ssap.service';
 import { ApiTags, ApiOperation, ApiBody, ApiQuery } from '@nestjs/swagger';
-import { CancelSmSsapDto, CreateSmSsapDto, FeeListQueryDto } from './dto/sm-ssap.dto';
+import {
+  CancelSmSsapDto,
+  CreateSmSsapDto,
+  FeeListQueryDto,
+  UpdateSmSsapBodyDto,
+} from './dto/sm-ssap.dto';
 
 @ApiTags('手术安排管理')
 @Controller('sm-ssap')
@@ -12,6 +17,16 @@ export class SmSsapController {
   @ApiOperation({ summary: '新增手术安排通知单' })
   async create(@Body() createDto: CreateSmSsapDto) {
     return await this.smSsapService.create(createDto);
+  }
+
+  @Post('update')
+  @ApiOperation({ summary: '修改手术安排' })
+  @ApiBody({
+    type: UpdateSmSsapBodyDto,
+    description: 'zyid、sqdh 必填，其余为可修改字段（只更新传入的项）',
+  })
+  async update(@Body() dto: UpdateSmSsapBodyDto) {
+    return await this.smSsapService.update(dto);
   }
 
   @Post('cancel')
