@@ -116,3 +116,17 @@ export class H12_mbxbResponseDto extends H12_mbxbBaseDto {
   // 继承所有基础字段
   // 可以添加响应特有的字段或转换
 }
+
+export class H12MbxbSave {
+  @Allow()
+  mbid: string;
+
+  @Allow()
+  mblx: number;
+
+  @Allow()
+  mbxbList: H12_mbxbBaseDto[];
+
+  @Allow()
+  mxxhDelete: number[];
+}

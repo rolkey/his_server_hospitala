@@ -1,20 +1,24 @@
 // src/h12_mbxb/h12_mbxb.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { H12_mbxb } from './h12_mbxb.entity';
 import {
   CreateH12_mbxbDto,
   UpdateH12_mbxbDto,
   QueryH12_mbxbDto,
   H12_mbxbResponseDto,
+  H12MbxbSave,
 } from './h12_mbxb.dto';
+
+const maxMxxxh = 6000000;
 
 @Injectable()
 export class H12_mbxbService {
   constructor(
     @InjectRepository(H12_mbxb)
     private readonly h12MbxbRepository: Repository<H12_mbxb>,
+    private dataSource: DataSource,
   ) {}
 
   async findAll(queryDto: QueryH12_mbxbDto) {
@@ -34,6 +38,28 @@ export class H12_mbxbService {
     const [pageData, total] = await h12MbxbQuery.getManyAndCount();
 
     return { pageData, total };
+  }
+
+  /**
+   * 保存模板细表
+   * @param h12MbxbSave 保存参数
+   */
+  async save(h12MbxbSave: H12MbxbSave) {
+    await this.dataSource.transaction(async (manager) => {
+      // 先处理删除
+      await manager.delete(H12_mbxb, {
+        mbid: h12MbxbSave.mbid,
+        mblx: h12MbxbSave.mblx,
+      });
+
+      // 处理更新部分 maxMxxxh
+      for (const [index, item] of h12MbxbSave.mbxbList.entries()) {
+        item.mbid = h12MbxbSave.mbid;
+        item.mblx = h12MbxbSave.mblx;
+        item.mxxh = index + 1;
+        await manager.insert(H12_mbxb, item);
+      }
+    });
   }
 
   async findOne(mbid: string, mblx: number, mxxh: number): Promise<H12_mbxbResponseDto | null> {

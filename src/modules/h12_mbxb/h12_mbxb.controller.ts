@@ -2,10 +2,10 @@
 import { Controller, Get, Post, Body, Param, Query, Put, Delete } from '@nestjs/common';
 import { H12_mbxbService } from './h12_mbxb.service';
 import {
-  CreateH12_mbxbDto,
   UpdateH12_mbxbDto,
   QueryH12_mbxbDto,
   H12_mbxbResponseDto,
+  H12MbxbSave,
 } from './h12_mbxb.dto';
 
 @Controller('h12-mbxb')
@@ -27,8 +27,8 @@ export class H12_mbxbController {
   }
 
   @Post()
-  async create(@Body() createDto: CreateH12_mbxbDto): Promise<H12_mbxbResponseDto> {
-    return this.h12MbxbService.create(createDto);
+  async create(@Body() h12MbxbSave: H12MbxbSave) {
+    return this.h12MbxbService.save(h12MbxbSave);
   }
 
   @Put(':mbid/:mblx/:mxxh')
