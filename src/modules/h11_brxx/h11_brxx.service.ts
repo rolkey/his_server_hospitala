@@ -252,7 +252,9 @@ export class h11_brxxService {
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
                   subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
-                  subQb.andWhere('h12_yzxb.yzrq <= :ksrq', { ksrq: queryDto.zxrq });
+                  subQb.andWhere('h12_yzxb.yzrq <= :ksrq', {
+                    ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+                  });
                   subQb.andWhere('(h12_yzxb.tzbz = 0 or tzrq >= :tzrq)', {
                     tzrq: queryDto.zxrq,
                   });
@@ -282,7 +284,9 @@ export class h11_brxxService {
           // 长期医嘱
           subQuery.andWhere('h12_yzxb.yzlx = 1');
           subQuery.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
-          subQuery.andWhere('h12_yzxb.yzrq < :ksrq', { ksrq: queryDto.zxrq });
+          subQuery.andWhere('h12_yzxb.yzrq < :ksrq', {
+            ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+          });
           subQuery.andWhere('(h12_yzxb.tzrq = 0 or tzrq >= :ksrq)', { ksrq: queryDto.zxrq });
           // 添加mxxh不在h13_yzzxcs.mxxh中的条件
           subQuery.andWhere((qb) => {
