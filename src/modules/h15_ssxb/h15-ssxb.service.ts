@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Like, DeleteResult, EntityManager, In } from 'typeorm';
 import { H15Ssxb } from './h15-ssxb.entity';
@@ -219,7 +219,7 @@ export class H15SsxbService {
         for (const detail of details) {
           // 检查是否已发药
           if (detail.tpbz === 1) {
-            throw new Error('该病人已发药不能删除，只能录入负数冲红！');
+            throw new BadRequestException('该病人已发药不能删除，只能录入负数冲红！');
           }
 
           // 检查是否已提交
@@ -235,7 +235,7 @@ export class H15SsxbService {
 
           // 查询药品信息
           const medicine = await transactionalEntityManager.query(
-            `SELECT ysxs FROM h30_ypzd WHERE ypid = ?`,
+            `SELECT ysxs FROM h30_ypzd WHERE ypid = @0`,
             [detail.xmid],
           );
 
@@ -249,8 +249,8 @@ export class H15SsxbService {
             const dfsl = detail.jfyl;
             await transactionalEntityManager.query(
               `UPDATE h31_kcxx
-             SET ssdfsl = isnull(ssdfsl,0) - ?
-             WHERE ypid = ? AND scph = ? AND ksid = ?`,
+             SET ssdfsl = isnull(ssdfsl,0) - @0
+             WHERE ypid = @1 AND scph = @2 AND ksid = @3`,
               [dfsl, detail.xmid, detail.scph, detail.zxksid],
             );
           }
