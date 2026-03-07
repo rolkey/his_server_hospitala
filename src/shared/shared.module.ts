@@ -87,4 +87,4 @@ import { ContextService } from './context.service';
   ],
   exports: [SharedService, RedisService, ContextService],
 })
-export class SharedModule { }
+export class SharedModule {}
