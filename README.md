@@ -37,3 +37,16 @@ git log --author="用户名" --pretty=tformat: --numstat | awk '{ add += $1; sub
 ```bash
 npx typeorm-model-generator -h localhost -d database -u root -x password -e mysql -o ./src/entity
 ```
+
+## 本地部署
+
+```bash
+systemctl stop his-server
+
+pnpm build
+rm /var/www/his-server
+scp -r ncc-dist /var/www/his-server
+cp .env /var/www/his-server/.env
+
+systemctl start his-server
+```
