@@ -1,0 +1,15 @@
+[Unit]
+Description=正方达 His Server
+After=network.target
+
+[Service]
+Type=simple
+User=root                              # 运行服务的系统用户（例如：root 或 yourname）
+WorkingDirectory=/var/www/his-server   # 项目根目录
+ExecStart=/usr/bin/node /var/www/his-server/ncc-dist/index.js
+Restart=always                         # 崩溃后自动重启
+RestartSec=10                          # 重启间隔（秒）
+Environment=NODE_ENV=production        # 设置环境变量，可根据需要添加更多
+
+[Install]
+WantedBy=multi-user.target
