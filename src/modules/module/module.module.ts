@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ModuleController } from './Module.controller';
+import { ModuleController } from './module.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module as module } from './module.entity';
 import { ModuleService } from './module.service';
