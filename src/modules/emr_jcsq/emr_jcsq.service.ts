@@ -58,6 +58,7 @@ export class emr_jcsqService {
         yzxb.xmdj = (item as any).sfdj;
         yzxb.xmgg = (item as any).ggxh;
         yzxb.xmdw = (item as any).jldw;
+        yzxb.sjyl1 = '1';
         yzxb.jssj = item.ypfl;
         yzxb.tpbz = 0;
         yzxb.tcbz = 1;
