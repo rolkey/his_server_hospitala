@@ -234,6 +234,7 @@ export class h12_yzxbService {
           currentRow: 0,
           packageGroupId: 0,
           recursionDepth: 0,
+          tcbz: false,
         };
 
         const yzzhs = h12_yzxbs.h12_mbxbs
@@ -292,6 +293,7 @@ export class h12_yzxbService {
             if (index === 0 && (mbxb.xmid.startsWith('T') || mbxb.xmid === '0000000')) {
               newAdvice.tpbz = 1;
               newAdvice.ysbz = 1;
+              controlData.tcbz = true;
             }
 
             // 中药处方细项
@@ -318,7 +320,9 @@ export class h12_yzxbService {
                 additionalAdvice.yzrq = newAdvice.yzrq;
                 additionalAdvice.yzzh = newAdvice.yzzh;
                 additionalAdvice.ysbz = 0;
-                additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+                if (controlData.tcbz) {
+                  additionalAdvice.tcbz = !ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
+                } else additionalAdvice.tcbz = 0;
                 adviceList.push(additionalAdvice);
 
                 newAdvice.tcbz = ypFylbid.includes(newAdvice.fylbid) ? 1 : 0;
