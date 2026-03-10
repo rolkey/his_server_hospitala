@@ -294,7 +294,7 @@ export class h12_yzxbService {
               newAdvice.tpbz = 1;
               newAdvice.ysbz = 1;
               controlData.tcbz = true;
-            }
+            } else controlData.tcbz = false;
 
             // 中药处方细项
             if (index > 0 && mbxb.fylbid === '02') {
