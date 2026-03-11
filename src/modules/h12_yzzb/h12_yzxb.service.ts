@@ -1486,12 +1486,52 @@ export class h12_yzxbService {
     userId: string,
     zcid: string,
     jsys: string,
+    jsysZcid: string,
+    fgqm: boolean, // 覆盖签名
+    kssqm: boolean, // 抗生素签名
   ) {
     // 实现提交医嘱逻辑
-    const ysxx = zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
+    // const ysxx = zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
 
-    await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
-    return true;
+    // await this.h12_yzxbRepo.update({ yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 }, { ...ysxx });
+    // return true;
+    const yzxbs = await this.h12_yzxbRepo.find({
+      where: { yzlx, yzxh, zyid, yzzh: In(yzzh), tjbz: 0 },
+    });
+    if (yzxbs.length > 0) {
+      for (const yzxb of yzxbs) {
+        const qm = () => {
+          if (ypFylbid.includes(yzxb.fylbid) && yzxb.scdh) {
+            if (yzxb.scdh === '2' && jsysZcid > '0103') {
+              throw new BadRequestException(
+                `签名医生职称与抗生素药品【${yzxb.xmmc}】要求职称不符！！`,
+              );
+            } else if (yzxb.scdh === '3' && jsysZcid > '0102') {
+              throw new BadRequestException(
+                `签名医生职称与抗生素药品【${yzxb.xmmc}】要求职称不符！！`,
+              );
+            }
+            yzxb.ksys = jsys;
+            yzxb.kssxys = yzxb.kssxys ?? userId;
+          } else {
+            // 不是抗生素的普通项目
+            const ysxx =
+              zcid === '0106' ? { ksys: jsys, kssxys: userId } : { ksys: userId, kssxys: null };
+            Object.assign(yzxb, ysxx);
+          }
+        };
+        if (!yzxb.ksys) qm();
+        // else if (fgqm) qm();
+      }
+      await this.dataSource.transaction(async (manager) => {
+        await Promise.all(
+          yzxbs.map((item) => {
+            const { zyid, yzlx, yzxh, mxxh, ksys, kssxys } = item;
+            return manager.update(h12_yzxb, { zyid, yzlx, yzxh, mxxh }, { ksys, kssxys });
+          }),
+        );
+      });
+    }
   }
 
   //  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
