@@ -8,6 +8,7 @@ import { csxz } from '../csxz/csxz.entity';
 import { h00_rybq } from '../h00_rybq/h00_rybq.entity';
 import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
 import dayjs = require('dayjs');
+import { fyxx } from '../fyxx/fyxx.entity';
 
 @Entity('h11_brxx', { schema: 'dbo' })
 export class h11_brxx {
@@ -134,6 +135,10 @@ export class h11_brxx {
 
   @Column('varchar', { name: 'cyksid', nullable: true, length: 10 })
   cyksid: string | null;
+
+  @ManyToOne(() => ksmc)
+  @JoinColumn({ name: 'cyksid', referencedColumnName: 'ksid' })
+  cyksidEntity: ksmc;
 
   @Column('varchar', { name: 'cyksmc', nullable: true, length: 30 })
   cyksmc: string | null;
@@ -438,6 +443,17 @@ export class h11_brxx {
 
   @Column('varchar', { name: 'infection_sync', nullable: true, length: 10 })
   infectionSync: string | null;
+
+  @Column('varchar', {
+    name: 'fyid',
+    nullable: true,
+    default: () => '(0)',
+  })
+  fyid: string | null;
+
+  @ManyToOne(() => fyxx)
+  @JoinColumn({ name: 'fyid', referencedColumnName: 'fyid' })
+  fyidEntity: fyxx;
 
   hljlmc: string | null;
 

@@ -20,6 +20,8 @@ import { reportModule } from './modules/report/report.module';
 import { csxzModule } from './modules/csxz/csxz.module';
 import { fyxxModule } from './modules/fyxx/fyxx.module';
 import { h00_brlxModule } from './modules/h00_brlx/h00_brlx.module';
+import { H00BrlbModule } from './modules/h00_brlb/h00_brlb.module';
+import { H00GxzdModule } from './modules/h00_gxzd/h00_gxzd.module';
 import { h00_mzzdModule } from './modules/h00_mzzd/h00_mzzd.module';
 import { h20_jzzbModule } from './modules/h20_jzzb/h20_jzzb.module';
 import { h00_syffModule } from './modules/h00_syff/h00_syff.module';
@@ -80,6 +82,7 @@ import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
 import { H15SsjxxbModule } from './modules/h15_ssjxxb/h15-ssjxxb.module';
 import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
 import { HisTechModule } from './modules/his-tech/his-tech.module';
+import { Views360Module } from './modules/views_360/views_360.module';
 
 @Module({
   imports: [
@@ -102,6 +105,8 @@ import { HisTechModule } from './modules/his-tech/his-tech.module';
     csxzModule,
     fyxxModule,
     h00_brlxModule,
+    H00BrlbModule,
+    H00GxzdModule,
     h20_jzzbModule,
     h00_mzzdModule,
     h00_rybqModule,
@@ -162,6 +167,7 @@ import { HisTechModule } from './modules/his-tech/his-tech.module';
     H15SsjxxbModule,
     H13BrzkqkModule,
     HisTechModule,
+    Views360Module,
   ],
 })
 export class AppModule {}
