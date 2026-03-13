@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { h21_brxx } from '../h21_brxx/h21-brxx.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
-import { MedicalRecordQueryDto } from './views_360.dto';
+import { FeeDetailQueryDto, FeeSummaryQueryDto, MedicalRecordQueryDto } from './views_360.dto';
 import { H21Ylzh } from '../h21_ylzh/h21_ylzh.entity';
 import { N04_23 } from '../n04-23/n04-23.entity';
 
@@ -153,5 +153,299 @@ export class Views360Service {
       ywfy: mzPatientInfo?.ywfy,
       surgeryHistory: surgeryHistory.map((item) => item.ssjczmc),
     };
+  }
+
+  async findFeeSummary(feeSummaryQueryDto: FeeSummaryQueryDto) {
+    const { type, id } = feeSummaryQueryDto;
+    //     --门诊费用汇总
+    // select h23_cfmx.fylbid ,SUM(round(h23_cfzb.cyfs *h23_cfmx.sl * h23_cfmx.zfje,2)) '应收费用',
+    // SUM(round(h23_cfzb.cyfs *h23_cfmx.sl * h23_cfmx.dj,2)) '实收费用'
+    //   from h23_cfzb, h23_cfmx where h23_cfzb.cfid= h23_cfmx.cfid
+    //    and h23_cfmx.sfbz=1  and h23_cfzb.mzid='就诊号' group by h23_cfmx.fylbid
+
+    //     --住院费用汇总
+    // select t.fylbid , sum(t.应收费用) 应收费用, sum(t.实收费用) 实收费用
+    // from (
+    // select h13_yzzxcs.fylbid ,SUM(round(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj,2)) '应收费用',
+    // SUM(round(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj,2)) '实收费用'
+    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
+    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
+    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号' group by h13_yzzxcs.fylbid
+    //   union all
+    //   select h15_ssxb.fylbid ,SUM(round(h15_ssxb.jfyl  * h15_ssxb.xmdj,2)) '应收费用',
+    // SUM(round(h15_ssxb.jfyl  * h15_ssxb.xmdj,2)) '实收费用'
+    //   from h15_ssxb where     h15_ssxb.zyid='就诊号' group by h15_ssxb.fylbid) t  group by t.fylbid
+
+    const manager = this.h21BrxxRepo.manager;
+
+    // type: 1=门诊；2=住院
+    if (type === '1') {
+      // 门诊费用按照费用类别汇总
+      const sql = `
+        SELECT
+          h23_cfmx.fylbid                                       AS fylbid,
+          SUM(ROUND(h23_cfzb.cyfs * h23_cfmx.sl * h23_cfmx.zfje, 2)) AS ysfy,
+          SUM(ROUND(h23_cfzb.cyfs * h23_cfmx.sl * h23_cfmx.dj, 2))   AS ssfy
+        FROM h23_cfzb
+        JOIN h23_cfmx ON h23_cfzb.cfid = h23_cfmx.cfid
+        WHERE h23_cfmx.sfbz = 1
+          AND h23_cfzb.mzid = @0
+        GROUP BY h23_cfmx.fylbid
+      `;
+
+      const result = await manager.query(sql, [id]);
+      return result;
+    }
+
+    if (type === '2') {
+      // 住院费用按照费用类别汇总
+      const sql = `
+        SELECT
+          t.fylbid                         AS fylbid,
+          SUM(t.ysfy)                      AS ysfy,
+          SUM(t.ssfy)                      AS ssfy
+        FROM (
+          SELECT
+            h13_yzzxcs.fylbid                                                 AS fylbid,
+            SUM(ROUND(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj, 2)) AS ysfy,
+            SUM(ROUND(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj, 2)) AS ssfy
+          FROM h12_yzxb
+          JOIN h13_yzzxcs
+            ON h12_yzxb.zyid = h13_yzzxcs.zyid
+           AND h12_yzxb.yzxh = h13_yzzxcs.yzxh
+           AND h12_yzxb.yzlx = h13_yzzxcs.yzlx
+           AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
+          WHERE h13_yzzxcs.sfbz = 1
+            AND h13_yzzxcs.zyid = @0
+          GROUP BY h13_yzzxcs.fylbid
+
+          UNION ALL
+
+          SELECT
+            h15_ssxb.fylbid                                                  AS fylbid,
+            SUM(ROUND(h15_ssxb.jfyl * h15_ssxb.xmdj, 2))                     AS ysfy,
+            SUM(ROUND(h15_ssxb.jfyl * h15_ssxb.xmdj, 2))                     AS ssfy
+          FROM h15_ssxb
+          WHERE h15_ssxb.zyid = @1
+          GROUP BY h15_ssxb.fylbid
+        ) t
+        GROUP BY t.fylbid
+      `;
+
+      const result = await manager.query(sql, [id, id]);
+      return result;
+    }
+
+    return [];
+  }
+
+  async findFeeDetail(feeDetailQueryDto: FeeDetailQueryDto) {
+    const { type, id, isMerge } = feeDetailQueryDto;
+    const manager = this.h21BrxxRepo.manager;
+
+    //     --门诊费用明细（合并，不合并都一样）
+    // select h23_cfmx.cfid, h23_cfmx.xmid, h23_cfmx.xmmc,h23_cfmx.gg,h23_cfmx.ypfl,
+    // h23_cfmx.fylbid ,h23_cfzb.kfysid,(h23_cfmx.sl * h23_cfzb.cyfs) sl,h23_cfmx.dw,
+    // (h23_cfmx.sl * h23_cfzb.cyfs * h23_cfmx.dj) je,h23_cfmx.gjybbm
+    //   from h23_cfzb, h23_cfmx where h23_cfzb.cfid= h23_cfmx.cfid
+    //    and h23_cfmx.sfbz=1  and h23_cfzb.mzid='就诊号'
+    //    order by h23_cfmx.cfid , h23_cfmx.mxxh
+    //     --门诊费用明细（合并）
+    // select t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys,sum(t.sl) sl, t.xmdw,sum(t.je) je , t.gjybbm  from
+    // (
+    // select   h13_yzzxcs.xmid, h12_yzxb.xmmc,h12_yzxb.xmgg,h12_yzxb.jssj as ybfl,
+    // h13_yzzxcs.fylbid ,h12_yzxb.ksys,((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts) sl,h12_yzxb.xmdw,
+    // ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts *h13_yzzxcs.xmdj) je,h12_yzxb.gjybbm
+    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
+    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
+    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号'
+    // union all
+    // select   h15_ssxb.xmid, h15_ssxb.xmmc,h15_ssxb.xmgg,h15_ssxb.ybfl,
+    // h15_ssxb.fylbid ,h15_ssxb.ksys,(h15_ssxb.jfyl ) sl,h15_ssxb.jldw,
+    // (h15_ssxb.jfyl  *h15_ssxb.xmdj) je,h15_ssxb.gjybbm
+    //   from h15_ssxb where
+    //    h15_ssxb.sfbz=1  and h15_ssxb.zyid='就诊号' ) t
+    //    group by t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys, t.xmdw, t.gjybbm
+    // --门诊费用明细（不合并）
+    // select t.zxrq,t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys,sum(t.sl) sl, t.xmdw,sum(t.je) je , t.gjybbm  from
+    // (
+    // select  h13_yzzxcs.zxrq , h13_yzzxcs.xmid, h12_yzxb.xmmc,h12_yzxb.xmgg,h12_yzxb.jssj as ybfl,
+    // h13_yzzxcs.fylbid ,h12_yzxb.ksys,((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts) sl,h12_yzxb.xmdw,
+    // ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts *h13_yzzxcs.xmdj) je,h12_yzxb.gjybbm
+    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
+    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
+    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号'
+    // union all
+    // select  h15_ssxb.ssrq, h15_ssxb.xmid, h15_ssxb.xmmc,h15_ssxb.xmgg,h15_ssxb.ybfl,
+    // h15_ssxb.fylbid ,h15_ssxb.ksys,(h15_ssxb.jfyl ) sl,h15_ssxb.jldw,
+    // (h15_ssxb.jfyl  *h15_ssxb.xmdj) je,h15_ssxb.gjybbm
+    //   from h15_ssxb where
+    //    h15_ssxb.sfbz=1  and h15_ssxb.zyid='就诊号' ) t
+    //    group by t.zxrq,t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys, t.xmdw, t.gjybbm
+
+    // type: 1=门诊；2=住院
+    if (type === '1') {
+      // 门诊费用明细（合并、不合并结果相同）
+      const sql = `
+        SELECT
+          h23_cfmx.cfid,
+          h23_cfmx.xmid,
+          h23_cfmx.xmmc,
+          h23_cfmx.gg,
+          h23_cfmx.ypfl,
+          h23_cfmx.fylbid,
+          h23_cfzb.kfysid,
+          (h23_cfmx.sl * h23_cfzb.cyfs)                         AS sl,
+          h23_cfmx.dw                                           AS xmdw,
+          (h23_cfmx.sl * h23_cfzb.cyfs * h23_cfmx.dj)           AS je,
+          h23_cfmx.gjybbm
+        FROM h23_cfzb
+        JOIN h23_cfmx ON h23_cfzb.cfid = h23_cfmx.cfid
+        WHERE h23_cfmx.sfbz = 1
+          AND h23_cfzb.mzid = @0
+        ORDER BY h23_cfmx.cfid, h23_cfmx.mxxh
+      `;
+
+      return manager.query(sql, [id]);
+    }
+
+    if (type === '2') {
+      // 住院费用明细
+      // isMerge: 1=合并；0 或其他=不合并
+      if (isMerge === '1') {
+        // 合并
+        const sql = `
+          SELECT
+            t.xmid,
+            t.xmmc,
+            t.gg,
+            t.ybfl,
+            t.fylbid,
+            t.kfysid,
+            SUM(t.sl)                       AS sl,
+            t.xmdw,
+            SUM(t.je)                       AS je,
+            t.gjybbm
+          FROM (
+            SELECT
+              h13_yzzxcs.xmid                                       AS xmid,
+              h12_yzxb.xmmc                                         AS xmmc,
+              h12_yzxb.xmgg                                         AS gg,
+              h12_yzxb.jssj                                         AS ybfl,
+              h13_yzzxcs.fylbid                                     AS fylbid,
+              h12_yzxb.ksys                                         AS kfysid,
+              ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.jfyl * h13_yzzxcs.kyts) AS sl,
+              h12_yzxb.xmdw                                         AS xmdw,
+              ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.jfyl * h13_yzzxcs.kyts * h13_yzzxcs.xmdj) AS je,
+              h12_yzxb.gjybbm                                       AS gjybbm
+            FROM h12_yzxb, h13_yzzxcs
+            WHERE h12_yzxb.zyid = h13_yzzxcs.zyid
+              AND h12_yzxb.yzxh = h13_yzzxcs.yzxh
+              AND h12_yzxb.yzlx = h13_yzzxcs.yzlx
+              AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
+              AND h13_yzzxcs.sfbz = 1
+              AND h13_yzzxcs.zyid = @0
+
+            UNION ALL
+
+            SELECT
+              h15_ssxb.xmid                                        AS xmid,
+              h15_ssxb.xmmc                                        AS xmmc,
+              h15_ssxb.xmgg                                        AS gg,
+              h15_ssxb.ybfl                                        AS ybfl,
+              h15_ssxb.fylbid                                      AS fylbid,
+              h15_ssxb.ksys                                        AS kfysid,
+              (h15_ssxb.jfyl)                                      AS sl,
+              h15_ssxb.jldw                                        AS xmdw,
+              (h15_ssxb.jfyl * h15_ssxb.xmdj)                      AS je,
+              h15_ssxb.gjybbm                                      AS gjybbm
+            FROM h15_ssxb
+            WHERE h15_ssxb.sfbz = 1
+              AND h15_ssxb.zyid = @0
+          ) t
+          GROUP BY
+            t.xmid,
+            t.xmmc,
+            t.gg,
+            t.ybfl,
+            t.fylbid,
+            t.kfysid,
+            t.xmdw,
+            t.gjybbm
+        `;
+
+        return manager.query(sql, [id]);
+      } else {
+        // 不合并：按执行日期分组
+        const sql = `
+          SELECT
+            t.zxrq,
+            t.xmid,
+            t.xmmc,
+            t.gg,
+            t.ybfl,
+            t.fylbid,
+            t.kfysid,
+            SUM(t.sl)                       AS sl,
+            t.xmdw,
+            SUM(t.je)                       AS je,
+            t.gjybbm
+          FROM (
+            SELECT
+              h13_yzzxcs.zxrq                                      AS zxrq,
+              h13_yzzxcs.xmid                                      AS xmid,
+              h12_yzxb.xmmc                                        AS xmmc,
+              h12_yzxb.xmgg                                        AS gg,
+              h12_yzxb.jssj                                        AS ybfl,
+              h13_yzzxcs.fylbid                                    AS fylbid,
+              h12_yzxb.ksys                                        AS kfysid,
+              ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.jfyl * h13_yzzxcs.kyts) AS sl,
+              h12_yzxb.xmdw                                        AS xmdw,
+              ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.jfyl * h13_yzzxcs.kyts * h13_yzzxcs.xmdj) AS je,
+              h12_yzxb.gjybbm                                      AS gjybbm
+            FROM h12_yzxb, h13_yzzxcs
+            WHERE h12_yzxb.zyid = h13_yzzxcs.zyid
+              AND h12_yzxb.yzxh = h13_yzzxcs.yzxh
+              AND h12_yzxb.yzlx = h13_yzzxcs.yzlx
+              AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
+              AND h13_yzzxcs.sfbz = 1
+              AND h13_yzzxcs.zyid = @0
+
+            UNION ALL
+
+            SELECT
+              h15_ssxb.ssrq                                       AS zxrq,
+              h15_ssxb.xmid                                       AS xmid,
+              h15_ssxb.xmmc                                       AS xmmc,
+              h15_ssxb.xmgg                                       AS gg,
+              h15_ssxb.ybfl                                       AS ybfl,
+              h15_ssxb.fylbid                                     AS fylbid,
+              h15_ssxb.ksys                                       AS kfysid,
+              (h15_ssxb.jfyl)                                     AS sl,
+              h15_ssxb.jldw                                       AS xmdw,
+              (h15_ssxb.jfyl * h15_ssxb.xmdj)                     AS je,
+              h15_ssxb.gjybbm                                     AS gjybbm
+            FROM h15_ssxb
+            WHERE h15_ssxb.sfbz = 1
+              AND h15_ssxb.zyid = @0
+          ) t
+          GROUP BY
+            t.zxrq,
+            t.xmid,
+            t.xmmc,
+            t.gg,
+            t.ybfl,
+            t.fylbid,
+            t.kfysid,
+            t.xmdw,
+            t.gjybbm
+          ORDER BY t.zxrq
+        `;
+
+        return manager.query(sql, [id]);
+      }
+    }
+
+    return [];
   }
 }

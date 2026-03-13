@@ -54,7 +54,9 @@ import { H11ZypjModule } from './modules/h11_zypj/h11_zypj.module';
 import { H11JszbModule } from './modules/h11_jszb/h11_jszb.module';
 import { H11FpzbModule } from './modules/h11_fpzb/h11_fpzb.module';
 import { H23RytzModule } from './modules/h23_rytz/h23_rytz.module';
+import { H23MzzdModule } from './modules/h23_mzzd/h23_mzzd.module';
 import { H21YlzhModule } from './modules/h21_ylzh/h21_ylzh.module';
+import { h21_brxxModule } from './modules/h21_brxx/h21_brxx.module';
 import { H11JsxbModule } from './modules/h11_jsxb/h11_jsxb.module';
 import { H11FpxbModule } from './modules/h11_fpxb/h11_fpxb.module';
 import { H11XnhModule } from './modules/h11_xnh/h11_xnh.module';
@@ -139,7 +141,9 @@ import { Views360Module } from './modules/views_360/views_360.module';
     H11JszbModule,
     H11FpzbModule,
     H23RytzModule,
+    H23MzzdModule,
     H21YlzhModule,
+    h21_brxxModule,
     H11JsxbModule,
     H11FpxbModule,
     H11XnhModule,

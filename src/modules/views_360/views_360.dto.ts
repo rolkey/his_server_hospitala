@@ -15,3 +15,27 @@ export class MedicalRecordQueryDto {
   @IsString()
   endDate?: string;
 }
+
+export class FeeSummaryQueryDto {
+  @IsString()
+  @IsNotEmpty()
+  type: string; // 1 门诊 2 住院
+
+  @IsString()
+  @IsNotEmpty()
+  id: string; // 1 门诊 2 住院
+}
+
+export class FeeDetailQueryDto {
+  @IsString()
+  @IsNotEmpty()
+  type: string; // 1 门诊 2 住院
+
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @IsOptional()
+  @IsString()
+  isMerge?: string; // 是否明细合并 1 是 0 否
+}
