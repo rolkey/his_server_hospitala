@@ -24,6 +24,14 @@ export class FeeSummaryQueryDto {
   @IsString()
   @IsNotEmpty()
   id: string; // 1 门诊 2 住院
+
+  @IsOptional()
+  @IsString()
+  startTime?: string;
+
+  @IsOptional()
+  @IsString()
+  endTime?: string;
 }
 
 export class FeeDetailQueryDto {
@@ -38,4 +46,12 @@ export class FeeDetailQueryDto {
   @IsOptional()
   @IsString()
   isMerge?: string; // 是否明细合并 1 是 0 否
+
+  @IsOptional()
+  @IsString()
+  startTime?: string;
+
+  @IsOptional()
+  @IsString()
+  endTime?: string;
 }

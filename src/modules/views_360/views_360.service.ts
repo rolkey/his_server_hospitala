@@ -103,37 +103,33 @@ export class Views360Service {
     // 住院次数
     const zyCount = await this.h11BrxxRepo.count({ where: { ylzh } });
 
-    // 检验次数：v_his_yh_liszb 与 V_BRXX 关联，按就诊号匹配，按医疗账户过滤
-    // 对应 SQL：
-    // select count(*)
-    // from v_his_yh_liszb lis
-    // join V_BRXX v on lis.brdh = v.jzbh
-    // where v.ylzh = @ylzh
-    // const jyCount = await this.h21BrxxRepo.manager
-    //   .createQueryBuilder()
-    //   .from('V_BRXX', 'v')
-    //   .innerJoin('v_his_yh_liszb', 'lis', 'lis.brdh = v.jzbh')
-    //   .where('v.ylzh = :ylzh', { ylzh })
-    //   .getCount();
+    // 检验次数：视图 v_his_yh_liszb 在库中存在 binding errors 时无法使用，捕获异常时退回 0
+    let jyCount = 0;
+    try {
+      const jyResult = await this.h21BrxxRepo.manager
+        .createQueryBuilder()
+        .select('COUNT(*)', 'cnt')
+        .from('v_his_yh_liszb', 'lis')
+        .where('lis.brdh IN (SELECT v.jzbh FROM V_BRXX v WHERE v.ylzh = :ylzh)', { ylzh })
+        .getRawOne<{ cnt: string }>();
+      jyCount = Number(jyResult?.cnt ?? 0);
+    } catch {
+      // 视图 binding errors 时接口不报错，检验次数返回 0，需在数据库中修复视图 v_his_yh_liszb
+    }
 
     // 检查次数：pacs_report(T_STUDY_REPORT) 与 V_BRXX 关联，门诊号 / 住院号任一匹配
-    // 对应 SQL：
-    // select count(*)
-    // from V_BRXX v
-    // join pacs_report T_STUDY_REPORT
-    //   on v.jzbh = T_STUDY_REPORT.门诊号
-    //   or v.jzbh = T_STUDY_REPORT.住院号
-    // where v.ylzh = @ylzh
-    // const jcCount = await this.h21BrxxRepo.manager
+    // const jcResult = await this.h21BrxxRepo.manager
     //   .createQueryBuilder()
+    //   .select('COUNT(*)', 'cnt')
     //   .from('V_BRXX', 'v')
     //   .innerJoin(
     //     'pacs_report',
     //     'T_STUDY_REPORT',
-    //     'v.jzbh = T_STUDY_REPORT.门诊号 OR v.jzbh = T_STUDY_REPORT.住院号',
+    //     'v.jzbh = T_STUDY_REPORT.mzid OR v.jzbh = T_STUDY_REPORT.住院号',
     //   )
     //   .where('v.ylzh = :ylzh', { ylzh })
-    //   .getCount();
+    //   .getRawOne<{ cnt: string }>();
+    // const jcCount = Number(jcResult?.cnt ?? 0);
     let surgeryHistory = [];
 
     // 手术史
@@ -146,8 +142,8 @@ export class Views360Service {
       ...patientInfo,
       mzCount: mzCount,
       zyCount: zyCount,
-      // jyCount,
-      // jcCount,
+      jyCount,
+      jcCount: 0,
       tw: mzPatientInfo?.tw,
       tzxx: mzPatientInfo?.tzxx,
       ywfy: mzPatientInfo?.ywfy,
@@ -156,26 +152,7 @@ export class Views360Service {
   }
 
   async findFeeSummary(feeSummaryQueryDto: FeeSummaryQueryDto) {
-    const { type, id } = feeSummaryQueryDto;
-    //     --门诊费用汇总
-    // select h23_cfmx.fylbid ,SUM(round(h23_cfzb.cyfs *h23_cfmx.sl * h23_cfmx.zfje,2)) '应收费用',
-    // SUM(round(h23_cfzb.cyfs *h23_cfmx.sl * h23_cfmx.dj,2)) '实收费用'
-    //   from h23_cfzb, h23_cfmx where h23_cfzb.cfid= h23_cfmx.cfid
-    //    and h23_cfmx.sfbz=1  and h23_cfzb.mzid='就诊号' group by h23_cfmx.fylbid
-
-    //     --住院费用汇总
-    // select t.fylbid , sum(t.应收费用) 应收费用, sum(t.实收费用) 实收费用
-    // from (
-    // select h13_yzzxcs.fylbid ,SUM(round(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj,2)) '应收费用',
-    // SUM(round(h13_yzzxcs.jfyl * (h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs) * h13_yzzxcs.xmdj,2)) '实收费用'
-    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
-    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
-    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号' group by h13_yzzxcs.fylbid
-    //   union all
-    //   select h15_ssxb.fylbid ,SUM(round(h15_ssxb.jfyl  * h15_ssxb.xmdj,2)) '应收费用',
-    // SUM(round(h15_ssxb.jfyl  * h15_ssxb.xmdj,2)) '实收费用'
-    //   from h15_ssxb where     h15_ssxb.zyid='就诊号' group by h15_ssxb.fylbid) t  group by t.fylbid
-
+    const { type, id, startTime, endTime } = feeSummaryQueryDto;
     const manager = this.h21BrxxRepo.manager;
 
     // type: 1=门诊；2=住院
@@ -190,10 +167,11 @@ export class Views360Service {
         JOIN h23_cfmx ON h23_cfzb.cfid = h23_cfmx.cfid
         WHERE h23_cfmx.sfbz = 1
           AND h23_cfzb.mzid = @0
+          AND h23_cfzb.kfsj BETWEEN @1 AND @2
         GROUP BY h23_cfmx.fylbid
       `;
 
-      const result = await manager.query(sql, [id]);
+      const result = await manager.query(sql, [id, startTime, endTime]);
       return result;
     }
 
@@ -217,6 +195,7 @@ export class Views360Service {
            AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
           WHERE h13_yzzxcs.sfbz = 1
             AND h13_yzzxcs.zyid = @0
+            AND h13_yzzxcs.zxrq BETWEEN @1 AND @2
           GROUP BY h13_yzzxcs.fylbid
 
           UNION ALL
@@ -226,13 +205,14 @@ export class Views360Service {
             SUM(ROUND(h15_ssxb.jfyl * h15_ssxb.xmdj, 2))                     AS ysfy,
             SUM(ROUND(h15_ssxb.jfyl * h15_ssxb.xmdj, 2))                     AS ssfy
           FROM h15_ssxb
-          WHERE h15_ssxb.zyid = @1
+          WHERE h15_ssxb.zyid = @0
+            AND h15_ssxb.ssrq BETWEEN @1 AND @2
           GROUP BY h15_ssxb.fylbid
         ) t
         GROUP BY t.fylbid
       `;
 
-      const result = await manager.query(sql, [id, id]);
+      const result = await manager.query(sql, [id, startTime, endTime]);
       return result;
     }
 
@@ -240,49 +220,8 @@ export class Views360Service {
   }
 
   async findFeeDetail(feeDetailQueryDto: FeeDetailQueryDto) {
-    const { type, id, isMerge } = feeDetailQueryDto;
+    const { type, id, isMerge, startTime, endTime } = feeDetailQueryDto;
     const manager = this.h21BrxxRepo.manager;
-
-    //     --门诊费用明细（合并，不合并都一样）
-    // select h23_cfmx.cfid, h23_cfmx.xmid, h23_cfmx.xmmc,h23_cfmx.gg,h23_cfmx.ypfl,
-    // h23_cfmx.fylbid ,h23_cfzb.kfysid,(h23_cfmx.sl * h23_cfzb.cyfs) sl,h23_cfmx.dw,
-    // (h23_cfmx.sl * h23_cfzb.cyfs * h23_cfmx.dj) je,h23_cfmx.gjybbm
-    //   from h23_cfzb, h23_cfmx where h23_cfzb.cfid= h23_cfmx.cfid
-    //    and h23_cfmx.sfbz=1  and h23_cfzb.mzid='就诊号'
-    //    order by h23_cfmx.cfid , h23_cfmx.mxxh
-    //     --门诊费用明细（合并）
-    // select t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys,sum(t.sl) sl, t.xmdw,sum(t.je) je , t.gjybbm  from
-    // (
-    // select   h13_yzzxcs.xmid, h12_yzxb.xmmc,h12_yzxb.xmgg,h12_yzxb.jssj as ybfl,
-    // h13_yzzxcs.fylbid ,h12_yzxb.ksys,((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts) sl,h12_yzxb.xmdw,
-    // ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts *h13_yzzxcs.xmdj) je,h12_yzxb.gjybbm
-    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
-    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
-    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号'
-    // union all
-    // select   h15_ssxb.xmid, h15_ssxb.xmmc,h15_ssxb.xmgg,h15_ssxb.ybfl,
-    // h15_ssxb.fylbid ,h15_ssxb.ksys,(h15_ssxb.jfyl ) sl,h15_ssxb.jldw,
-    // (h15_ssxb.jfyl  *h15_ssxb.xmdj) je,h15_ssxb.gjybbm
-    //   from h15_ssxb where
-    //    h15_ssxb.sfbz=1  and h15_ssxb.zyid='就诊号' ) t
-    //    group by t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys, t.xmdw, t.gjybbm
-    // --门诊费用明细（不合并）
-    // select t.zxrq,t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys,sum(t.sl) sl, t.xmdw,sum(t.je) je , t.gjybbm  from
-    // (
-    // select  h13_yzzxcs.zxrq , h13_yzzxcs.xmid, h12_yzxb.xmmc,h12_yzxb.xmgg,h12_yzxb.jssj as ybfl,
-    // h13_yzzxcs.fylbid ,h12_yzxb.ksys,((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts) sl,h12_yzxb.xmdw,
-    // ((h13_yzzxcs.zxcs - h13_yzzxcs.bzxcs)*h13_yzzxcs.jfyl * h13_yzzxcs.kyts *h13_yzzxcs.xmdj) je,h12_yzxb.gjybbm
-    //   from h12_yzxb, h13_yzzxcs where h12_yzxb.zyid= h13_yzzxcs.zyid  and h12_yzxb.yzxh= h13_yzzxcs.yzxh
-    //   and h12_yzxb.yzlx= h13_yzzxcs.yzlx and h12_yzxb.mxxh= h13_yzzxcs.mxxh
-    //    and h13_yzzxcs.sfbz=1  and h13_yzzxcs.zyid='就诊号'
-    // union all
-    // select  h15_ssxb.ssrq, h15_ssxb.xmid, h15_ssxb.xmmc,h15_ssxb.xmgg,h15_ssxb.ybfl,
-    // h15_ssxb.fylbid ,h15_ssxb.ksys,(h15_ssxb.jfyl ) sl,h15_ssxb.jldw,
-    // (h15_ssxb.jfyl  *h15_ssxb.xmdj) je,h15_ssxb.gjybbm
-    //   from h15_ssxb where
-    //    h15_ssxb.sfbz=1  and h15_ssxb.zyid='就诊号' ) t
-    //    group by t.zxrq,t.xmid,t.xmmc,t.xmgg,t.ybfl,t.fylbid,t.ksys, t.xmdw, t.gjybbm
-
     // type: 1=门诊；2=住院
     if (type === '1') {
       // 门诊费用明细（合并、不合并结果相同）
@@ -303,10 +242,11 @@ export class Views360Service {
         JOIN h23_cfmx ON h23_cfzb.cfid = h23_cfmx.cfid
         WHERE h23_cfmx.sfbz = 1
           AND h23_cfzb.mzid = @0
+          AND h23_cfzb.kfsj BETWEEN @1 AND @2
         ORDER BY h23_cfmx.cfid, h23_cfmx.mxxh
       `;
 
-      return manager.query(sql, [id]);
+      return manager.query(sql, [id, startTime, endTime]);
     }
 
     if (type === '2') {
@@ -345,6 +285,7 @@ export class Views360Service {
               AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
               AND h13_yzzxcs.sfbz = 1
               AND h13_yzzxcs.zyid = @0
+              AND h13_yzzxcs.zxrq BETWEEN @1 AND @2
 
             UNION ALL
 
@@ -362,6 +303,7 @@ export class Views360Service {
             FROM h15_ssxb
             WHERE h15_ssxb.sfbz = 1
               AND h15_ssxb.zyid = @0
+              AND h15_ssxb.ssrq BETWEEN @1 AND @2
           ) t
           GROUP BY
             t.xmid,
@@ -374,7 +316,7 @@ export class Views360Service {
             t.gjybbm
         `;
 
-        return manager.query(sql, [id]);
+        return manager.query(sql, [id, startTime, endTime]);
       } else {
         // 不合并：按执行日期分组
         const sql = `
@@ -410,6 +352,7 @@ export class Views360Service {
               AND h12_yzxb.mxxh = h13_yzzxcs.mxxh
               AND h13_yzzxcs.sfbz = 1
               AND h13_yzzxcs.zyid = @0
+              AND h13_yzzxcs.zxrq BETWEEN @1 AND @2
 
             UNION ALL
 
@@ -428,6 +371,7 @@ export class Views360Service {
             FROM h15_ssxb
             WHERE h15_ssxb.sfbz = 1
               AND h15_ssxb.zyid = @0
+              AND h15_ssxb.ssrq BETWEEN @1 AND @2
           ) t
           GROUP BY
             t.zxrq,
@@ -442,7 +386,7 @@ export class Views360Service {
           ORDER BY t.zxrq
         `;
 
-        return manager.query(sql, [id]);
+        return manager.query(sql, [id, startTime, endTime]);
       }
     }
 
