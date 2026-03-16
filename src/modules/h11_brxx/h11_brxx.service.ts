@@ -24,6 +24,7 @@ import { ERR } from '@/common/exceptions/error-code';
 import { h00_cwxx } from '../h00_cwxx/h00_cwxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { h00_syff } from '../h00_syff/h00_syff.entity';
+import { getSqlWithParameters } from '@/utils/sql-utils';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 import e = require('express');
 @Injectable()
@@ -510,6 +511,11 @@ export class h11_brxxService {
     } else {
       detailQuery.orderBy('h11_brxx.rysj', 'ASC');
     }
+    // console.log(
+    //   'h11_brxx query: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++',
+    //   '\n',
+    //   getSqlWithParameters(detailQuery),
+    // );
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 

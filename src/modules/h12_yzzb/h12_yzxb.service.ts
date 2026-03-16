@@ -1074,6 +1074,7 @@ export class h12_yzxbService {
     // });
     return '数据保存成功!';
   }
+
   // 获取实体的所有列名
   async saveYzxb(advice: H12_yzxbDto, manager: EntityManager) {
     let h12_yzxbRow = null;
