@@ -1,5 +1,7 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { DateTransformer } from '@/common/transformers/date.transformer';
+import { H00Brlb } from '../h00_brlb/h00_brlb.entity';
+import { H00Gxzd } from '../h00_gxzd/h00_gxzd.entity';
 
 @Entity('h21_ylzh')
 export class H21Ylzh {
@@ -222,4 +224,12 @@ export class H21Ylzh {
 
   @Column({ name: 'openid', type: 'varchar', length: 128, nullable: true })
   openid: string | null;
+
+  @ManyToOne(() => H00Brlb)
+  @JoinColumn({ name: 'bzxx1', referencedColumnName: 'brlbid' })
+  brlbEntity: H00Brlb;
+
+  @ManyToOne(() => H00Gxzd)
+  @JoinColumn({ name: 'gxid', referencedColumnName: 'gxid' })
+  gxdzEntity: H00Gxzd;
 }

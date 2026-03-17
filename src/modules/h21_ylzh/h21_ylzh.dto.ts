@@ -382,7 +382,7 @@ export class H21YlzhQueryDto {
 
   @IsOptional()
   @IsString()
-  sfzh?: string;
+  sfzh?: string; // 身份证号
 
   @IsOptional()
   @IsString()
@@ -391,10 +391,42 @@ export class H21YlzhQueryDto {
   @IsOptional()
   @IsInt()
   @Type(() => Number)
-  pageNo?: number = 1;
+  pageNo?: number;
 
   @IsOptional()
   @IsInt()
   @Type(() => Number)
-  pageSize?: number = 10;
+  pageSize?: number;
+
+  @IsOptional()
+  @IsString()
+  kh?: string; // 卡号 就诊卡号/本院卡/电子码
+
+  @IsOptional()
+  @IsString()
+  xbid?: string; // 性别
+
+  @IsOptional()
+  @IsString()
+  brnlStart?: string; // 年龄开始
+
+  @IsOptional()
+  @IsString()
+  brnlEnd?: string; // 年龄结束
+
+  @IsOptional()
+  @IsString()
+  bzzl?: string; // 特殊人群
+
+  @IsOptional()
+  @IsString()
+  dh?: string; // 电话
+
+  @IsOptional()
+  @IsString()
+  jtdz?: string; // 联系地址
+
+  @IsOptional()
+  @IsString()
+  mjly?: string; // 媒介渠道
 }

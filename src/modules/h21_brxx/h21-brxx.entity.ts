@@ -1,5 +1,9 @@
-import { AfterLoad, Column, Entity } from 'typeorm';
+import { AfterLoad, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { DateTransformer } from '@/common/transformers/date.transformer';
+import { Jbbmicd10 } from '../jbbmicd/jbbmicd10.entity';
+import { usrcat } from '../usrcat/usrcat.entity';
+import { ksmc } from '../ksmc/ksmc.entity';
+import { fyxx } from '../fyxx/fyxx.entity';
 
 @Entity('h21_brxx', { schema: 'dbo' })
 export class h21_brxx {
@@ -290,13 +294,21 @@ export class h21_brxx {
   @DateTransformer()
   szsj: Date | null;
 
-  // @ManyToOne(() => jbbmicd10)
-  // @JoinColumn({ name: "cyzd2", referencedColumnName: "bzbm" })
-  // cyzd2Entity: jbbmicd10;
+  @ManyToOne(() => Jbbmicd10)
+  @JoinColumn({ name: 'lczd', referencedColumnName: 'bzbm' })
+  Jbbmicd10Entity: Jbbmicd10;
 
-  // @ManyToOne(() => usrcat)
-  // @JoinColumn({ name: "kfysid", referencedColumnName: "usid" })
-  // kfysidEntity: usrcat;
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: 'ysid', referencedColumnName: 'usid' })
+  kfysidEntity: usrcat;
+
+  @ManyToOne(() => ksmc)
+  @JoinColumn({ name: 'ksid', referencedColumnName: 'ksid' })
+  ksidEntity: ksmc;
+
+  @ManyToOne(() => fyxx)
+  @JoinColumn({ name: 'fyid', referencedColumnName: 'fyid' })
+  fyidEntity: fyxx;
 
   // @ManyToOne(() => h00_mzzd)
   // @JoinColumn({ name: "mzdm", referencedColumnName: "mzid" })
@@ -341,10 +353,6 @@ export class h21_brxx {
   // @ManyToOne(() => h21_ylzh)
   // @JoinColumn({ name: "ylzh", referencedColumnName: "ylzh" })
   // ylzhEntity: h21_ylzh;
-
-  // @ManyToOne(() => ksmc)
-  // @JoinColumn({ name: "ksid", referencedColumnName: "ksid" })
-  // ksidEntity: ksmc;
 
   // @ManyToOne(() => usrcat)
   // @JoinColumn({ name: "ysid", referencedColumnName: "usid" })
