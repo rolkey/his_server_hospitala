@@ -7,8 +7,8 @@ import { ExportDataDto, QueryOrdersDto, UpdateExecuteStatusDto } from './technol
 export class TechnologyOrdersController {
   constructor(private readonly technologyOrdersService: TechnologyOrdersService) {}
 
-  @Post('query')
-  queryOrders(@Body() queryOrdersDto: QueryOrdersDto) {
+  @Get('query')
+  queryOrders(@Query() queryOrdersDto: QueryOrdersDto) {
     return this.technologyOrdersService.queryOrders(queryOrdersDto);
   }
 
