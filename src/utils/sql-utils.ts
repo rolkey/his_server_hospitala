@@ -2,6 +2,10 @@ export function getSqlWithParameters(query: any): string {
   const sql = query.getQuery();
   const parameters = query.getParameters();
 
+  return decodeSQLs(sql, parameters);
+}
+
+export function decodeSQLs(sql: string, parameters: any) {
   let fullSql = sql;
 
   // 替换命名参数
@@ -23,6 +27,8 @@ export function getSqlWithParameters(query: any): string {
       // 处理普通参数
       const regex = new RegExp(`:${key}(?![a-zA-Z0-9_])`, 'g');
       fullSql = fullSql.replace(regex, formatValue(value));
+      const regexa = new RegExp(`@${key}(?![a-zA-Z0-9_])`, 'g');
+      fullSql = fullSql.replace(regexa, formatValue(value));
     }
   }
 
