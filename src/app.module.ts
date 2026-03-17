@@ -80,6 +80,7 @@ import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
 import { H15SsjxxbModule } from './modules/h15_ssjxxb/h15-ssjxxb.module';
 import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
 import { HisTechModule } from './modules/his-tech/his-tech.module';
+import { TechnologyOrdersModule } from './modules/technology-orders/technology-orders.module';
 
 @Module({
   imports: [
@@ -162,6 +163,7 @@ import { HisTechModule } from './modules/his-tech/his-tech.module';
     H15SsjxxbModule,
     H13BrzkqkModule,
     HisTechModule,
+    TechnologyOrdersModule,
   ],
 })
 export class AppModule {}
