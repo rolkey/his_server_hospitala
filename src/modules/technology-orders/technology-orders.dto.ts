@@ -54,5 +54,5 @@ export class QueryExecutionDetailsDto {
 
   @IsArray()
   @IsString({ each: true })
-  fylbid: string[];
+  types: string[] | string;
 }

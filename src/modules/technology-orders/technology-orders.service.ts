@@ -58,10 +58,10 @@ export class TechnologyOrdersService {
    * @returns
    */
   async queryExecutionDetails(queryDto: QueryExecutionDetailsDto): Promise<any[]> {
-    const { zyid, fylbid } = queryDto;
+    const { zyid, types } = queryDto;
 
     // 处理数组参数
-    const fylbidParams = Array.isArray(fylbid) ? fylbid : [fylbid];
+    const fylbidParams = Array.isArray(types) ? types : [types];
 
     const query = `
       SELECT
