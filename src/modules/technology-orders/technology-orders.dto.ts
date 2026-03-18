@@ -1,4 +1,4 @@
-import { Allow } from 'class-validator';
+import { Allow, IsArray, IsString } from 'class-validator';
 
 export class QueryOrdersDto {
   @Allow()
@@ -45,4 +45,14 @@ export class OrderResultDto {
   bzxx: string; // 备注信息
   mxxh: string; // 明细序号
   yzlx: string; // 医嘱类型
+  ksysxm: string; // 开嘱医生姓名
+}
+
+export class QueryExecutionDetailsDto {
+  @IsString()
+  zyid: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  fylbid: string[];
 }

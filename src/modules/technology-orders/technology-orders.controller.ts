@@ -1,7 +1,12 @@
 import { Controller, Get, Post, Body, Param, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { TechnologyOrdersService } from './technology-orders.service';
-import { ExportDataDto, QueryOrdersDto, UpdateExecuteStatusDto } from './technology-orders.dto';
+import {
+  ExportDataDto,
+  QueryExecutionDetailsDto,
+  QueryOrdersDto,
+  UpdateExecuteStatusDto,
+} from './technology-orders.dto';
 
 @Controller('technology-orders')
 export class TechnologyOrdersController {
@@ -10,6 +15,11 @@ export class TechnologyOrdersController {
   @Get('query')
   queryOrders(@Query() queryOrdersDto: QueryOrdersDto) {
     return this.technologyOrdersService.queryOrders(queryOrdersDto);
+  }
+
+  @Get('execution-details')
+  async getExecutionDetails(@Query() queryDto: QueryExecutionDetailsDto) {
+    return await this.technologyOrdersService.queryExecutionDetails(queryDto);
   }
 
   @Post('print')
