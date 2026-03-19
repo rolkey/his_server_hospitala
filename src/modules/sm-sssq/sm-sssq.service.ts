@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between, EntityManager, Transaction, In, Not } from 'typeorm';
 import { SmSssq } from './sm-sssq.entity';
@@ -261,6 +261,15 @@ export class SmSssqService {
 
   async remove(data: { zyid: string; sqdh: string }): Promise<void> {
     const { zyid, sqdh } = data;
+
+    // 如果存在医嘱记录，不允许删除申请单
+    const h12Yzxb = await this.h12YzxbRepository.findOne({
+      where: { zyid, scdh: In(sqdh.split(',')) },
+    });
+    if (h12Yzxb) {
+      throw new BadRequestException('存在医嘱记录，不允许删除申请单！！');
+    }
+
     return await this.entityManager.transaction(async (transactionalEntityManager) => {
       // 检查 h12_yzxb中yzzt是否有不为0的，不为0要抛出异常禁止删除
       const yzxb = await transactionalEntityManager.findOne(h12_yzxb, {
