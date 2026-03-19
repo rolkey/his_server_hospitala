@@ -397,6 +397,8 @@ export class h12_yzxb {
   @JoinColumn({ name: 'zyid', referencedColumnName: 'zyid' })
   h12_yzzb: h12_yzzb;
 
+  // 逻辑字段
+  yzts: number;
   isNew: boolean;
 
   //   @OneToMany(() => h13_yzzxcs, (h13_yzzxcs) => h13_yzzxcs.h12_yzxb, {

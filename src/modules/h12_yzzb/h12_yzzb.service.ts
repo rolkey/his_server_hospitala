@@ -151,6 +151,8 @@ export class h12_yzzbService {
           .addOrderBy('h12_yzxb.zxcs', 'ASC')
           .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
+        console.log('医嘱脚本', getSqlWithParameters(h12_yzxbQuery));
+
         const [h12_yzxbList, ksidList, usidList] = await Promise.all([
           h12_yzxbQuery.getMany(),
           this.ksmcRepo.find({ select: ['ksid', 'ksmc'] }),
@@ -342,6 +344,16 @@ export class h12_yzzbService {
     ]);
     if (!yzzb) return null;
 
+    // 查询医嘱天数
+    const mxxhs = h12_yzxbList.map((item) => item.mxxh);
+    const yzzccss = await this.h13_yzzxcsRepo.find({
+      where: {
+        zyid: data.zyid,
+        mxxh: In(mxxhs),
+        yzlx: Number(data.yzlx),
+      },
+    });
+
     // 构建字典
     const ksmcDict = Object.fromEntries(ksidList.map((item) => [item.ksid, item]));
     const usrcatDict = Object.fromEntries(usidList.map((item) => [item.usid, item]));
@@ -359,6 +371,9 @@ export class h12_yzzbService {
       item.jssxhsEntity = usrcatDict[item.jssxhs] || null;
       item.ksidEntity = ksmcDict[item.ksid] || null;
       item.jshsEntity = usrcatDict[item.jshs] || null;
+
+      const yzmxs = yzzccss.filter((item) => item.mxxh === item.mxxh);
+      item.yzts = yzmxs.length;
     });
     yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
     yzzb.zkksidEntity = ksmcDict[yzzb?.zkksid] || null;
