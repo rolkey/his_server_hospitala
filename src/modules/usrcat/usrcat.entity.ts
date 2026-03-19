@@ -142,8 +142,8 @@ export class usrcat {
   // @Column("varchar", { name: "pyzc", nullable: true, length: 10 })
   // pyzc: string | null;
 
-  // @Column("varchar", { name: "ssdj", nullable: true, length: 10 })
-  // ssdj: string | null;
+  @Column('varchar', { name: 'ssdj', nullable: true, length: 10 })
+  ssdj: string | null;
 
   // @Column("varchar", { name: "bskpd", nullable: true, length: 20 })
   // bskpd: string | null;

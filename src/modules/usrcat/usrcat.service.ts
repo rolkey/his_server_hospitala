@@ -63,6 +63,7 @@ export class UsrcatService {
         zcid: true,
         ybry: true,
         roles: true,
+        ssdj: true,
       },
       where,
       relations: {
