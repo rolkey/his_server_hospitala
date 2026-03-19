@@ -372,7 +372,7 @@ export class h12_yzzbService {
       item.ksidEntity = ksmcDict[item.ksid] || null;
       item.jshsEntity = usrcatDict[item.jshs] || null;
 
-      const yzmxs = yzzccss.filter((item) => item.mxxh === item.mxxh);
+      const yzmxs = yzzccss.filter((yzitem) => yzitem.mxxh === item.mxxh);
       item.yzts = yzmxs.length;
     });
     yzzb.ksidEntity = ksmcDict[yzzb?.ksid] || null;
