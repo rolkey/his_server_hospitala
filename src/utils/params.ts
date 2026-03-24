@@ -49,3 +49,16 @@ export function mergeObjects<T extends Record<string, any>>(...objects: T[]): T 
 
   return result;
 }
+
+/**
+ * 通过值查找对象的键
+ * @param obj 要查找的对象
+ * @param value 要匹配的值
+ * @returns 找到的键，如果未找到则返回 undefined
+ */
+export function getKeyByValue<T extends Record<string, any>, K extends T[keyof T]>(
+  obj: T,
+  value: K,
+): keyof T | undefined {
+  return Object.keys(obj).find((key) => obj[key] === value) as keyof T | undefined;
+}

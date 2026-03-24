@@ -235,6 +235,22 @@ export class h12_yzxbServiceNew {
         return yzxbUpdate;
       });
 
+      // 检查是否需要更新患者信息，如果没有更新由跳过
+      const updateData: any = {};
+      if (fhYzxb.some((advice) => advice.xmmc?.includes('病危'))) {
+        updateData.rybqid = 1;
+      }
+      if (fhYzxb.some((advice) => advice.xmmc?.includes('解除病危'))) {
+        updateData.rybqid = 0;
+      }
+      if (
+        fhYzxb.some(
+          (advice) => advice.xmmc?.includes('II级护理') || advice.xmmc?.includes('二级护理'),
+        )
+      ) {
+        updateData.hljl = 2;
+      }
+
       // 转换日期 ////
       const dtoZXRQ = new Date(dto.rq);
       const formatZXRQ = dtoZXRQ.getFullYear() + '-' + dtoZXRQ.getMonth() + '-' + dtoZXRQ.getDate();
@@ -249,6 +265,11 @@ export class h12_yzxbServiceNew {
         }
         if (yzxbFJList.length > 0) {
           await reviewManager.save(h12_yzxb, yzxbFJList);
+        }
+
+        // 更新病人信息
+        if (updateData.hljl || updateData.rybqid) {
+          await reviewManager.update(h11_brxx, { zyid: dto.zyid }, updateData);
         }
       });
     } catch (error) {
