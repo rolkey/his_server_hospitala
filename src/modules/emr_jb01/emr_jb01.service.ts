@@ -88,7 +88,9 @@ export class emr_jb01Service {
     const entity = this.emrJb01Repo.create({
       ...dto,
       jbxh: nextJbxh,
-      sxsj: new Date(),
+      jbsj: ldt_Begin,
+      sxsj: ldt_Begin,
+      bqdm: 0,
     });
     // 返回所有病人
     const dateStart = new Date(jbsj);
@@ -97,17 +99,6 @@ export class emr_jb01Service {
     dateEnd.setHours(23, 59, 59, 999);
     const patients = await this.h11BrxxRepo
       .createQueryBuilder('h')
-      .select('h.zyid', 'ZYH')
-      .addSelect('h.zybh', 'ZYHM')
-      .addSelect('h.brxm', 'BRXM')
-      .addSelect('h.rycw', 'BRCH')
-      .addSelect('h.rybqid', 'ryqk')
-      .addSelect('h.rysj', 'ryrq')
-      .addSelect('h.csrq', 'CSNY')
-      .addSelect('h.xbid', 'BRXB')
-      .addSelect('1', 'SWBZ')
-      .addSelect('h.ryzd', 'ryzd')
-      .addSelect('h.zyzt', 'zyzt')
       .where(
         `(
           (h.rysj <= :dateEnd AND h.zyzt <= 2)
@@ -117,7 +108,7 @@ export class emr_jb01Service {
         { dateStart, dateEnd },
       )
       .andWhere('h.cyksid LIKE :ksdm', { ksdm })
-      .getRawMany();
+      .getMany();
 
     return {
       entity,
@@ -167,17 +158,6 @@ export class emr_jb01Service {
     // 2. 查询病人列表，排除已存在于 EMR_JB02 中的病人（已被纳入本次交班）
     const patients = await this.h11BrxxRepo
       .createQueryBuilder('h')
-      .select('h.zyid', 'ZYH')
-      .addSelect('h.zybh', 'ZYHM')
-      .addSelect('h.brxm', 'BRXM')
-      .addSelect('h.rycw', 'BRCH')
-      .addSelect('h.rybqid', 'ryqk')
-      .addSelect('h.rysj', 'ryrq')
-      .addSelect('h.csrq', 'CSNY')
-      .addSelect('h.xbid', 'BRXB')
-      .addSelect('1', 'SWBZ')
-      .addSelect('h.ryzd', 'ryzd')
-      .addSelect('h.zyzt', 'zyzt')
       .where(
         `(
           (h.rysj <= :dateEnd AND h.zyzt <= 2)
@@ -188,11 +168,12 @@ export class emr_jb01Service {
       )
       .andWhere('h.cyksid LIKE :ksdmLike', { ksdmLike })
       .andWhere('h.zyid NOT IN (SELECT j.zyh FROM EMR_JB02 j WHERE j.jbxh = :jbxh)', { jbxh })
-      .getRawMany();
+      .orderBy('h.rycw', 'ASC')
+      .getMany();
     const details = await this.emrJb02Repo
       .createQueryBuilder('jb02')
       .where('jb02.jbxh = :jbxh', { jbxh })
-      .getRawMany();
+      .getMany();
     return {
       patients,
       entity: jb01,
@@ -292,25 +273,36 @@ export class emr_jb01Service {
 
     await this.dataSource.transaction(async (manager) => {
       // 1. 更新/保存交班01主记录
-      await manager.save(emr_jb01, { ...jb01, jbxh });
+      // 绕开 save() 的 INSERT/UPDATE 自动判断（该判断在 @Column({ primary: true }) 场景下不可靠）
+      const jb01Repo = manager.getRepository(emr_jb01);
+      const existsJb01 = await jb01Repo.count({ where: { jbxh } });
+      if (existsJb01 > 0) {
+        await jb01Repo.update({ jbxh }, { ...jb01, jbxh });
+      } else {
+        await jb01Repo.insert({ ...jb01, jbxh });
+      }
 
       // 2. 批量保存明细
       if (jb02.length > 0) {
-        // 获取当前 JLXH 最大值，用于为没有 jlxh 的行生成新序号
+        const jb02Repo = manager.getRepository(emr_jb02);
         const maxResult = await manager
           .createQueryBuilder(emr_jb02, 'j')
           .select('MAX(CAST(j.jlxh AS BIGINT))', 'maxJlxh')
           .getRawOne<{ maxJlxh: string | null }>();
         let nextJlxh = Number(maxResult?.maxJlxh ?? 0) + 1;
 
-        const detailEntities: Partial<emr_jb02>[] = jb02.map((row, index) => ({
-          ...row,
-          jlxh: row.jlxh ? String(row.jlxh) : String(nextJlxh++),
-          jbxh,
-          bz1: String(index + 1).padStart(2, '0'),
-        }));
-
-        await manager.save(emr_jb02, detailEntities as emr_jb02[]);
+        for (let index = 0; index < jb02.length; index++) {
+          const row = jb02[index];
+          const jlxh = row.jlxh ? String(row.jlxh) : String(nextJlxh++);
+          const bz1 = String(index + 1).padStart(2, '0');
+          const data = { ...row, jlxh, jbxh, bz1 };
+          const existsJb02 = await jb02Repo.count({ where: { jlxh } });
+          if (existsJb02 > 0) {
+            await jb02Repo.update({ jlxh }, data);
+          } else {
+            await jb02Repo.insert(data);
+          }
+        }
       }
     });
 
