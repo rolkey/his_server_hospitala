@@ -72,9 +72,8 @@ export class emr_jb01Controller {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    const ztNum = Number(zt) as 1 | 2;
-    const results = await this.emrJb01Service.history({ zt: ztNum, zyh, startDate, endDate });
-    return { pageData: results, total: results.length };
+    const results = await this.emrJb01Service.history({ startDate, endDate });
+    return results;
   }
 
   /**
@@ -95,36 +94,6 @@ export class emr_jb01Controller {
   async search(@Query('date') date: string, @Query('ksdm') ksdm: string) {
     const result = await this.emrJb01Service.search({ date, ksdm });
     return result;
-  }
-
-  /**
-   * 白班签名：写入 czry + jbhs
-   * @param body.czry  主签名人
-   * @param body.czry1 副签名人（可选）
-   */
-  @Post('sign/:jbxh')
-  async sign(
-    @Param('jbxh') jbxh: string,
-    @Body('czry') czry: string,
-    @Body('czry1') czry1?: string,
-  ) {
-    const record = await this.emrJb01Service.sign(jbxh, { czry, czry1 });
-    return { record };
-  }
-
-  /**
-   * 夜班签名：写入 czry1
-   * @param body.czry1    主签名人
-   * @param body.czry1sub 副签名人（可选）
-   */
-  @Post('signNight/:jbxh')
-  async signNight(
-    @Param('jbxh') jbxh: string,
-    @Body('czry1') czry1: string,
-    @Body('czry1sub') czry1sub?: string,
-  ) {
-    const record = await this.emrJb01Service.signNight(jbxh, { czry1, czry1sub });
-    return { record };
   }
 
   /**

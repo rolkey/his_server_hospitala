@@ -99,6 +99,7 @@ export class emr_jb01Service {
     dateEnd.setHours(23, 59, 59, 999);
     const patients = await this.h11BrxxRepo
       .createQueryBuilder('h')
+      .leftJoinAndSelect('h.ryzdEntity', 'ryzdEntity')
       .where(
         `(
           (h.rysj <= :dateEnd AND h.zyzt <= 2)
@@ -158,6 +159,7 @@ export class emr_jb01Service {
     // 2. 查询病人列表，排除已存在于 EMR_JB02 中的病人（已被纳入本次交班）
     const patients = await this.h11BrxxRepo
       .createQueryBuilder('h')
+      .leftJoinAndSelect('h.ryzdEntity', 'ryzdEntity')
       .where(
         `(
           (h.rysj <= :dateEnd AND h.zyzt <= 2)
@@ -167,12 +169,13 @@ export class emr_jb01Service {
         { dateStart, dateEnd },
       )
       .andWhere('h.cyksid LIKE :ksdmLike', { ksdmLike })
-      .andWhere('h.zyid NOT IN (SELECT j.zyh FROM EMR_JB02 j WHERE j.jbxh = :jbxh)', { jbxh })
+      // .andWhere('h.zyid NOT IN (SELECT j.zyh FROM EMR_JB02 j WHERE j.jbxh = :jbxh)', { jbxh })
       .orderBy('h.rycw', 'ASC')
       .getMany();
     const details = await this.emrJb02Repo
       .createQueryBuilder('jb02')
       .where('jb02.jbxh = :jbxh', { jbxh })
+      .orderBy('jb02.bz1', 'ASC')
       .getMany();
     return {
       patients,
@@ -186,59 +189,21 @@ export class emr_jb01Service {
    * - zt=1：按住院号模糊查询（ZYH like）
    * - zt=2：按交班时间范围查询（JBSJ between）
    */
-  async history(params: { zt: 1 | 2; zyh?: string; startDate?: string; endDate?: string }) {
-    const { zt, zyh, startDate, endDate } = params;
+  async history(params: { startDate?: string; endDate?: string }) {
+    const { startDate, endDate } = params;
 
-    const qb = this.emrJb02Repo
-      .createQueryBuilder('jb02')
-      .innerJoin(emr_jb01, 'jb01', 'jb02.jbxh = jb01.jbxh')
-      .select([
-        'jb02.jlxh   AS JLXH',
-        'jb02.jbxh   AS JBXH',
-        'jb02.zyh    AS ZYH',
-        'jb02.brch   AS BRCH',
-        'jb02.brlx   AS BRLX',
-        'jb02.jbqk   AS JBQK',
-        'jb02.qkms   AS QKMS',
-        'jb02.brzd   AS BRZD',
-        'jb02.brxm   AS BRXM',
-        'jb02.brxb   AS BRXB',
-        'jb02.csny   AS CSNY',
-        'jb02.jbjl   AS JBJL',
-        'jb02.jbjl1  AS JBJL1',
-        'jb02.jbjl2  AS JBJL2',
-        'jb02.jbry1  AS JBRY1',
-        'jb02.jbry2  AS JBRY2',
-        'jb02.shbz1  AS SHBZ1',
-        'jb02.shbz2  AS SHBZ2',
-        'jb02.shbz3  AS SHBZ3',
-        'jb02.shsj1  AS SHSJ1',
-        'jb02.shsj2  AS SHSJ2',
-        'jb02.shsj3  AS SHSJ3',
-        'jb02.brzt1  AS BRZT1',
-        'jb02.brzt2  AS BRZT2',
-        'jb02.brzt3  AS BRZT3',
-        'jb02.bz1    AS BZ1',
-        'jb02.bz2    AS BZ2',
-        'jb02.bz3    AS BZ3',
-        'jb01.shbz   AS SHBZ',
-        'jb01.czry   AS CZRY',
-        'jb01.czry1  AS CZRY1',
-      ]);
+    const qb = this.emrJb02Repo.createQueryBuilder('jb02').innerJoinAndSelect('jb02.jb01', 'jb01');
+    if (!startDate || !endDate) throw new BadRequestException('查询日期范围不能为空');
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    qb.where('jb01.jbsj >= :start AND jb01.jbsj <= :end', { start, end }).orderBy(
+      'jb01.jbsj',
+      'ASC',
+    );
 
-    if (zt === 1) {
-      if (!zyh) throw new BadRequestException('住院号不能为空');
-      qb.where('jb02.zyh LIKE :zyh', { zyh: `%${zyh}%` });
-    } else {
-      if (!startDate || !endDate) throw new BadRequestException('查询日期范围不能为空');
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      qb.where('jb01.jbsj >= :start AND jb01.jbsj <= :end', { start, end });
-    }
-
-    return qb.getRawMany();
+    return qb.getMany();
   }
 
   /**
@@ -282,9 +247,24 @@ export class emr_jb01Service {
         await jb01Repo.insert({ ...jb01, jbxh });
       }
 
-      // 2. 批量保存明细
+      // 2. 全量同步明细（新增 / 更新 / 删除）
+      const jb02Repo = manager.getRepository(emr_jb02);
+
+      // 查出该 jbxh 下数据库中已有的所有明细 jlxh
+      const existingRows = await jb02Repo.find({ where: { jbxh } });
+      const existingJlxhSet = new Set(existingRows.map((r) => String(r.jlxh)));
+
+      // 传入记录中携带的 jlxh（已存在的行）
+      const incomingJlxhSet = new Set(jb02.filter((r) => r.jlxh).map((r) => String(r.jlxh)));
+
+      // 删除：数据库有、传入没有的行
+      const toDelete = [...existingJlxhSet].filter((id) => !incomingJlxhSet.has(id));
+      if (toDelete.length > 0) {
+        await jb02Repo.delete(toDelete.map((jlxh) => ({ jlxh })));
+      }
+
       if (jb02.length > 0) {
-        const jb02Repo = manager.getRepository(emr_jb02);
+        // 预先取最大 jlxh，用于需要新增序号的行
         const maxResult = await manager
           .createQueryBuilder(emr_jb02, 'j')
           .select('MAX(CAST(j.jlxh AS BIGINT))', 'maxJlxh')
@@ -296,8 +276,7 @@ export class emr_jb01Service {
           const jlxh = row.jlxh ? String(row.jlxh) : String(nextJlxh++);
           const bz1 = String(index + 1).padStart(2, '0');
           const data = { ...row, jlxh, jbxh, bz1 };
-          const existsJb02 = await jb02Repo.count({ where: { jlxh } });
-          if (existsJb02 > 0) {
+          if (existingJlxhSet.has(jlxh)) {
             await jb02Repo.update({ jlxh }, data);
           } else {
             await jb02Repo.insert(data);

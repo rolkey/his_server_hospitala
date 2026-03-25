@@ -1,4 +1,5 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { emr_jb01 } from '../emr_jb01/emr_jb01.entity';
 
 /** 交接班明细表 EMR_JB02 */
 @Entity('EMR_JB02', { schema: 'dbo' })
@@ -8,6 +9,10 @@ export class emr_jb02 {
 
   @Column('decimal', { name: 'JBXH', nullable: true, precision: 18, scale: 0 })
   jbxh: string | null;
+
+  @ManyToOne(() => emr_jb01, (jb01) => jb01.jbxh)
+  @JoinColumn({ name: 'jbxh', referencedColumnName: 'jbxh' })
+  jb01: emr_jb01;
 
   @Column('varchar', { name: 'ZYH', nullable: true, length: 20 })
   zyh: string | null;
