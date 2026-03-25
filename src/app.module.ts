@@ -80,6 +80,10 @@ import { emr_jcffModule } from './modules/emr_jcff/emr_jcff.module';
 import { emr_jcsqModule } from './modules/emr_jcsq/emr_jcsq.module';
 import { emr_jcxmModule } from './modules/emr_jcxm/emr_jcxm.module';
 import { emr_xmflModule } from './modules/emr_xmfl/emr_xmfl.module';
+import { emr_jb01Module } from './modules/emr_jb01/emr_jb01.module';
+import { emr_jb02Module } from './modules/emr_jb02/emr_jb02.module';
+import { enr_jb01Module } from './modules/enr_jb01/enr_jb01.module';
+import { enr_jb02Module } from './modules/enr_jb02/enr_jb02.module';
 import { H15SsxbTfModule } from './modules/h15_ssxb_tf/h15-ssxb-tf.module';
 import { H15SsjxxbModule } from './modules/h15_ssjxxb/h15-ssjxxb.module';
 import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
@@ -168,6 +172,10 @@ import { Views360Module } from './modules/views_360/views_360.module';
     emr_jcffModule,
     emr_jcxmModule,
     emr_xmflModule,
+    emr_jb01Module,
+    emr_jb02Module,
+    enr_jb01Module,
+    enr_jb02Module,
     H15SsxbTfModule,
     H15SsjxxbModule,
     H13BrzkqkModule,
