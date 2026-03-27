@@ -11,7 +11,7 @@ export class emr_jb02 {
   jbxh: string | null;
 
   @ManyToOne(() => emr_jb01, (jb01) => jb01.jbxh)
-  @JoinColumn({ name: 'jbxh', referencedColumnName: 'jbxh' })
+  @JoinColumn({ name: 'JBXH', referencedColumnName: 'jbxh' })
   jb01: emr_jb01;
 
   @Column('varchar', { name: 'ZYH', nullable: true, length: 20 })
