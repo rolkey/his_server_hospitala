@@ -13,7 +13,9 @@
             "cwd": "${workspaceFolder}", // 确保工作目录正确
             "envFile": "${workspaceFolder}/.env", // 设置环境变量文件路径
             "env": {
-                "TZ": "Asia/Shanghai" // 设置时区
+                "TZ": "Asia/Shanghai", // 设置时区
+                "HTTP_PROXY": "",
+                "HTTPS_PROXY": "",
             }
         }
     ]
