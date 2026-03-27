@@ -47,6 +47,10 @@ import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { log } from 'console';
 import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
 import { emr_jcsqService } from '../emr_jcsq/emr_jcsq.service';
+import { ParamService } from '../h12_xmzd/service/param.service';
+import { H12CheckService } from './h12_check.service';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
@@ -74,6 +78,10 @@ export class h12_yzxbService {
     private h11_brxxRepo: Repository<h11_brxx>,
     @InjectRepository(h13_yzzxcs)
     private readonly h13_yzzxcsRepository: Repository<h13_yzzxcs>,
+    @InjectRepository(N0422)
+    private readonly n0422Repository: Repository<N0422>,
+    @InjectRepository(N04_23)
+    private readonly n0423Repository: Repository<N04_23>,
 
     @Inject(forwardRef(() => h12_yzzbService))
     private readonly h12_yzzbService: h12_yzzbService,
@@ -90,6 +98,8 @@ export class h12_yzxbService {
     private contextService: ContextService,
     // private sfxmService: SfxmService,
     private h12CyclService: H12CyclService,
+    private readonly paramService: ParamService,
+    private readonly h12CheckService: H12CheckService,
 
     @Inject(forwardRef(() => emr_jcsqService))
     private emrJcsqService: emr_jcsqService,
@@ -911,7 +921,7 @@ export class h12_yzxbService {
       throw new BadRequestException('请录入医嘱内容!');
     }
 
-    // TODO: 验证床位信息
+    // 验证床位信息
     const h11Brxx = await this.h11_brxxRepo.findOne({
       where: { zyid: h12_yzzbOpe.zyid },
     });
@@ -1030,12 +1040,25 @@ export class h12_yzxbService {
       }
     }
 
-    // 2. 保存数据
-    // await this.dataSource.transaction(async (manager) => {
-    //   try {
-    // for (let i = 0; i < h12_yzxbList.length; i++) {
-    //   const adviceRow = h12_yzxbList[i];
-    // await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
+    // 2. 违规审核
+    const yzsssh = await this.paramService.gfGetPara(13, 'yzsssh', '0', '医嘱实时审核');
+    if (yzsssh === '1') {
+      // 进行审核
+      const n0422s = await this.n0422Repository.find({
+        where: { zyid: h12_yzzbOpe.zyid },
+      });
+      const n0423s = await this.n0423Repository.find({
+        where: { zyid: h12_yzzbOpe.zyid },
+      });
+      await this.h12CheckService.checkAdvice(
+        h11Brxx,
+        n0422s,
+        n0423s,
+        h12_yzxbList as unknown as h12_yzxb[],
+      );
+    }
+
+    // 3. 保存数据
 
     // 处理删除记录
     const promises = [];

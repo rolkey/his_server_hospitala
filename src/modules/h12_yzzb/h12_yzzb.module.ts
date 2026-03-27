@@ -47,6 +47,10 @@ import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 import { emr_jcsqService } from '../emr_jcsq/emr_jcsq.service';
 import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { H12CheckService } from './h12_check.service';
+import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
 // import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
 
 @Global()
@@ -75,6 +79,8 @@ import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
       C00Fbxx,
       H13YzzxcsDelete,
       emr_jcsq,
+      N0422,
+      N04_23,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => SfxmModule),
@@ -95,6 +101,7 @@ import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
     h12_yzxbService,
     h12_yzxbServiceNew,
     h13_yzzxcsService,
+    H12CheckService,
     ContextService,
     BabyAdviceService,
     h11_lshService,
@@ -102,6 +109,6 @@ import { emr_jcsq } from '../emr_jcsq/emr_jcsq.entity';
     H12CyclService,
     emr_jcsqService,
   ],
-  exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew],
+  exports: [h12_yzzbService, h12_yzxbService, h12_yzxbServiceNew, H12CheckService],
 })
 export class h12_yzzbModule {}

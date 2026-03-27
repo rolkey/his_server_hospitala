@@ -33,6 +33,8 @@ import { H12Cycl } from '../h12-cycl/h12-cycl.entity';
 import { Syspar } from '../h12_xmzd/entity/syspar.entity';
 import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { Mzff } from '../mzff/mzff.entity';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { Mzff } from '../mzff/mzff.entity';
       Syspar,
       SysparNew,
       Mzff,
+      N0422,
+      N04_23,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => h12_yzzbModule),

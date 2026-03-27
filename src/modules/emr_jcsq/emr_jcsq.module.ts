@@ -35,6 +35,8 @@ import { SysparNew } from '../h12_xmzd/entity/__syspar_new.entity';
 import { Mzff } from '../mzff/mzff.entity';
 import { h12_yzzbModule } from '../h12_yzzb/h12_yzzb.module';
 import { h21_brxx } from '../h21_brxx/h21-brxx.entity';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
 
 @Global()
 @Module({
@@ -62,6 +64,8 @@ import { h21_brxx } from '../h21_brxx/h21-brxx.entity';
       Syspar,
       SysparNew,
       Mzff,
+      N0422,
+      N04_23,
     ]),
     forwardRef(() => GyIdentityModule),
     forwardRef(() => h12_yzzbModule),

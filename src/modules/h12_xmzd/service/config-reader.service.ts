@@ -455,6 +455,7 @@ export class ConfigReaderService {
       gs_zydjf: await this.paramService.gfGetPara(13, 'zydjf', '0', '中药代煎费'),
       gs_zydjf1: await this.paramService.gfGetPara(13, 'zydjf1', '0', '中药代煎费1'),
       gs_zydjf2: await this.paramService.gfGetPara(13, 'zydjf2', '0', '中药代煎费2'),
+      gs_yzsssh: await this.paramService.gfGetPara(13, 'yzsssh', '0', '医嘱实时审核'),
     };
   }
 

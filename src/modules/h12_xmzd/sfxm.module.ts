@@ -16,6 +16,8 @@ import { UsrcatModule } from '@/modules/usrcat/usrcat.module';
 import { ksmcModule } from '@/modules/ksmc/ksmc.module';
 import { usrcat as Usrcat } from '@/modules/usrcat/usrcat.entity';
 import { ksmc as Ksmc } from '@/modules/ksmc/ksmc.entity';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
 
 @Module({
   imports: [
