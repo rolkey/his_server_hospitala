@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { N0422 } from '../n04_22/n04_22.entity';
 import { N04_23 } from '../n04-23/n04-23.entity';
 import { h12_yzxb } from './h12_yzxb.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * 病人信息接口
@@ -213,7 +215,7 @@ function mapBrxxToHisCaseVo(brxx: h11_brxx): Partial<HisCaseVo> {
   const managerDoctorName = brxx.sxysEntity?.unam ?? brxx.sxys;
 
   return {
-    hisId: brxx.patientId, // 对应医院系统的记录ID
+    hisId: brxx.zyid, // 对应医院系统的记录ID
     patientNo: brxx.zybh, // 住院号
     patientName: brxx.brxm, // 病人姓名
     age: brxx.brnl, // 年龄（字符串）
@@ -399,7 +401,10 @@ const DataSource = {
  */
 @Injectable()
 export class H12CheckService {
-  constructor(private readonly paramService: ParamService) {}
+  constructor(
+    private readonly paramService: ParamService,
+    private readonly httpService: HttpService,
+  ) {}
   /**
    * 医嘱审核
    * @param brxx 患者信息
@@ -410,15 +415,64 @@ export class H12CheckService {
   async checkAdvice(brxx: h11_brxx, zdxx: N0422[], ssxx: N04_23[], yzxb: h12_yzxb[]) {
     // 把数据转为审核需要的格式
     const hisCaseVo = mapBrxxToHisCaseVo(brxx);
-    const hisCaseDiagVo = mapZdxxToHisDiagVo(zdxx, brxx.patientId, null);
-    const hisCaseOperVo = mapSsxxToHisOperVo(ssxx, brxx.patientId, null);
-    const hisCaseChargeVo = mapYzxxToHisChargeVo(yzxb, brxx.patientId, null);
-    hisCaseVo.params.set(DataSource.DIAG, hisCaseDiagVo);
-    hisCaseVo.params.set(DataSource.OPER, hisCaseOperVo);
-    hisCaseVo.params.set(DataSource.CHARGE, hisCaseChargeVo);
+    const hisCaseDiagVo = mapZdxxToHisDiagVo(zdxx, brxx.zyid, null);
+    const hisCaseOperVo = mapSsxxToHisOperVo(ssxx, brxx.zyid, null);
+    const hisCaseChargeVo = mapYzxxToHisChargeVo(yzxb, brxx.zyid, null);
+    hisCaseVo.params = {
+      [DataSource.DIAG]: hisCaseDiagVo,
+      [DataSource.OPER]: hisCaseOperVo,
+      [DataSource.CHARGE]: hisCaseChargeVo,
+    };
 
-    const url = `http://192.168.168.128:8080/rolkey-drgi-zfd-rk/his-hac/checkAdviceRealTime`;
+    const url = await this.paramService.gfGetPara(
+      13,
+      'yzsssh-url',
+      'http://192.168.168.128:8080/rolkey-drgi-zfd-rk/his-hac/checkAdviceRealTime',
+      '医嘱实时审核地址',
+    );
+    const headers = {
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate', // HttpService (Axios) 会自动处理解压，但声明这个有时有助于服务器识别
+      'Accept-Language': 'zh-CN,zh;q=0.9',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      // 注意：这里没有添加 Cookie。如果后端依赖 Cookie 验证，需要在这里手动添加
+      // 'Cookie': 'width=220; sidebarStatus=1',
+      'Upgrade-Insecure-Requests': '1',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+      // 关键：显式指定 Content-Type 为 JSON，因为我们在 POST 数据
+      'Content-Type': 'application/json',
+    };
+
     // 通过调用Post方法调用远程审核接口
-    // const result = await axios.post(url, hisCaseVo);
+    try {
+      // HttpService 返回的是 Observable，通常使用 firstValueFrom 转为 Promise
+      const response = await firstValueFrom(
+        this.httpService.post(url, hisCaseVo, { headers, proxy: false }),
+      );
+      return response.data;
+    } catch (error) {
+      // 错误处理
+      console.error(error);
+      // 兼容性更好的错误判断方式
+      if (error.response) {
+        // 请求已发出，服务器响应状态码不在 2xx 范围内
+        const { status, statusText, data } = error.response;
+        console.error(
+          `请求状态码: ${status}, 状态文本: ${statusText}, 响应数据: ${JSON.stringify(data)}`,
+        );
+        throw new BadRequestException(`实时审核请求失败！状态码: ${status}, 信息: ${statusText}`);
+      } else if (error.request) {
+        // 请求已发出，但没有收到响应
+        console.error('无响应:', error.request);
+        throw new BadRequestException('实时审核服务器无响应，请检查网络或服务状态。');
+      } else {
+        // 设置请求时发生错误
+        console.error('请求设置错误:', error.message);
+        throw new BadRequestException(`实时审核发生错误！${error.message}`);
+      }
+    }
   }
 }

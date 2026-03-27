@@ -51,6 +51,7 @@ import { N04_23 } from '../n04-23/n04-23.entity';
 import { N0422 } from '../n04_22/n04_22.entity';
 import { H12CheckService } from './h12_check.service';
 import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
+import { HttpModule } from '@nestjs/axios';
 // import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
 
 @Global()
@@ -94,6 +95,7 @@ import { emr_jcsqModule } from '../emr_jcsq/emr_jcsq.module';
     forwardRef(() => h11_lshModule),
     forwardRef(() => H12CyclModule),
     // forwardRef(() => emr_jcsqModule),
+    HttpModule,
   ],
   controllers: [h12_yzzbController],
   providers: [
