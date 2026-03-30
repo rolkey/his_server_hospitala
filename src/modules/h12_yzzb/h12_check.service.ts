@@ -6,6 +6,7 @@ import { h12_yzxb } from './h12_yzxb.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 
 /**
  * 病人信息接口
@@ -431,10 +432,7 @@ export class H12CheckService {
       '医嘱实时审核地址',
     );
     const headers = {
-      Accept:
-        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'Accept-Encoding': 'gzip, deflate', // HttpService (Axios) 会自动处理解压，但声明这个有时有助于服务器识别
-      'Accept-Language': 'zh-CN,zh;q=0.9',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       // 注意：这里没有添加 Cookie。如果后端依赖 Cookie 验证，需要在这里手动添加
@@ -452,25 +450,34 @@ export class H12CheckService {
       const response = await firstValueFrom(
         this.httpService.post(url, hisCaseVo, { headers, proxy: false }),
       );
-      return response.data;
+      //   console.log('响应值', response);
+      const { status, msg, data } = response as any;
+      if (status !== 200) {
+        throw new BadRequestException(`审核失败！！${status}，${msg}`);
+      }
+      const { code, data: checkData, msg: checkMsg } = data;
+      if (code !== 200) {
+        throw new BadRequestException(`审核失败！！${code}，${checkMsg}`);
+      } else if (checkData && checkData.length > 0) {
+        throw new CustomException(ErrorCode.ERR_40820, null, 200, checkData);
+      } else return;
     } catch (error) {
-      // 错误处理
-      console.error(error);
+      // 检查是否是 CustomException 且错误码为 ERR_40820
+      if (error instanceof CustomException && error.code === ErrorCode.ERR_40820.code) {
+        // 直接重新抛出该异常
+        throw error;
+      }
+
       // 兼容性更好的错误判断方式
       if (error.response) {
         // 请求已发出，服务器响应状态码不在 2xx 范围内
         const { status, statusText, data } = error.response;
-        console.error(
-          `请求状态码: ${status}, 状态文本: ${statusText}, 响应数据: ${JSON.stringify(data)}`,
-        );
         throw new BadRequestException(`实时审核请求失败！状态码: ${status}, 信息: ${statusText}`);
       } else if (error.request) {
         // 请求已发出，但没有收到响应
-        console.error('无响应:', error.request);
         throw new BadRequestException('实时审核服务器无响应，请检查网络或服务状态。');
       } else {
         // 设置请求时发生错误
-        console.error('请求设置错误:', error.message);
         throw new BadRequestException(`实时审核发生错误！${error.message}`);
       }
     }

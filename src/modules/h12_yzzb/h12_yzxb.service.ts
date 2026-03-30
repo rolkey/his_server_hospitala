@@ -41,7 +41,7 @@ import { h12_yzzbService } from './h12_yzzb.service';
 import { SfxmService } from '../h12_xmzd/service/sfxm.service';
 import { ypFylbid } from '@/constants/advice.contants';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
-import { CustomException } from '@/common/exceptions/custom.exception';
+import { CustomException, ErrorCode } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { H12CyclService } from '../h12-cycl/h12-cycl.service';
 import { log } from 'console';
@@ -881,7 +881,10 @@ export class h12_yzxbService {
         await Promise.all(promises);
       } catch (error: any) {
         console.error('医嘱提交失败', error);
-        throw new CustomException(ERR.ERR_10000, error.message ?? '医嘱提交失败');
+        if (error instanceof CustomException && error.code === ErrorCode.ERR_40820.code) {
+          // 直接重新抛出该异常
+          throw error;
+        } else throw new CustomException(ERR.ERR_10000, error.message ?? '医嘱提交失败');
       }
     });
   }
@@ -898,8 +901,10 @@ export class h12_yzxbService {
       try {
         return await this.saveAdviceManager(h12_yzzbOpe, manager);
       } catch (error: any) {
-        console.error('医嘱保存失败', error?.stack ?? error?.message ?? error);
-        throw new CustomException(ERR.ERR_10000, error?.message ?? '医嘱保存失败');
+        if (error instanceof CustomException && error.code === ErrorCode.ERR_40820.code) {
+          // 直接重新抛出该异常
+          throw error;
+        } else throw new CustomException(ERR.ERR_10000, error?.message ?? '医嘱保存失败');
       }
     });
   }
@@ -1035,7 +1040,7 @@ export class h12_yzxbService {
         });
 
         if (!kcjgxx) {
-          throw new BadRequestException(`${adviceRow.xmmc}  库存不足，请修改医嘱后再保存！`);
+          throw new BadRequestException(`${adviceRow.xmmc} 库存不足，请修改医嘱后再保存！`);
         }
       }
     }

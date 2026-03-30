@@ -55,6 +55,9 @@ export const ERR = {
   ERR_40809: { code: 40809, message: '该患者领药单已经执行！！' },
   ERR_40810: { code: 40810, message: '费用删除失败！！' },
 
+  // 医嘱审核错误
+  ERR_40820: { code: 40820, message: '医嘱审核错误' },
+
   // 手术费用相关
   ERR_40900: { code: 40901, message: '手术明细保存失败！！' },
   ERR_40901: { code: 40901, message: '提交手术明细失败！！' },
