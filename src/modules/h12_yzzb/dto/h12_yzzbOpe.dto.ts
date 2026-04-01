@@ -21,6 +21,13 @@ export class H12_yzzbOpeDto {
   @Allow()
   yzlx: number;
 
+  /**
+   * 违规在前端医生是否已经申诉，已经申诉过则不再提示有问题
+   * checked的意思是已经做过检查并申诉
+   */
+  @Allow()
+  checkedFlag?: boolean;
+
   @Allow()
   h12_yzxbs: UpdateH12_yzxbDto[];
 
