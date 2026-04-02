@@ -333,7 +333,7 @@ function mapYzxxToHisChargeVo(
   return yzxb.map((item) => {
     // 基础信息
     const charge: HisCaseChargeVoTs = {
-      hisId: hisId ?? null,
+      hisId: item.mxxh !== undefined && item.mxxh !== null ? String(item.mxxh) : null,
       caseId: caseId ?? null,
       // 费用日期：优先使用医嘱日期 yzrq，若无则尝试使用开始日期组合（暂不组合）
       usageDate: item.yzrq ?? null,
