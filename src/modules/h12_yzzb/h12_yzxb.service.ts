@@ -1035,19 +1035,26 @@ export class h12_yzxbService {
     // for (let i = 0; i < h12_yzxbList.length; i++) {
     //   const adviceRow = h12_yzxbList[i];
     // await Promise.all(h12_yzxbList.map((mbxb) => this.saveYzxb(mbxb, manager)));
-
-    // 处理删除记录
-    const promises = [];
-    for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
-      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
+    for (const item of h12_yzzbOpe.deleteList) {
+      const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = item;
       if (scdh && xmid === '0000000') {
         // 只有主项删除时，关联的检查申请才能删除
-        const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
-        if (deleteJcsq) promises.push(...deleteJcsq);
+        await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
       }
-      promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
+      await this.remove(zyid, yzlx, yzxh, mxxh, manager)
     }
-    await Promise.all(promises);
+    // 处理删除记录
+    // const promises = [];
+    // for (let i = 0; i < h12_yzzbOpe.deleteList.length; i++) {
+    //   const { zyid, yzlx, yzxh, mxxh, scdh, xmid } = h12_yzzbOpe.deleteList[i];
+    //   if (scdh && xmid === '0000000') {
+    //     // 只有主项删除时，关联的检查申请才能删除
+    //     const deleteJcsq = await this.emrJcsqService.getDeleteJcsqPromise(zyid, [scdh], manager);
+    //     if (deleteJcsq) promises.push(...deleteJcsq);
+    //   }
+    //   promises.push(this.remove(zyid, yzlx, yzxh, mxxh, manager));
+    // }
+    // await Promise.all(promises);
 
     try {
       await manager.save(h12_yzxb, h12_yzxbList);
@@ -1353,32 +1360,48 @@ export class h12_yzxbService {
     }
     await this.dataSource.transaction(async (manager) => {
       //   await manager.save(h12_yzxb, h12_yzxbs);
-      await Promise.all(
-        h12_yzxbs.map((h12Yzxb) =>
-          manager.update(
-            h12_yzxb,
-            {
-              zyid: h12Yzxb.zyid,
-              yzxh: h12Yzxb.yzxh,
-              yzlx: h12Yzxb.yzlx,
-              mxxh: h12Yzxb.mxxh,
-            },
-            {
-              mrcs: h12Yzxb.mrcs,
-              tzrq: h12Yzxb.tzrq,
-              yzzt: h12Yzxb.yzzt,
-              tzbz: h12Yzxb.tzbz,
-              jsys: h12Yzxb.jsys,
-              jssxys: h12Yzxb.jssxys,
-            },
-          ),
-        ),
-      );
-
+      // await Promise.all(
+      //   h12_yzxbs.map((h12Yzxb) =>
+      //     manager.update(
+      //       h12_yzxb,
+      //       {
+      //         zyid: h12Yzxb.zyid,
+      //         yzxh: h12Yzxb.yzxh,
+      //         yzlx: h12Yzxb.yzlx,
+      //         mxxh: h12Yzxb.mxxh,
+      //       },
+      //       {
+      //         mrcs: h12Yzxb.mrcs,
+      //         tzrq: h12Yzxb.tzrq,
+      //         yzzt: h12Yzxb.yzzt,
+      //         tzbz: h12Yzxb.tzbz,
+      //         jsys: h12Yzxb.jsys,
+      //         jssxys: h12Yzxb.jssxys,
+      //       },
+      //     ),
+      //   ),
+      // );
+      for (const h12Yzxb of h12_yzxbs) {
+        await manager.update(
+          h12_yzxb,
+          {
+            zyid: h12Yzxb.zyid,
+            yzxh: h12Yzxb.yzxh,
+            yzlx: h12Yzxb.yzlx,
+            mxxh: h12Yzxb.mxxh,
+          },
+          {
+            mrcs: h12Yzxb.mrcs,
+            tzrq: h12Yzxb.tzrq,
+            yzzt: h12Yzxb.yzzt,
+            tzbz: h12Yzxb.tzbz,
+            jsys: h12Yzxb.jsys,
+            jssxys: h12Yzxb.jssxys,
+          })
+      }
       // 处理库存
       //   const zxrq = DateFormater.formatDate1(tzsj);
       //   await this.h13_yzzxcsService.wfStopFymx(zyid, yzxh, yzlx, yzzh, zxrq, mrcs, userId, manager);
-
       // 更新消息数据
       await this.h11Jshztzd1Service.updateOrCreateRecord(
         {
@@ -1524,12 +1547,17 @@ export class h12_yzxbService {
         // else if (fgqm) qm();
       }
       await this.dataSource.transaction(async (manager) => {
-        await Promise.all(
-          yzxbs.map((item) => {
-            const { zyid, yzlx, yzxh, mxxh, ksys, kssxys } = item;
-            return manager.update(h12_yzxb, { zyid, yzlx, yzxh, mxxh }, { ksys, kssxys });
-          }),
-        );
+        for (const item of yzxbs) {
+          const { zyid, yzlx, yzxh, mxxh, ksys, kssxys } = item;
+          await manager.update(h12_yzxb, { zyid, yzlx, yzxh, mxxh }, { ksys, kssxys });
+        }
+        // yzxbs.map((item) => {
+        // await Promise.all(
+        //   yzxbs.map((item) => {
+        //     const { zyid, yzlx, yzxh, mxxh, ksys, kssxys } = item;
+        //     return manager.update(h12_yzxb, { zyid, yzlx, yzxh, mxxh }, { ksys, kssxys });
+        //   }),
+        // );
       });
     }
   }

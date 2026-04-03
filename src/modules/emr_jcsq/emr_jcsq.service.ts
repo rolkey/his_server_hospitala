@@ -26,7 +26,7 @@ export class emr_jcsqService {
 
     @Inject(forwardRef(() => h12_yzxbService))
     private readonly h12YzxbService: h12_yzxbService,
-  ) {}
+  ) { }
 
   // 更新医嘱明细
   async updateAdvices(h12Yzxb: h12_yzxb, saveDto: SaveDto, xmid: string, manager: EntityManager) {
@@ -238,7 +238,7 @@ export class emr_jcsqService {
           // 这里实现生成医嘱逻辑
           await this.addAdvice(jcsq, saveDto, manager);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         throw new CustomException(ERR.ERR_10000, error.message ?? '保存申请单失败');
       }
@@ -354,14 +354,15 @@ export class emr_jcsqService {
       select: ['sqdh'],
     });
     if (!jcsq.length) return;
-
-    return [
-      manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) }),
-      manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) }),
-    ];
+    await manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) })
+    await manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) })
+    // return [
+    //   manager.delete(emr_jcsqmx, { sqdh: In([...sqdhs]) }),
+    //   manager.delete(emr_jcsq, { sqdh: In([...sqdhs]) }),
+    // ];
   }
 
   async deleteJcsq(zyid: string, sqdhs: string[], manager: EntityManager) {
-    await Promise.all(await this.getDeleteJcsqPromise(zyid, sqdhs, manager));
+    await this.getDeleteJcsqPromise(zyid, sqdhs, manager)
   }
 }
