@@ -847,28 +847,27 @@ export class h12_yzxbService {
       try {
         const { zyid, zybh, brxm, qfbz, yzlx, ksid, userId, cycw, cycl, h12_yzxbs, deleteList } =
           h12_yzzb1OpeDto;
-        const promises = [
-          this.saveAdviceManager({ zyid, yzlx, h12_yzxbs, deleteList }, manager),
-          this.h11Jshztzd1Service.updateOrCreateRecord(
-            {
-              zyid,
-              gstr_ainf: { u_ksid: ksid, u_userid: userId },
-              yzlx,
-              ldt_sj: new Date(),
-              cycw,
-              zybh,
-              brxm,
-              qfbz,
-            },
-            manager,
-          ),
-        ];
-
+        // const promises = [
+        await this.saveAdviceManager({ zyid, yzlx, h12_yzxbs, deleteList }, manager)
+        await this.h11Jshztzd1Service.updateOrCreateRecord(
+          {
+            zyid,
+            gstr_ainf: { u_ksid: ksid, u_userid: userId },
+            yzlx,
+            ldt_sj: new Date(),
+            cycw,
+            zybh,
+            brxm,
+            qfbz,
+          },
+          manager,
+        )
+        // ];
         if (cycl) {
-          promises.push(this.h12CyclService.recreateCycl(cycl, manager));
+          await this.h12CyclService.recreateCycl(cycl, manager)
+          // promises.push(this.h12CyclService.recreateCycl(cycl, manager));
         }
-
-        await Promise.all(promises);
+        // await Promise.all(promises);
       } catch (error: any) {
         console.error('医嘱提交失败', error);
         throw new CustomException(ERR.ERR_10000, error.message ?? '医嘱提交失败');

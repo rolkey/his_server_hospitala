@@ -13,7 +13,7 @@ export class H12CyclService {
     private readonly h12CyclRepository: Repository<H12Cycl>,
     // @InjectRepository(h11_brxx)
     // private readonly h11_brxxRepository: Repository<h11_brxx>,
-  ) {}
+  ) { }
 
   // 创建记录
   async create(createH12CyclDto: CreateH12CyclDto): Promise<H12Cycl> {
@@ -134,9 +134,7 @@ export class H12CyclService {
 
   async recreateCycl(dto: CreateH12CyclDto, manager: EntityManager): Promise<void> {
     const entity = this.h12CyclRepository.create(dto);
-    await Promise.all([
-      manager.update(h11_brxx, { zyid: dto.zyid }, { bz2: dto.bz2, cyzd: dto.bz3 }),
-      manager.save(entity),
-    ]);
+    await manager.update(h11_brxx, { zyid: dto.zyid }, { bz2: dto.bz2, cyzd: dto.bz3 })
+    await manager.save(entity)
   }
 }
