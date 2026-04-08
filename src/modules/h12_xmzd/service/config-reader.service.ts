@@ -456,6 +456,12 @@ export class ConfigReaderService {
       gs_zydjf1: await this.paramService.gfGetPara(13, 'zydjf1', '0', '中药代煎费1'),
       gs_zydjf2: await this.paramService.gfGetPara(13, 'zydjf2', '0', '中药代煎费2'),
       gs_yzsssh: await this.paramService.gfGetPara(13, 'yzsssh', '0', '医嘱实时审核'),
+      gs_drgUrl: await this.paramService.gfGetPara(
+        13,
+        'drg-query-url',
+        'http://192.168.168.128:8102/code-route?code={doctorCode}&target=fund/drg-combination/indexX/{patientNo}/-1/{patientId}',
+        'DRG查询地址',
+      ),
     };
   }
 
