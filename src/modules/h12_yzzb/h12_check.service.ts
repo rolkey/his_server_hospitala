@@ -425,9 +425,9 @@ export class H12CheckService {
       [DataSource.CHARGE]: hisCaseChargeVo,
     };
 
-    const url = await this.paramService.gfGetPara(
+    const url = await this.paramService.gfGetParaNew(
       13,
-      'yzsssh-url',
+      'YZSSSH-URL',
       'http://192.168.168.128:8080/rolkey-drgi-zfd-rk/his-hac/checkAdviceRealTime',
       '医嘱实时审核地址',
     );

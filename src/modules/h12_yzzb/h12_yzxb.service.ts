@@ -52,6 +52,11 @@ import { H12CheckService } from './h12_check.service';
 import { N0422 } from '../n04_22/n04_22.entity';
 import { N04_23 } from '../n04-23/n04-23.entity';
 
+interface Diags {
+  n0422s: N0422[];
+  n0423s: N04_23[];
+}
+
 @Injectable({ scope: Scope.TRANSIENT })
 export class h12_yzxbService {
   // TODO: 使用Redis缓存参数
@@ -928,6 +933,13 @@ export class h12_yzxbService {
     // 验证床位信息
     const h11Brxx = await this.h11_brxxRepo.findOne({
       where: { zyid: h12_yzzbOpe.zyid },
+      relations: ['ryzdEntity'],
+      select: {
+        // 不指定 h11_brxx 的字段，这样会默认选择所有字段
+        ryzdEntity: {
+          zwmc: true, // 只选择诊断名称字段
+        },
+      },
     });
 
     if (!h11Brxx.rycw) {
@@ -1046,19 +1058,32 @@ export class h12_yzxbService {
 
     // 2. 违规审核
     if (!h12_yzzbOpe.checkedFlag) {
-      const yzsssh = await this.paramService.gfGetPara(13, 'yzsssh', '0', '医嘱实时审核');
+      const yzsssh = await this.paramService.gfGetParaNew(13, 'yzsssh', '0', '医嘱实时审核');
       if (yzsssh === '1') {
+        const diags: Diags = { n0422s: [], n0423s: [] };
         // 进行审核
-        const n0422s = await this.n0422Repository.find({
+        diags.n0422s = await this.n0422Repository.find({
           where: { zyid: h12_yzzbOpe.zyid },
         });
-        const n0423s = await this.n0423Repository.find({
+        diags.n0423s = await this.n0423Repository.find({
           where: { zyid: h12_yzzbOpe.zyid },
         });
+
+        // 如果没有诊断要从h11_brxx.ryzd中取
+        if (diags.n0422s.length === 0 && h11Brxx.ryzdEntity) {
+          diags.n0422s.push({
+            zyid: h12_yzzbOpe.zyid,
+            zdxh: 1,
+            zdmc: h11Brxx.ryzdEntity.zwmc,
+            zdbm: h11Brxx.ryzd,
+            maindiag_flag: '1',
+          } as N0422);
+        }
+
         await this.h12CheckService.checkAdvice(
           h11Brxx,
-          n0422s,
-          n0423s,
+          diags.n0422s,
+          diags.n0423s,
           h12_yzxbList as unknown as h12_yzxb[],
         );
       }
