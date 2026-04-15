@@ -9,7 +9,7 @@ export class H21YlzhService {
   constructor(
     @InjectRepository(H21Ylzh)
     private readonly h21YlzhRepository: Repository<H21Ylzh>,
-  ) {}
+  ) { }
 
   async create(createH21YlzhDto: CreateH21YlzhDto): Promise<H21Ylzh> {
     const entity = this.h21YlzhRepository.create(createH21YlzhDto);
@@ -19,7 +19,9 @@ export class H21YlzhService {
   async findAll(
     queryDto: H21YlzhQueryDto,
   ): Promise<{ pageData: H21Ylzh[]; total: number } | H21Ylzh[]> {
-    const { pageNo, pageSize, ...filters } = queryDto;
+    const { ...filters } = queryDto;
+    const pageSize = queryDto.pageSize || 100;
+    const pageNo = queryDto.pageNo || 1;
 
     const queryBuilder = this.h21YlzhRepository
       .createQueryBuilder('ylzh')
@@ -86,14 +88,14 @@ export class H21YlzhService {
       queryBuilder.andWhere('ylzh.xbid = :xbid', { xbid: filters.xbid });
     }
 
-    if (pageNo && pageSize) {
-      const skip = (pageNo - 1) * pageSize;
-      const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
-      return { pageData, total };
-    } else {
-      const data = await queryBuilder.getMany();
-      return data;
-    }
+    // if (pageNo && pageSize) {
+    const skip = (pageNo - 1) * pageSize;
+    const [pageData, total] = await queryBuilder.skip(skip).take(pageSize).getManyAndCount();
+    return { pageData, total };
+    // } else {
+    //   const data = await queryBuilder.getMany();
+    //   return data;
+    // }
   }
 
   async findOne(ylzh: string): Promise<H21Ylzh> {
