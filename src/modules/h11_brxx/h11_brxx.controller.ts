@@ -110,4 +110,9 @@ export class h11_brxxController {
   async transferDepartment(@Body() dto: TransferDepartmentDto) {
     return await this.h11_brxxService.transferDepartment(dto);
   }
+
+  @Get('getDiags')
+  async getDiags(@Query() data: { zyid: string }): Promise<any> {
+    return await this.h11_brxxService_new.getDiags(data.zyid);
+  }
 }

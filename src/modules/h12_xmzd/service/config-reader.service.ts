@@ -462,6 +462,13 @@ export class ConfigReaderService {
         'http://192.168.168.128:8102/code-route?code={doctorCode}&target=fund/drg-combination/indexX/{patientNo}/-1/{patientId}',
         'DRG查询地址',
       ),
+      gs_hacCheck: await this.paramService.gfGetParaNew(13, 'yzsssh', '0', '医嘱实时审核'),
+      gs_hacUrl: await this.paramService.gfGetParaNew(
+        13,
+        'YZSSSH-URL',
+        'http://192.168.168.128:8080/rolkey-drgi-zfd-rk/his-hac/checkAdviceRealTime',
+        '医嘱实时审核地址',
+      ),
     };
   }
 

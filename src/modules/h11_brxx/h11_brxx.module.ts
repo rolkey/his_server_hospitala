@@ -22,6 +22,8 @@ import { h00_fylb } from '../h00_fylb/h00_fylb.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { h11_brxxService_new } from './h11_brxx.service_new';
 import { SfxmModule } from '../h12_xmzd/sfxm.module';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
 // import { Jbbmicd10Module } from '../jbbmicd/jbbmicd10.module';
 
 @Global()
@@ -42,6 +44,8 @@ import { SfxmModule } from '../h12_xmzd/sfxm.module';
       SysparNew,
       H11Jszb,
       h00_fylb,
+      N0422,
+      N04_23,
     ]),
     SfxmModule,
     // forwardRef(() => Jbbmicd10Module),
@@ -57,4 +61,4 @@ import { SfxmModule } from '../h12_xmzd/sfxm.module';
   ],
   exports: [h11_brxxService],
 })
-export class h11_brxxModule { }
+export class h11_brxxModule {}

@@ -9,12 +9,23 @@ import { h00_fylbService } from '../h00_fylb/h00_fylb.service';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
+import { N0422 } from '../n04_22/n04_22.entity';
+import { N04_23 } from '../n04-23/n04-23.entity';
+
+interface Diags {
+  n0422s: N0422[];
+  n0423s: N04_23[];
+}
 
 @Injectable()
 export class h11_brxxService_new {
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
+    @InjectRepository(N0422)
+    private readonly n0422Repository: Repository<N0422>,
+    @InjectRepository(N04_23)
+    private readonly n0423Repository: Repository<N04_23>,
     private readonly h11_lshService: h11_lshService,
     private readonly h11_zybhService: h11_zybhService,
     private readonly h00_fylbService: h00_fylbService,
@@ -348,5 +359,39 @@ export class h11_brxxService_new {
    */
   private safeMoney(v: number) {
     return Math.round(v * 100) / 100;
+  }
+
+  async getDiags(zyid: string): Promise<Diags> {
+    const h11Brxx = await this.h11_brxxRepo.findOne({
+      where: { zyid },
+      relations: ['ryzdEntity'],
+      select: {
+        // 不指定 h11_brxx 的字段，这样会默认选择所有字段
+        ryzdEntity: {
+          zwmc: true, // 只选择诊断名称字段
+        },
+      },
+    });
+
+    const diags: Diags = { n0422s: [], n0423s: [] };
+    // 进行审核
+    diags.n0422s = await this.n0422Repository.find({
+      where: { zyid: zyid },
+    });
+    diags.n0423s = await this.n0423Repository.find({
+      where: { zyid: zyid },
+    });
+
+    // 如果没有诊断要从h11_brxx.ryzd中取
+    if (diags.n0422s.length === 0 && h11Brxx.ryzdEntity) {
+      diags.n0422s.push({
+        zyid: zyid,
+        zdxh: 1,
+        zdmc: h11Brxx.ryzdEntity.zwmc,
+        zdbm: h11Brxx.ryzd,
+        maindiag_flag: '1',
+      } as N0422);
+    }
+    return diags;
   }
 }

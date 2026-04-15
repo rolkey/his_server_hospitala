@@ -1057,37 +1057,37 @@ export class h12_yzxbService {
     }
 
     // 2. 违规审核
-    if (!h12_yzzbOpe.checkedFlag) {
-      const yzsssh = await this.paramService.gfGetParaNew(13, 'yzsssh', '0', '医嘱实时审核');
-      if (yzsssh === '1') {
-        const diags: Diags = { n0422s: [], n0423s: [] };
-        // 进行审核
-        diags.n0422s = await this.n0422Repository.find({
-          where: { zyid: h12_yzzbOpe.zyid },
-        });
-        diags.n0423s = await this.n0423Repository.find({
-          where: { zyid: h12_yzzbOpe.zyid },
-        });
+    // if (!h12_yzzbOpe.checkedFlag) {
+    //   const yzsssh = await this.paramService.gfGetParaNew(13, 'yzsssh', '0', '医嘱实时审核');
+    //   if (yzsssh === '1') {
+    //     const diags: Diags = { n0422s: [], n0423s: [] };
+    //     // 进行审核
+    //     diags.n0422s = await this.n0422Repository.find({
+    //       where: { zyid: h12_yzzbOpe.zyid },
+    //     });
+    //     diags.n0423s = await this.n0423Repository.find({
+    //       where: { zyid: h12_yzzbOpe.zyid },
+    //     });
 
-        // 如果没有诊断要从h11_brxx.ryzd中取
-        if (diags.n0422s.length === 0 && h11Brxx.ryzdEntity) {
-          diags.n0422s.push({
-            zyid: h12_yzzbOpe.zyid,
-            zdxh: 1,
-            zdmc: h11Brxx.ryzdEntity.zwmc,
-            zdbm: h11Brxx.ryzd,
-            maindiag_flag: '1',
-          } as N0422);
-        }
+    //     // 如果没有诊断要从h11_brxx.ryzd中取
+    //     if (diags.n0422s.length === 0 && h11Brxx.ryzdEntity) {
+    //       diags.n0422s.push({
+    //         zyid: h12_yzzbOpe.zyid,
+    //         zdxh: 1,
+    //         zdmc: h11Brxx.ryzdEntity.zwmc,
+    //         zdbm: h11Brxx.ryzd,
+    //         maindiag_flag: '1',
+    //       } as N0422);
+    //     }
 
-        await this.h12CheckService.checkAdvice(
-          h11Brxx,
-          diags.n0422s,
-          diags.n0423s,
-          h12_yzxbList as unknown as h12_yzxb[],
-        );
-      }
-    }
+    //     await this.h12CheckService.checkAdvice(
+    //       h11Brxx,
+    //       diags.n0422s,
+    //       diags.n0423s,
+    //       h12_yzxbList as unknown as h12_yzxb[],
+    //     );
+    //   }
+    // }
 
     // 3. 保存数据
 
