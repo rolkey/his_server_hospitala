@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, AfterLoad, ManyToOne, JoinColumn } from 'typeorm';
 import { DateTransformer } from '@/common/transformers/date.transformer';
+import { bs_dzpj } from './bs_dzpj.entity';
 
 @Entity('h11_fpzb')
 export class H11Fpzb {
@@ -94,4 +95,15 @@ export class H11Fpzb {
 
   @Column({ name: 'jkdh', type: 'varchar', length: 12, nullable: true })
   jkdh: string | null;
+
+  @ManyToOne(() => bs_dzpj)
+  @JoinColumn({ name: 'fphm', referencedColumnName: 'bz5' })
+  bsDzpjEntity: bs_dzpj;
+
+  @AfterLoad()
+  trim() {
+    if (this.fphm) {
+      this.fphm = this.fphm.trim();
+    }
+  }
 }

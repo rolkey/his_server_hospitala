@@ -30,7 +30,7 @@ export class H11FpzbService {
     private readonly paramService: ParamService,
     private readonly h11_lshService: h11_lshService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(createH11FpzbDto: CreateH11FpzbDto) {
     // 查询结算主表
@@ -134,8 +134,14 @@ export class H11FpzbService {
     const { pageNo = 1, pageSize = 10, ...filters } = queryDto;
     const skip = (pageNo - 1) * pageSize;
 
-    const queryBuilder = this.h11FpzbRepository.createQueryBuilder('fpzb');
-
+    const queryBuilder = this.h11FpzbRepository.createQueryBuilder('fpzb')
+      .leftJoin('fpzb.bsDzpjEntity', 'bsDzpjEntity', 'bsDzpjEntity.mzzy=2')
+      .addSelect([
+        'bsDzpjEntity.jlxh',
+        'bsDzpjEntity.jym',
+        'bsDzpjEntity.pjhm',
+        'bsDzpjEntity.pjdm',
+      ])
     // 添加过滤条件
     if (filters.value) {
       queryBuilder.andWhere(
