@@ -4,14 +4,14 @@ import { Repository } from 'typeorm';
 import { h11_zybh } from './h11_zybh.entity';
 import { DateTime } from 'luxon';
 import { ParamService } from '@/modules/h12_xmzd/service/param.service';
-import { log } from 'console';
+
 @Injectable()
 export class h11_zybhService {
   constructor(
     @InjectRepository(h11_zybh)
     private h11_zybhRepo: Repository<h11_zybh>,
     private readonly paramService: ParamService,
-  ) {}
+  ) { }
 
   async findCurrentZYBH() {
     const result =

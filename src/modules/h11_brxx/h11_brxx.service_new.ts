@@ -19,6 +19,7 @@ interface Diags {
 
 @Injectable()
 export class h11_brxxService_new {
+
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
@@ -31,7 +32,7 @@ export class h11_brxxService_new {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async updateBedAllocation(data: {
     cwid: string;
@@ -393,5 +394,14 @@ export class h11_brxxService_new {
       } as N0422);
     }
     return diags;
+  }
+
+  async getZycs(data: { ylzh?: string; sfzh?: string; zybh?: string; }) {
+    const maxZycs = await this.h11_brxxRepo
+      .createQueryBuilder('brxx')
+      .select('MAX(brxx.zycs)', 'maxZycs')
+      .where('brxx.ylzh = :ylzh', { ylzh: data?.ylzh || '' })
+      .getRawOne().then((res) => res?.maxZycs ? res?.maxZycs + 1 : 1);
+    return maxZycs
   }
 }
