@@ -325,6 +325,7 @@ export class H11FpzbService {
       );
       //throw new BadRequestException('回滚测试!');
       await queryRunner.commitTransaction();
+      return fphmZF
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
