@@ -89,10 +89,18 @@ export class h11_brxxService_new {
    * 获取未结算费用
    */
   async getUnSettleFee(zyid: string) {
-    const [yzList, ssList] = await Promise.all([this.getYzExecuteList(zyid), this.getSsList(zyid)]);
+    const [yzList, ssList, fymxList] = await Promise.all([
+      this.getYzExecuteList(zyid),
+      this.getSsList(zyid),
+      this.getFymxList(zyid),
+    ])
 
-    const yzResult = this.buildYzResult(yzList);
-    const ssResult = this.buildSsResult(ssList);
+    const fymxMap = new Map<string, any>(
+      fymxList.map((item) => [item.feedetl_sn, item] as [string, any]),
+    )
+
+    const yzResult = this.buildYzResult(yzList, fymxMap);
+    const ssResult = this.buildSsResult(ssList, fymxMap);
 
     return [...yzResult, ...ssResult];
   }
@@ -113,6 +121,7 @@ export class h11_brxxService_new {
         AND zx.mxxh = yz.mxxh
         `,
       )
+      .leftJoin('h00_fylb', 'fylb', 'zx.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'zx.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = zx.xmid')
       .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = zx.xmid')
@@ -154,6 +163,8 @@ export class h11_brxxService_new {
 
         'xmzd.gjybbm as xmzd_gjybbm',
         'xmzd.gjybmc as xmzd_gjybmc',
+
+        'fylb.fylbmc as fylbmc',
       ])
       .where('yz.zyid = :zyid', { zyid })
       .andWhere('zx.xmdj > 0')
@@ -171,6 +182,7 @@ export class h11_brxxService_new {
     return this.dataSource
       .createQueryBuilder()
       .from('h15_ssxb', 'ss')
+      .leftJoin('h00_fylb', 'fylb', 'ss.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'ss.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = ss.xmid')
       .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = ss.xmid')
@@ -199,6 +211,8 @@ export class h11_brxxService_new {
 
         'xmzd.gjybbm as xmzd_gjybbm',
         'xmzd.gjybmc as xmzd_gjybmc',
+
+        'fylb.fylbmc as fylbmc',
       ])
       .where('ss.zyid = :zyid', { zyid })
       .andWhere('ss.jsbz = 0')
@@ -206,11 +220,37 @@ export class h11_brxxService_new {
       .andWhere('ss.jfyl <> 0')
       .getRawMany();
   }
+
+  async getFymxList(zyid: string) {
+    return this.dataSource
+      .createQueryBuilder()
+      .from('G60_fymx', 'fymx')
+      .select([
+        'fymx.lsh as lsh',
+        'fymx.mxxh as mxxh',
+        'fymx.lshxh as lshxh',
+        'fymx.setl_id as setl_id',
+        'fymx.feedetl_sn as feedetl_sn',
+        'fymx.det_item_fee_sumamt as det_item_fee_sumamt',
+        'fymx.cnt as cnt',
+        'fymx.pric as pric',
+        'fymx.pric_uplmt_amt as pric_uplmt_amt',
+        'fymx.selfpay_prop as selfpay_prop',
+        'fymx.fulamt_ownpay_amt as fulamt_ownpay_amt',
+        'fymx.overlmt_amt as overlmt_amt',
+        'fymx.preselfpay_amt as preselfpay_amt',
+        'fymx.inscp_scp_amt as inscp_scp_amt',
+        'fymx.chrgitm_lv as chrgitm_lv',
+        'fymx.med_chrgitm_type as med_chrgitm_type',
+      ])
+      .where('fymx.lsh = :zyid', { zyid })
+      .getRawMany();
+  }
   /**
    * 医嘱费用组装
    */
 
-  private buildYzResult(list: any[]) {
+  private buildYzResult(list: any[], fymxMap: Map<string, any>) {
     const map = new Map();
 
     for (const r of list) {
@@ -253,8 +293,12 @@ export class h11_brxxService_new {
           cydy: r.bzxx?.includes('出院') ? 1 : 0,
           ypsl: 0,
           clsl: 0,
+          fylbmc: r.fylbmc,
           gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : (r.xmzd_gjybbm ?? r.yp_gjybbm),
           gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : (r.xmzd_gjybmc ?? r.yp_gjybmc),
+          inscp_scp_amt: fymxMap.get(`Y${r.maxid}`)?.inscp_scp_amt,
+          fulamt_ownpay_amt: fymxMap.get(`Y${r.maxid}`)?.fulamt_ownpay_amt,
+          overlmt_amt: fymxMap.get(`Y${r.maxid}`)?.overlmt_amt,
         });
       }
 
@@ -274,7 +318,7 @@ export class h11_brxxService_new {
    * 手术费用组装
    */
 
-  private buildSsResult(list: any[]) {
+  private buildSsResult(list: any[], fymxMap: Map<string, any>) {
     const map = new Map();
 
     for (const r of list) {
@@ -316,11 +360,14 @@ export class h11_brxxService_new {
           cydy: 0,
           ypsl: 0,
           clsl: 0,
+          fylbmc: r.fylbmc,
           gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : (r.xmzd_gjybbm ?? r.yp_gjybbm),
           gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : (r.xmzd_gjybmc ?? r.yp_gjybmc),
+          inscp_scp_amt: fymxMap.get(`S${r.maxid}`)?.inscp_scp_amt,
+          fulamt_ownpay_amt: fymxMap.get(`S${r.maxid}`)?.fulamt_ownpay_amt,
+          overlmt_amt: fymxMap.get(`S${r.maxid}`)?.overlmt_amt,
         });
       }
-
       const row = map.get(key);
 
       row.sl += sl;

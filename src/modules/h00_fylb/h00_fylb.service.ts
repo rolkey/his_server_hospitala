@@ -8,7 +8,7 @@ export class h00_fylbService {
   constructor(
     @InjectRepository(h00_fylb)
     private h00_fylbRepo: Repository<h00_fylb>,
-  ) {}
+  ) { }
 
   findAll() {
     return this.h00_fylbRepo.find({});

@@ -90,6 +90,7 @@ import { H13BrzkqkModule } from './modules/h13_brzkqk/h13_brzkqk.module';
 import { HisTechModule } from './modules/his-tech/his-tech.module';
 import { TechnologyOrdersModule } from './modules/technology-orders/technology-orders.module';
 import { Views360Module } from './modules/views_360/views_360.module';
+import { chsModule } from './modules/chs/chs.module';
 
 @Module({
   imports: [
@@ -182,6 +183,7 @@ import { Views360Module } from './modules/views_360/views_360.module';
     HisTechModule,
     TechnologyOrdersModule,
     Views360Module,
+    chsModule
   ],
 })
-export class AppModule {}
+export class AppModule { }
