@@ -28,42 +28,40 @@ import { G60Dzjs } from './G60Dzjs';
 @Injectable()
 export class chsService implements OnModuleInit {
   // 1. 定义一个私有 Map 用于存储参数
-  // private fixmedins_code = '';
+  private fixmedins_code = '';
 
   constructor(
-    @InjectRepository(G01Ryxx)
-    private g01RyxxRepo: Repository<G01Ryxx>,
-    @InjectRepository(G01Cbxx)
-    private g01CbxxRepo: Repository<G01Cbxx>,
-    @InjectRepository(G50Zdxx)
-    private g50ZdxxRepo: Repository<G50Zdxx>,
-    @InjectRepository(G10Djxx)
-    private g10DjxxRepo: Repository<G10Djxx>,
-    @InjectRepository(G60Jsxx)
-    private g60JsxxRepo: Repository<G60Jsxx>,
-    @InjectRepository(G01Log)
-    private g01LogRepo: Repository<G01Log>,
-    @InjectRepository(G01Sfxx)
-    private g01SfxxRepo: Repository<G01Sfxx>,
+    // @InjectRepository(G01Ryxx)
+    // private g01RyxxRepo: Repository<G01Ryxx>,
+    // @InjectRepository(G01Cbxx)
+    // private g01CbxxRepo: Repository<G01Cbxx>,
+    // @InjectRepository(G50Zdxx)
+    // private g50ZdxxRepo: Repository<G50Zdxx>,
+    // @InjectRepository(G10Djxx)
+    // private g10DjxxRepo: Repository<G10Djxx>,
+    // @InjectRepository(G60Jsxx)
+    // private g60JsxxRepo: Repository<G60Jsxx>,
+    // @InjectRepository(G01Log)
+    // private g01LogRepo: Repository<G01Log>,
+    // @InjectRepository(G01Sfxx)
+    // private g01SfxxRepo: Repository<G01Sfxx>,
     @InjectRepository(G60Fymx)
     private g60FymxRepo: Repository<G60Fymx>,
-
-    @InjectRepository(G10Dzzh)
-    private g10DzzhRepo: Repository<G10Dzzh>,
-
-    @InjectRepository(G60Dzjs)
-    private g60DzjsRepo: Repository<G60Dzjs>,
+    // @InjectRepository(G10Dzzh)
+    // private g10DzzhRepo: Repository<G10Dzzh>,
+    // @InjectRepository(G60Dzjs)
+    // private g60DzjsRepo: Repository<G60Dzjs>, 
 
     private readonly syspar_newService: syspar_newService,
     private dataSource: DataSource,
   ) { }
   async onModuleInit() {
-    // try {
-    //   const syspar_new = await this.syspar_newService.findNewOne('1', 'xyb_yydm');
-    //   this.fixmedins_code = syspar_new?.pval || '';
-    // } catch (error) {
-    //   logger.error('医保参数初始化失败', error);
-    // }
+    try {
+      const syspar_new = await this.syspar_newService.findNewOne('1', 'xyb_yydm');
+      this.fixmedins_code = syspar_new?.pval || '';
+    } catch (error) {
+      // logger.error('医保参数初始化失败', error);
+    }
   }
 
   async getFymxByLsh(lsh: string, lshxh: string) {
@@ -289,187 +287,88 @@ export class chsService implements OnModuleInit {
   //     }
   //   });
   // }
-  // async saveSettlement(settlement: Settlement) {
-  //   logger.info(`saveSettlement:${JSON.stringify(settlement)}`);
-  //   return await this.dataSource.transaction(async (manager) => {
-  //     try {
-  //       const invono = settlement.invono;
+  async saveSettlement(settlement: Settlement) {
+    console.log('saveSettlement', settlement);
+    return await this.dataSource.transaction(async (manager) => {
+      try {
+        const invono = settlement.invono;
 
-  //       const ybdjh = settlement.ybdjh;
+        const ybdjh = settlement.ybdjh;
 
-  //       const lsh = settlement.setlinfo.lsh;
+        const lsh = settlement.setlinfo.lsh;
 
-  //       const lshxh = settlement.setlinfo.lshxh;
+        const lshxh = settlement.setlinfo.lshxh;
 
-  //       const djxxRepo = manager.getRepository(G10Djxx);
+        const djxxRepo = manager.getRepository(G10Djxx);
 
-  //       const jsxxRepo = manager.getRepository(G60Jsxx);
+        const jsxxRepo = manager.getRepository(G60Jsxx);
 
-  //       const jsmxRepo = manager.getRepository(G60Jsmx);
+        const jsmxRepo = manager.getRepository(G60Jsmx);
 
-  //       const fymxRepo = manager.getRepository(G60Fymx);
+        const dzzhRepo = manager.getRepository(G10Dzzh);
 
-  //       const zdxxRepo = manager.getRepository(G50Zdxx);
+        const dzjsRepo = manager.getRepository(G60Dzjs);
 
-  //       const ryxxRepo = manager.getRepository(G01Ryxx);
+        const djxx = await djxxRepo.findOne({ where: { lsh, lshxh } });
 
-  //       const cbxxRepo = manager.getRepository(G01Cbxx);
+        const jsxx = await jsxxRepo.findOne({ where: { lsh, lshxh } });
 
-  //       const sfxxRepo = manager.getRepository(G01Sfxx);
+        const newJsxx = jsxxRepo.merge(jsxx, {
+          ...settlement.setlinfo,
+          fyid: djxx.fyid,
+        });
 
-  //       const logRepo = manager.getRepository(G01Log);
+        await jsmxRepo.delete({ lsh, lshxh });
 
-  //       const dzzhRepo = manager.getRepository(G10Dzzh);
+        await jsxxRepo.delete({ lsh, lshxh });
 
-  //       const dzjsRepo = manager.getRepository(G60Dzjs);
+        await jsxxRepo.save(newJsxx);
 
-  //       const djxx = await djxxRepo.findOne({ where: { lsh, lshxh } });
-
-  //       const jsxx = await jsxxRepo.findOne({ where: { lsh, lshxh } });
-
-  //       const newJsxx = jsxxRepo.merge(jsxx, {
-  //         ...settlement.setlinfo,
-  //         fyid: djxx.fyid,
-  //       });
-
-  //       await jsmxRepo.delete({ lsh, lshxh });
-
-  //       await jsxxRepo.delete({ lsh, lshxh });
-
-  //       await djxxRepo
-  //         .createQueryBuilder()
-  //         .delete()
-  //         .where(`lsh= :lsh and lshxh='0' and jsbz != 4 `, { lsh: ybdjh })
-  //         .execute();
-
-  //       await jsxxRepo.save(newJsxx);
-
-  //       await jsmxRepo.save(
-  //         settlement?.setldetail.map((item, index) => ({
-  //           ...item,
-  //           lsh,
-  //           lshxh,
-  //           mxxh: index + 1,
-  //           setl_id: newJsxx.setl_id,
-  //         })),
-  //       )
-
-  //       if (settlement?.g10Dzzh && settlement?.g10Dzzh?.setlId && settlement?.g10Dzzh?.mdtrtId) {
-  //         await dzzhRepo.save({
-  //           ...settlement.g10Dzzh,
-  //           lsh: ybdjh,
-  //           fyid: djxx.fyid,
-  //           jssj: new Date(),
-  //           bz1: '1',
-  //           fixmedinsCode: this.fixmedins_code,
-  //         });
-  //         await dzjsRepo.save({
-  //           ...settlement.g10Dzzh,
-  //           lsh: ybdjh,
-  //           lshxh: '10',
-  //           insuType: settlement?.g10Dzzh?.insuTypebs || settlement?.g10Dzzh?.insuType,
-  //         });
-  //         djxx.dzbz = '0';
-  //       }
-  //       await djxxRepo.save({
-  //         ...djxx,
-  //         ...settlement.setlinfo,
-  //         setl_id: newJsxx.setl_id,
-  //         jsbz: 4,
-  //         invono,
-  //         lsh: lsh,
-  //         lshxh: lshxh,
-  //         elec_bill_code: invono,
-  //         jssj: settlement.setlinfo.setl_time,
-  //         acct_mulaid_pay: settlement?.g10Dzzh?.acctPay || 0,
-  //       })
-  //       await djxxRepo.update({ lsh, lshxh }, { lsh: ybdjh, lshxh: '0' });
-  //       await jsxxRepo.update({ lsh, lshxh }, { lsh: ybdjh, lshxh: '0' });
-  //       await zdxxRepo.update({ lsh, bz5: lshxh }, { lsh: ybdjh, bz5: '0' });
-  //       await fymxRepo.update(
-  //         { lsh, lshxh },
-  //         {
-  //           lsh: ybdjh,
-  //           setl_id: newJsxx.setl_id,
-  //           lshxh: '0',
-  //         },
-  //       )
-
-  //       await jsmxRepo.update({ lsh, lshxh }, { lsh: ybdjh, lshxh: '0' });
-  //       await logRepo.update({ lsh, lshxh }, { lsh: ybdjh, lshxh: '0' });
-
-  //       await cbxxRepo.count({
-  //         where: {
-  //           lsh: ybdjh,
-  //           lshxh: '0',
-  //         },
-  //       }).then(async (count) => {
-  //         if (count === 0) {
-  //           await cbxxRepo.update(
-  //             { lsh, lshxh },
-  //             { lsh: ybdjh, lshxh: '0' }
-  //           )
-  //         }
-  //       })
-
-  //       await sfxxRepo.count({
-  //         where: {
-  //           lsh: ybdjh,
-  //           lshxh: '0',
-  //         },
-  //       }).then(async (count) => {
-  //         if (count === 0) {
-  //           await sfxxRepo.update(
-  //             { lsh, lshxh },
-  //             { lsh: ybdjh, lshxh: '0' }
-  //           )
-  //         }
-  //       })
-
-  //       await ryxxRepo.count({
-  //         where: {
-  //           lsh: ybdjh,
-  //           lshxh: '0',
-  //         },
-  //       }).then(async (count) => {
-  //         if (count === 0) {
-  //           await ryxxRepo.update(
-  //             { lsh, lshxh },
-  //             { lsh: ybdjh, lshxh: '0' }
-  //           )
-  //         }
-  //       })
-
-  //       await fymxRepo
-  //         .createQueryBuilder()
-  //         .delete()
-  //         .where(`lsh = :lsh`, { lsh: ybdjh })
-  //         .andWhere(`setl_id != :setl_id`, { setl_id: newJsxx.setl_id })
-  //         .execute();
-
-  //       await ryxxRepo.createQueryBuilder()
-  //         .delete()
-  //         .where(`lsh= :lsh and lshxh !='0' `, { lsh: ybdjh })
-  //         .execute();
-
-  //       await cbxxRepo.createQueryBuilder()
-  //         .delete()
-  //         .where(`lsh= :lsh and lshxh !='0' `, { lsh: ybdjh })
-  //         .execute();
-
-  //       await sfxxRepo.createQueryBuilder()
-  //         .delete()
-  //         .where(`lsh= :lsh and lshxh !='0' `, { lsh: ybdjh })
-  //         .execute();
-
-  //       return { jsbz: 4 };
-  //     } catch (error: any) {
-  //       console.error(settlement);
-  //       logger.error(`医保结算失败:${JSON.stringify(settlement)}`);
-  //       throw new CustomException(ERR.ERR_10000, error.message ?? '医保结算失败');
-  //     }
-  //   });
-  // }
+        await jsmxRepo.save(
+          settlement?.setldetail.map((item, index) => ({
+            ...item,
+            lsh,
+            lshxh,
+            mxxh: index + 1,
+            setl_id: newJsxx.setl_id,
+          })),
+        )
+        if (settlement?.g10Dzzh && settlement?.g10Dzzh?.setlId && settlement?.g10Dzzh?.mdtrtId) {
+          await dzzhRepo.save({
+            ...settlement.g10Dzzh,
+            lsh: ybdjh,
+            fyid: djxx.fyid,
+            jssj: new Date(),
+            bz1: '1',
+            fixmedinsCode: this.fixmedins_code,
+          });
+          await dzjsRepo.save({
+            ...settlement.g10Dzzh,
+            lsh: ybdjh,
+            lshxh: '10',
+            insuType: settlement?.g10Dzzh?.insuTypebs || settlement?.g10Dzzh?.insuType,
+          });
+          djxx.dzbz = '0';
+        }
+        await djxxRepo.save({
+          ...djxx,
+          ...settlement.setlinfo,
+          setl_id: newJsxx.setl_id,
+          jsbz: 4,
+          invono,
+          lsh: lsh,
+          lshxh: lshxh,
+          elec_bill_code: invono,
+          jssj: settlement.setlinfo.setl_time,
+          acct_mulaid_pay: settlement?.g10Dzzh?.acctPay || 0,
+        })
+        return { jsbz: 4 };
+      } catch (error: any) {
+        console.error(settlement);
+        throw new CustomException(ERR.ERR_10000, error.message ?? '医保结算失败');
+      }
+    })
+  }
   // async cancelSettlement(settlement: Settlement) {
   //   return await this.dataSource.transaction(async (manager) => {
   //     try {

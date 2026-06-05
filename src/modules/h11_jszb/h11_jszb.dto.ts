@@ -15,7 +15,7 @@ export class CreateH11JszbDto {
   @IsOptional()
   @IsString()
   @MaxLength(10)
-  jsdh: string;
+  jsdh?: string;
 
   @IsNotEmpty({ message: '住院编号不能为空!' })
   @IsString()

@@ -16,8 +16,7 @@ import { H11JszbService } from '../h11_jszb/h11_jszb.service';
 import { H11JsxbService } from '../h11_jsxb/h11_jsxb.service';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
-
-import { log } from 'console';
+import { chsService } from '../chs/chs.service';
 
 @Injectable()
 export class H11FpzbService {
@@ -29,74 +28,81 @@ export class H11FpzbService {
     private readonly h11JsxbService: H11JsxbService,
     private readonly paramService: ParamService,
     private readonly h11_lshService: h11_lshService,
+    private readonly chsService: chsService,
+
     private dataSource: DataSource,
   ) { }
 
   async create(createH11FpzbDto: CreateH11FpzbDto) {
-    // 查询结算主表
-    const h11Jszb = await this.h11JszbService.findOne(createH11FpzbDto.jsdh);
-    if (!h11Jszb) {
-      throw new BadRequestException('结算主表查询失败');
-    }
-
-    const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: h11Jszb.jsyid, fyid: '1' };
-    const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
-    if (!fphm) {
-      throw new BadRequestException('发票号码获取失败');
-    } else {
-      // 查一下这个发票号码有没有被使用过
-      const fphmRet = await this.findOne(fphm);
-      if (fphmRet) {
-        throw new BadRequestException('获取到的发票号码已使用,请重试!');
-      }
-    }
-
-    // 生成发票主表
-    const h11Fpzb: CreateH11FpzbDto = {
-      jsdh: h11Jszb.jsdh,
-      zybh: h11Jszb.zybh,
-      zyid: h11Jszb.zyid,
-      brxm: h11Jszb.brxm,
-      xbid: h11Jszb.xbid,
-      rysj: h11Jszb.rysj,
-      zzsj: h11Jszb.zzsj,
-      fpje: h11Jszb.ssje,
-      yjje: h11Jszb.yjje,
-      qtje: h11Jszb.gfje,
-      syje: h11Jszb.syje,
-      ksid: h11Jszb.ksid,
-      ksmc: h11Jszb.ksmc,
-      sfyid: h11Jszb.jsyid,
-      sfyxm: h11Jszb.jsyxm,
-      sfsj: new Date(),
-      sjzt: 1,
-      fyhj: h11Jszb.ssje,
-      fphm: fphm,
-      kshm: '',
-    };
-
-    // 生成发票细表
-    const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh });
-    const createH11FpxbDto: CreateH11FpxbDto[] = [];
-
-    if (H11Jsxb.pageData.length <= 0) {
-      throw new BadRequestException('结算细表查询失败');
-    }
-    for (let i = 0; i < H11Jsxb.pageData.length; i++) {
-      createH11FpxbDto[i] = {
-        fphm: fphm,
-        fpxmid: H11Jsxb.pageData[i].fylbid,
-        fpxmmc: H11Jsxb.pageData[i].fylbmc,
-        fpxmje: H11Jsxb.pageData[i].jsje,
-        fpxmqtje: H11Jsxb.pageData[i].zfje,
-      };
-    }
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const { jsdh } = await this.h11JszbService.createByManager({
+        ...createH11FpzbDto
+      }, queryRunner.manager)
+      createH11FpzbDto.jsdh = jsdh
+      // 查询结算主表
+      const h11Jszb = await this.h11JszbService.findOne(createH11FpzbDto.jsdh);
+      if (!h11Jszb) {
+        throw new BadRequestException('结算主表查询失败');
+      }
+
+      const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: h11Jszb.jsyid, fyid: '1' };
+      const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
+      if (!fphm) {
+        throw new BadRequestException('发票号码获取失败');
+      } else {
+        // 查一下这个发票号码有没有被使用过
+        const fphmRet = await this.findOne(fphm);
+        if (fphmRet) {
+          throw new BadRequestException('获取到的发票号码已使用,请重试!');
+        }
+      }
+
+      // 生成发票主表
+      const h11Fpzb: CreateH11FpzbDto = {
+        jsdh: h11Jszb.jsdh,
+        zybh: h11Jszb.zybh,
+        zyid: h11Jszb.zyid,
+        brxm: h11Jszb.brxm,
+        xbid: h11Jszb.xbid,
+        rysj: h11Jszb.rysj,
+        zzsj: h11Jszb.zzsj,
+        fpje: h11Jszb.ssje,
+        yjje: h11Jszb.yjje,
+        qtje: h11Jszb.gfje,
+        syje: h11Jszb.syje,
+        ksid: h11Jszb.ksid,
+        ksmc: h11Jszb.ksmc,
+        sfyid: h11Jszb.jsyid,
+        sfyxm: h11Jszb.jsyxm,
+        sfsj: new Date(),
+        sjzt: 1,
+        fyhj: h11Jszb.ssje,
+        fphm: fphm,
+        kshm: '',
+      };
+
+      // 生成发票细表
+      const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh });
+      const createH11FpxbDto: CreateH11FpxbDto[] = [];
+
+      if (H11Jsxb.pageData.length <= 0) {
+        throw new BadRequestException('结算细表查询失败');
+      }
+      for (let i = 0; i < H11Jsxb.pageData.length; i++) {
+        createH11FpxbDto[i] = {
+          fphm: fphm,
+          fpxmid: H11Jsxb.pageData[i].fylbid,
+          fpxmmc: H11Jsxb.pageData[i].fylbmc,
+          fpxmje: H11Jsxb.pageData[i].jsje,
+          fpxmqtje: H11Jsxb.pageData[i].zfje,
+        };
+      }
+
       // 保存发票主表
       const mainEntity = await queryRunner.manager.save(H11Fpzb, h11Fpzb);
       // 保存发票细表
@@ -119,6 +125,13 @@ export class H11FpzbService {
         .andWhere('usid = :usid', { usid: h11ZypjPrimaryDto.usid })
         .andWhere('fyid = :fyid', { fyid: h11ZypjPrimaryDto.fyid })
         .execute();
+
+      await this.chsService.saveSettlement({
+        setlinfo: createH11FpzbDto.setlinfo,
+        setldetail: createH11FpzbDto.setldetail,
+        invono: fphm,
+        ybdjh: createH11FpzbDto.zyid
+      })
 
       await queryRunner.commitTransaction();
       return mainEntity;
@@ -199,7 +212,7 @@ export class H11FpzbService {
     const userId = dto.czrid;
     const userName = dto.czrxm;
     const fpzb = await this.findOne(dto.fphm);
-    log(fpzb);
+    console.log(fpzb);
     if (!fpzb) {
       throw new BadRequestException(`发票 ${dto.fphm} 不存在`);
     }
