@@ -17,6 +17,10 @@ import { H11JsxbService } from '../h11_jsxb/h11_jsxb.service';
 import { ParamService } from '../h12_xmzd/service/param.service';
 import { h11_lshService } from '../h11_lsh/h11_lsh.service';
 import { chsService } from '../chs/chs.service';
+import { CustomException } from '@/common/exceptions/custom.exception';
+import { ERR } from '@/common/exceptions/error-code';
+import { RedisService } from '@/shared/redis.service';
+import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
 
 @Injectable()
 export class H11FpzbService {
@@ -29,118 +33,132 @@ export class H11FpzbService {
     private readonly paramService: ParamService,
     private readonly h11_lshService: h11_lshService,
     private readonly chsService: chsService,
-
+    private redisService: RedisService,
     private dataSource: DataSource,
   ) { }
 
   async create(createH11FpzbDto: CreateH11FpzbDto) {
+    console.log('create', createH11FpzbDto)
+    const cacheKey = `h21_fpzbService_create_${createH11FpzbDto.zyid}`;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const cachedData = await this.redisService.get(cacheKey);
 
-    try {
-      const { jsdh } = await this.h11JszbService.createByManager({
-        ...createH11FpzbDto
-      }, queryRunner.manager)
-      createH11FpzbDto.jsdh = jsdh
-      // 查询结算主表
-      const h11Jszb = await this.h11JszbService.findOne(createH11FpzbDto.jsdh);
-      if (!h11Jszb) {
-        throw new BadRequestException('结算主表查询失败');
-      }
-
-      const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: h11Jszb.jsyid, fyid: '1' };
-      const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
-      if (!fphm) {
-        throw new BadRequestException('发票号码获取失败');
-      } else {
-        // 查一下这个发票号码有没有被使用过
-        const fphmRet = await this.findOne(fphm);
-        if (fphmRet) {
-          throw new BadRequestException('获取到的发票号码已使用,请重试!');
-        }
-      }
-
-      // 生成发票主表
-      const h11Fpzb: CreateH11FpzbDto = {
-        jsdh: h11Jszb.jsdh,
-        zybh: h11Jszb.zybh,
-        zyid: h11Jszb.zyid,
-        brxm: h11Jszb.brxm,
-        xbid: h11Jszb.xbid,
-        rysj: h11Jszb.rysj,
-        zzsj: h11Jszb.zzsj,
-        fpje: h11Jszb.ssje,
-        yjje: h11Jszb.yjje,
-        qtje: h11Jszb.gfje,
-        syje: h11Jszb.syje,
-        ksid: h11Jszb.ksid,
-        ksmc: h11Jszb.ksmc,
-        sfyid: h11Jszb.jsyid,
-        sfyxm: h11Jszb.jsyxm,
-        sfsj: new Date(),
-        sjzt: 1,
-        fyhj: h11Jszb.ssje,
-        fphm: fphm,
-        kshm: '',
-      };
-
-      // 生成发票细表
-      const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh });
-      const createH11FpxbDto: CreateH11FpxbDto[] = [];
-
-      if (H11Jsxb.pageData.length <= 0) {
-        throw new BadRequestException('结算细表查询失败');
-      }
-      for (let i = 0; i < H11Jsxb.pageData.length; i++) {
-        createH11FpxbDto[i] = {
-          fphm: fphm,
-          fpxmid: H11Jsxb.pageData[i].fylbid,
-          fpxmmc: H11Jsxb.pageData[i].fylbmc,
-          fpxmje: H11Jsxb.pageData[i].jsje,
-          fpxmqtje: H11Jsxb.pageData[i].zfje,
-        };
-      }
-
-      // 保存发票主表
-      const mainEntity = await queryRunner.manager.save(H11Fpzb, h11Fpzb);
-      // 保存发票细表
-      await queryRunner.manager.save(H11Fpxb, createH11FpxbDto);
-
-      // 更新JSZB
-      await queryRunner.manager
-        .createQueryBuilder()
-        .update('h11_jszb')
-        .set({ fpbz: 1, fphm: fphm, sfsj: () => 'CURRENT_TIMESTAMP' })
-        .where('jsdh = :jsdh', { jsdh: h11Jszb.jsdh })
-        .execute();
-
-      // 更新票据号码
-      await queryRunner.manager
-        .createQueryBuilder()
-        .update('h11_zypj')
-        .set({ dqhm: () => 'dqhm + 1' })
-        .where('pjlxid = :pjlxid', { pjlxid: h11ZypjPrimaryDto.pjlxid })
-        .andWhere('usid = :usid', { usid: h11ZypjPrimaryDto.usid })
-        .andWhere('fyid = :fyid', { fyid: h11ZypjPrimaryDto.fyid })
-        .execute();
-      if (createH11FpzbDto?.setlinfo?.setl_id) {
-        await this.chsService.saveSettlement({
-          setlinfo: createH11FpzbDto.setlinfo,
-          setldetail: createH11FpzbDto.setldetail,
-          invono: fphm,
-          ybdjh: createH11FpzbDto.zyid
-        }, queryRunner.manager)
-      }
-      await queryRunner.commitTransaction();
-      return mainEntity;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
+    if (cachedData) {
+      throw new CustomException(ERR.ERR_10000, '该患者正在收费中...');
     }
+    await this.redisService.set(cacheKey, cacheKey, 60);
+
+    // const queryRunner = this.dataSource.createQueryRunner();
+    // await queryRunner.connect();
+    // await queryRunner.startTransaction();
+    return await this.dataSource.transaction(async (manager) => {
+      try {
+        const { jsdh } = await this.h11JszbService.createByManager({
+          ...createH11FpzbDto
+        }, manager)
+        createH11FpzbDto.jsdh = jsdh
+        // 查询结算主表
+        const h11JszbRepo = manager.getRepository(H11Jszb)
+        const h11Jszb = await h11JszbRepo.findOne({ where: { jsdh: createH11FpzbDto.jsdh } });
+        // const h11Jszb = await this.h11JszbService.findOne(createH11FpzbDto.jsdh);
+        if (!h11Jszb) {
+          throw new BadRequestException('结算主表查询失败');
+        }
+
+        const h11ZypjPrimaryDto: H11ZypjPrimaryDto = { pjlxid: 'FPHM', usid: h11Jszb.jsyid, fyid: '1' };
+        const fphm = (await this.h11ZypjService.getCurrentNumber(h11ZypjPrimaryDto)).dqhm; //获取发票号码
+        if (!fphm) {
+          throw new BadRequestException('发票号码获取失败');
+        } else {
+          // 查一下这个发票号码有没有被使用过
+          const fphmRet = await this.findOne(fphm);
+          if (fphmRet) {
+            throw new BadRequestException('获取到的发票号码已使用,请重试!');
+          }
+        }
+
+        // 生成发票主表
+        const h11Fpzb: CreateH11FpzbDto = {
+          jsdh: h11Jszb.jsdh,
+          zybh: h11Jszb.zybh,
+          zyid: h11Jszb.zyid,
+          brxm: h11Jszb.brxm,
+          xbid: h11Jszb.xbid,
+          rysj: h11Jszb.rysj,
+          zzsj: h11Jszb.zzsj,
+          fpje: h11Jszb.ssje,
+          yjje: h11Jszb.yjje,
+          qtje: h11Jszb.gfje,
+          syje: h11Jszb.syje,
+          ksid: h11Jszb.ksid,
+          ksmc: h11Jszb.ksmc,
+          sfyid: h11Jszb.jsyid,
+          sfyxm: h11Jszb.jsyxm,
+          sfsj: new Date(),
+          sjzt: 1,
+          fyhj: h11Jszb.ssje,
+          fphm: fphm,
+          kshm: '',
+        };
+
+        // 生成发票细表
+        const H11Jsxb = await this.h11JsxbService.findAllNotPage({ jsdh: createH11FpzbDto.jsdh }, manager);
+        const createH11FpxbDto: CreateH11FpxbDto[] = [];
+        if (H11Jsxb.pageData.length <= 0) {
+          throw new BadRequestException('结算细表查询失败');
+        }
+        for (let i = 0; i < H11Jsxb.pageData.length; i++) {
+          createH11FpxbDto[i] = {
+            fphm: fphm,
+            fpxmid: H11Jsxb.pageData[i].fylbid,
+            fpxmmc: H11Jsxb.pageData[i].fylbmc,
+            fpxmje: H11Jsxb.pageData[i].jsje,
+            fpxmqtje: H11Jsxb.pageData[i].zfje,
+          };
+        }
+
+        // 保存发票主表
+        const mainEntity = await manager.save(H11Fpzb, h11Fpzb);
+        // 保存发票细表
+        await manager.save(H11Fpxb, createH11FpxbDto);
+
+        // 更新JSZB
+        await manager
+          .createQueryBuilder()
+          .update('h11_jszb')
+          .set({ fpbz: 1, fphm: fphm, sfsj: () => 'CURRENT_TIMESTAMP' })
+          .where('jsdh = :jsdh', { jsdh: h11Jszb.jsdh })
+          .execute();
+
+        // 更新票据号码
+        await manager
+          .createQueryBuilder()
+          .update('h11_zypj')
+          .set({ dqhm: () => 'dqhm + 1' })
+          .where('pjlxid = :pjlxid', { pjlxid: h11ZypjPrimaryDto.pjlxid })
+          .andWhere('usid = :usid', { usid: h11ZypjPrimaryDto.usid })
+          .andWhere('fyid = :fyid', { fyid: h11ZypjPrimaryDto.fyid })
+          .execute();
+        if (createH11FpzbDto?.setlinfo?.setl_id) {
+          await this.chsService.saveSettlement({
+            setlinfo: createH11FpzbDto.setlinfo,
+            setldetail: createH11FpzbDto.setldetail,
+            invono: fphm,
+            g10Dzzh: createH11FpzbDto.g10Dzzh,
+            ybdjh: createH11FpzbDto.zyid
+          }, manager)
+        }
+        // await queryRunner.commitTransaction();
+        return mainEntity;
+      } catch (error: any) {
+        // await queryRunner.rollbackTransaction();
+        console.error(error);
+        throw new CustomException(ERR.ERR_10000, error.message ?? '住院结算失败');
+      } finally {
+        await this.redisService.del(cacheKey);
+        // await queryRunner.release();
+      }
+    })
   }
 
   async findAll(queryDto: H11FpzbQueryDto): Promise<{ pageData: H11Fpzb[]; total: number }> {

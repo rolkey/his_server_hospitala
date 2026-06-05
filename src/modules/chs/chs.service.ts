@@ -318,9 +318,9 @@ export class chsService implements OnModuleInit {
         fyid: djxx.fyid,
       });
 
-      await jsmxRepo.delete({ lsh, lshxh });
+      await jsmxRepo.delete({ lsh, lshxh, setl_id: newJsxx.setl_id });
 
-      await jsxxRepo.delete({ lsh, lshxh });
+      await jsxxRepo.delete({ lsh, lshxh, setl_id: newJsxx.setl_id });
 
       await jsxxRepo.save(newJsxx);
 
