@@ -125,13 +125,14 @@ export class H11FpzbService {
         .andWhere('usid = :usid', { usid: h11ZypjPrimaryDto.usid })
         .andWhere('fyid = :fyid', { fyid: h11ZypjPrimaryDto.fyid })
         .execute();
-
-      await this.chsService.saveSettlement({
-        setlinfo: createH11FpzbDto.setlinfo,
-        setldetail: createH11FpzbDto.setldetail,
-        invono: fphm,
-        ybdjh: createH11FpzbDto.zyid
-      })
+      if (createH11FpzbDto?.setlinfo?.setl_id) {
+        await this.chsService.saveSettlement({
+          setlinfo: createH11FpzbDto.setlinfo,
+          setldetail: createH11FpzbDto.setldetail,
+          invono: fphm,
+          ybdjh: createH11FpzbDto.zyid
+        })
+      }
 
       await queryRunner.commitTransaction();
       return mainEntity;
