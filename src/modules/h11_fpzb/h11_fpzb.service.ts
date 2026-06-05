@@ -131,9 +131,8 @@ export class H11FpzbService {
           setldetail: createH11FpzbDto.setldetail,
           invono: fphm,
           ybdjh: createH11FpzbDto.zyid
-        })
+        }, queryRunner.manager)
       }
-
       await queryRunner.commitTransaction();
       return mainEntity;
     } catch (err) {
