@@ -309,6 +309,10 @@ export class h11_brxx {
   @Column('varchar', { name: 'czry', nullable: true, length: 8 })
   czry: string | null;
 
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: 'czry', referencedColumnName: 'usid' })
+  czryEntity: usrcat;
+
   @Column('varchar', { name: 'hkyb1', nullable: true, length: 8 })
   hkyb1: string | null;
 
@@ -508,14 +512,15 @@ export class h11_brxx {
     if (this.nldw) {
       this.nldw = this.nldw.trim();
     }
-
     if (this.gjid) {
       this.gjid = this.gjid.trim();
     }
     if (this.rybqid) {
       this.rybqid = this.rybqid.trim();
     }
-
+    if (this.zkbqid) {
+      this.zkbqid = this.zkbqid.trim();
+    }
     this.zyts = this.cysj
       ? dayjs(this.cysj).diff(this.rysj, 'day')
       : dayjs(new Date()).diff(this.rysj, 'day');

@@ -252,7 +252,7 @@ export class h11_brxxService {
               qb.orWhere(
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
-                  subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
+                  // subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
                   subQb.andWhere('h12_yzxb.yzrq <= :ksrq', {
                     ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
                   });
@@ -427,6 +427,11 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
+      .leftJoin('h11_brxx.czryEntity', 'czryEntity')
+      .addSelect([
+        'czryEntity.usid',
+        'czryEntity.unam',
+      ])
       .addSelect([
         'ryzdEntity.icd11',
         'ryzdEntity.icd11mc',
@@ -501,7 +506,15 @@ export class h11_brxxService {
          from h11_jshztzd1
          where h11_jshztzd1.zyid = h11_brxx.zyid)`,
         'xyztjbz',
-      );
+      )
+      .addSelect(
+        `(SELECT sum(round(jfyl * xmdj * (zxcs - bzxcs) * kyts,2))
+	FROM h13_yzzxcs
+	WHERE h13_yzzxcs.zyid =h11_brxx.zyid)`, 'yzfy')
+      .addSelect(`(SELECT sum(round(a.jfyl * a.xmdj,2))
+	FROM h15_ssxb a, h15_sszb b
+	WHERE a.zyid = h11_brxx.zyid AND  a.zyid = b.zyid AND a.ssid = b.ssid )`, 'ssfy')
+      .addSelect(`(SELECT sum(yjje)  FROM h11_yjk Where zyid = h11_brxx.zyid AND ksid = h11_brxx.ryksid And (sjzt = 1 OR sjzt = 3 ) and ISNULL(zfyid,'') = '')`, 'yjk')
 
     // 排序
     if (queryDto.rykssj && queryDto.ryjssj) {
@@ -519,12 +532,17 @@ export class h11_brxxService {
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
+
     // 5️⃣ 合并结果
     const result = pageData.map((entity) => {
       const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
       return {
         ...entity,
         zyts1: matchedRaw?.zyts1,
+        qfjsje: (matchedRaw?.yzfy || 0) + (matchedRaw?.ssfy || 0),
+        yzfy: matchedRaw?.yzfy,
+        ssfy: matchedRaw?.ssfy,
+        yjk: matchedRaw?.yjk,
         isexecute: matchedRaw?.isexecute,
         istoday: matchedRaw?.istoday,
         ztbz: entity.zyzt === 4 ? 1 : 0,
@@ -565,6 +583,7 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoinAndSelect('h11_brxx.czryEntity', 'czryEntity')
       .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
       .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
@@ -572,6 +591,8 @@ export class h11_brxxService {
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .leftJoin('h11_brxx.mzzdEntity', 'mzzdEntity')
+
+
       .addSelect([
         'ryzdEntity.icd11',
         'ryzdEntity.icd11mc',

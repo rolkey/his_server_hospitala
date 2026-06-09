@@ -17,6 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisService } from './redis.service';
 import { createClient } from 'redis';
 import { ContextService } from './context.service';
+import { CustomTypeOrmLogger } from '@/utils/typeorm.logger';
 
 @Global()
 @Module({
@@ -37,6 +38,7 @@ import { ContextService } from './context.service';
           database: process.env.DB_DATABASE || configService.get('DB_DATABASE'),
           synchronize: false,
           timezone: '+08:00',
+          logger: process.env.NODE_ENV === 'development' ? null : new CustomTypeOrmLogger(), // 替换默认 logging 配置
           logging: 'all',
           // type: 'mysql',
           // autoLoadEntities: true,
@@ -87,4 +89,4 @@ import { ContextService } from './context.service';
   ],
   exports: [SharedService, RedisService, ContextService],
 })
-export class SharedModule {}
+export class SharedModule { }
