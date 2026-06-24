@@ -687,6 +687,7 @@ export class h11_brxxService {
 
       return result;
     } catch (error) {
+      console.error('入院登记失败', error)
       // 发生错误时回滚事务
       await queryRunner.rollbackTransaction();
       throw error;
