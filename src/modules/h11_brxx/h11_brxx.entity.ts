@@ -164,14 +164,14 @@ export class h11_brxx {
   mzzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'mzzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'mzzd', referencedColumnName: 'bzbm' })
   mzzdEntity: Jbbmicd10;
 
   @Column('varchar', { name: 'ryzd', nullable: true, length: 120 })
   ryzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'ryzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'ryzd', referencedColumnName: 'bzbm' })
   ryzdEntity: Jbbmicd10;
 
   @Column('datetime', { name: 'ryqzsj', nullable: true })
@@ -239,7 +239,7 @@ export class h11_brxx {
   cyzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'cyzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'cyzd', referencedColumnName: 'bzbm' })
   cyzdEntity: Jbbmicd10;
 
   @Column('varchar', { name: 'hbh', nullable: true, length: 20 })
