@@ -664,7 +664,11 @@ export class h11_brxxService {
       }
 
       // 创建新实体
-      const entity = queryRunner.manager.create(h11_brxx, dto);
+      const entity = queryRunner.manager.create(h11_brxx, {
+        ...dto,
+        sflx: dto?.sflx || '01',
+        fyid: dto?.fyid || '1'
+      });
 
       // 获取住院ID号
       entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
@@ -687,7 +691,7 @@ export class h11_brxxService {
 
       return result;
     } catch (error) {
-      console.error('入院登记失败', error)
+      console.error('入院登记失败', error, dto)
       // 发生错误时回滚事务
       await queryRunner.rollbackTransaction();
       throw error;

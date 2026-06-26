@@ -337,7 +337,7 @@ export class h11_brxx {
   @Column('varchar', { name: 'swrq', nullable: true, length: 20 })
   swrq: string | null;
 
-  @Column('tinyint', { name: 'szbz', nullable: true, default: () => '(0)' })
+  @Column('tinyint', { name: 'szbz', nullable: true, })
   szbz: number | null;
 
   @Column('varchar', { name: 'sjdm', nullable: true, length: 20 })
@@ -431,7 +431,6 @@ export class h11_brxx {
     name: 'sflx',
     nullable: true,
     length: 2,
-    default: () => "'01'",
   })
   sflx: string | null;
 
@@ -451,7 +450,7 @@ export class h11_brxx {
   @Column('varchar', {
     name: 'fyid',
     nullable: true,
-    default: () => '(0)',
+    length: 10
   })
   fyid: string | null;
 
