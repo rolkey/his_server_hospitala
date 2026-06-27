@@ -903,40 +903,40 @@ export class h11_brxxService {
       }
 
       // 3.养老处理
-      const ylmbbz = await this.paramService.gfGetPara(
-        81,
-        'ylmbbz',
-        '0',
-        '启用养老管理系统(1启用，0未启用)',
-      );
-      const ylybksid = await this.paramService.gfGetPara(
-        81,
-        'ylybksid',
-        '',
-        '启用养老医保科室编号',
-      );
-      if (ylmbbz === '1') {
-        const YLItem = await queryRunner.query(
-          `SELECT count(*) as count
-         FROM dict_oldie
-         WHERE id = @0 AND status <> 11`,
-          [ghbh],
-        );
-        const YLCount = YLItem?.[0]?.count || 0;
-        if (YLCount > 0 && ylybksid != czrKsid) {
-          return {
-            code: -1,
-            msg: '请先办理退回，然后才可以删除!',
-          };
-        }
+      // const ylmbbz = await this.paramService.gfGetPara(
+      //   81,
+      //   'ylmbbz',
+      //   '0',
+      //   '启用养老管理系统(1启用，0未启用)',
+      // );
+      // const ylybksid = await this.paramService.gfGetPara(
+      //   81,
+      //   'ylybksid',
+      //   '',
+      //   '启用养老医保科室编号',
+      // );
+      // if (ylmbbz === '1') {
+      // const YLItem = await queryRunner.query(
+      //   `SELECT count(*) as count
+      //  FROM dict_oldie
+      //  WHERE id = @0 AND status <> 11`,
+      //   [ghbh],
+      // );
+      // const YLCount = YLItem?.[0]?.count || 0;
+      // if (YLCount > 0 && ylybksid != czrKsid) {
+      //   return {
+      //     code: -1,
+      //     msg: '请先办理退回，然后才可以删除!',
+      //   };
+      // }
 
-        const DCMXDelete = await queryRunner.query(`DELETE yw_dcmx  Where zyh = @0`, [ghbh]);
-        //更新床位状态
-        const CWSYXXUpdate = await queryRunner.query(
-          `UPDATE h13_cwsyxx Set cwzt = 1,zyid='',id='',cwfpxx='病人信息删除1' Where  zyid = @0`,
-          params,
-        );
-      }
+      // const DCMXDelete = await queryRunner.query(`DELETE yw_dcmx  Where zyh = @0`, [ghbh]);
+      // //更新床位状态
+      // const CWSYXXUpdate = await queryRunner.query(
+      //   `UPDATE h13_cwsyxx Set cwzt = 1,zyid='',id='',cwfpxx='病人信息删除1' Where  zyid = @0`,
+      //   params,
+      // );
+      // }
 
       // 4.删除信息
       const ssxbDelete = await queryRunner.query(`DELETE h15_ssxb  Where zyid = @0`, params);

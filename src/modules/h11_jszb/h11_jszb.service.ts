@@ -183,6 +183,7 @@ export class H11JszbService {
       const createH11XnhDto: CreateH11XnhDto = {
         ...createH11JszbDto.paymentType,
         fphm: jsdh,
+        bz1: '1',
         zyid: createH11JszbDto.zyid,
         zyh: createH11JszbDto.zybh,
         brxm: createH11JszbDto.brxm,
