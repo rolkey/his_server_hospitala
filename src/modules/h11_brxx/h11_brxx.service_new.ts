@@ -107,6 +107,7 @@ export class h11_brxxService_new {
   /**
    * 查询医嘱执行原始数据
    */
+
   async getYzExecuteList(zyid: string) {
     return this.dataSource
       .createQueryBuilder()
@@ -165,6 +166,10 @@ export class h11_brxxService_new {
         'xmzd.gjybmc as xmzd_gjybmc',
 
         'fylb.fylbmc as fylbmc',
+
+        'zx.maxid as bz1',
+        'zx.xmid as bz2',
+        'yz.ybbz as bz3',
       ])
       .where('yz.zyid = :zyid', { zyid })
       .andWhere('zx.xmdj > 0')
@@ -213,6 +218,10 @@ export class h11_brxxService_new {
         'xmzd.gjybmc as xmzd_gjybmc',
 
         'fylb.fylbmc as fylbmc',
+
+        'ss.maxid as bz1',
+        'ss.xmid as bz2',
+        'ss.ybbz as bz3',
       ])
       .where('ss.zyid = :zyid', { zyid })
       .andWhere('ss.jsbz = 0')
@@ -299,6 +308,10 @@ export class h11_brxxService_new {
           inscp_scp_amt: fymxMap.get(`Y${r.maxid}`)?.inscp_scp_amt,
           fulamt_ownpay_amt: fymxMap.get(`Y${r.maxid}`)?.fulamt_ownpay_amt,
           overlmt_amt: fymxMap.get(`Y${r.maxid}`)?.overlmt_amt,
+
+          bz1: String(r.bz1),
+          bz2: r.bz2,
+          bz3: String(r.bz3),
         });
       }
 
@@ -366,6 +379,10 @@ export class h11_brxxService_new {
           inscp_scp_amt: fymxMap.get(`S${r.maxid}`)?.inscp_scp_amt,
           fulamt_ownpay_amt: fymxMap.get(`S${r.maxid}`)?.fulamt_ownpay_amt,
           overlmt_amt: fymxMap.get(`S${r.maxid}`)?.overlmt_amt,
+
+          bz1: String(r.bz1),
+          bz2: r.bz2,
+          bz3: String(r.bz3),
         });
       }
       const row = map.get(key);

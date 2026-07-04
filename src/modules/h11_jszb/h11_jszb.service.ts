@@ -229,7 +229,7 @@ export class H11JszbService {
       await manager
         .createQueryBuilder()
         .update(h13_yzzxcs)
-        .set({ jsbz: 1, jsdh: jsdh })
+        .set({ jsbz: 1, jsdh: jsdh, xnhbz: 1 })
         .where('jsbz=0')
         .andWhere('sfbz=1')
         .andWhere('zyid = :zyid', { zyid: createH11JszbDto.zyid })
@@ -246,7 +246,7 @@ export class H11JszbService {
 
       // 5.给手术细表打上结算标志和结算单号
       await manager.query(
-        `UPDATE h15_ssxb SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+        `UPDATE h15_ssxb SET jsbz = $1,jsdh = $2,xnhbz=1 WHERE (zyid = $3) AND
 	      ( h15_ssxb.sfbz = '1' ) AND  
         ( h15_ssxb.jsbz = '0' ) AND
         ( convert( char(10),h15_ssxb.ssrq,102) <= $4)`,
