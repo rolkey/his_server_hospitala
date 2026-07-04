@@ -144,6 +144,7 @@ export class H11FpzbService {
             setlinfo: createH11FpzbDto.setlinfo,
             setldetail: createH11FpzbDto.setldetail,
             invono: fphm,
+            czry: createH11FpzbDto.sfyid,
             g10Dzzh: createH11FpzbDto.g10Dzzh,
             ybdjh: createH11FpzbDto.zyid
           }, manager)

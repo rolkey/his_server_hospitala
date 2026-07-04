@@ -206,6 +206,10 @@ export class Settlement {
 
   @IsOptional()
   g60Dzjs?: G60Dzjs;
+
+  @IsOptional()
+  @IsString()
+  czry?: string;
 }
 
 export class MsgDto {
@@ -229,4 +233,4 @@ export class MsgDto {
   @IsString()
   mdtrt_id?: string;
 }
-export class ReplaceDto {}
+export class ReplaceDto { }

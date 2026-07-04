@@ -299,6 +299,8 @@ export class chsService implements OnModuleInit {
 
       const lshxh = settlement.setlinfo.lshxh;
 
+      const czry = settlement.czry;
+
       const djxxRepo = manager.getRepository(G10Djxx);
 
       const jsxxRepo = manager.getRepository(G60Jsxx);
@@ -358,6 +360,7 @@ export class chsService implements OnModuleInit {
         invono,
         lsh: lsh,
         lshxh: lshxh,
+        czry,
         elec_bill_code: invono,
         jssj: settlement.setlinfo.setl_time,
         acct_mulaid_pay: settlement?.g10Dzzh?.acctPay || 0,

@@ -515,7 +515,7 @@ export class h11_brxxService {
 	FROM h15_ssxb a, h15_sszb b
 	WHERE a.zyid = h11_brxx.zyid AND  a.zyid = b.zyid AND a.ssid = b.ssid )`, 'ssfy')
       .addSelect(`(SELECT sum(yjje)  FROM h11_yjk Where zyid = h11_brxx.zyid AND ksid = h11_brxx.ryksid And (sjzt = 1 OR sjzt = 3 ) and ISNULL(zfyid,'') = '')`, 'yjk')
-
+    // .addSelect(`(select top 1 bz1 from __ksmc where __ksmc.ksid=h11_brxx.cyksid)`, 'dept_code')
     // 排序
     if (queryDto.rykssj && queryDto.ryjssj) {
       detailQuery.orderBy('h11_brxx.rysj', 'ASC');
@@ -532,12 +532,12 @@ export class h11_brxxService {
     // 4️⃣ 查询详细数据 + raw 结果（合并为一次查询）
     const { entities: pageData, raw: rawResult } = await detailQuery.getRawAndEntities();
 
-
     // 5️⃣ 合并结果
     const result = pageData.map((entity) => {
       const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
       return {
         ...entity,
+        // dept_code: matchedRaw?.dept_code,
         zyts1: matchedRaw?.zyts1,
         qfjsje: (matchedRaw?.yzfy || 0) + (matchedRaw?.ssfy || 0),
         yzfy: matchedRaw?.yzfy,
@@ -573,6 +573,7 @@ export class h11_brxxService {
 	FROM h15_ssxb a, h15_sszb b
 	WHERE a.zyid = h11_brxx.zyid AND  a.zyid = b.zyid AND a.ssid = b.ssid ) as ssfy`,
         `(SELECT sum(yjje)  FROM h11_yjk Where zyid = h11_brxx.zyid AND ksid = h11_brxx.ryksid And (sjzt = 1 OR sjzt = 3 ) and ISNULL(zfyid,'') = '') as yjk`,
+        `(select top 1 bz1 from __ksmc where __ksmc.ksid=h11_brxx.cyksid) as dept_code`
       ])
       .where('h11_brxx.zyid = :zyid', { zyid });
     const result = await query.getRawOne();
@@ -623,6 +624,7 @@ export class h11_brxxService {
     if (h11_brxx) {
       h11_brxx.fyhj = result?.yzfy + result?.ssfy;
       h11_brxx.yjk = result?.yjk;
+      h11_brxx.dept_code = result?.dept_code;
     }
     return h11_brxx;
   }

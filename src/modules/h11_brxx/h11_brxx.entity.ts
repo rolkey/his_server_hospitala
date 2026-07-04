@@ -476,6 +476,8 @@ export class h11_brxx {
 
   zyztmc: string | null;
 
+  dept_code: string | null;
+
   @AfterLoad()
   trim() {
     if (this.ylzh) {

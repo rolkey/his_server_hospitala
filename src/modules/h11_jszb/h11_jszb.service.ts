@@ -400,38 +400,42 @@ export class H11JszbService {
       createH11JszbDto.paymentType.kbhj +
       createH11JszbDto.paymentType.qtje4 +
       createH11JszbDto.paymentType.yfje +
-      createH11JszbDto.paymentType.yfje4;
-    if (ssjeSum - yjje != fkje) {
+      createH11JszbDto.paymentType.yfje4 +
+      createH11JszbDto.paymentType.ljfykb +
+      createH11JszbDto.paymentType.sjhj -
+      createH11JszbDto.paymentType.yfje3
+
+    if ((ssjeSum - yjje).toFixed(2) != fkje.toFixed(2)) {
       throw new BadRequestException(
         `传入付款方式总额(${fkje})与后台计算金额(${ssjeSum - yjje})不符,请检查!`,
       );
     }
 
-    if (jsjeSum != createH11JszbDto.jsje) {
+    if (jsjeSum?.toFixed(2) != createH11JszbDto.jsje?.toFixed(2)) {
       throw new BadRequestException(
         `传入结算金额(${createH11JszbDto.jsje})与后台计算金额(${jsjeSum})不符,请检查!`,
       );
     }
 
-    if (jsjeSum != createH11JszbDto.zfje) {
+    if (jsjeSum?.toFixed(2) != createH11JszbDto.zfje?.toFixed(2)) {
       throw new BadRequestException(
         `传入自费金额(${createH11JszbDto.zfje})与后台计算金额(${jsjeSum})不符,请检查!`,
       );
     }
 
-    if (ssjeSum != createH11JszbDto.ssje) {
+    if (ssjeSum?.toFixed(2) != createH11JszbDto.ssje?.toFixed(2)) {
       throw new BadRequestException(
         `传入实收金额(${createH11JszbDto.ssje})与后台计算金额(${ssjeSum})不符,请检查!`,
       );
     }
 
-    if (yjje != createH11JszbDto.yjje) {
+    if (yjje?.toFixed(2) != createH11JszbDto.yjje?.toFixed(2)) {
       throw new BadRequestException(
         `传入预交金额(${createH11JszbDto.yjje})与后台计算金额(${yjje})不符,请检查!`,
       );
     }
 
-    if (syjeSum != createH11JszbDto.syje) {
+    if (syjeSum?.toFixed(2) !== createH11JszbDto.syje?.toFixed(2)) {
       throw new BadRequestException(
         `传入剩余金额(${createH11JszbDto.syje})与后台计算金额(${syjeSum})不符,请检查!`,
       );
