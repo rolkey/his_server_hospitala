@@ -402,8 +402,7 @@ export class H11JszbService {
       createH11JszbDto.paymentType.yfje +
       createH11JszbDto.paymentType.yfje4 +
       createH11JszbDto.paymentType.ljfykb +
-      createH11JszbDto.paymentType.sjhj -
-      createH11JszbDto.paymentType.yfje3
+      createH11JszbDto.paymentType.sjhj
 
     if ((ssjeSum - yjje).toFixed(2) != fkje.toFixed(2)) {
       throw new BadRequestException(
