@@ -21,6 +21,7 @@ import { CustomException } from '@/common/exceptions/custom.exception';
 import { ERR } from '@/common/exceptions/error-code';
 import { RedisService } from '@/shared/redis.service';
 import { H11Jszb } from '../h11_jszb/h11_jszb.entity';
+import { logger } from '@/utils/typeorm.logger';
 
 @Injectable()
 export class H11FpzbService {
@@ -38,7 +39,9 @@ export class H11FpzbService {
   ) { }
 
   async create(createH11FpzbDto: CreateH11FpzbDto) {
-    console.log('create', createH11FpzbDto)
+
+    logger.info('create', createH11FpzbDto)
+
     const cacheKey = `h21_fpzbService_create_${createH11FpzbDto.zyid}`;
 
     const cachedData = await this.redisService.get(cacheKey);
@@ -76,7 +79,7 @@ export class H11FpzbService {
             throw new BadRequestException('获取到的发票号码已使用,请重试!');
           }
         }
-
+        const syje = h11Jszb.ssje - createH11FpzbDto?.gfje || 0
         // 生成发票主表
         const h11Fpzb: CreateH11FpzbDto = {
           jsdh: h11Jszb.jsdh,
@@ -86,10 +89,11 @@ export class H11FpzbService {
           xbid: h11Jszb.xbid,
           rysj: h11Jszb.rysj,
           zzsj: h11Jszb.zzsj,
-          fpje: h11Jszb.ssje,
+          fpje: Number(syje.toFixed(2)),
           yjje: h11Jszb.yjje,
-          qtje: h11Jszb.gfje,
-          syje: h11Jszb.syje,
+          qtje: 0,
+          // syje: h11Jszb.syje,
+          syje: Number((h11Jszb?.yjje || 0 - syje || 0).toFixed(2)),
           ksid: h11Jszb.ksid,
           ksmc: h11Jszb.ksmc,
           sfyid: h11Jszb.jsyid,
@@ -384,7 +388,7 @@ export class H11FpzbService {
     const mmjs = (await this.paramService.gfGetPara(11, 'mmjs', '0', '毛毛合并结算')).toString();
     if (mmjs == '0') {
       const updateYZZX = await queryRunner.query(
-        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid = @0 and jsdh = @1`,
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '', xnhbz=0 Where zyid = @0 and jsdh = @1`,
         [zyid, jsdh],
       );
       const updateYZZB = await queryRunner.query(`Update h12_yzzb Set jsbz = 0 Where zyid = @0`, [
@@ -392,7 +396,7 @@ export class H11FpzbService {
       ]);
     } else if (mmjs == '1') {
       const updateYZZX = await queryRunner.query(
-        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1)) and jsdh = @2`,
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '',xnhbz=0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1)) and jsdh = @2`,
         [zyid, zyid, jsdh],
       );
       const updateYZZB = await queryRunner.query(
@@ -401,7 +405,7 @@ export class H11FpzbService {
       );
     } else {
       const updateYZZX = await queryRunner.query(
-        `Update h13_yzzxcs Set jsbz = 0, jsdh = '' Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601' )) and jsdh = @2`,
+        `Update h13_yzzxcs Set jsbz = 0, jsdh = '',xnhbz=0 Where zyid in (select zyid from h11_brxx where zyid=@0  or ( lsh = @1 and brlxid='0601' )) and jsdh = @2`,
         [zyid, zyid, jsdh],
       );
       const updateYZZB = await queryRunner.query(
@@ -470,7 +474,7 @@ export class H11FpzbService {
       [selectSSXB[0].yszje, zyid],
     );
     const updateSSXB = await queryRunner.query(
-      `Update h15_ssxb Set jsbz = 0, jsdh = '' Where jsdh = @0`,
+      `Update h15_ssxb Set jsbz = 0, jsdh = '',xnhbz=0 Where jsdh = @0`,
       [jsdh],
     );
 
