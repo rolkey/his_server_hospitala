@@ -67,7 +67,10 @@ import { H22SfjlModule } from './modules/h22_sfjl/h22_sfjl.module';
 import { KsryModule } from './modules/ksry/ksry.module';
 import { h13_djdyModule } from './modules/h13_djdy/h13_djdy.module';
 import { C00FbxxModule } from './modules/c00_fbxx/c00_fbxx.module';
+import { N0421Module } from './modules/n04_21/n04_21.module';
 import { N0422Module } from './modules/n04_22/n04_22.module';
+import { N0424Module } from './modules/n04_24/n04_24.module';
+import { N0425Module } from './modules/n04_25/n04_25.module';
 import { H15SszbModule } from './modules/h15_sszb/h15-sszb.module';
 import { H15SsxbModule } from './modules/h15_ssxb/h15-ssxb.module';
 import { BasOprModule } from './modules/bas-opr/bas-opr.module';
@@ -160,7 +163,10 @@ import { chsModule } from './modules/chs/chs.module';
     KsryModule,
     h13_djdyModule,
     C00FbxxModule,
+    N0421Module,
     N0422Module,
+    N0424Module,
+    N0425Module,
     H15SszbModule,
     H15SsxbModule,
     BasOprModule,
