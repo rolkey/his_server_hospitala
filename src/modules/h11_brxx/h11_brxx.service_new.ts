@@ -173,6 +173,7 @@ export class h11_brxxService_new {
       ])
       .where('yz.zyid = :zyid', { zyid })
       .andWhere('zx.xmdj > 0')
+      .andWhere('zx.jfyl > 0')
       .andWhere('(zx.zxcs - zx.bzxcs) <> 0')
       .andWhere('zx.jsbz = 0')
       .andWhere('COALESCE(zx.xnhbz,0) = 0')
@@ -225,6 +226,7 @@ export class h11_brxxService_new {
       ])
       .where('ss.zyid = :zyid', { zyid })
       .andWhere('ss.jsbz = 0')
+      .andWhere('ss.xmdj > 0')
       .andWhere('COALESCE(ss.xnhbz,0) = 0')
       .andWhere('ss.jfyl <> 0')
       .getRawMany();
