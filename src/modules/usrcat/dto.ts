@@ -95,3 +95,9 @@ export class UpdatePasswordDto {
   @Length(3, 20, { message: `密码长度必须大于$constraint1到$constraint2之间` })
   pwrd: string;
 }
+
+export class FindDoctorsByKsidDto {
+  @IsString()
+  @IsNotEmpty({ message: '科室ID不能为空' })
+  ksid: string;
+}

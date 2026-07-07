@@ -191,6 +191,44 @@ export class UsrcatService {
       .getMany();
   }
 
+  /** 根据科室查询医生列表 */
+  async findDoctorsByKsid(ksid: string) {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .select('usrcat.usid', 'usid')
+      .addSelect('usrcat.unam', 'unam')
+      .addSelect('usrcat.szbm', 'szbm')
+      .addSelect('usrcat.pybm', 'pybm')
+      .addSelect('usrcat.qtbm', 'qtbm')
+      .addSelect('usrcat.wbbm', 'wbbm')
+      .addSelect('usrcat.ksid', 'ksid')
+      .addSelect('usrcat.ybry', 'ybry')
+      .addSelect('usrcat.zcid', 'zcid')
+      .addSelect('usrcat.zwid', 'zwid')
+      .addSelect("'(' + RTRIM(usrcat.usid) + ')' + LTRIM(RTRIM(usrcat.unam))", 'name')
+      .where("isnull(usrcat.zhjy,0)=0 and ((usrcat.zcid like '01%' ) OR (usrcat.zcid like '03%'))")
+      .andWhere("usrcat.usid in (select usid from __ksry where syid='12' and ksid=:ksid)", { ksid })
+      .orderBy('usrcat.usid', 'ASC')
+      .getRawMany();
+  }
+
+  /** 查询护士列表 */
+  async findNurses() {
+    return await this.UsrcatRepo.createQueryBuilder('usrcat')
+      .select('usrcat.usid', 'usid')
+      .addSelect('usrcat.unam', 'unam')
+      .addSelect('usrcat.szbm', 'szbm')
+      .addSelect('usrcat.pybm', 'pybm')
+      .addSelect('usrcat.qtbm', 'qtbm')
+      .addSelect('usrcat.wbbm', 'wbbm')
+      .addSelect('usrcat.ksid', 'ksid')
+      .addSelect('usrcat.ybry', 'ybry')
+      .addSelect('usrcat.zcid', 'zcid')
+      .addSelect('usrcat.zwid', 'zwid')
+      .where("isnull(usrcat.zhjy,0)=0 and usrcat.zcid like '02%'")
+      .orderBy('usrcat.usid', 'ASC')
+      .getRawMany();
+  }
+
   async findTollCollector() {
     return await this.UsrcatRepo.createQueryBuilder('usrcat')
       .where('isnull(usrcat.zhjy,0)=0')
