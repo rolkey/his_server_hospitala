@@ -79,7 +79,10 @@ export class H11FpzbService {
             throw new BadRequestException('获取到的发票号码已使用,请重试!');
           }
         }
-        const syje = h11Jszb.ssje - createH11FpzbDto?.gfje || 0
+        const fpje = (createH11FpzbDto?.ssje || 0) - (createH11FpzbDto?.gfje || 0)
+
+        const syje = (createH11FpzbDto?.yjje || 0) - (fpje || 0)
+
         // 生成发票主表
         const h11Fpzb: CreateH11FpzbDto = {
           jsdh: h11Jszb.jsdh,
@@ -89,11 +92,11 @@ export class H11FpzbService {
           xbid: h11Jszb.xbid,
           rysj: h11Jszb.rysj,
           zzsj: h11Jszb.zzsj,
-          fpje: Number(syje.toFixed(2)),
-          yjje: h11Jszb.yjje,
+          fpje: Number(fpje.toFixed(2)),
+          yjje: createH11FpzbDto.yjje,
           qtje: 0,
-          // syje: h11Jszb.syje,
-          syje: Number((h11Jszb?.yjje || 0 - syje || 0).toFixed(2)),
+          syje: Number(syje.toFixed(2)),
+          // syje: Number((createH11FpzbDto?.yjje || 0 - syje || 0).toFixed(2)),
           ksid: h11Jszb.ksid,
           ksmc: h11Jszb.ksmc,
           sfyid: h11Jszb.jsyid,
@@ -153,6 +156,7 @@ export class H11FpzbService {
             ybdjh: createH11FpzbDto.zyid
           }, manager)
         }
+        // throw new BadRequestException('测试');
         // await queryRunner.commitTransaction();
         return mainEntity;
       } catch (error: any) {

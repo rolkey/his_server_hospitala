@@ -20,6 +20,7 @@ interface Diags {
 @Injectable()
 export class h11_brxxService_new {
 
+
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
@@ -169,6 +170,7 @@ export class h11_brxxService_new {
 
         'zx.maxid as bz1',
         'zx.xmid as bz2',
+        'yz.zflx as zflx',
         'yz.ybbz as bz3',
       ])
       .where('yz.zyid = :zyid', { zyid })
@@ -178,6 +180,7 @@ export class h11_brxxService_new {
       .andWhere('zx.jsbz = 0')
       .andWhere('COALESCE(zx.xnhbz,0) = 0')
       .andWhere('zx.sfbz = 1')
+      .orderBy('zx.zxrq', 'ASC')
       .getRawMany();
   }
 
@@ -220,6 +223,7 @@ export class h11_brxxService_new {
 
         'fylb.fylbmc as fylbmc',
 
+        'ss.zflx as zflx',
         'ss.maxid as bz1',
         'ss.xmid as bz2',
         'ss.ybbz as bz3',
@@ -229,6 +233,7 @@ export class h11_brxxService_new {
       .andWhere('ss.xmdj > 0')
       .andWhere('COALESCE(ss.xnhbz,0) = 0')
       .andWhere('ss.jfyl <> 0')
+      .orderBy('ss.ssrq', 'ASC')
       .getRawMany();
   }
 
@@ -271,6 +276,8 @@ export class h11_brxxService_new {
 
       const key = [r.zyid, r.yzlx, r.maxid].join('_');
 
+      const zflx = fymxMap.get(`Y${r.maxid}`)?.chrgitm_lv
+
       if (!map.has(key)) {
         map.set(key, {
           lx: r.yzlx,
@@ -292,7 +299,7 @@ export class h11_brxxService_new {
           maxid: r.maxid,
           yzrq: dayjs(r.yzrq).format('YYYY-MM-DD HH:mm:ss'),
           jb: '',
-          zflx: '',
+          zflx: zflx ? Number(zflx) : Number(r.zflx),
           zfje: 0,
           czfje: 0,
           yzlx: r.yzlx === 1 || r.yzlx === 5 ? '1' : '2',
@@ -342,6 +349,8 @@ export class h11_brxxService_new {
 
       const key = [r.zyid, r.xmid, r.maxid].join('_');
 
+      const zflx = fymxMap.get(`S${r.maxid}`)?.chrgitm_lv
+
       if (!map.has(key)) {
         map.set(key, {
           lx: 10,
@@ -363,7 +372,7 @@ export class h11_brxxService_new {
           maxid: r.maxid,
           yzrq: dayjs(r.ssrq).format('YYYY-MM-DD HH:mm:ss'),
           jb: '',
-          zflx: '',
+          zflx: zflx ? Number(zflx) : Number(r.zflx),
           zfje: 0,
           czfje: 0,
           yzlx: '10',
@@ -470,4 +479,6 @@ export class h11_brxxService_new {
       .getRawOne().then((res) => res?.maxZycs ? res?.maxZycs + 1 : 1);
     return maxZycs
   }
+
+
 }
