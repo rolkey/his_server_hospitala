@@ -10,12 +10,14 @@ import {
   N0423BatchOperationDto,
   N0423ResponseDto,
 } from './dto/n04-23.dto';
+import { PatientCaseLockService } from '../n04_21/patient-case-lock.service';
 
 @Injectable()
 export class N0423Service {
   constructor(
     @InjectRepository(N04_23)
     private readonly n0423Repository: Repository<N04_23>,
+    private readonly patientCaseLockService: PatientCaseLockService,
   ) {}
 
   /**
@@ -23,6 +25,10 @@ export class N0423Service {
    */
   async save(createDto: CreateN0423Dto): Promise<void> {
     const { zyid, list } = createDto;
+    const hasSjbz = Array.isArray(list) && list.some((row) => row && row.sjbz !== undefined);
+    await this.patientCaseLockService.assertNotArchived(zyid, {
+      allowWorkflowWrite: hasSjbz,
+    });
     await this.n0423Repository.delete({ zyid });
     for (const [index, n0423] of list.entries()) {
       n0423.zyid = zyid;

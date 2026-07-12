@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { N0422 } from './n04_22.entity';
+import { PatientCaseLockService } from '../n04_21/patient-case-lock.service';
 
 @Injectable()
 export class N0422Service {
   constructor(
     @InjectRepository(N0422)
     private readonly n0422Repository: Repository<N0422>,
+    private readonly patientCaseLockService: PatientCaseLockService,
   ) {}
 
   // 创建记录 - Controller中 @Post() 使用
@@ -38,6 +40,12 @@ export class N0422Service {
   }
 
   async save(zyid: string, n0422s: Partial<N0422>[]): Promise<void> {
+    // 诊断行若显式带 sjbz，视为工作流写状态，放行；否则已归档则拒绝
+    const hasSjbz =
+      Array.isArray(n0422s) && n0422s.some((row) => row && row.sjbz !== undefined);
+    await this.patientCaseLockService.assertNotArchived(zyid, {
+      allowWorkflowWrite: hasSjbz,
+    });
     await this.n0422Repository.delete({ zyid });
     for (const [index, n0422] of n0422s.entries()) {
       n0422.zyid = zyid;

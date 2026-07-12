@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { N0425 } from './n04_25.entity';
+import { PatientCaseLockService } from '../n04_21/patient-case-lock.service';
 
 /** 婴儿信息查询字段，与 N04_25 按 zyid 查询 SQL 一致 */
 const N0425_DETAIL_FIELDS: (keyof N0425)[] = [
@@ -31,6 +32,7 @@ export class N0425Service {
   constructor(
     @InjectRepository(N0425)
     private readonly n0425Repository: Repository<N0425>,
+    private readonly patientCaseLockService: PatientCaseLockService,
   ) {}
 
   async create(data: Partial<N0425>): Promise<N0425> {
@@ -62,6 +64,7 @@ export class N0425Service {
   }
 
   async update(zyid: string, data: Partial<N0425>): Promise<Partial<N0425>> {
+    await this.patientCaseLockService.assertNotArchived(zyid, { sjbz: data.sjbz });
     const { zyid: _, ...updateData } = data;
     const result = await this.n0425Repository.update({ zyid }, updateData);
     if (result.affected === 0) {
@@ -75,6 +78,7 @@ export class N0425Service {
     if (!zyid) {
       throw new NotFoundException('住院ID不能为空');
     }
+    await this.patientCaseLockService.assertNotArchived(zyid, { sjbz: data.sjbz });
     const existing = await this.n0425Repository.findOne({ where: { zyid } });
     if (existing) {
       await this.n0425Repository.update({ zyid }, data);
@@ -84,6 +88,7 @@ export class N0425Service {
   }
 
   async remove(zyid: string): Promise<void> {
+    await this.patientCaseLockService.assertNotArchived(zyid);
     const result = await this.n0425Repository.delete({ zyid });
     if (result.affected === 0) {
       throw new NotFoundException(`住院ID ${zyid} 对应的婴儿信息不存在`);
