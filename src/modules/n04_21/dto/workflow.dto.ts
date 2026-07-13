@@ -19,7 +19,7 @@ export class PatientCaseWorkflowDto {
   @IsIn([0, 1, 2, 9])
   action: WorkflowActionCode;
 
-  /** 基本信息业务数据（提交/归档时传入；状态字段由服务端写入） */
+  /** 基本信息业务数据（可选，任意操作均可携带；状态字段由服务端写入） */
   @ApiPropertyOptional({ description: 'N04_21 基本信息' })
   @Allow()
   @IsOptional()

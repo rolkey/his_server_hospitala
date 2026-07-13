@@ -34,6 +34,14 @@ function toNumberOrNaN(value: unknown): number {
   return Number(value);
 }
 
+function formatDateTime(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
+}
+
 @Injectable()
 export class N0421WorkflowService {
   constructor(
@@ -78,14 +86,23 @@ export class N0421WorkflowService {
       throw new ConflictException('病案室该患者已存档，不能取消，请联系病案室！');
     }
 
-    // 提交/归档：优先用请求体校验；未传则回退查库
-    if (action === 1 || action === 2) {
+    // 取消提交/取消归档：已办出院超过录入时限且无解锁记录时禁止（对齐 PB uf_vidify_sj）
+    if (action === 0 || action === 9) {
+      await this.assertWithinEntryWindow(zyid);
+    }
+
+    // 提交/归档/取消提交：基本信息校验（PB uf_gd 对 action=9 同样走 uf_vidify_gd）
+    // 优先用请求体校验；未传则回退查库
+    if (action === 1 || action === 2 || action === 9) {
       const basicForValidate = {
         ...(existingBasic || {}),
         ...(dto.basic || {}),
       } as N0421;
       this.validateBasicForArchive(basicForValidate);
+    }
 
+    // 诊断校验仅提交/归档需要（PB zdxx.uf_gd 对 0/9 直接重置 sjbz 不校验）
+    if (action === 1 || action === 2) {
       if (dto.diagnosis !== undefined) {
         this.validateDiagnosisRows(dto.diagnosis);
       } else {
@@ -102,8 +119,8 @@ export class N0421WorkflowService {
       const moduleSjbz = resolveModuleSjbz(action);
       const manager = queryRunner.manager;
 
-      // 提交/归档：先在事务内保存业务数据，再写状态
-      if ((action === 1 || action === 2) && (dto.basic || dto.diagnosis || dto.surgery || dto.fee || dto.newborn)) {
+      // 先在事务内保存业务数据，再写状态（PB：wf_gd/wf_qxgd 均以 wf_save_patient 落库）
+      if (dto.basic || dto.diagnosis || dto.surgery || dto.fee || dto.newborn) {
         await this.saveBusinessPayload(manager, zyid, dto);
       }
 
@@ -174,6 +191,48 @@ export class N0421WorkflowService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  /**
+   * 对齐 PB vu_basy_jbxx.uf_vidify_sj：
+   * 已办出院（h11_brxx.zyzt>2）的病历，出院后超过参数 sysj（小时）即锁定首页录入，
+   * 除非 h12_bljs 存在未过期的“首页”解锁记录。
+   * 取消提交/取消归档会重新放开编辑，故在此拦截，防止超时后绕过锁定。
+   */
+  private async assertWithinEntryWindow(zyid: string) {
+    const rows: { cysj?: Date | string | null; zyzt?: number | null }[] =
+      await this.dataSource.query(
+        `SELECT cysj, zyzt FROM dbo.h11_brxx WHERE zyid = @0`,
+        [zyid],
+      );
+    const brxx = rows?.[0];
+    if (!brxx) return;
+
+    const zyzt = Number(brxx.zyzt ?? 0);
+    const cysj = brxx.cysj ? new Date(brxx.cysj) : null;
+    if (zyzt <= 2 || !cysj || Number.isNaN(cysj.getTime())) return;
+
+    const now = new Date();
+
+    // 有效期内的解锁记录直接放行
+    const unlockRows: { yxsj?: Date | string | null }[] = await this.dataSource.query(
+      `SELECT MAX(yxsj) AS yxsj FROM dbo.h12_bljs WHERE zyid = @0 AND bllx = N'首页'`,
+      [zyid],
+    );
+    const yxsj = unlockRows?.[0]?.yxsj ? new Date(unlockRows[0].yxsj) : null;
+    if (yxsj && !Number.isNaN(yxsj.getTime()) && yxsj > now) return;
+
+    const sysjHours = Number(
+      await this.paramService.gfGetPara(50, 'sysj', '24', '出院时间限制首页修改'),
+    );
+    if (!Number.isFinite(sysjHours) || sysjHours <= 0) return;
+
+    const deadline = new Date(cysj.getTime() + sysjHours * 3600 * 1000);
+    if (now > deadline) {
+      throw new BadRequestException(
+        `该首页已超过规定时间录入，请相关人员解锁！出院日期：${formatDateTime(cysj)}，有效日期范围：${formatDateTime(deadline)}`,
+      );
     }
   }
 
