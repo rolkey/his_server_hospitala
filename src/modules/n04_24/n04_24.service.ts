@@ -236,9 +236,9 @@ export class N0424Service {
       .where('n04_24.zyid = :zyid', { zyid })
       .getOne();
 
-    if (!record) {
-      throw new NotFoundException(`住院ID ${zyid} 对应的病案费用不存在`);
-    }
+    // if (!record) {
+    //   throw new NotFoundException(`住院ID ${zyid} 对应的病案费用不存在`);
+    // }
 
     return record;
   }

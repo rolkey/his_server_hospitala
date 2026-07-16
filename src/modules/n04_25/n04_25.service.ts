@@ -52,9 +52,9 @@ export class N0425Service {
       .where('n04_25.zyid = :zyid', { zyid })
       .getOne();
 
-    if (!record) {
-      throw new NotFoundException(`住院ID ${zyid} 对应的婴儿信息不存在`);
-    }
+    // if (!record) {
+    //   throw new NotFoundException(`住院ID ${zyid} 对应的婴儿信息不存在`);
+    // }
 
     return record;
   }
