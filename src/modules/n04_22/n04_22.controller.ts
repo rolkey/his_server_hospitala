@@ -12,8 +12,12 @@ export class N0422Controller {
   //   }
 
   @Get()
-  find(@Query() condition: Partial<N0422>) {
-    return this.n0422Service.findByCondition(condition);
+  find(@Query() query: Partial<N0422> & { seedInitial?: string }) {
+    const { seedInitial, ...condition } = query;
+    const shouldSeedInitial = seedInitial === 'true' || seedInitial === '1';
+    return this.n0422Service.findByCondition(condition, {
+      seedInitial: shouldSeedInitial,
+    });
   }
 
   //   @Put()

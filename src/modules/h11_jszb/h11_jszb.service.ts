@@ -392,22 +392,35 @@ export class H11JszbService {
     const jsjeSum = zfje + qtje;
     const ssjeSum = zfje + qtje;
     const syjeSum = yjje - jsjeSum;
-    const fkje =
-      createH11JszbDto.paymentType.yhje +
-      createH11JszbDto.paymentType.je1 +
-      createH11JszbDto.paymentType.je3 +
-      createH11JszbDto.paymentType.qt3 +
-      createH11JszbDto.paymentType.kbhj +
-      createH11JszbDto.paymentType.qtje4 +
-      createH11JszbDto.paymentType.yfje +
-      createH11JszbDto.paymentType.yfje4 +
-      createH11JszbDto.paymentType.ljfykb +
-      createH11JszbDto.paymentType.sjhj +
-      createH11JszbDto.paymentType.zfje +
-      createH11JszbDto.paymentType.qt4 +
-      createH11JszbDto.paymentType.dbje
+    const fkje = Number(createH11JszbDto.paymentType.yhje) +
+      Number(createH11JszbDto.paymentType.je1) +
+      Number(createH11JszbDto.paymentType.je3) +
+      Number(createH11JszbDto.paymentType.qt3) +
+      Number(createH11JszbDto.paymentType.kbhj) +
+      Number(createH11JszbDto.paymentType.qtje4) +
+      Number(createH11JszbDto.paymentType.yfje) +
+      Number(createH11JszbDto.paymentType.yfje4) +
+      Number(createH11JszbDto.paymentType.ljfykb) +
+      Number(createH11JszbDto.paymentType.sjhj) +
+      Number(createH11JszbDto.paymentType.zfje) +
+      Number(createH11JszbDto.paymentType.qt4) +
+      Number(createH11JszbDto.paymentType.dbje)
+    // const fkje =
+    //   createH11JszbDto.paymentType.yhje +
+    //   createH11JszbDto.paymentType.je1 +
+    //   createH11JszbDto.paymentType.je3 +
+    //   createH11JszbDto.paymentType.qt3 +
+    //   createH11JszbDto.paymentType.kbhj +
+    //   createH11JszbDto.paymentType.qtje4 +
+    //   createH11JszbDto.paymentType.yfje +
+    //   createH11JszbDto.paymentType.yfje4 +
+    //   createH11JszbDto.paymentType.ljfykb +
+    //   createH11JszbDto.paymentType.sjhj +
+    //   createH11JszbDto.paymentType.zfje +
+    //   createH11JszbDto.paymentType.qt4 +
+    //   createH11JszbDto.paymentType.dbje
 
-    if ((ssjeSum - yjje).toFixed(2) != fkje.toFixed(2)) {
+    if ((ssjeSum - yjje)?.toFixed(2) != fkje?.toFixed(2)) {
       throw new BadRequestException(
         `传入付款方式总额(${fkje})与后台计算金额(${ssjeSum - yjje})不符,请检查!`,
       );

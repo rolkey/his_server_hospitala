@@ -10,6 +10,7 @@ import { N0421Service } from './n04_21.service';
 import { N0421Controller } from './n04_21.controller';
 import { N0421WorkflowService } from './n04_21.workflow.service';
 import { N0421SettlementService } from './n04_21.settlement.service';
+import { N0421RetrieveService } from './n04_21.retrieve.service';
 import { PatientCaseLockService } from './patient-case-lock.service';
 
 @Module({
@@ -24,6 +25,7 @@ import { PatientCaseLockService } from './patient-case-lock.service';
     N0421WorkflowService,
     N0421SettlementService,
     PatientCaseLockService,
+    N0421RetrieveService,
   ],
   exports: [N0421Service, PatientCaseLockService],
 })
