@@ -9,6 +9,7 @@ import { N0421 } from './n04_21.entity';
 import { N0421Service } from './n04_21.service';
 import { N0421Controller } from './n04_21.controller';
 import { N0421WorkflowService } from './n04_21.workflow.service';
+import { N0421SettlementService } from './n04_21.settlement.service';
 import { PatientCaseLockService } from './patient-case-lock.service';
 
 @Module({
@@ -18,7 +19,12 @@ import { PatientCaseLockService } from './patient-case-lock.service';
     SfxmModule,
   ],
   controllers: [N0421Controller],
-  providers: [N0421Service, N0421WorkflowService, PatientCaseLockService],
+  providers: [
+    N0421Service,
+    N0421WorkflowService,
+    N0421SettlementService,
+    PatientCaseLockService,
+  ],
   exports: [N0421Service, PatientCaseLockService],
 })
 export class N0421Module {}

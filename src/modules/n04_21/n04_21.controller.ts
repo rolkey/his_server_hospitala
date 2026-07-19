@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { N0421Service } from './n04_21.service';
 import { N0421WorkflowService } from './n04_21.workflow.service';
+import { N0421SettlementService } from './n04_21.settlement.service';
 import { N0421 } from './n04_21.entity';
 import { FindByZyidDto } from './dto/n04_21.dto';
 import { PatientCaseWorkflowDto } from './dto/workflow.dto';
@@ -22,6 +23,7 @@ export class N0421Controller {
   constructor(
     private readonly n0421Service: N0421Service,
     private readonly n0421WorkflowService: N0421WorkflowService,
+    private readonly n0421SettlementService: N0421SettlementService,
   ) {}
 
   @Get()
@@ -43,6 +45,17 @@ export class N0421Controller {
   @ApiResponse({ status: HttpStatus.OK, description: '查询成功' })
   findByZyidQuery(@Query() query: FindByZyidDto) {
     return this.n0421Service.findByZyid(query.zyid);
+  }
+
+  @Get('settlement')
+  @ApiOperation({
+    summary: '医保结算单打印数据',
+    description:
+      '汇总基本信息、诊断、手术、机构信息、医保结算与费用分类等，用于医保基金结算清单打印预览。',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: '查询成功' })
+  getSettlementSheet(@Query() query: FindByZyidDto) {
+    return this.n0421SettlementService.getSettlementSheet(query.zyid);
   }
 
   @Post('workflow')
