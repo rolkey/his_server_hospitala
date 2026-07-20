@@ -38,6 +38,13 @@ git log --author="用户名" --pretty=tformat: --numstat | awk '{ add += $1; sub
 npx typeorm-model-generator -h localhost -d database -u root -x password -e mysql -o ./src/entity
 ```
 
+## 打包
+
+```bash
+rm -rf node_modules apps/*/node_modules packages/*/node_modules pnpm-lock.yaml
+pnpm i
+```
+
 ## 本地部署
 
 ```bash

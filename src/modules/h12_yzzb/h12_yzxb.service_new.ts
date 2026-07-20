@@ -2874,26 +2874,39 @@ export class h12_yzxbServiceNew {
    */
   async reviewBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
     // 检查是否执行有费用，有费用不允许退回，另外状态也必须在2, 5, 6中
-    // const yzzxcs = await this.h13_yzzxcsRepo.find({
-    //   where: {
-    //     zyid: dto.zyid,
-    //     yzlx: dto.yzlx,
-    //     yzzh: In(dto.yzzh),
-    //     zxcs: Raw((zxcs) => `${zxcs} > bzxcs`),
-    //   },
-    // });
-    // if (yzzxcs.length > 0) {
-    //   throw new CustomException(ERR.ERR_40203);
-    // }
+    const yzzxcs = await this.h13_yzzxcsRepo.find({
+      where: {
+        zyid: dto.zyid,
+        yzlx: dto.yzlx,
+        yzzh: In(dto.yzzh),
+        zxcs: Raw((zxcs) => `${zxcs} > bzxcs`),
+      },
+    });
+    if (yzzxcs.length > 0) {
+      throw new CustomException(ERR.ERR_40203);
+    }
 
     // 如果新提交医嘱，则直接退回不提单状态，让医生可以修改
     await this.h12_yzxbRepo.update(
       { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: 1 },
-      { yzzt: 7, tjbz: 0, hdbz: 0, kssxhs: null, kshs: null },
+      {
+        yzzt: 7,
+        tjbz: 0,
+        hdbz: 0,
+        kssxhs: null,
+        kshs: null,
+        tzbz: () => 'CASE WHEN yzlx = 2 THEN 0 ELSE tzbz END', // 不等于 2 时保持原值
+      },
     );
     await this.h12_yzxbRepo.update(
       { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([2, 5, 6]) },
-      { yzzt: 7, hdbz: 0, kssxhs: null, kshs: null },
+      {
+        yzzt: 7,
+        hdbz: 0,
+        kssxhs: null,
+        kshs: null,
+        tzbz: () => 'CASE WHEN yzlx = 2 THEN 0 ELSE tzbz END', // 不等于 2 时保持原值
+      },
     );
   }
 
