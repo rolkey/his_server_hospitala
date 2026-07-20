@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { H11Jsxb } from './h11_jsxb.entity';
 import { CreateH11JsxbDto, UpdateH11JsxbDto, H11JsxbQueryDto } from './h11_jsxb.dto';
 
@@ -9,7 +9,7 @@ export class H11JsxbService {
   constructor(
     @InjectRepository(H11Jsxb)
     private readonly h11JsxbRepository: Repository<H11Jsxb>,
-  ) {}
+  ) { }
 
   async create(createH11JsxbDto: CreateH11JsxbDto): Promise<H11Jsxb> {
     const entity = this.h11JsxbRepository.create(createH11JsxbDto);
@@ -38,9 +38,9 @@ export class H11JsxbService {
     return { items, total };
   }
 
-  async findAllNotPage(queryDto: H11JsxbQueryDto): Promise<{ pageData: H11Jsxb[]; total: number }> {
+  async findAllNotPage(queryDto: H11JsxbQueryDto, manager?: EntityManager): Promise<{ pageData: H11Jsxb[]; total: number }> {
     const { page = 1, limit = 10, ...filters } = queryDto;
-    const queryBuilder = this.h11JsxbRepository.createQueryBuilder('jsxb');
+    const queryBuilder = manager ? manager.getRepository(H11Jsxb).createQueryBuilder('jsxb') : this.h11JsxbRepository.createQueryBuilder('jsxb');
 
     // 添加过滤条件
     if (filters.jsdh) {

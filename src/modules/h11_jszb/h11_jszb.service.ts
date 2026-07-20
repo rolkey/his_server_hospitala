@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { H11Jszb } from './h11_jszb.entity';
 import {
   CreateH11JszbDto,
@@ -19,9 +19,8 @@ import { H11Yjk } from '../h11_yjk/h11_yjk.entity';
 import { h12_yzzb } from '../h12_yzzb/h12_yzzb.entity';
 import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
+import dayjs = require('dayjs');
 
-import { log } from 'console';
-import * as dayjs from 'dayjs';
 
 @Injectable()
 export class H11JszbService {
@@ -33,7 +32,7 @@ export class H11JszbService {
     private readonly h11YjkService: H11YjkService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(createH11JszbDto: CreateH11JszbDto) {
     // 校验金额
@@ -167,7 +166,132 @@ export class H11JszbService {
       await queryRunner.release();
     }
   }
+  async createByManager(createH11JszbDto: CreateH11JszbDto, manager: EntityManager) {
+    // 校验金额
+    const Amount = await this.verifyAmount(createH11JszbDto);
 
+    const jsdh = (await this.h11_lshService.getSerialNumber('JSDH', '结算单号码', 10)).toString(); //获取结算单号
+    if (!jsdh) throw new BadRequestException('结算单号获取失败');
+    if (jsdh === '-1') throw new BadRequestException('发票号码获取失败');
+
+    try {
+      // 保存h11_jszb
+      const createDto: CreateH11JszbDto = { ...createH11JszbDto, jsdh, sfsj: new Date() };
+      const mainEntity = await manager.save(H11Jszb, createDto);
+
+      // 保存h11_xnh 结构
+      const createH11XnhDto: CreateH11XnhDto = {
+        ...createH11JszbDto.paymentType,
+        fphm: jsdh,
+        bz1: '1',
+        zyid: createH11JszbDto.zyid,
+        zyh: createH11JszbDto.zybh,
+        brxm: createH11JszbDto.brxm,
+      };
+      await manager.save(H11Xnh, createH11XnhDto);
+
+      // 生成结算细表
+      const createH11JsxbDto: CreateH11JsxbDto[] = [];
+      for (let i = 0; i < Amount.costCategory.length; i++) {
+        createH11JsxbDto[i] = {
+          jsdh: jsdh,
+          fylbid: Amount.costCategory[i].fylbid,
+          fylbmc: Amount.costCategory[i].fylbmc,
+          jsje: Amount.costCategory[i].jsje,
+          zfje: Amount.costCategory[i].zfje,
+          gfje: Amount.costCategory[i].zfje,
+          jmje: Amount.costCategory[i].qtje - Amount.costCategory[i].zfje,
+          ssje: Amount.costCategory[i].qtje,
+        };
+      }
+
+      await manager.save(H11Jsxb, createH11JsxbDto); //结算细表
+
+      // 修改费用状态
+      // 1.修改预交款状态
+      await manager
+        .createQueryBuilder()
+        .update(H11Yjk)
+        .set({ jsbz: 1, jsdh: jsdh })
+        .where('jsbz = 0')
+        .andWhere('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 2.医嘱主表打上结算标志
+      await manager
+        .createQueryBuilder()
+        .update(h12_yzzb)
+        .set({ jsbz: 1 })
+        .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 3.给医嘱执行表打上结算标志和结算单号
+      await manager
+        .createQueryBuilder()
+        .update(h13_yzzxcs)
+        .set({ jsbz: 1, jsdh: jsdh, xnhbz: 1 })
+        .where('jsbz=0')
+        .andWhere('sfbz=1')
+        .andWhere('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+        .execute();
+
+      // 4.给医嘱执行表打上结算标志和结算单号
+      await manager.query(
+        `UPDATE h13_cwzy SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+	      ( h13_cwzy.jsbz='0') AND
+			  ( h13_cwzy.sfbz='1') AND
+        ( h13_cwzy.tzsj is not null)`,
+        ['1', jsdh, createH11JszbDto.zyid],
+      );
+
+      // 5.给手术细表打上结算标志和结算单号
+      await manager.query(
+        `UPDATE h15_ssxb SET jsbz = $1,jsdh = $2,xnhbz=1 WHERE (zyid = $3) AND
+	      ( h15_ssxb.sfbz = '1' ) AND  
+        ( h15_ssxb.jsbz = '0' ) AND
+        ( convert( char(10),h15_ssxb.ssrq,102) <= $4)`,
+        ['1', jsdh, createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 6.给手术主表表打上结算标志和结算单号
+      await manager.query(
+        `UPDATE h15_sszb SET jsbz = $1 WHERE (zyid = $2) AND
+        ( h15_sszb.jsbz = '0' ) AND
+        ( convert( char(10),h15_sszb.ssrq,102) <= $3)`,
+        ['1', createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 7.给处方执行表打上结算标志和结算单号
+      await manager.query(
+        `UPDATE h12_yzcfxb SET jsbz = $1,jsdh = $2 WHERE (zyid = $3) AND
+        ( h12_yzcfxb.jsbz = '0' ) AND
+			  ( h12_yzcfxb.sfbz = '1') AND
+        ( convert( char(10),h12_yzcfxb.rq,102) <= $4)`,
+        ['1', jsdh, createH11JszbDto.zyid, dayjs(createH11JszbDto.zzsj).format('YYYY.MM.DD')],
+      );
+
+      // 8.修改在院状态
+      if (createH11JszbDto.jslx === 1 || createH11JszbDto.jslx === 4) {
+        await manager
+          .createQueryBuilder()
+          .update('h11_brxx')
+          .set({ zyzt: 4 })
+          .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+          .execute();
+      } else if (createH11JszbDto.jslx === 3) {
+        await manager
+          .createQueryBuilder()
+          .update('h11_brxx')
+          .set({ zyzt: 7 })
+          .where('zyid = :zyid', { zyid: createH11JszbDto.zyid })
+          .execute();
+      }
+      return mainEntity;
+    } catch (err) {
+      throw err
+    } finally {
+    }
+  }
   async findAll(queryDto: H11JszbQueryDto): Promise<{ pageData: H11Jszb[]; total: number }> {
     const { pageNo = 1, pageSize = 10, ...filters } = queryDto;
     const skip = (pageNo - 1) * pageSize;
@@ -268,46 +392,65 @@ export class H11JszbService {
     const jsjeSum = zfje + qtje;
     const ssjeSum = zfje + qtje;
     const syjeSum = yjje - jsjeSum;
-    const fkje =
-      createH11JszbDto.paymentType.yhje +
-      createH11JszbDto.paymentType.je1 +
-      createH11JszbDto.paymentType.je3 +
-      createH11JszbDto.paymentType.qt3 +
-      createH11JszbDto.paymentType.kbhj +
-      createH11JszbDto.paymentType.qtje4 +
-      createH11JszbDto.paymentType.yfje +
-      createH11JszbDto.paymentType.yfje4;
-    if (ssjeSum - yjje != fkje) {
+    const fkje = Number(createH11JszbDto.paymentType.yhje) +
+      Number(createH11JszbDto.paymentType.je1) +
+      Number(createH11JszbDto.paymentType.je3) +
+      Number(createH11JszbDto.paymentType.qt3) +
+      Number(createH11JszbDto.paymentType.kbhj) +
+      Number(createH11JszbDto.paymentType.qtje4) +
+      Number(createH11JszbDto.paymentType.yfje) +
+      Number(createH11JszbDto.paymentType.yfje4) +
+      Number(createH11JszbDto.paymentType.ljfykb) +
+      Number(createH11JszbDto.paymentType.sjhj) +
+      Number(createH11JszbDto.paymentType.zfje) +
+      Number(createH11JszbDto.paymentType.qt4) +
+      Number(createH11JszbDto.paymentType.dbje)
+    // const fkje =
+    //   createH11JszbDto.paymentType.yhje +
+    //   createH11JszbDto.paymentType.je1 +
+    //   createH11JszbDto.paymentType.je3 +
+    //   createH11JszbDto.paymentType.qt3 +
+    //   createH11JszbDto.paymentType.kbhj +
+    //   createH11JszbDto.paymentType.qtje4 +
+    //   createH11JszbDto.paymentType.yfje +
+    //   createH11JszbDto.paymentType.yfje4 +
+    //   createH11JszbDto.paymentType.ljfykb +
+    //   createH11JszbDto.paymentType.sjhj +
+    //   createH11JszbDto.paymentType.zfje +
+    //   createH11JszbDto.paymentType.qt4 +
+    //   createH11JszbDto.paymentType.dbje
+
+    if ((ssjeSum - yjje)?.toFixed(2) != fkje?.toFixed(2)) {
       throw new BadRequestException(
         `传入付款方式总额(${fkje})与后台计算金额(${ssjeSum - yjje})不符,请检查!`,
       );
     }
 
-    if (jsjeSum != createH11JszbDto.jsje) {
+    if (jsjeSum?.toFixed(2) != createH11JszbDto.jsje?.toFixed(2)) {
       throw new BadRequestException(
         `传入结算金额(${createH11JszbDto.jsje})与后台计算金额(${jsjeSum})不符,请检查!`,
       );
     }
 
-    if (jsjeSum != createH11JszbDto.zfje) {
+    if (jsjeSum?.toFixed(2) != createH11JszbDto.zfje?.toFixed(2)) {
       throw new BadRequestException(
         `传入自费金额(${createH11JszbDto.zfje})与后台计算金额(${jsjeSum})不符,请检查!`,
       );
     }
 
-    if (ssjeSum != createH11JszbDto.ssje) {
+    if (ssjeSum?.toFixed(2) != createH11JszbDto.ssje?.toFixed(2)) {
       throw new BadRequestException(
         `传入实收金额(${createH11JszbDto.ssje})与后台计算金额(${ssjeSum})不符,请检查!`,
       );
     }
 
-    if (yjje != createH11JszbDto.yjje) {
+    if (yjje?.toFixed(2) != createH11JszbDto.yjje?.toFixed(2)) {
       throw new BadRequestException(
         `传入预交金额(${createH11JszbDto.yjje})与后台计算金额(${yjje})不符,请检查!`,
       );
     }
 
-    if (syjeSum != createH11JszbDto.syje) {
+    if (syjeSum?.toFixed(2) !== createH11JszbDto.syje?.toFixed(2)) {
       throw new BadRequestException(
         `传入剩余金额(${createH11JszbDto.syje})与后台计算金额(${syjeSum})不符,请检查!`,
       );

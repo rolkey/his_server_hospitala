@@ -38,7 +38,7 @@ export class h11_brxxService {
     private readonly paramService: ParamService,
     private dataSource: DataSource,
     private readonly configReaderService: ConfigReaderService,
-  ) {}
+  ) { }
 
   async getPatientListForReceipt(queryDto: receiptDto) {
     const pageSize = queryDto.pageSize || 10;
@@ -52,7 +52,7 @@ export class h11_brxxService {
     if (queryDto?.value) {
       baseQuery.andWhere(
         '(h11_brxx.brxm LIKE :value OR h11_brxx.sfzh LIKE :value OR h11_brxx.ylzh LIKE :value ' +
-          'OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
+        'OR h11_brxx.jtdh LIKE :value OR h11_brxx.zybh LIKE :value OR h11_brxx.rycw LIKE :value)',
         { value: `%${queryDto?.value}%` },
       );
     }
@@ -140,23 +140,23 @@ export class h11_brxxService {
       .whereInIds(ids)
       .addSelect(
         'CASE' +
-          '  WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())' +
-          '  ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)' +
-          ' END',
+        '  WHEN h11_brxx.zyzt < 3 THEN DATEDIFF(DAY, h11_brxx.rysj, GETDATE())' +
+        '  ELSE DATEDIFF(DAY, h11_brxx.rysj, h11_brxx.cysj)' +
+        ' END',
         'zyts1',
       )
       .addSelect('0', 'isfinish')
       .addSelect(
         '(SELECT CASE' +
-          "  WHEN ISNULL(y.kshs, '0') = '0' THEN 1" +
-          '  WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2' +
-          '  ELSE 0 END' +
-          ' FROM (' +
-          '  SELECT h12_yzxb.yzrq, h12_yzxb.kshs,' +
-          '  ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp' +
-          '  FROM h12_yzxb' +
-          '  WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid' +
-          ') AS y WHERE y.fsp = 1)',
+        "  WHEN ISNULL(y.kshs, '0') = '0' THEN 1" +
+        '  WHEN CONVERT(VARCHAR(10), y.yzrq, 120) = CONVERT(VARCHAR(10), GETDATE(), 120) THEN 2' +
+        '  ELSE 0 END' +
+        ' FROM (' +
+        '  SELECT h12_yzxb.yzrq, h12_yzxb.kshs,' +
+        '  ROW_NUMBER() OVER(PARTITION BY h12_yzxb.zyid ORDER BY h12_yzxb.yzrq DESC) fsp' +
+        '  FROM h12_yzxb' +
+        '  WHERE h12_yzxb.ysbz = 1 AND h12_yzxb.zyid = h11_brxx.zyid' +
+        ') AS y WHERE y.fsp = 1)',
         'isexecute',
       )
       .addSelect(
@@ -252,7 +252,7 @@ export class h11_brxxService {
               qb.orWhere(
                 new Brackets((subQb) => {
                   subQb.where('h12_yzxb.yzlx = 1');
-                  subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
+                  // subQb.andWhere('h12_yzxb.yzzt in (2, 3, 6)');
                   subQb.andWhere('h12_yzxb.yzrq <= :ksrq', {
                     ksrq: dayjs(queryDto.zxrq).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
                   });
@@ -427,6 +427,11 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.bz4Entity', 'bz4', `bz4.lx = '病人所属'`)
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
+      .leftJoin('h11_brxx.czryEntity', 'czryEntity')
+      .addSelect([
+        'czryEntity.usid',
+        'czryEntity.unam',
+      ])
       .addSelect([
         'ryzdEntity.icd11',
         'ryzdEntity.icd11mc',
@@ -501,8 +506,16 @@ export class h11_brxxService {
          from h11_jshztzd1
          where h11_jshztzd1.zyid = h11_brxx.zyid)`,
         'xyztjbz',
-      );
-
+      )
+      .addSelect(
+        `(SELECT sum(round(jfyl * xmdj * (zxcs - bzxcs) * kyts,2))
+	FROM h13_yzzxcs
+	WHERE h13_yzzxcs.zyid =h11_brxx.zyid)`, 'yzfy')
+      .addSelect(`(SELECT sum(round(a.jfyl * a.xmdj,2))
+	FROM h15_ssxb a, h15_sszb b
+	WHERE a.zyid = h11_brxx.zyid AND  a.zyid = b.zyid AND a.ssid = b.ssid )`, 'ssfy')
+      .addSelect(`(SELECT sum(yjje)  FROM h11_yjk Where zyid = h11_brxx.zyid AND ksid = h11_brxx.ryksid And (sjzt = 1 OR sjzt = 3 ) and ISNULL(zfyid,'') = '')`, 'yjk')
+    // .addSelect(`(select top 1 bz1 from __ksmc where __ksmc.ksid=h11_brxx.cyksid)`, 'dept_code')
     // 排序
     if (queryDto.rykssj && queryDto.ryjssj) {
       detailQuery.orderBy('h11_brxx.rysj', 'ASC');
@@ -524,7 +537,12 @@ export class h11_brxxService {
       const matchedRaw = rawResult.find((raw) => raw.h11_brxx_zyid === entity.zyid);
       return {
         ...entity,
+        // dept_code: matchedRaw?.dept_code,
         zyts1: matchedRaw?.zyts1,
+        qfjsje: (matchedRaw?.yzfy || 0) + (matchedRaw?.ssfy || 0),
+        yzfy: matchedRaw?.yzfy,
+        ssfy: matchedRaw?.ssfy,
+        yjk: matchedRaw?.yjk,
         isexecute: matchedRaw?.isexecute,
         istoday: matchedRaw?.istoday,
         ztbz: entity.zyzt === 4 ? 1 : 0,
@@ -555,6 +573,7 @@ export class h11_brxxService {
 	FROM h15_ssxb a, h15_sszb b
 	WHERE a.zyid = h11_brxx.zyid AND  a.zyid = b.zyid AND a.ssid = b.ssid ) as ssfy`,
         `(SELECT sum(yjje)  FROM h11_yjk Where zyid = h11_brxx.zyid AND ksid = h11_brxx.ryksid And (sjzt = 1 OR sjzt = 3 ) and ISNULL(zfyid,'') = '') as yjk`,
+        `(select top 1 bz1 from __ksmc where __ksmc.ksid=h11_brxx.cyksid) as dept_code`
       ])
       .where('h11_brxx.zyid = :zyid', { zyid });
     const result = await query.getRawOne();
@@ -565,6 +584,7 @@ export class h11_brxxService {
       .leftJoinAndSelect('h11_brxx.cycwEntity', 'cycwEntity')
       .leftJoinAndSelect('h11_brxx.mzysEntity', 'mzysEntity')
       .leftJoinAndSelect('h11_brxx.sxysEntity', 'sxysEntity')
+      .leftJoinAndSelect('h11_brxx.czryEntity', 'czryEntity')
       .leftJoinAndSelect('h11_brxx.mzbhEntity', 'mzbhEntity')
       .leftJoinAndSelect('h11_brxx.zrhsEntity', 'zrhsEntity')
       .leftJoinAndSelect('h11_brxx.zkbqidEntity', 'zkbqidEntity')
@@ -572,6 +592,8 @@ export class h11_brxxService {
       .leftJoin('h11_brxx.ryzdEntity', 'ryzdEntity')
       .leftJoin('h11_brxx.cyzdEntity', 'cyzdEntity')
       .leftJoin('h11_brxx.mzzdEntity', 'mzzdEntity')
+
+
       .addSelect([
         'ryzdEntity.icd11',
         'ryzdEntity.icd11mc',
@@ -602,6 +624,7 @@ export class h11_brxxService {
     if (h11_brxx) {
       h11_brxx.fyhj = result?.yzfy + result?.ssfy;
       h11_brxx.yjk = result?.yjk;
+      h11_brxx.dept_code = result?.dept_code;
     }
     return h11_brxx;
   }
@@ -643,7 +666,11 @@ export class h11_brxxService {
       }
 
       // 创建新实体
-      const entity = queryRunner.manager.create(h11_brxx, dto);
+      const entity = queryRunner.manager.create(h11_brxx, {
+        ...dto,
+        sflx: dto?.sflx || '01',
+        fyid: dto?.fyid || '1'
+      });
 
       // 获取住院ID号
       entity.zyid = await this.h11_lshService.getSerialNumber('ZYID', '住院ID号', 12);
@@ -666,6 +693,7 @@ export class h11_brxxService {
 
       return result;
     } catch (error) {
+      console.error('入院登记失败', error, dto)
       // 发生错误时回滚事务
       await queryRunner.rollbackTransaction();
       throw error;
@@ -877,40 +905,40 @@ export class h11_brxxService {
       }
 
       // 3.养老处理
-      const ylmbbz = await this.paramService.gfGetPara(
-        81,
-        'ylmbbz',
-        '0',
-        '启用养老管理系统(1启用，0未启用)',
-      );
-      const ylybksid = await this.paramService.gfGetPara(
-        81,
-        'ylybksid',
-        '',
-        '启用养老医保科室编号',
-      );
-      if (ylmbbz === '1') {
-        const YLItem = await queryRunner.query(
-          `SELECT count(*) as count
-         FROM dict_oldie
-         WHERE id = @0 AND status <> 11`,
-          [ghbh],
-        );
-        const YLCount = YLItem?.[0]?.count || 0;
-        if (YLCount > 0 && ylybksid != czrKsid) {
-          return {
-            code: -1,
-            msg: '请先办理退回，然后才可以删除!',
-          };
-        }
+      // const ylmbbz = await this.paramService.gfGetPara(
+      //   81,
+      //   'ylmbbz',
+      //   '0',
+      //   '启用养老管理系统(1启用，0未启用)',
+      // );
+      // const ylybksid = await this.paramService.gfGetPara(
+      //   81,
+      //   'ylybksid',
+      //   '',
+      //   '启用养老医保科室编号',
+      // );
+      // if (ylmbbz === '1') {
+      // const YLItem = await queryRunner.query(
+      //   `SELECT count(*) as count
+      //  FROM dict_oldie
+      //  WHERE id = @0 AND status <> 11`,
+      //   [ghbh],
+      // );
+      // const YLCount = YLItem?.[0]?.count || 0;
+      // if (YLCount > 0 && ylybksid != czrKsid) {
+      //   return {
+      //     code: -1,
+      //     msg: '请先办理退回，然后才可以删除!',
+      //   };
+      // }
 
-        const DCMXDelete = await queryRunner.query(`DELETE yw_dcmx  Where zyh = @0`, [ghbh]);
-        //更新床位状态
-        const CWSYXXUpdate = await queryRunner.query(
-          `UPDATE h13_cwsyxx Set cwzt = 1,zyid='',id='',cwfpxx='病人信息删除1' Where  zyid = @0`,
-          params,
-        );
-      }
+      // const DCMXDelete = await queryRunner.query(`DELETE yw_dcmx  Where zyh = @0`, [ghbh]);
+      // //更新床位状态
+      // const CWSYXXUpdate = await queryRunner.query(
+      //   `UPDATE h13_cwsyxx Set cwzt = 1,zyid='',id='',cwfpxx='病人信息删除1' Where  zyid = @0`,
+      //   params,
+      // );
+      // }
 
       // 4.删除信息
       const ssxbDelete = await queryRunner.query(`DELETE h15_ssxb  Where zyid = @0`, params);

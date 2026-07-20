@@ -152,7 +152,7 @@ export class h12_yzxbServiceNew {
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
     private readonly h13YzzxcsService: h13_yzzxcsService,
-  ) {}
+  ) { }
 
   // -------------------------
   // 复核医嘱 0201
@@ -174,7 +174,8 @@ export class h12_yzxbServiceNew {
       .where('yzxb.zyid = :zyid', { zyid: dto.zyid })
       .andWhere('yzxb.yzlx = :yzlx', { yzlx: dto.yzlx })
       //   .andWhere('yzxb.ysbz = 1')
-      .andWhere('yzxb.tjbz = 1')
+      .andWhere('(yzxb.tjbz = 1 or (yzxb.tpbz=0 and yzxb.ysbz=0 and yzxb.tjbz=0))')
+
       .andWhere('yzxb.yzzt IN (1, 5)');
 
     // 添加 OR 组合条件
@@ -1587,24 +1588,24 @@ export class h12_yzxbServiceNew {
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
   ): H13YzzxcsTf[] {
     return h13_yzzxcsList.map((item) =>
-      //   this.createRefundListOfReviewOne(item, dto),
-      ({
-        ...item,
-        czrq: new Date(),
-        fydh: null,
-        zxcs2: item.maxid,
-        zxhs: dto.zxhs,
-        zxcs: -1 * item.bzxcs,
-        bzxcs: 0,
-        tyrid: dto.zxhs,
-        tysj: new Date(),
-        fysj: null,
-        fyrid: null,
-        sysj: null,
-        clbz: 0,
-        fybz: 0,
-        zyid: dto.zyid,
-      }),
+    //   this.createRefundListOfReviewOne(item, dto),
+    ({
+      ...item,
+      czrq: new Date(),
+      fydh: null,
+      zxcs2: item.maxid,
+      zxhs: dto.zxhs,
+      zxcs: -1 * item.bzxcs,
+      bzxcs: 0,
+      tyrid: dto.zxhs,
+      tysj: new Date(),
+      fysj: null,
+      fyrid: null,
+      sysj: null,
+      clbz: 0,
+      fybz: 0,
+      zyid: dto.zyid,
+    }),
     ) as H13YzzxcsTf[];
   }
 
@@ -1624,7 +1625,7 @@ export class h12_yzxbServiceNew {
   /**
    * 生成复核列表
    */
-  private reviewDelete() {}
+  private reviewDelete() { }
 
   /**
    * 创建退费列表
@@ -1839,11 +1840,11 @@ export class h12_yzxbServiceNew {
             .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
             .andWhere(
               'EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE ' +
-                'h13.zyid = h13_tf.zyid ' +
-                'AND h13.maxid = h13_tf.zxcs2 ' +
-                'AND h13.yzzh = :yzzh ' +
-                'AND h13.yzlx = :yzlx ' +
-                'AND ISNULL(h13.fybz, 0) = 1)',
+              'h13.zyid = h13_tf.zyid ' +
+              'AND h13.maxid = h13_tf.zxcs2 ' +
+              'AND h13.yzzh = :yzzh ' +
+              'AND h13.yzlx = :yzlx ' +
+              'AND ISNULL(h13.fybz, 0) = 1)',
               {
                 yzzh: item.yzzh,
                 yzlx: item.yzlx,

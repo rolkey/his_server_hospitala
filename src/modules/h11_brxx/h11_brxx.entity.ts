@@ -164,14 +164,14 @@ export class h11_brxx {
   mzzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'mzzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'mzzd', referencedColumnName: 'bzbm' })
   mzzdEntity: Jbbmicd10;
 
   @Column('varchar', { name: 'ryzd', nullable: true, length: 120 })
   ryzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'ryzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'ryzd', referencedColumnName: 'bzbm' })
   ryzdEntity: Jbbmicd10;
 
   @Column('datetime', { name: 'ryqzsj', nullable: true })
@@ -239,7 +239,7 @@ export class h11_brxx {
   cyzd: string | null;
 
   @ManyToOne(() => Jbbmicd10)
-  @JoinColumn({ name: 'cyzd', referencedColumnName: 'icd11' })
+  @JoinColumn({ name: 'cyzd', referencedColumnName: 'bzbm' })
   cyzdEntity: Jbbmicd10;
 
   @Column('varchar', { name: 'hbh', nullable: true, length: 20 })
@@ -309,6 +309,10 @@ export class h11_brxx {
   @Column('varchar', { name: 'czry', nullable: true, length: 8 })
   czry: string | null;
 
+  @ManyToOne(() => usrcat)
+  @JoinColumn({ name: 'czry', referencedColumnName: 'usid' })
+  czryEntity: usrcat;
+
   @Column('varchar', { name: 'hkyb1', nullable: true, length: 8 })
   hkyb1: string | null;
 
@@ -333,7 +337,7 @@ export class h11_brxx {
   @Column('varchar', { name: 'swrq', nullable: true, length: 20 })
   swrq: string | null;
 
-  @Column('tinyint', { name: 'szbz', nullable: true, default: () => '(0)' })
+  @Column('tinyint', { name: 'szbz', nullable: true, })
   szbz: number | null;
 
   @Column('varchar', { name: 'sjdm', nullable: true, length: 20 })
@@ -427,7 +431,6 @@ export class h11_brxx {
     name: 'sflx',
     nullable: true,
     length: 2,
-    default: () => "'01'",
   })
   sflx: string | null;
 
@@ -447,7 +450,7 @@ export class h11_brxx {
   @Column('varchar', {
     name: 'fyid',
     nullable: true,
-    default: () => '(0)',
+    length: 10
   })
   fyid: string | null;
 
@@ -472,6 +475,8 @@ export class h11_brxx {
   ztbz: number;
 
   zyztmc: string | null;
+
+  dept_code: string | null;
 
   @AfterLoad()
   trim() {
@@ -508,14 +513,15 @@ export class h11_brxx {
     if (this.nldw) {
       this.nldw = this.nldw.trim();
     }
-
     if (this.gjid) {
       this.gjid = this.gjid.trim();
     }
     if (this.rybqid) {
       this.rybqid = this.rybqid.trim();
     }
-
+    if (this.zkbqid) {
+      this.zkbqid = this.zkbqid.trim();
+    }
     this.zyts = this.cysj
       ? dayjs(this.cysj).diff(this.rysj, 'day')
       : dayjs(new Date()).diff(this.rysj, 'day');

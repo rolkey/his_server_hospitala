@@ -61,4 +61,4 @@ import { N04_23 } from '../n04-23/n04-23.entity';
   ],
   exports: [h11_brxxService],
 })
-export class h11_brxxModule {}
+export class h11_brxxModule { }

@@ -19,6 +19,8 @@ interface Diags {
 
 @Injectable()
 export class h11_brxxService_new {
+
+
   constructor(
     @InjectRepository(h11_brxx)
     private h11_brxxRepo: Repository<h11_brxx>,
@@ -31,7 +33,7 @@ export class h11_brxxService_new {
     private readonly h00_fylbService: h00_fylbService,
     private readonly paramService: ParamService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async updateBedAllocation(data: {
     cwid: string;
@@ -88,16 +90,25 @@ export class h11_brxxService_new {
    * 获取未结算费用
    */
   async getUnSettleFee(zyid: string) {
-    const [yzList, ssList] = await Promise.all([this.getYzExecuteList(zyid), this.getSsList(zyid)]);
+    const [yzList, ssList, fymxList] = await Promise.all([
+      this.getYzExecuteList(zyid),
+      this.getSsList(zyid),
+      this.getFymxList(zyid),
+    ])
 
-    const yzResult = this.buildYzResult(yzList);
-    const ssResult = this.buildSsResult(ssList);
+    const fymxMap = new Map<string, any>(
+      fymxList.map((item) => [item.feedetl_sn, item] as [string, any]),
+    )
+
+    const yzResult = this.buildYzResult(yzList, fymxMap);
+    const ssResult = this.buildSsResult(ssList, fymxMap);
 
     return [...yzResult, ...ssResult];
   }
   /**
    * 查询医嘱执行原始数据
    */
+
   async getYzExecuteList(zyid: string) {
     return this.dataSource
       .createQueryBuilder()
@@ -112,6 +123,7 @@ export class h11_brxxService_new {
         AND zx.mxxh = yz.mxxh
         `,
       )
+      .leftJoin('h00_fylb', 'fylb', 'zx.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'zx.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = zx.xmid')
       .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = zx.xmid')
@@ -153,13 +165,22 @@ export class h11_brxxService_new {
 
         'xmzd.gjybbm as xmzd_gjybbm',
         'xmzd.gjybmc as xmzd_gjybmc',
+
+        'fylb.fylbmc as fylbmc',
+
+        'zx.maxid as bz1',
+        'zx.xmid as bz2',
+        'yz.zflx as zflx',
+        'yz.ybbz as bz3',
       ])
       .where('yz.zyid = :zyid', { zyid })
       .andWhere('zx.xmdj > 0')
+      .andWhere('zx.jfyl > 0')
       .andWhere('(zx.zxcs - zx.bzxcs) <> 0')
       .andWhere('zx.jsbz = 0')
       .andWhere('COALESCE(zx.xnhbz,0) = 0')
       .andWhere('zx.sfbz = 1')
+      .orderBy('zx.zxrq', 'ASC')
       .getRawMany();
   }
 
@@ -170,6 +191,7 @@ export class h11_brxxService_new {
     return this.dataSource
       .createQueryBuilder()
       .from('h15_ssxb', 'ss')
+      .leftJoin('h00_fylb', 'fylb', 'ss.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'ss.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = ss.xmid')
       .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = ss.xmid')
@@ -198,18 +220,53 @@ export class h11_brxxService_new {
 
         'xmzd.gjybbm as xmzd_gjybbm',
         'xmzd.gjybmc as xmzd_gjybmc',
+
+        'fylb.fylbmc as fylbmc',
+
+        'ss.zflx as zflx',
+        'ss.maxid as bz1',
+        'ss.xmid as bz2',
+        'ss.ybbz as bz3',
       ])
       .where('ss.zyid = :zyid', { zyid })
       .andWhere('ss.jsbz = 0')
+      .andWhere('ss.xmdj > 0')
       .andWhere('COALESCE(ss.xnhbz,0) = 0')
       .andWhere('ss.jfyl <> 0')
+      .orderBy('ss.ssrq', 'ASC')
+      .getRawMany();
+  }
+
+  async getFymxList(zyid: string) {
+    return this.dataSource
+      .createQueryBuilder()
+      .from('G60_fymx', 'fymx')
+      .select([
+        'fymx.lsh as lsh',
+        'fymx.mxxh as mxxh',
+        'fymx.lshxh as lshxh',
+        'fymx.setl_id as setl_id',
+        'fymx.feedetl_sn as feedetl_sn',
+        'fymx.det_item_fee_sumamt as det_item_fee_sumamt',
+        'fymx.cnt as cnt',
+        'fymx.pric as pric',
+        'fymx.pric_uplmt_amt as pric_uplmt_amt',
+        'fymx.selfpay_prop as selfpay_prop',
+        'fymx.fulamt_ownpay_amt as fulamt_ownpay_amt',
+        'fymx.overlmt_amt as overlmt_amt',
+        'fymx.preselfpay_amt as preselfpay_amt',
+        'fymx.inscp_scp_amt as inscp_scp_amt',
+        'fymx.chrgitm_lv as chrgitm_lv',
+        'fymx.med_chrgitm_type as med_chrgitm_type',
+      ])
+      .where('fymx.lsh = :zyid', { zyid })
       .getRawMany();
   }
   /**
    * 医嘱费用组装
    */
 
-  private buildYzResult(list: any[]) {
+  private buildYzResult(list: any[], fymxMap: Map<string, any>) {
     const map = new Map();
 
     for (const r of list) {
@@ -218,6 +275,8 @@ export class h11_brxxService_new {
       const je = this.safeMoney(sl * Number(r.xmdj));
 
       const key = [r.zyid, r.yzlx, r.maxid].join('_');
+
+      const zflx = fymxMap.get(`Y${r.maxid}`)?.chrgitm_lv
 
       if (!map.has(key)) {
         map.set(key, {
@@ -240,7 +299,7 @@ export class h11_brxxService_new {
           maxid: r.maxid,
           yzrq: dayjs(r.yzrq).format('YYYY-MM-DD HH:mm:ss'),
           jb: '',
-          zflx: '',
+          zflx: zflx ? Number(zflx) : Number(r.zflx),
           zfje: 0,
           czfje: 0,
           yzlx: r.yzlx === 1 || r.yzlx === 5 ? '1' : '2',
@@ -252,8 +311,16 @@ export class h11_brxxService_new {
           cydy: r.bzxx?.includes('出院') ? 1 : 0,
           ypsl: 0,
           clsl: 0,
+          fylbmc: r.fylbmc,
           gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : (r.xmzd_gjybbm ?? r.yp_gjybbm),
           gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : (r.xmzd_gjybmc ?? r.yp_gjybmc),
+          inscp_scp_amt: fymxMap.get(`Y${r.maxid}`)?.inscp_scp_amt,
+          fulamt_ownpay_amt: fymxMap.get(`Y${r.maxid}`)?.fulamt_ownpay_amt,
+          overlmt_amt: fymxMap.get(`Y${r.maxid}`)?.overlmt_amt,
+
+          bz1: String(r.bz1),
+          bz2: r.bz2,
+          bz3: String(r.bz3),
         });
       }
 
@@ -273,7 +340,7 @@ export class h11_brxxService_new {
    * 手术费用组装
    */
 
-  private buildSsResult(list: any[]) {
+  private buildSsResult(list: any[], fymxMap: Map<string, any>) {
     const map = new Map();
 
     for (const r of list) {
@@ -281,6 +348,8 @@ export class h11_brxxService_new {
       const je = this.safeMoney(sl * Number(r.xmdj));
 
       const key = [r.zyid, r.xmid, r.maxid].join('_');
+
+      const zflx = fymxMap.get(`S${r.maxid}`)?.chrgitm_lv
 
       if (!map.has(key)) {
         map.set(key, {
@@ -303,7 +372,7 @@ export class h11_brxxService_new {
           maxid: r.maxid,
           yzrq: dayjs(r.ssrq).format('YYYY-MM-DD HH:mm:ss'),
           jb: '',
-          zflx: '',
+          zflx: zflx ? Number(zflx) : Number(r.zflx),
           zfje: 0,
           czfje: 0,
           yzlx: '10',
@@ -315,11 +384,18 @@ export class h11_brxxService_new {
           cydy: 0,
           ypsl: 0,
           clsl: 0,
+          fylbmc: r.fylbmc,
           gjybbm: r.dyzd_gjybbm ? r.dyzd_gjybbm : (r.xmzd_gjybbm ?? r.yp_gjybbm),
           gjybmc: r.dyzd_gjybmc ? r.dyzd_gjybmc : (r.xmzd_gjybmc ?? r.yp_gjybmc),
+          inscp_scp_amt: fymxMap.get(`S${r.maxid}`)?.inscp_scp_amt,
+          fulamt_ownpay_amt: fymxMap.get(`S${r.maxid}`)?.fulamt_ownpay_amt,
+          overlmt_amt: fymxMap.get(`S${r.maxid}`)?.overlmt_amt,
+
+          bz1: String(r.bz1),
+          bz2: r.bz2,
+          bz3: String(r.bz3),
         });
       }
-
       const row = map.get(key);
 
       row.sl += sl;
@@ -394,4 +470,15 @@ export class h11_brxxService_new {
     }
     return diags;
   }
+
+  async getZycs(data: { ylzh?: string; sfzh?: string; zybh?: string; }) {
+    const maxZycs = await this.h11_brxxRepo
+      .createQueryBuilder('brxx')
+      .select('MAX(brxx.zycs)', 'maxZycs')
+      .where('brxx.ylzh = :ylzh', { ylzh: data?.ylzh || '' })
+      .getRawOne().then((res) => res?.maxZycs ? res?.maxZycs + 1 : 1);
+    return maxZycs
+  }
+
+
 }

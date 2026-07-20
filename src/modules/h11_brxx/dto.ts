@@ -305,6 +305,10 @@ export class CreateDto {
   infection_sync?: string;
   @Allow()
   tzdh?: string;
+  @Allow()
+  fyid?: string;
+
+
 }
 
 export class QueryDto {

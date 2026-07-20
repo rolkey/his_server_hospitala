@@ -12,7 +12,7 @@ export class BabyAdviceService {
     private h11_brxxRepo: Repository<h11_brxx>,
     private readonly configReaderService: ConfigReaderService,
     private readonly h11_lshService: h11_lshService,
-  ) {}
+  ) { }
 
   /**
    * 生成毛毛医嘱 - 主入口函数
@@ -30,7 +30,7 @@ export class BabyAdviceService {
       const result = await this.baby_insertBabyRecord(motherRecord, babyInfo, ysid, gs_cxsz);
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
       }

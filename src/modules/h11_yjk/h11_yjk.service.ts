@@ -13,7 +13,7 @@ export class H11YjkService {
     @InjectRepository(H11Yjk)
     private readonly h11YjkRepository: Repository<H11Yjk>,
     private readonly h11ZypjService: H11ZypjService,
-  ) {}
+  ) { }
 
   /**
    * 创建预交款记录
@@ -50,7 +50,9 @@ export class H11YjkService {
     const updateH11ZypjDto: UpdateH11ZypjDto = { dqhm: Number(zypj.dqhm) + 1 };
     await this.h11ZypjService.update('YJHM', createH11YjkDto.sfyid, '1', updateH11ZypjDto);
 
-    const newYjk = this.h11YjkRepository.create(createH11YjkDto);
+    const newYjk = this.h11YjkRepository.create(
+      { ...createH11YjkDto, sjzt: createH11YjkDto.sjzt || 1 }
+    );
     return this.h11YjkRepository.save(newYjk);
   }
 
