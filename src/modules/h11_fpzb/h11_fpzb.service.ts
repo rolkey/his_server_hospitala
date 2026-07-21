@@ -79,7 +79,7 @@ export class H11FpzbService {
             throw new BadRequestException('获取到的发票号码已使用,请重试!');
           }
         }
-        const fpje = (createH11FpzbDto?.ssje || 0) - (createH11FpzbDto?.gfje || 0)
+        const fpje = (createH11FpzbDto?.ssje || 0) - (createH11FpzbDto?.gfje || 0) - (createH11FpzbDto?.paymentType?.yfje || 0)
 
         const syje = (createH11FpzbDto?.yjje || 0) - (fpje || 0)
 

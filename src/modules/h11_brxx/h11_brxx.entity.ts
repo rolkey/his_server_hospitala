@@ -522,9 +522,16 @@ export class h11_brxx {
     if (this.zkbqid) {
       this.zkbqid = this.zkbqid.trim();
     }
-    this.zyts = this.cysj
-      ? dayjs(this.cysj).diff(this.rysj, 'day')
-      : dayjs(new Date()).diff(this.rysj, 'day');
+
+    if (this.rysj) {
+      // 1. 将起始日期和结束日期都归一化到当天的 00:00:00
+      const start = dayjs(this.rysj).startOf('day');
+      const end = this.cysj
+        ? dayjs(this.cysj).startOf('day')
+        : dayjs().startOf('day');
+      // 2. 计算纯日期差（此时不需要四舍五入，因为时间部分已经是0，不会有小数）
+      this.zyts = end.diff(start, 'day');
+    }
 
     if (this.hljl) {
       this.hljl = this.hljl.trim();
