@@ -1532,7 +1532,7 @@ export class h12_yzxbService {
     // 实现未提交医嘱逻辑
     // 执行过的医嘱不能取消签名
     await this.h12_yzxbRepo.update(
-      { yzlx, yzxh, zyid, yzzh: In(yzzh), zxbz: 0 },
+      { yzlx, yzxh, zyid, yzzh: In(yzzh), zxbz: 0, hdbz: 0 }, // 核对标志/医嘱状态必须为0
       { tjbz: 0, yzzt: 0 },
     );
     return true;

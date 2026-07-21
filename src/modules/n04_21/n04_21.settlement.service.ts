@@ -1,9 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ParamService } from '@/modules/h12_xmzd/service/param.service';
 import { N0421 } from './n04_21.entity';
-import { N0422 } from '../n04_22/n04_22.entity';
 import { N04_23 } from '../n04-23/n04-23.entity';
 
 /** 医保结算单 - 费用明细分类（G60_fymx.med_chrgitm_type） */
@@ -23,6 +22,42 @@ const FEE_CATEGORIES: { type: string; name: string }[] = [
   { type: '13', name: '挂号费' },
   { type: '14', name: '其他费' },
 ];
+
+/**
+ * 病案首页治疗类别 → 医保结算单国标编码
+ * 病案：1中医 2中西医 3西医
+ * 国标：1西医 2中医（2.1中医 2.2民族医）3中西医
+ */
+function mapCaseZllbToSettlement(zllb: string | null | undefined): string {
+  const v = String(zllb ?? '').trim();
+  const map: Record<string, string> = {
+    '1': '2', // 中医
+    '2': '3', // 中西医
+    '3': '1', // 西医
+  };
+  return map[v] ?? v;
+}
+
+/**
+ * 对齐 PB：hls(护理天数合计) 为 0/空时，隐藏 ehl，二级护理位改显实际住院天数 sjzy
+ */
+function resolveSettlementEhl(basic: {
+  thl?: number | null;
+  yhl?: number | null;
+  ehl?: number | null;
+  shl?: number | null;
+  sjzy?: string | number | null;
+}): number {
+  const thl = Number(basic.thl ?? 0) || 0;
+  const yhl = Number(basic.yhl ?? 0) || 0;
+  const ehl = Number(basic.ehl ?? 0) || 0;
+  const shl = Number(basic.shl ?? 0) || 0;
+  const hls = thl + yhl + ehl + shl;
+  if (hls === 0) {
+    return Number(basic.sjzy ?? 0) || 0;
+  }
+  return ehl;
+}
 
 export interface SettlementFeeRow {
   name: string;
@@ -78,6 +113,43 @@ function mapRybq(value: unknown): string {
   return v === '' ? '' : '无';
 }
 
+/**
+ * 结算单诊断名称/编码：优先医保字段 zdmc/zdbm，空则回退院内 zwmc/icd10
+ *（历史数据与未对照字典时常只有院内字段有值；对齐诊断录入保存兼容逻辑）
+ */
+function mapSettlementDiagnosis(row: {
+  zdmc?: string | null;
+  zdbm?: string | null;
+  zwmc?: string | null;
+  icd10?: string | null;
+  zdbq?: string | null;
+}): SettlementDiagnosisRow {
+  return {
+    zdmc: String(row.zdmc || row.zwmc || '').trim(),
+    zdbm: String(row.zdbm || row.icd10 || '').trim(),
+    rybq: mapRybq(row.zdbq),
+  };
+}
+
+function matchZdlx(value: unknown, expected: string): boolean {
+  const v = String(value ?? '').trim();
+  if (v === expected) return true;
+  // 兼容数值/小数存储
+  const n = Number(v);
+  return Number.isFinite(n) && String(n) === expected;
+}
+
+type DiagnosisSqlRow = {
+  zdxh?: number;
+  zdlx?: string;
+  zdmc?: string;
+  zdbm?: string;
+  zwmc?: string;
+  icd10?: string;
+  zdbq?: string;
+  maindiag_flag?: string;
+};
+
 function formatDateTime(value: unknown): string {
   if (!value) return '';
   const date = value instanceof Date ? value : new Date(String(value));
@@ -103,8 +175,6 @@ export class N0421SettlementService {
     private readonly dataSource: DataSource,
     @InjectRepository(N0421)
     private readonly n0421Repository: Repository<N0421>,
-    @InjectRepository(N0422)
-    private readonly n0422Repository: Repository<N0422>,
     @InjectRepository(N04_23)
     private readonly n0423Repository: Repository<N04_23>,
     private readonly paramService: ParamService,
@@ -118,7 +188,7 @@ export class N0421SettlementService {
   async getSettlementSheet(zyid: string) {
     const basic = await this.n0421Repository.findOne({ where: { zyid } });
     if (!basic) {
-      throw new NotFoundException('首页未保存，不能打印！');
+      throw new BadRequestException('首页未保存，不能打印！');
     }
 
     const warnings: string[] = [];
@@ -172,21 +242,41 @@ export class N0421SettlementService {
       throw new BadRequestException(`责任护士：${zrhs}，未对照国家编码，不能打印结算单！`);
     }
 
-    // 诊断（西医 zdlx in 2/3；中医主病 zdlx=4、主证 zdlx=1）
-    const diagnosisAll = await this.n0422Repository.find({
-      where: { zyid },
-      order: { zdxh: 'ASC' },
-    });
+    // 诊断：先读 N04_22；中医主病/主证若缺失则从归档表 NQ04_22 补全
+    // （本例 zyid=000000034949：现表无 zdlx=4，归档表仍有「二度 / B10.02.02.」）
+    const liveDiagnosis: DiagnosisSqlRow[] = await this.dataSource.query(
+      `SELECT zdxh, zdlx, zdmc, zdbm, zwmc, icd10, zdbq, maindiag_flag
+       FROM dbo.N04_22
+       WHERE zyid = @0
+       ORDER BY zdxh`,
+      [zyid],
+    );
+    const archivedDiagnosis: DiagnosisSqlRow[] = await this.dataSource.query(
+      `SELECT zdxh, zdlx, zdmc, zdbm, zwmc, icd10, zdbq, maindiag_flag
+       FROM dbo.NQ04_22
+       WHERE zyid = @0
+       ORDER BY zdxh`,
+      [zyid],
+    );
+    const diagnosisAll = this.mergeDiagnosisWithArchive(liveDiagnosis, archivedDiagnosis);
+
     const westDiagnosis: SettlementDiagnosisRow[] = diagnosisAll
-      .filter((row) => ['2', '3'].includes(String(row.zdlx ?? '').trim()))
+      .filter((row) => matchZdlx(row.zdlx, '2') || matchZdlx(row.zdlx, '3'))
+      .sort((a, b) => {
+        const rank = (row: DiagnosisSqlRow) => {
+          if (String(row.maindiag_flag ?? '').trim() === '1') return 0;
+          if (matchZdlx(row.zdlx, '2')) return 1;
+          return 2;
+        };
+        const d = rank(a) - rank(b);
+        return d !== 0 ? d : Number(a.zdxh) - Number(b.zdxh);
+      })
       .slice(0, 20)
-      .map((row) => ({
-        zdmc: row.zdmc || '',
-        zdbm: row.zdbm || '',
-        rybq: mapRybq(row.zdbq),
-      }));
-    const tcmMain = diagnosisAll.find((row) => String(row.zdlx ?? '').trim() === '4');
-    const tcmSymptom = diagnosisAll.find((row) => String(row.zdlx ?? '').trim() === '1');
+      .map((row) => mapSettlementDiagnosis(row));
+
+    // 中医主病/主证：合并后的诊断 → 字典补全 → h11_brxx.cyzd4/cyzd5
+    const tcmMain = await this.resolveTcmDiagnosis(diagnosisAll, zyid, '4', 'cyzd4');
+    const tcmSymptom = await this.resolveTcmDiagnosis(diagnosisAll, zyid, '1', 'cyzd5');
 
     // 手术（对齐 PB：过滤 oprn_optn_part_code='1'，最多取 2 条）
     const surgeryAll = await this.n0423Repository.find({
@@ -382,21 +472,18 @@ export class N0421SettlementService {
       ybbh: String(djxx.psn_no || basic.jkkh || '').trim(),
       bah: basic.bah || '',
       sbsj: formatDateTime(djxx.jssj),
-      basic,
+      /** 治疗类别已转为结算单国标编码；二级护理在护理合计为 0 时回填住院天数（对齐 PB） */
+      basic: {
+        ...basic,
+        zllb: mapCaseZllbToSettlement(basic.zllb),
+        ehl: resolveSettlementEhl(basic),
+      },
       /** 医保类型（险种名称）/ 特殊人员类型 */
       yblxmc,
       psnType: String(djxx.psn_type || '').trim(),
       westDiagnosis,
-      tcmMain: tcmMain
-        ? { zdmc: tcmMain.zdmc || '', zdbm: tcmMain.zdbm || '', rybq: mapRybq(tcmMain.zdbq) }
-        : null,
-      tcmSymptom: tcmSymptom
-        ? {
-            zdmc: tcmSymptom.zdmc || '',
-            zdbm: tcmSymptom.zdbm || '',
-            rybq: mapRybq(tcmSymptom.zdbq),
-          }
-        : null,
+      tcmMain,
+      tcmSymptom,
       diagnosisCount: westDiagnosis.length,
       surgeries,
       surgeryCount: surgeries.length,
@@ -439,5 +526,106 @@ export class N0421SettlementService {
       [nameOrId],
     );
     return String(rows?.[0]?.ybry || '').trim();
+  }
+
+  /**
+   * 现表 N04_22 为主；归档表 NQ04_22 补缺失的中医主病(4)/主证(1)。
+   * 并对现表空医保字段用归档同行补齐。
+   */
+  private mergeDiagnosisWithArchive(
+    live: DiagnosisSqlRow[],
+    archived: DiagnosisSqlRow[],
+  ): DiagnosisSqlRow[] {
+    const merged = live.map((row) => ({ ...row }));
+
+    const enrichFromArchive = (target: DiagnosisSqlRow, source: DiagnosisSqlRow) => {
+      if (!String(target.zdmc || '').trim() && source.zdmc) target.zdmc = source.zdmc;
+      if (!String(target.zdbm || '').trim() && source.zdbm) target.zdbm = source.zdbm;
+      if (!String(target.zwmc || '').trim() && source.zwmc) target.zwmc = source.zwmc;
+      if (!String(target.icd10 || '').trim() && source.icd10) target.icd10 = source.icd10;
+      if (!String(target.zdbq || '').trim() && source.zdbq) target.zdbq = source.zdbq;
+    };
+
+    for (const row of merged) {
+      const zdlx = String(row.zdlx ?? '').trim();
+      const arch = archived.find((item) => String(item.zdlx ?? '').trim() === zdlx);
+      if (arch) enrichFromArchive(row, arch);
+    }
+
+    for (const zdlx of ['4', '1'] as const) {
+      if (merged.some((row) => matchZdlx(row.zdlx, zdlx))) continue;
+      const arch = archived.find((row) => matchZdlx(row.zdlx, zdlx));
+      if (arch) merged.push({ ...arch });
+    }
+
+    return merged;
+  }
+
+  /**
+   * 中医主病(zdlx=4)/主证(zdlx=1)：
+   * 1) 合并后的诊断行
+   * 2) 名称/编码空时按 icd10/zdbm 查 __jbbmicd10
+   * 3) 仍无行时回退 h11_brxx.cyzd4 / cyzd5
+   */
+  private async resolveTcmDiagnosis(
+    diagnosisAll: DiagnosisSqlRow[],
+    zyid: string,
+    zdlx: '4' | '1',
+    brxxCodeField: 'cyzd4' | 'cyzd5',
+  ): Promise<SettlementDiagnosisRow | null> {
+    const row = diagnosisAll.find((item) => matchZdlx(item.zdlx, zdlx));
+    let mapped = row ? mapSettlementDiagnosis(row) : null;
+
+    const codeHint = String(row?.icd10 || row?.zdbm || mapped?.zdbm || '').trim();
+    if (mapped && (!mapped.zdmc || !mapped.zdbm) && codeHint) {
+      const icd = await this.lookupIcd(codeHint);
+      if (icd) {
+        mapped = {
+          zdmc: mapped.zdmc || String(icd.ybmc || icd.bzmc || '').trim(),
+          zdbm: mapped.zdbm || String(icd.ybbm || codeHint).trim(),
+          rybq: mapped.rybq || mapRybq(row?.zdbq || '1'),
+        };
+      }
+    }
+
+    if (mapped && (mapped.zdmc || mapped.zdbm || mapped.rybq)) {
+      return mapped;
+    }
+
+    const brxxRows: Record<string, string>[] = await this.dataSource.query(
+      `SELECT TOP 1 ISNULL(cyzd4, '') AS cyzd4, ISNULL(cyzd5, '') AS cyzd5
+       FROM dbo.h11_brxx WHERE zyid = @0`,
+      [zyid],
+    );
+    const bzbm = String(brxxRows?.[0]?.[brxxCodeField] || '').trim();
+    if (!bzbm) {
+      return mapped;
+    }
+
+    const icd = await this.lookupIcd(bzbm);
+    return {
+      zdmc: String(icd?.ybmc || icd?.bzmc || '').trim() || bzbm,
+      zdbm: String(icd?.ybbm || bzbm).trim(),
+      rybq: mapped?.rybq || mapRybq(row?.zdbq || '1'),
+    };
+  }
+
+  /** 按院内码/医保码查疾病字典（对齐 PB ISNULL(ybbm,icd10)/ISNULL(ybmc,zwmc)） */
+  private async lookupIcd(code: string): Promise<{
+    bzmc?: string;
+    ybbm?: string;
+    ybmc?: string;
+  } | null> {
+    const rows: { bzmc?: string; ybbm?: string; ybmc?: string }[] =
+      await this.dataSource.query(
+        `SELECT TOP 1
+            ISNULL(bzmc, '') AS bzmc,
+            ISNULL(ybbm, icd10) AS ybbm,
+            ISNULL(ybmc, zwmc) AS ybmc
+         FROM dbo.__jbbmicd10
+         WHERE bzbm = @0 OR ybbm = @0 OR icd10 = @0`,
+        [code],
+      );
+    return rows?.[0] ?? null;
   }
 }
