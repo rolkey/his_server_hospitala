@@ -860,7 +860,7 @@ export class h11_brxxService {
       '门诊收费作废发票密码',
     );
 
-    if (sysPwd !== pwd) {
+    if (pwd && sysPwd !== pwd) {
       return {
         code: -1,
         msg: '录入密码不正确!',
@@ -964,6 +964,84 @@ export class h11_brxxService {
       msg: '删除成功!',
     };
   }
+
+  async chekcForciblyDelete(dto: ForciblyDeleteDto) {
+    // const pwd = dto.pwd || '';
+    // const czrKsid = dto.czrKsid || '';
+    const zyid = dto.zyid || '';
+    // const ghbh = dto.ghbh || ''; // 养老使用
+    const params: any[] = [zyid]; // 1.科室ID 2.药品ID 3.药品批次
+    // 1.检查有无结算
+    const FPZBItem = await this.dataSource.query(
+      `SELECT count(*) as count
+         FROM h11_fpzb
+         WHERE zyid = @0 AND sjzt = 1`,
+      params,
+    );
+    const FPZBCount = FPZBItem?.[0]?.count || 0;
+    if (FPZBCount > 0) {
+      return {
+        code: -1,
+        msg: '该病人已结算不能删除!',
+      };
+    }
+
+    // 2.检查有无医保登记
+    const YBDJItem = await this.dataSource.query(
+      `SELECT count(*) as count
+         FROM G10_DJXX
+         WHERE lsh = @0 AND jsbz > 0`,
+      params,
+    );
+
+
+    const YBDJCount = YBDJItem?.[0]?.count || 0;
+    if (YBDJCount > 0) {
+      return {
+        code: -1,
+        msg: '该病该病人有医保登记,请先将医保！',
+      };
+    }
+
+    // 3.检查有无医嘱
+    const YZZBItem = await this.dataSource.query(
+      `SELECT count(*) as count
+         FROM h12_yzzb
+         WHERE zyid = @0`,
+      params,
+    );
+
+
+    const YZZBCount = YZZBItem?.[0]?.count || 0;
+    if (YZZBCount > 0) {
+      return {
+        code: -1,
+        msg: '该病人有医嘱记录！',
+      }
+    }
+
+    // 4.检查有无手术
+    const SSZBItem = await this.dataSource.query(
+      `SELECT count(*) as count
+         FROM h15_sszb
+         WHERE zyid = @0`,
+      params,
+    );
+
+    const SSZBCount = SSZBItem?.[0]?.count || 0;
+
+    if (SSZBCount > 0) {
+      return {
+        code: -1,
+        msg: '该病人有手术医嘱记录！',
+      }
+    }
+    return {
+      code: 0,
+      msg: '可以删除!',
+    };
+  }
+
 
   // 入院前校验
   async createCheck(queryDto: QueryDto) {
