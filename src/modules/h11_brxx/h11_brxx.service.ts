@@ -903,7 +903,22 @@ export class h11_brxxService {
           msg: '该病该病人有医保登记,请先将医保！',
         };
       }
+      // .检查有无预交款
+      const YJKItem = await this.dataSource.query(
+        `SELECT count(*) as count
+         FROM h11_yjk
+         WHERE zyid = @0 and sjzt=1`,
+        params,
+      );
 
+      const YJKCount = YJKItem?.[0]?.count || 0;
+
+      if (YJKCount > 0) {
+        return {
+          code: -1,
+          msg: '该病人有预交款记录！',
+        }
+      }
       // 3.养老处理
       // const ylmbbz = await this.paramService.gfGetPara(
       //   81,
@@ -1036,6 +1051,24 @@ export class h11_brxxService {
         msg: '该病人有手术医嘱记录！',
       }
     }
+    // 5.检查有无预交款
+    const YJKItem = await this.dataSource.query(
+      `SELECT count(*) as count
+         FROM h11_yjk
+        WHERE zyid = @0 and sjzt=1`,
+      params,
+    );
+
+    const YJKCount = YJKItem?.[0]?.count || 0;
+
+    if (YJKCount > 0) {
+      return {
+        code: -1,
+        msg: '该病人有预交款记录！',
+      }
+    }
+
+
     return {
       code: 0,
       msg: '可以删除!',
