@@ -42,6 +42,10 @@ export class Queryjbbmicd10Dto extends QueryDto {
 
   @Allow()
   value?: string;
+
+  /** 诊断类型，支持逗号分隔多值，如 1 或 0,1,2,3,4,5,6,9 */
+  @Allow()
+  lx?: string;
 }
 
 export class UpdateDto extends CreateDto {}

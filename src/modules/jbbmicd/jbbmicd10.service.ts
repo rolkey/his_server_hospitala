@@ -19,6 +19,15 @@ export class Jbbmicd10Service {
     const queryBuilder = this.jbbmicd10Repo.createQueryBuilder('zd');
 
     queryBuilder.where(`zd.yxbz='1'`);
+
+    const lxValues = dto.lx
+      ?.split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (lxValues?.length) {
+      queryBuilder.andWhere('zd.lx IN (:...lxValues)', { lxValues });
+    }
+
     const value = dto.value?.trim().toUpperCase();
     if (value) {
       queryBuilder.andWhere(
