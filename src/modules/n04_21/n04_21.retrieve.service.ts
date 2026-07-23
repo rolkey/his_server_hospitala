@@ -477,7 +477,7 @@ export class N0421RetrieveService {
     const sfdm = trim(brxx.sfdm);
     const sjdm = trim(brxx.sjdm);
     const jgdm = trim(brxx.jgdm);
-    const csddmc = trim(brxx.csddmc) || trim(brxx.xjdm);
+    const xjdm = trim(brxx.xjdm);
     const mzmc = trim(brxx.mzmc);
     const gjid = trim(brxx.gjid);
     const hyzkmc = trim(brxx.hyzkmc);
@@ -491,6 +491,10 @@ export class N0421RetrieveService {
     const gg1 = trim(brxx.gg1) || sfdm;
     const gg2 = trim(brxx.gg2) || sjdm;
     const gg3 = trim(brxx.gg3) || jgdm;
+    // 出生地：h11_brxx 无 CSD 列，与入院登记 CSDZ 一致，用省/市/县代码（非 csddmc 名称）
+    const csd1 = sfdm;
+    const csd2 = sjdm;
+    const csd3 = jgdm || xjdm;
     const xzz1 = trim(brxx.xzz1);
     const xzz2 = trim(brxx.xzz2);
     const xzz3 = trim(brxx.xzz3);
@@ -735,10 +739,10 @@ export class N0421RetrieveService {
       ryblfx: 'A',
       sslclj1: '3',
       mzys: outpatientDoctorName,
-      // 出生地：h11_brxx 无 CSD 列，用省份/市/出生地(或县)代码初始化
-      csd1: sfdm || undefined,
-      csd2: sjdm || undefined,
-      csd3: csddmc || undefined,
+      // 出生地：h11_brxx 无 CSD 列，用省份/市/县代码初始化（csddmc 为名称，不可用于级联）
+      csd1: csd1 || undefined,
+      csd2: csd2 || undefined,
+      csd3: csd3 || undefined,
       gg1: gg1 || undefined,
       gg2: gg2 || undefined,
       gg3: gg3 || undefined,
@@ -797,10 +801,20 @@ export class N0421RetrieveService {
       zycs?: number | null;
       hbh?: string | null;
       sfzh?: string | null;
+      sfdm?: string | null;
+      sjdm?: string | null;
+      jgdm?: string | null;
+      xjdm?: string | null;
+      gg1?: string | null;
+      gg2?: string | null;
+      gg3?: string | null;
     }[] = await this.dataSource.query(
       `
       SELECT rysj, cysj, ISNULL(bahm, '') AS bahm, ISNULL(zybh, '') AS zybh,
-             ryzd, zycs, hbh, sfzh
+             ryzd, zycs, hbh, sfzh,
+             ISNULL(sfdm, '') AS sfdm, ISNULL(sjdm, '') AS sjdm,
+             ISNULL(jgdm, '') AS jgdm, ISNULL(xjdm, '') AS xjdm,
+             ISNULL(GG1, '') AS gg1, ISNULL(GG2, '') AS gg2, ISNULL(GG3, '') AS gg3
       FROM dbo.h11_brxx
       WHERE zyid = @0
       `,
@@ -852,6 +866,23 @@ export class N0421RetrieveService {
     if (isBlank(merged.ryzdmc)) {
       merged.ryzdmc = ryzdmc;
       merged.ryzdicd = ryzd;
+    }
+
+    const sfdm = trim(brxx.sfdm);
+    const sjdm = trim(brxx.sjdm);
+    const jgdm = trim(brxx.jgdm);
+    const xjdm = trim(brxx.xjdm);
+    if (isBlank(merged.csd1) && sfdm) merged.csd1 = sfdm;
+    if (isBlank(merged.csd2) && sjdm) merged.csd2 = sjdm;
+    if (isBlank(merged.csd3) && (jgdm || xjdm)) merged.csd3 = jgdm || xjdm;
+    if (isBlank(merged.gg1) && (trim(brxx.gg1) || sfdm)) {
+      merged.gg1 = trim(brxx.gg1) || sfdm;
+    }
+    if (isBlank(merged.gg2) && (trim(brxx.gg2) || sjdm)) {
+      merged.gg2 = trim(brxx.gg2) || sjdm;
+    }
+    if (isBlank(merged.gg3) && (trim(brxx.gg3) || jgdm)) {
+      merged.gg3 = trim(brxx.gg3) || jgdm;
     }
 
     const nursing = await this.calcNursingDays(zyid);
