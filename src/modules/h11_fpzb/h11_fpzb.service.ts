@@ -219,6 +219,10 @@ export class H11FpzbService {
     if (filters.end) {
       queryBuilder.andWhere('fpzb.sfsj <= :end', { end: filters.end });
     }
+    if (filters.sfyid) {
+      queryBuilder.andWhere('fpzb.sfyid = :sfyid', { sfyid: filters.sfyid });
+    }
+
 
     queryBuilder.orderBy(`fpzb.sfsj`, 'DESC');
 
