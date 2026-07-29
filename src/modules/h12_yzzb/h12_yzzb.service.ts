@@ -151,7 +151,7 @@ export class h12_yzzbService {
           .addOrderBy('h12_yzxb.zxcs', 'ASC')
           .addOrderBy('h12_yzxb.mxxh', 'ASC');
 
-        console.log('医嘱脚本', getSqlWithParameters(h12_yzxbQuery));
+        // console.log('医嘱脚本', getSqlWithParameters(h12_yzxbQuery));
 
         const [h12_yzxbList, ksidList, usidList] = await Promise.all([
           h12_yzxbQuery.getMany(),
@@ -333,7 +333,11 @@ export class h12_yzzbService {
       .addOrderBy('h12_yzxb.typbz', 'ASC');
 
     if (data.yzzt) {
-      h12YzxbQuery.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt.split(',') });
+      if (data.yzzt.includes('100')) {
+        h12YzxbQuery.andWhere(
+          '((yzzt=1 and ksys is not null and kshs IS NULL) OR (jsys IS NOT NULL AND jshs IS NULL))',
+        );
+      } else h12YzxbQuery.andWhere('h12_yzxb.yzzt IN (:...yzzt)', { yzzt: data.yzzt.split(',') });
     }
 
     const [yzzb, h12_yzxbList, ksidList, usidList] = await Promise.all([
