@@ -152,7 +152,7 @@ export class h12_yzxbServiceNew {
     private readonly h00syffService: h00_syffService,
     private readonly entityManager: EntityManager,
     private readonly h13YzzxcsService: h13_yzzxcsService,
-  ) { }
+  ) {}
 
   // -------------------------
   // 复核医嘱 0201
@@ -640,14 +640,21 @@ export class h12_yzxbServiceNew {
 
       // 检查医嘱对应的费用项目合法性
       for (const yzxb of yzxbList) {
+        // 检查停嘱日期是否存在
+        // if (!yzxb.tzrq) {
+        //   continue; // 如果没有停嘱日期，跳过该条记录
+        // }
+
         // 执行日期大于等于停嘱日期，要进行相应处理
         const tzrq = new Date(yzxb.tzrq);
         tzrq.setHours(0, 0, 0, 0); // 去掉时分秒
 
         let tfsl = 0;
         for (const h13Yzzxcs of yzxb.h13_yzzxcsList) {
-          if (h13Yzzxcs.zxrq.getDate() >= tzrq.getDate()) {
-            if (h13Yzzxcs.zxcs - yzxb.mrcs > 0) {
+          const timeDiff = h13Yzzxcs.zxcs - yzxb.mrcs;
+          const dateDiff = h13Yzzxcs.zxrq.getDate() - tzrq.getDate();
+          if (dateDiff > 0) {
+            if (timeDiff > 0) {
               await this.reviewFee(
                 yzxb,
                 tzrq,
@@ -660,7 +667,7 @@ export class h12_yzxbServiceNew {
                 updateYzzxcss,
               );
             } else {
-              throw new BadRequestException('实际退费数量有问题！！');
+              throw new BadRequestException('实际退费数量有问题！！' + timeDiff);
             }
             tfsl++;
           }
@@ -1588,24 +1595,24 @@ export class h12_yzxbServiceNew {
     dto: { zyid: string; yzlx: number; zxhs: string }, //adviceDto,
   ): H13YzzxcsTf[] {
     return h13_yzzxcsList.map((item) =>
-    //   this.createRefundListOfReviewOne(item, dto),
-    ({
-      ...item,
-      czrq: new Date(),
-      fydh: null,
-      zxcs2: item.maxid,
-      zxhs: dto.zxhs,
-      zxcs: -1 * item.bzxcs,
-      bzxcs: 0,
-      tyrid: dto.zxhs,
-      tysj: new Date(),
-      fysj: null,
-      fyrid: null,
-      sysj: null,
-      clbz: 0,
-      fybz: 0,
-      zyid: dto.zyid,
-    }),
+      //   this.createRefundListOfReviewOne(item, dto),
+      ({
+        ...item,
+        czrq: new Date(),
+        fydh: null,
+        zxcs2: item.maxid,
+        zxhs: dto.zxhs,
+        zxcs: -1 * item.bzxcs,
+        bzxcs: 0,
+        tyrid: dto.zxhs,
+        tysj: new Date(),
+        fysj: null,
+        fyrid: null,
+        sysj: null,
+        clbz: 0,
+        fybz: 0,
+        zyid: dto.zyid,
+      }),
     ) as H13YzzxcsTf[];
   }
 
@@ -1625,7 +1632,7 @@ export class h12_yzxbServiceNew {
   /**
    * 生成复核列表
    */
-  private reviewDelete() { }
+  private reviewDelete() {}
 
   /**
    * 创建退费列表
@@ -1840,11 +1847,11 @@ export class h12_yzxbServiceNew {
             .andWhere('h13_tf.yzlx = :yzlx', { yzlx: item.yzlx })
             .andWhere(
               'EXISTS (SELECT 1 FROM h13_yzzxcs h13 WHERE ' +
-              'h13.zyid = h13_tf.zyid ' +
-              'AND h13.maxid = h13_tf.zxcs2 ' +
-              'AND h13.yzzh = :yzzh ' +
-              'AND h13.yzlx = :yzlx ' +
-              'AND ISNULL(h13.fybz, 0) = 1)',
+                'h13.zyid = h13_tf.zyid ' +
+                'AND h13.maxid = h13_tf.zxcs2 ' +
+                'AND h13.yzzh = :yzzh ' +
+                'AND h13.yzlx = :yzlx ' +
+                'AND ISNULL(h13.fybz, 0) = 1)',
               {
                 yzzh: item.yzzh,
                 yzlx: item.yzlx,
