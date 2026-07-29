@@ -426,6 +426,11 @@ export class H11FpzbQueryDto {
   @Type(() => Number)
   @IsNumber()
   pageSize?: number = 10;
+
+  @IsOptional()
+  @IsString()
+  sfyid?: string;
+
 }
 
 export class H11FpzbCancelDto {

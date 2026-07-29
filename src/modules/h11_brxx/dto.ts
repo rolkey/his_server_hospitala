@@ -502,6 +502,7 @@ export class bedAllocationDto {
 }
 
 export class ForciblyDeleteDto {
+
   @IsNotEmpty({ message: 'ZYID不能为空' })
   @IsString()
   zyid?: string;
@@ -510,13 +511,15 @@ export class ForciblyDeleteDto {
   @IsString()
   czrKsid?: string;
 
-  @IsNotEmpty({ message: '密码不能为空' })
-  @IsString()
-  pwd?: string;
-
   @IsOptional()
   @IsString()
   ghbh?: string;
+
+  @IsOptional()
+  @IsString()
+  pwd?: string;
+
+
 }
 
 export class TransferDepartmentDto {

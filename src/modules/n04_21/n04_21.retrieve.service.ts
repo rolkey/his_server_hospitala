@@ -203,6 +203,7 @@ interface H11BrxxRow {
   hkyb?: string | null;
   hkyb1?: string | null;
   csddmc?: string | null;
+  xjdm?: string | null;
   gzdw?: string | null;
   dwdh?: string | null;
   dwyb?: string | null;
@@ -221,7 +222,18 @@ interface H11BrxxRow {
   hbh?: string | null;
   rycw?: string | null;
   zkksid?: string | null;
+  gg1?: string | null;
+  gg2?: string | null;
+  gg3?: string | null;
+  xzz1?: string | null;
+  xzz2?: string | null;
+  xzz3?: string | null;
+  xzz4?: string | null;
   xzz5?: string | null;
+  hkdz1?: string | null;
+  hkdz2?: string | null;
+  hkdz3?: string | null;
+  hkdz4?: string | null;
   hkdz5?: string | null;
   zrhs?: string | null;
   sflx?: string | null;
@@ -383,6 +395,7 @@ export class N0421RetrieveService {
         hkyb,
         hkyb1,
         csddmc,
+        ISNULL(xjdm, '') AS xjdm,
         gzdw,
         dwdh,
         dwyb,
@@ -401,7 +414,18 @@ export class N0421RetrieveService {
         hbh,
         ISNULL(rycw, cycw) AS rycw,
         zkksid,
+        ISNULL(GG1, '') AS gg1,
+        ISNULL(GG2, '') AS gg2,
+        ISNULL(GG3, '') AS gg3,
+        ISNULL(XZZ1, '') AS xzz1,
+        ISNULL(XZZ2, '') AS xzz2,
+        ISNULL(XZZ3, '') AS xzz3,
+        ISNULL(XZZ4, '') AS xzz4,
         ISNULL(XZZ5, '') AS xzz5,
+        ISNULL(HKDZ1, '') AS hkdz1,
+        ISNULL(HKDZ2, '') AS hkdz2,
+        ISNULL(HKDZ3, '') AS hkdz3,
+        ISNULL(HKDZ4, '') AS hkdz4,
         ISNULL(HKDZ5, '') AS hkdz5,
         ISNULL(zrhs, '') AS zrhs,
         ISNULL(sflx, '01') AS sflx,
@@ -451,7 +475,9 @@ export class N0421RetrieveService {
     const xbid = trim(brxx.xbid);
     const csrq = toDate(brxx.csrq);
     const sfdm = trim(brxx.sfdm);
+    const sjdm = trim(brxx.sjdm);
     const jgdm = trim(brxx.jgdm);
+    const xjdm = trim(brxx.xjdm);
     const mzmc = trim(brxx.mzmc);
     const gjid = trim(brxx.gjid);
     const hyzkmc = trim(brxx.hyzkmc);
@@ -461,7 +487,23 @@ export class N0421RetrieveService {
     const mzysId = trim(brxx.mzys);
     const ryff = trim(brxx.ryff);
     const sfzh = trim(brxx.sfzh);
+    // 籍贯：优先用入院登记的 GG1/2/3，缺省时回退省份/市/籍贯代码
+    const gg1 = trim(brxx.gg1) || sfdm;
+    const gg2 = trim(brxx.gg2) || sjdm;
+    const gg3 = trim(brxx.gg3) || jgdm;
+    // 出生地：h11_brxx 无 CSD 列，与入院登记 CSDZ 一致，用省/市/县代码（非 csddmc 名称）
+    const csd1 = sfdm;
+    const csd2 = sjdm;
+    const csd3 = jgdm || xjdm;
+    const xzz1 = trim(brxx.xzz1);
+    const xzz2 = trim(brxx.xzz2);
+    const xzz3 = trim(brxx.xzz3);
+    const xzz4 = trim(brxx.xzz4);
     const xzz5 = trim(brxx.xzz5);
+    const hkdz1 = trim(brxx.hkdz1);
+    const hkdz2 = trim(brxx.hkdz2);
+    const hkdz3 = trim(brxx.hkdz3);
+    const hkdz4 = trim(brxx.hkdz4);
     const hkdz5 = trim(brxx.hkdz5);
 
     if (isBlank(xbid) || (xbid !== '1' && xbid !== '2')) {
@@ -697,9 +739,26 @@ export class N0421RetrieveService {
       ryblfx: 'A',
       sslclj1: '3',
       mzys: outpatientDoctorName,
-      xzz5,
-      hkdz5,
-      hkdz,
+      // 出生地：h11_brxx 无 CSD 列，用省份/市/县代码初始化（csddmc 为名称，不可用于级联）
+      csd1: csd1 || undefined,
+      csd2: csd2 || undefined,
+      csd3: csd3 || undefined,
+      gg1: gg1 || undefined,
+      gg2: gg2 || undefined,
+      gg3: gg3 || undefined,
+      xzz1: xzz1 || undefined,
+      xzz2: xzz2 || undefined,
+      xzz3: xzz3 || undefined,
+      xzz4: xzz4 || undefined,
+      xzz5: xzz5 || undefined,
+      hkdz1: hkdz1 || undefined,
+      hkdz2: hkdz2 || undefined,
+      hkdz3: hkdz3 || undefined,
+      hkdz4: hkdz4 || undefined,
+      hkdz5: hkdz5 || undefined,
+      // brxx.hkdz 在校验文案中为「现住地址」，同步到 xzdz；hkdz 保留兼容
+      xzdz: hkdz || undefined,
+      hkdz: hkdz || undefined,
       sjbz: 0,
       tjbz: 0,
       zkys,
@@ -742,10 +801,20 @@ export class N0421RetrieveService {
       zycs?: number | null;
       hbh?: string | null;
       sfzh?: string | null;
+      sfdm?: string | null;
+      sjdm?: string | null;
+      jgdm?: string | null;
+      xjdm?: string | null;
+      gg1?: string | null;
+      gg2?: string | null;
+      gg3?: string | null;
     }[] = await this.dataSource.query(
       `
       SELECT rysj, cysj, ISNULL(bahm, '') AS bahm, ISNULL(zybh, '') AS zybh,
-             ryzd, zycs, hbh, sfzh
+             ryzd, zycs, hbh, sfzh,
+             ISNULL(sfdm, '') AS sfdm, ISNULL(sjdm, '') AS sjdm,
+             ISNULL(jgdm, '') AS jgdm, ISNULL(xjdm, '') AS xjdm,
+             ISNULL(GG1, '') AS gg1, ISNULL(GG2, '') AS gg2, ISNULL(GG3, '') AS gg3
       FROM dbo.h11_brxx
       WHERE zyid = @0
       `,
@@ -797,6 +866,23 @@ export class N0421RetrieveService {
     if (isBlank(merged.ryzdmc)) {
       merged.ryzdmc = ryzdmc;
       merged.ryzdicd = ryzd;
+    }
+
+    const sfdm = trim(brxx.sfdm);
+    const sjdm = trim(brxx.sjdm);
+    const jgdm = trim(brxx.jgdm);
+    const xjdm = trim(brxx.xjdm);
+    if (isBlank(merged.csd1) && sfdm) merged.csd1 = sfdm;
+    if (isBlank(merged.csd2) && sjdm) merged.csd2 = sjdm;
+    if (isBlank(merged.csd3) && (jgdm || xjdm)) merged.csd3 = jgdm || xjdm;
+    if (isBlank(merged.gg1) && (trim(brxx.gg1) || sfdm)) {
+      merged.gg1 = trim(brxx.gg1) || sfdm;
+    }
+    if (isBlank(merged.gg2) && (trim(brxx.gg2) || sjdm)) {
+      merged.gg2 = trim(brxx.gg2) || sjdm;
+    }
+    if (isBlank(merged.gg3) && (trim(brxx.gg3) || jgdm)) {
+      merged.gg3 = trim(brxx.gg3) || jgdm;
     }
 
     const nursing = await this.calcNursingDays(zyid);

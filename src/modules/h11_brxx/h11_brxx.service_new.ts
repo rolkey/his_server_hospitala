@@ -126,7 +126,7 @@ export class h11_brxxService_new {
       .leftJoin('h00_fylb', 'fylb', 'zx.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'zx.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = zx.xmid')
-      .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = zx.xmid')
+      .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = zx.xmid and dyzd.xmzl = yz.xmzl',)
       .select([
         'yz.yzlx as yzlx',
         'yz.yzxh as yzxh',
@@ -194,7 +194,7 @@ export class h11_brxxService_new {
       .leftJoin('h00_fylb', 'fylb', 'ss.fylbid = fylb.fylbid')
       .leftJoin('h30_ypzd', 'yp', 'ss.xmid = yp.ypid')
       .leftJoin('h00_xmzd', 'xmzd', 'xmzd.xmid = ss.xmid')
-      .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = ss.xmid')
+      .leftJoin('G00_dyzd', 'dyzd', 'dyzd.xmid = ss.xmid and dyzd.xmzl = ss.xmzl')
       .select([
         'ss.xmid as xmid',
         'ss.xmmc as xmmc',

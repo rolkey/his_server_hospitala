@@ -99,6 +99,12 @@ export class h11_brxxController {
     return await this.h11_brxxService.forciblyDelete(dto);
   }
 
+  // 删除
+  @Get('chekcForciblyDelete')
+  async chekcForciblyDelete(@Query() dto: ForciblyDeleteDto) {
+    return await this.h11_brxxService.chekcForciblyDelete(dto);
+  }
+
   // 作废未确认出院
   @Post('cancelUnconfirmedDischarge')
   async cancelUnconfirmedDischarge(@Body() dto: { zyid: string; ksid: string }) {
