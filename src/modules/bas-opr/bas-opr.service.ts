@@ -22,6 +22,7 @@ export class BasOprService {
     const where = [
       { icdcm: Like(`%${params}%`) },
       { opr: Like(`%${params}%`) },
+      { bzmc: Like(`%${params}%`) },
       { pybm: Like(`%${params?.toUpperCase()}%`) },
       { wbbm: Like(`%${params?.toUpperCase()}%`) },
     ];
