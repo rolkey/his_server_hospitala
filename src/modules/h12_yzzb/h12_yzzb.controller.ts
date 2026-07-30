@@ -18,7 +18,9 @@ import { UsrcatService } from '../usrcat/usrcat.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BabyAdviceService } from './baby-advice.service';
 import { h12_yzxbServiceNew } from './h12_yzxb.service_new';
-import { JwtGuard } from '@/common/guards';
+// import { JwtGuard } from '@/common/guards';
+import { StopOrdersDto } from './dto/stop-orders.dto';
+
 @Controller('h12_yzzb')
 export class h12_yzzbController {
   constructor(
@@ -370,5 +372,16 @@ export class h12_yzzbController {
     @Req() request: any,
   ) {
     return await this.h12_yzxbServiceNew.stopBack(dto, request.user);
+  }
+
+  /**
+   * 批量停止医嘱 stop-orders-dto
+   */
+  @Post('additionalItemStop')
+  @ApiOperation({ summary: '附加项目停嘱' })
+  @ApiResponse({ status: 200, description: '医嘱停止成功' })
+  async additionalItemStop(@Body() stopOrdersDto: StopOrdersDto) {
+    const record = await this.h12_yzxbServiceNew.additionalItemStop(stopOrdersDto);
+    return { record };
   }
 }

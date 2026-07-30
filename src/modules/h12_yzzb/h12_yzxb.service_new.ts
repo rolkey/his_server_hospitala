@@ -44,12 +44,11 @@ import { availableParallelism } from 'os';
 import { OutResponse, createSuccessResponse, createErrorResponse } from './dto/out-response.dto';
 import { usrcat } from '../usrcat/usrcat.entity';
 import { ParamService } from '../h12_xmzd/service/param.service';
-import DateFormater from '@/utils/DateFormater';
 
-import { log } from 'console';
 import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
+import { StopOrdersDto } from './dto/stop-orders.dto';
 
 /**
  * 完整重构版 Service
@@ -2929,5 +2928,70 @@ export class h12_yzxbServiceNew {
       { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([5, 6]) },
       { yzzt: 7, jssxhs: null, jshs: null },
     );
+  }
+
+  /**
+   * 批量停止医嘱
+   * @param zyid 住院ID
+   * @param mxxhList 医嘱明细序号数组
+   * @param yzlx 医嘱类型
+   * @param u_zcid 用户操作ID
+   * @param u_userid 用户ID
+   * @param s_datetime 服务器时间
+   * @returns 操作结果
+   */
+  async additionalItemStop(data: StopOrdersDto) {
+    const { zyid, mxxhList, yzlx, u_zcid, u_userid, s_datetime } = data;
+
+    // 1. 验证mxxhList是否为空
+    if (!mxxhList || mxxhList.length === 0) {
+      throw new BadRequestException('医嘱明细序号列表不能为空');
+    }
+
+    // 2. 获取所有需要停止的医嘱明细记录
+    const orderDetails = await this.h12_yzxbRepo.find({
+      where: { zyid, mxxh: In(mxxhList), yzlx },
+    });
+
+    if (!orderDetails || orderDetails.length === 0) {
+      throw new BadRequestException('未找到医嘱明细记录');
+    }
+
+    // 3. 准备当前时间
+    const now = dayjs(s_datetime || new Date());
+    const currentTime = now.startOf('minute').toDate(); // 取整到分钟
+
+    // 4. 准备更新数据
+    const today = now.format('YYYYMMDD'); // 格式化为yyyymmdd
+    const jsrq = `${now.format('MM')}/${now.format('DD')}`; // mm/dd格式
+    const jssj = now.format('hhmmA'); // 格式化为hhmmam/pm
+
+    // 5. 验证所有记录的停止日期不能小于开始日期
+    const invalidOrders = orderDetails.filter((order) => currentTime < order.yzrq);
+    if (invalidOrders.length > 0) {
+      throw new BadRequestException('存在停止日期小于开始日期的医嘱，请检查!');
+    }
+
+    // 6. 批量更新医嘱明细
+    const updatePromises = orderDetails.map(async (orderDetail) => {
+      await this.h12_yzxbRepo.update(
+        { zyid, mxxh: orderDetail.mxxh, yzlx },
+        {
+          jsrq, // 停止日期
+          tzrq: currentTime, // 停止日期时间
+          mrcs: 0, // 每日次数
+          jshs: u_userid, // 停止护士
+          jsys: data.jsys, // 结束医生
+          jssj, // 停止时间
+        },
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    // 7. 返回更新后的记录
+    return await this.h12_yzxbRepo.find({
+      where: { zyid, mxxh: In(mxxhList), yzlx },
+    });
   }
 }
