@@ -238,10 +238,10 @@ export class h12_yzxbServiceNew {
       // 检查是否需要更新患者信息，如果没有更新由跳过
       const updateData: any = {};
       if (fhYzxb.some((advice) => advice.xmmc?.includes('病危'))) {
-        updateData.rybqid = 1;
+        updateData.rybqid = '1';
       }
       if (fhYzxb.some((advice) => advice.xmmc?.includes('解除病危'))) {
-        updateData.rybqid = 0;
+        updateData.rybqid = '0';
       }
       if (
         fhYzxb.some(
