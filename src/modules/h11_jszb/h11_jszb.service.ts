@@ -404,7 +404,8 @@ export class H11JszbService {
       Number(createH11JszbDto.paymentType.sjhj) +
       Number(createH11JszbDto.paymentType.zfje) +
       Number(createH11JszbDto.paymentType.qt4) +
-      Number(createH11JszbDto.paymentType.dbje)
+      Number(createH11JszbDto.paymentType.dbje) +
+      Number(createH11JszbDto.paymentType.qtje1)
     // const fkje =
     //   createH11JszbDto.paymentType.yhje +
     //   createH11JszbDto.paymentType.je1 +
