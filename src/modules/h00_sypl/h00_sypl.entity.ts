@@ -8,8 +8,8 @@ export class h00_sypl {
   @Column('varchar', { name: 'syplmc', nullable: true, length: 30 })
   syplmc: string | null;
 
-  // @Column("char", { name: "szbm", nullable: true, length: 20 })
-  // szbm: string | null;
+  @Column('char', { name: 'szbm', nullable: true, length: 20 })
+  szbm: string | null;
 
   // @Column("char", { name: "pybm", nullable: true, length: 20 })
   // pybm: string | null;

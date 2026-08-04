@@ -11,7 +11,11 @@ export class h00_syplService {
   ) {}
 
   findAll() {
-    return this.h00_syplRepo.find({});
+    return this.h00_syplRepo.find({
+      order: {
+        szbm: 'ASC', // 升序排列，如果需要降序，可以改为 'DESC'
+      },
+    });
   }
 
   findOne(syplid: string) {
