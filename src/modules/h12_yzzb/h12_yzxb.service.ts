@@ -1054,6 +1054,10 @@ export class h12_yzxbService {
           throw new BadRequestException(`${adviceRow.xmmc} 库存不足，请修改医嘱后再保存！`);
         }
       }
+
+      if (adviceRow.fybz) {
+        adviceRow.fybz = adviceRow.fybz.trim();
+      }
     }
 
     // 2. 违规审核
