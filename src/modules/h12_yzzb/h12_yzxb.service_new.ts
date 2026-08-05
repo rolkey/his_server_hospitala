@@ -653,7 +653,7 @@ export class h12_yzxbServiceNew {
           const timeDiff = h13Yzzxcs.zxcs - yzxb.mrcs;
           const dateDiff = h13Yzzxcs.zxrq.getDate() - tzrq.getDate();
           if (dateDiff > 0) {
-            if (timeDiff > 0) {
+            if (!(timeDiff < 0)) {
               await this.reviewFee(
                 yzxb,
                 tzrq,
@@ -665,10 +665,10 @@ export class h12_yzxbServiceNew {
                 deleteYzzxcsTfs,
                 updateYzzxcss,
               );
+              tfsl++;
             } else {
-              throw new BadRequestException('实际退费数量有问题！！' + timeDiff);
+              //   throw new BadRequestException('实际退费数量有问题！！' + timeDiff);
             }
-            tfsl++;
           }
         }
         if (tfsl) {
