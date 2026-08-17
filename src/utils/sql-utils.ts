@@ -88,7 +88,7 @@ export function getCompleteSqlWithParameters(query: any): string {
 }
 
 // 格式化值的辅助函数
-function formatValue(value: any): string {
+export function formatValue(value: any): string {
   if (value === null || value === undefined) {
     return 'NULL';
   }
@@ -102,4 +102,12 @@ function formatValue(value: any): string {
   }
 
   return String(value);
+}
+
+export function escapeSqlString(str: any): string {
+  if (str === null || str === undefined) return 'NULL';
+  if (typeof str === 'number') return str.toString();
+  if (typeof str === 'boolean') return str ? '1' : '0';
+  if (str instanceof Date) return `'${str.toISOString()}'`;
+  return `'${str.toString().replace(/'/g, "''")}'`;
 }
