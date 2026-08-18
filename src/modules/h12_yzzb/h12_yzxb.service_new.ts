@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { formatSqlParam } from '@/utils/sql-utils';
 import dayjs = require('dayjs');
 // import * as dayjs from 'dayjs';
 // import dayjs from 'dayjs';
@@ -993,9 +994,15 @@ export class h12_yzxbServiceNew {
           }
 
           if (executeType === '104') {
+            yzlx = '%';
             zxbz = Zxbz.WITH_GROUP;
             for (const yzzhItem of dto.yzzh.split(',')) {
               try {
+                const fullSql = `EXEC sp_h13hdzx_zyzx @zxbz = ${formatSqlParam(zxbz)}, @li_para = ${formatSqlParam(currentZyid)}, @ls_depart = ${formatSqlParam(zxks)}, @ldt_begin = ${formatSqlParam(beginDate)},
+            @ldt_end = ${formatSqlParam(endDate)}, @ls_man = ${formatSqlParam(zxhs)}, @ls_yzlx = ${formatSqlParam(yzlx)}`;
+
+                console.log('执行SQL:', fullSql);
+
                 await this.dataSource.query(
                   `EXEC sp_h13hdzx_zyzx_dg  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,
                       @ldt_end = @4, @ls_man = @5, @ls_yzlx = @6`,
@@ -1007,6 +1014,11 @@ export class h12_yzxbServiceNew {
               }
             }
           } else {
+            const fullSql = `EXEC sp_h13hdzx_zyzx @zxbz = ${formatSqlParam(zxbz)}, @li_para = ${formatSqlParam(currentZyid)}, @ls_depart = ${formatSqlParam(zxks)}, @ldt_begin = ${formatSqlParam(beginDate)},
+            @ldt_end = ${formatSqlParam(endDate)}, @ls_man = ${formatSqlParam(zxhs)}, @ls_yzlx = ${formatSqlParam(yzlx)}`;
+
+            console.log('执行SQL:', fullSql);
+
             // 执行存储过程
             await this.dataSource.query(
               `EXEC sp_h13hdzx_zyzx  @zxbz = @0, @li_para = @1, @ls_depart = @2, @ldt_begin = @3,

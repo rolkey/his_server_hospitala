@@ -104,10 +104,11 @@ export function formatValue(value: any): string {
   return String(value);
 }
 
-export function escapeSqlString(str: any): string {
-  if (str === null || str === undefined) return 'NULL';
-  if (typeof str === 'number') return str.toString();
-  if (typeof str === 'boolean') return str ? '1' : '0';
-  if (str instanceof Date) return `'${str.toISOString()}'`;
-  return `'${str.toString().replace(/'/g, "''")}'`;
-}
+export const formatSqlParam = (param: any): string => {
+  if (param === null || param === undefined) return 'NULL';
+  if (typeof param === 'number') return param.toString();
+  if (typeof param === 'boolean') return param ? '1' : '0';
+  if (param instanceof Date) return `'${param.toISOString()}'`;
+  // 字符串类型添加引号并转义单引号
+  return `'${String(param).replace(/'/g, "''")}'`;
+};
