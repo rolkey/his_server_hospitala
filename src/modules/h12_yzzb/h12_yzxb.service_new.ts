@@ -1038,6 +1038,9 @@ export class h12_yzxbServiceNew {
             }
 
             try {
+              const fullSql = `EXEC sp_h13zxcs_fyjl @as_ksid = ${formatSqlParam(zxks)}, @li_para = ${formatSqlParam(currentZyid)}, @ls_usid = ${formatSqlParam(zxhs)}, @yzlx = ${formatSqlParam(yzlx)}`;
+              console.log('执行SQL:', fullSql);
+
               lockAcquired = await this.tryAcquireSysparLock();
 
               await this.dataSource.query(
@@ -2953,7 +2956,7 @@ export class h12_yzxbServiceNew {
    * @returns 操作结果
    */
   async additionalItemStop(data: StopOrdersDto) {
-    const { zyid, mxxhList, yzlx, u_zcid, u_userid, s_datetime } = data;
+    const { zyid, mxxhList, yzlx, u_zcid, u_userid, mrcs, stopDatetime } = data;
 
     // 1. 验证mxxhList是否为空
     if (!mxxhList || mxxhList.length === 0) {
@@ -2970,13 +2973,11 @@ export class h12_yzxbServiceNew {
     }
 
     // 3. 准备当前时间
-    const now = dayjs(s_datetime || new Date());
+    const now = dayjs(stopDatetime || new Date());
     const currentTime = now.startOf('minute').toDate(); // 取整到分钟
 
     // 4. 准备更新数据
-    const today = now.format('YYYYMMDD'); // 格式化为yyyymmdd
-    const jsrq = `${now.format('MM')}/${now.format('DD')}`; // mm/dd格式
-    const jssj = now.format('hhmmA'); // 格式化为hhmmam/pm
+    const tzrq_a = now.format('YYYY-MM-DD hh:mm:ss'); // 格式化为hhmmam/pm
 
     // 5. 验证所有记录的停止日期不能小于开始日期
     const invalidOrders = orderDetails.filter((order) => currentTime < order.yzrq);
@@ -2989,12 +2990,11 @@ export class h12_yzxbServiceNew {
       await this.h12_yzxbRepo.update(
         { zyid, mxxh: orderDetail.mxxh, yzlx },
         {
-          jsrq, // 停止日期
-          tzrq: currentTime, // 停止日期时间
-          mrcs: 0, // 每日次数
+          tzrq: tzrq_a, // 停止日期时间
+          mrcs: mrcs, // 末日次数
           jshs: u_userid, // 停止护士
           jsys: data.jsys, // 结束医生
-          jssj, // 停止时间
+          //   jssj, // 停止时间
         },
       );
     });

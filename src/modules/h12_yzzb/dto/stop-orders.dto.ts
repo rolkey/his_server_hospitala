@@ -26,7 +26,11 @@ export class StopOrdersDto {
   @IsNotEmpty()
   jsys: string; // 结束医生ID
 
+  @IsNumber()
+  @IsNotEmpty()
+  mrcs: number; // 末日次数
+
   @IsString()
   @IsOptional()
-  s_datetime?: string; // 服务器时间(可选)
+  stopDatetime?: string; // 服务器时间(可选)
 }
