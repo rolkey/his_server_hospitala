@@ -87,6 +87,7 @@ export class H11Jshztzd1Service {
          and h11_brxx.cyksid = @1
          and h12_yzxb.ysbz = 1
          and h12_yzxb.tjbz = 1
+         and hdbz = 0
          and ((h12_yzxb.hdbz = 0) or
              (h12_yzxb.yzlx = 1 and h12_yzxb.tzbz = 1 and isnull(h12_yzxb.jshs, '') = ''))
          and not exists (select *
