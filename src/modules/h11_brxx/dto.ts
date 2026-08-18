@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsNumber,
   IsOptional,
@@ -95,8 +95,11 @@ export class CreateDto {
   yebz?: number;
   @Allow()
   hyzkmc?: string;
+
   @Allow()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   hyid?: string;
+
   @Allow()
   csddmc?: string;
   @Allow()
@@ -109,12 +112,18 @@ export class CreateDto {
   gzdw?: string;
   @Allow()
   dwdh?: string;
+
   @Allow()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   dwyb?: string;
+
   @Allow()
   hkdz?: string;
+
   @Allow()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   hkyb?: string;
+
   @Allow()
   lxrm?: string;
   @Allow()
@@ -227,8 +236,11 @@ export class CreateDto {
   nldw1?: string;
   @Allow()
   czry?: string;
+
   @Allow()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   hkyb1?: string;
+
   @Allow()
   bzxx?: string;
   @Allow()

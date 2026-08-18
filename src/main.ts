@@ -45,6 +45,6 @@ async function bootstrap() {
   console.log('Current time:', new Date().toLocaleString(), 'TZ:', process.env.TZ);
 
   await app.listen(process.env.APP_PORT || 8085);
-  console.log(`🚀 HTTP服务启动成功: http://localhost:${process.env.APP_PORT}`);
+  console.log(`🚀 HTTP服务启动成功: http://localhost:${process.env.APP_PORT}/api-doctor`);
 }
 bootstrap();
