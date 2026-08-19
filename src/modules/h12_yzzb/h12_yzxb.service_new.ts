@@ -50,6 +50,7 @@ import { C00Fbxx } from '../c00_fbxx/c00_fbxx.entity';
 import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 import { h13_yzzxcsService } from '../​​h13_yzzxcs​​/h13_yzzxcs.service';
 import { StopOrdersDto } from './dto/stop-orders.dto';
+import { H11Jshztzd1 } from '../h11_jshztzd1/h11-jshztzd1.entity';
 
 /**
  * 完整重构版 Service
@@ -158,6 +159,12 @@ export class h12_yzxbServiceNew {
   // 复核医嘱 0201
   // -------------------------
   async reviewNoFee(dto: reviewDto): Promise<void> {
+    const gs_cxsz = await this.configReaderService.readGsCxsz();
+    const gstr_ainf = await this.configReaderService.readGstrAinf({
+      userId: dto.jshs,
+      systemId: 12,
+    });
+
     const yzxbQueryBuilder = this.h12_yzxbRepo
       .createQueryBuilder('yzxb')
       .leftJoin('yzxb.h13_yzzxcsList', 'yzzxcs')
@@ -271,6 +278,35 @@ export class h12_yzxbServiceNew {
         // 更新病人信息
         if (updateData.hljl || updateData.rybqid) {
           await reviewManager.update(h11_brxx, { zyid: dto.zyid }, updateData);
+        }
+
+        // 更新医嘱消息
+        const hztzdUpdateData = {
+          hdry: dto.jshs, // 核对人员ID
+          hdbz: 1, // 核对标志
+          hdsj: new Date(), // 核对时间
+        };
+
+        if (gs_cxsz.yztj === '1') {
+          await reviewManager.update(
+            H11Jshztzd1,
+            {
+              zyid: dto.zyid,
+              ksid: gstr_ainf.u_ksid,
+              qfbz: dto.yzlx, // 请确认这个字段来源
+            },
+            hztzdUpdateData,
+          );
+        } else {
+          // 如果 yztj != '1'，则不区分 qfbz
+          await reviewManager.update(
+            H11Jshztzd1,
+            {
+              zyid: dto.zyid,
+              ksid: gstr_ainf.u_ksid,
+            },
+            hztzdUpdateData,
+          );
         }
       });
     } catch (error) {
