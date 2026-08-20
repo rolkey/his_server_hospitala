@@ -122,7 +122,15 @@ export class h13_yzzxcsController {
 
   @Post('query-yzzxcs')
   async queryByYzzh(
-    @Body() data: { zyid: string; yzzhs?: number[]; rq: Date[]; xmmc?: string; yzlx?: number },
+    @Body()
+    data: {
+      zyid: string;
+      yzzhs?: number[];
+      rq: Date[];
+      xmmc?: string;
+      yzlx?: number;
+      tf?: number;
+    },
   ) {
     // 将逗号分隔的字符串转换为数字数组
     return await this.h13_yzzxcsService.queryByYzzh({
@@ -131,6 +139,7 @@ export class h13_yzzxcsController {
       yzlx: data.yzlx,
       rq: data.rq,
       xmmc: data.xmmc,
+      tf: data.tf,
     });
   }
 

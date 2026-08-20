@@ -66,6 +66,7 @@ export class h13_yzzxcsService {
     rq?: Date[];
     xmmc?: string;
     yzlx?: number;
+    tf?: number; // 0.不过滤，1.过滤已执行次数=不执行次数
   }): Promise<h13_yzzxcs[]> {
     const { zyid, yzzhs } = data;
     const queryBuilder = this.h13YzzxcsRepository
@@ -101,6 +102,9 @@ export class h13_yzzxcsService {
     // 从关联表 xmidEntity 中查询 xmmc
     if (data.xmmc) {
       queryBuilder.andWhere('xmidEntity.xmmc LIKE :xmmc', { xmmc: `%${data.xmmc}%` });
+    }
+    if (data.tf) {
+      queryBuilder.andWhere('h13_yzzxcs.zxcs > isnull(h13_yzzxcs.bzxcs, 0)');
     }
 
     return await queryBuilder.getMany();
