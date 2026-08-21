@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, In, DataSource, Between, Like, Equal, Not } from 'typeorm';
 import { h13_yzzxcs } from './h13_yzzxcs.entity';
@@ -9,10 +9,11 @@ import { plainToInstance } from 'class-transformer';
 import { getCompleteSqlWithParameters, getSqlWithParameters } from '@/utils/sql-utils';
 import DateFormater from '@/utils/DateFormater';
 import { h12_yzxb } from '../h12_yzzb/h12_yzxb.entity';
+import { H13YzzxcsDelete } from '../h13_yzzxcs_delete/h13-yzzxcs-delete.entity';
 
 @Injectable()
 export class h13_yzzxcsService {
-  //   private readonly logger = new Logger(h13_yzzxcsService.name);
+  private readonly logger = new Logger(h13_yzzxcsService.name);
 
   constructor(
     @InjectRepository(h13_yzzxcs)
@@ -938,5 +939,210 @@ export class h13_yzzxcsService {
       .andWhere('yzzh IN (:...yzzh)', { yzzh }) // 使用IN条件
       .andWhere('CONVERT(char(10), zxrq, 120) = :zxrq', { zxrq: zxrq.substring(0, 10) })
       .execute();
+  }
+
+  /**
+   * 插入删除记录备份
+   * 对应PB中的 gf_h13_yzzxcs_delete
+   *
+   * @param al_bz 备份类型: 0-全部, 1-单条, 2-同组, 3-一条所有记录
+   * @param as_zyid 住院ID
+   * @param al_yzlx 医嘱类型
+   * @param al_yzxh 医嘱序号
+   * @param al_mxxh 明细序号
+   * @param al_maxid 最大ID
+   * @param as_bz1 备注
+   * @param manager 事务管理器(可选)
+   */
+  /**
+   * 插入删除记录备份 (INSERT ... SELECT)
+   * 对应PB中的 gf_h13_yzzxcs_delete
+   *
+   * @param al_bz 备份类型: 0-全部, 1-单条, 2-同组, 3-一条所有记录
+   * @param as_zyid 住院ID
+   * @param al_yzlx 医嘱类型
+   * @param al_yzxh 医嘱序号
+   * @param al_mxxh 明细序号
+   * @param al_maxid 最大ID
+   * @param as_bz1 备注
+   * @param manager 事务管理器(可选)
+   */
+  async insertDeleteLog(
+    al_bz: number,
+    as_zyid: string,
+    al_yzlx: number,
+    al_yzxh: number,
+    al_mxxh: number,
+    al_maxid: number,
+    as_bz1: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const entityManager = manager || this.dataSource.manager;
+    const ldt_sj = new Date();
+    const userId = 'gstr_ainf.u_userid'; // TODO: 从上下文获取当前用户ID
+
+    try {
+      // 使用原生 SQL 实现 INSERT ... SELECT
+      let sql = `
+        INSERT INTO h13_yzzxcs_delete (
+          yzxh, mxxh, yzlx, zyid, zxrq, ksid, fydh, zybh,
+          jfyl, xmdj, sfbz, fylbid, jsdh, jsbz, zxcs2,
+          zxhs, zxsj, zflx, syffid, bzxcs, tyrid, tysj,
+          sqtysl, sjtysl, syrid, sysj, kyts, zfbl, fybz,
+          fysj, fyrid, zxcs, zkksid, clbz, dybz, xnhbz,
+          jzje, jzry, ybfl, scph, cjid, bz1, zfje,
+          pfjg, xmid, yjry, yjrq, YZZH, czrq, scpc
+        )
+        SELECT
+          yzxh, mxxh, yzlx, zyid, zxrq, ksid, fydh, zybh,
+          jfyl, xmdj, sfbz, fylbid, jsdh, jsbz, maxid as zxcs2,
+          @zxhs as zxhs, @zxsj as zxsj, zflx, syffid, bzxcs, tyrid, tysj,
+          sqtysl, sjtysl, syrid, sysj, kyts, zfbl, fybz,
+          fysj, fyrid, zxcs, zkksid, clbz, dybz, xnhbz,
+          jzje, jzry, ybfl, scph, cjid, @bz1 as bz1, zfje,
+          pfjg, xmid, yjry, yjrq, YZZH, czrq, scpc
+        FROM h13_yzzxcs
+        WHERE 1=1
+      `;
+
+      const params: any = {
+        zxhs: userId,
+        zxsj: ldt_sj,
+        bz1: as_bz1,
+      };
+
+      // 根据备份类型构建不同的WHERE条件
+      if (al_bz === 0) {
+        // 0: 全部
+        sql += ` AND zyid = @zyid`;
+        params.zyid = as_zyid;
+      } else if (al_bz === 1) {
+        // 1: 单条 (按maxid)
+        sql += `
+          AND zyid = @zyid
+          AND yzlx = @yzlx
+          AND yzxh = @yzxh
+          AND mxxh = @mxxh
+          AND maxid = @maxid
+        `;
+        params.zyid = as_zyid;
+        params.yzlx = al_yzlx;
+        params.yzxh = al_yzxh;
+        params.mxxh = al_mxxh;
+        params.maxid = al_maxid;
+      } else if (al_bz === 2) {
+        // 2: 同组 (按yzzh)
+        sql += `
+          AND zyid = @zyid
+          AND yzlx = @yzlx
+          AND yzxh = @yzxh
+          AND yzzh = @yzzh
+        `;
+        params.zyid = as_zyid;
+        params.yzlx = al_yzlx;
+        params.yzxh = al_yzxh;
+        params.yzzh = al_mxxh; // al_mxxh 在这里作为 yzzh 使用
+      } else if (al_bz === 3) {
+        // 3: 一条所有记录 (按mxxh)
+        sql += `
+          AND zyid = @zyid
+          AND yzlx = @yzlx
+          AND yzxh = @yzxh
+          AND mxxh = @mxxh
+        `;
+        params.zyid = as_zyid;
+        params.yzlx = al_yzlx;
+        params.yzxh = al_yzxh;
+        params.mxxh = al_mxxh;
+      }
+
+      // 执行 INSERT ... SELECT
+      await entityManager.query(sql, params);
+
+      this.logger.debug(`备份删除记录成功: zyid=${as_zyid}, bz=${al_bz}`);
+    } catch (error) {
+      this.logger.error('插入删除记录失败', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 批量备份执行记录
+   * @param yzzxcsList 执行记录列表
+   * @param bz1 备注
+   * @param manager 事务管理器
+   */
+  async batchInsertDeleteLog(
+    yzzxcsList: h13_yzzxcs[],
+    bz1: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!yzzxcsList || yzzxcsList.length === 0) {
+      return;
+    }
+
+    const repo = manager || this.dataSource.manager;
+    const ldt_sj = new Date();
+    const userId = 'gstr_ainf.u_userid';
+
+    try {
+      const deleteRecords = yzzxcsList.map((item) => ({
+        yzxh: item.yzxh,
+        mxxh: item.mxxh,
+        yzlx: item.yzlx,
+        zyid: item.zyid,
+        zxrq: item.zxrq,
+        ksid: item.ksid,
+        fydh: item.fydh,
+        zybh: item.zybh,
+        jfyl: item.jfyl,
+        xmdj: item.xmdj,
+        sfbz: item.sfbz,
+        fylbid: item.fylbid,
+        jsdh: item.jsdh,
+        jsbz: item.jsbz,
+        zxcs2: item.maxid,
+        zxhs: userId,
+        zxsj: ldt_sj.toISOString(),
+        zflx: item.zflx,
+        syffid: item.syffid,
+        bzxcs: item.bzxcs,
+        tyrid: item.tyrid,
+        tysj: item.tysj,
+        sqtysl: item.sqtysl,
+        sjtysl: item.sjtysl,
+        syrid: item.syrid,
+        sysj: item.sysj,
+        kyts: item.kyts,
+        zfbl: item.zfbl,
+        fybz: item.fybz,
+        fysj: item.fysj,
+        fyrid: item.fyrid,
+        zxcs: item.zxcs,
+        zkksid: item.zkksid,
+        clbz: item.clbz,
+        dybz: item.dybz,
+        xnhbz: item.xnhbz,
+        jzje: item.jzje,
+        jzry: item.jzry,
+        ybfl: item.ybfl,
+        scph: item.scph,
+        cjid: item.cjid,
+        bz1: bz1,
+        zfje: item.zfje,
+        pfjg: item.pfjg,
+        xmid: item.xmid,
+        yjry: item.yjry,
+        yjrq: item.yjrq,
+        yzzh: item.yzzh,
+        czrq: item.czrq,
+        scpc: item.scpc,
+      }));
+
+      await repo.insert(H13YzzxcsDelete, deleteRecords);
+    } catch (error) {
+      this.logger.error('批量插入删除记录失败', error);
+      throw error;
+    }
   }
 }

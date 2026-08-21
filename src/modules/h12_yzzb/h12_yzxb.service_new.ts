@@ -38,6 +38,7 @@ import { h13_yzzxcs } from '../​​h13_yzzxcs​​/h13_yzzxcs.entity';
 import { h11_brxx } from '../h11_brxx/h11_brxx.entity';
 import { h13_cwsyxx } from '../h13_cwsyxx/h13_cwsyxx.entity';
 import { H31Lyjl } from '../h31_lyjl/h31_lyjl.entity';
+import { H31_kcxx } from '../h31_kcxx/h31_kcxx.entity';
 import { ConfigReaderService } from '../h12_xmzd/service/config-reader.service';
 import { h12_yzxbService } from './h12_yzxb.service';
 import { h00_syffService } from '../h00_syff/h00_syff.service';
@@ -140,6 +141,8 @@ export class h12_yzxbServiceNew {
     private h13_cwsyxxRepo: Repository<h13_cwsyxx>,
     @InjectRepository(C00Fbxx)
     private c00FbxxRepo: Repository<C00Fbxx>,
+    @InjectRepository(H13YzzxcsTf)
+    private h13_yzzxcsTfRepo: Repository<H13YzzxcsTf>,
     @InjectRepository(usrcat)
     private usrcatRepo: Repository<usrcat>,
     // @InjectRepository(H31Lyjl)
@@ -2929,42 +2932,298 @@ export class h12_yzxbServiceNew {
    * @param user
    * @param info
    */
+  /**
+   * 护士退回医生（完整版）
+   * 对应PowerScript中的 ue_hsth 事件
+   */
   async reviewBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
-    // 检查是否执行有费用，有费用不允许退回，另外状态也必须在2, 5, 6中
-    const yzzxcs = await this.h13_yzzxcsRepo.find({
+    // 1. 检查是否启用预扣
+    const gs_cxsz = await this.configReaderService.readGsCxsz();
+    if (gs_cxsz?.yksl === '1') {
+      throw new CustomException(ERR.ERR_10000, '该启用预扣，不能此操作!');
+    }
+
+    // 2. 获取要退回的医嘱明细
+    const yzxbs = await this.h12_yzxbRepo.find({
       where: {
         zyid: dto.zyid,
         yzlx: dto.yzlx,
         yzzh: In(dto.yzzh),
-        zxcs: Raw((zxcs) => `${zxcs} > bzxcs`),
+        sjbz: 1, // 有效
       },
     });
-    if (yzzxcs.length > 0) {
-      throw new CustomException(ERR.ERR_40203);
+
+    if (yzxbs.length === 0) {
+      throw new CustomException(ERR.ERR_10000, '未有医嘱!');
     }
 
-    // 如果新提交医嘱，则直接退回不提单状态，让医生可以修改
-    await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: 1 },
-      {
-        yzzt: 7,
-        tjbz: 0,
-        hdbz: 0,
-        kssxhs: null,
-        kshs: null,
-        tzbz: () => 'CASE WHEN yzlx = 2 THEN 0 ELSE tzbz END', // 不等于 2 时保持原值
+    // 3. 检查执行记录是否有费用
+    const mxxhList = yzxbs.map((y) => y.mxxh);
+    const yzzxcs = await this.h13_yzzxcsRepo.find({
+      where: {
+        zyid: dto.zyid,
+        yzlx: dto.yzlx,
+        mxxh: In(mxxhList),
       },
-    );
-    await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([2, 5, 6]) },
-      {
-        yzzt: 7,
-        hdbz: 0,
-        kssxhs: null,
-        kshs: null,
-        tzbz: () => 'CASE WHEN yzlx = 2 THEN 0 ELSE tzbz END', // 不等于 2 时保持原值
+    });
+
+    // 检查是否有已执行的费用（zxcs > bzxcs）
+    const fysl = yzzxcs.filter((item) => item.zxcs > item.bzxcs);
+    if (fysl.length > 0) {
+      throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成领药单，请取消执行次数再退回!');
+    }
+
+    // 4. 检查退药记录 (第3、4、5版校验)
+    if (['3', '4', '5'].includes(gs_cxsz?.kssz || '')) {
+      for (const yzxb of yzxbs) {
+        // 4.1 检查退药记录是否未发药
+        const tfCount = await this.h13_yzzxcsTfRepo
+          .createQueryBuilder('tf')
+          .where('tf.zyid = :zyid', { zyid: dto.zyid })
+          .andWhere('tf.yzlx = :yzlx', { yzlx: dto.yzlx })
+          .andWhere('tf.mxxh = :mxxh', { mxxh: yzxb.mxxh })
+          .andWhere(
+            'tf.zxcs2 IN (SELECT maxid FROM h13_yzzxcs WHERE zyid = :zyid AND mxxh = :mxxh AND yzlx = :yzlx AND fybz = 1)',
+            {
+              zyid: dto.zyid,
+              mxxh: yzxb.mxxh,
+              yzlx: dto.yzlx,
+            },
+          )
+          .andWhere('tf.fybz = 0')
+          .getCount();
+
+        if (tfCount > 0) {
+          throw new CustomException(
+            ERR.ERR_10000,
+            `【${yzxb.xmmc}】退药记录未发药，不能退回医生，请关联药房先退药!`,
+          );
+        }
+
+        // 4.2 第5版检查是否已生成领药单
+        if (gs_cxsz.kssz === '5') {
+          const lydCount = await this.h13_yzzxcsTfRepo
+            .createQueryBuilder('tf')
+            .where('tf.zyid = :zyid', { zyid: dto.zyid })
+            .andWhere('tf.yzlx = :yzlx', { yzlx: dto.yzlx })
+            .andWhere('tf.mxxh = :mxxh', { mxxh: yzxb.mxxh })
+            .andWhere(
+              'tf.zxcs2 IN (SELECT maxid FROM h13_yzzxcs WHERE zyid = :zyid AND mxxh = :mxxh AND yzlx = :yzlx AND fydh IS NOT NULL)',
+              {
+                zyid: dto.zyid,
+                mxxh: yzxb.mxxh,
+                yzlx: dto.yzlx,
+              },
+            )
+            .andWhere('tf.fydh IS NULL')
+            .getCount();
+
+          if (lydCount > 0) {
+            throw new CustomException(
+              ERR.ERR_10000,
+              `【${yzxb.xmmc}】退药记录未生成发药，不能退回医生，请关联护士生成领药单!`,
+            );
+          }
+        }
+      }
+    }
+
+    // 5. 事务处理
+    await this.entityManager.transaction(async (reviewManager) => {
+      // 5.1 备份执行记录到删除表 (对应PB中的 gf_h13_yzzxcs_delete)
+      // 备份类型 al_bz=2 (同组)
+      for (const yzzh of dto.yzzh) {
+        // 获取该组的所有执行记录
+        const yzxcsToDelete = await reviewManager.find(h13_yzzxcs, {
+          where: {
+            zyid: dto.zyid,
+            yzlx: dto.yzlx,
+            yzzh: yzzh,
+          },
+        });
+
+        if (yzxcsToDelete.length > 0) {
+          // 使用 H13YzzxcsDeleteService 进行备份
+          await this.h13YzzxcsService.batchInsertDeleteLog(
+            yzxcsToDelete,
+            '护士退回',
+            reviewManager,
+          );
+        }
+
+        // 备份退费记录
+        const mxxhListForYzzh = yzxbs.filter((y) => y.yzzh === yzzh).map((y) => y.mxxh);
+
+        if (mxxhListForYzzh.length > 0) {
+          const tfList = await reviewManager.find(H13YzzxcsTf, {
+            where: {
+              zyid: dto.zyid,
+              yzlx: dto.yzlx,
+              mxxh: In(mxxhListForYzzh),
+            },
+          });
+
+          if (tfList.length > 0) {
+            await this.h13YzzxcsService.batchInsertDeleteLog(
+              tfList as any,
+              '护士退回-退费记录',
+              reviewManager,
+            );
+          }
+        }
+      }
+
+      // 5.2 更新医嘱状态为退回
+      await reviewManager.update(
+        h12_yzxb,
+        {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          yzzh: In(dto.yzzh),
+          yzzt: In([2, 3, 5, 6]),
+        },
+        {
+          yzzt: 7, // 退回状态
+          tjbz: 0,
+          hdbz: 0,
+          zxbz: 0,
+          clbz: 0,
+          kshs: null,
+          kssxhs: null,
+          jshs: null,
+          jssxhs: null,
+          hdhs: null,
+          hshd: null,
+          hshdrq: null,
+          zxrq: null,
+          tzbz: () => 'CASE WHEN yzlx = 2 THEN 0 ELSE tzbz END',
+          tzrq: () => 'CASE WHEN yzlx = 2 THEN NULL ELSE tzrq END',
+        },
+      );
+
+      // 5.3 更新附加项目
+      await reviewManager.update(
+        h12_yzxb,
+        {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          yzzh: In(dto.yzzh),
+          ysbz: 0,
+          tpbz: 1,
+        },
+        {
+          yzzt: 0,
+          tjbz: 0,
+          tzbz: 0,
+          zxbz: 0,
+          hdbz: 0,
+          clbz: 0,
+          kshs: null,
+          jshs: null,
+        },
+      );
+
+      // 5.4 删除预扣库存
+      for (const yzzh of dto.yzzh) {
+        // 获取该组的所有执行记录并汇总
+        const yzxcs = await reviewManager.find(h13_yzzxcs, {
+          where: {
+            zyid: dto.zyid,
+            yzlx: dto.yzlx,
+            yzzh: yzzh,
+            fybz: 0,
+          },
+        });
+
+        // 按药品、批号、科室分组汇总
+        const groupMap = new Map<
+          string,
+          { xmid: string; scph: string; ksid: string; sl: number }
+        >();
+        for (const item of yzxcs) {
+          const key = `${item.xmid}_${item.scph || ''}_${item.ksid}`;
+          if (!groupMap.has(key)) {
+            groupMap.set(key, {
+              xmid: item.xmid,
+              scph: item.scph || '',
+              ksid: item.ksid,
+              sl: 0,
+            });
+          }
+          const group = groupMap.get(key);
+          group.sl += (item.zxcs - item.bzxcs) * item.jfyl * (item.kyts || 1);
+        }
+
+        // 更新库存预扣数量
+        for (const [key, group] of groupMap) {
+          await reviewManager
+            .createQueryBuilder()
+            .update(H31_kcxx)
+            .set({ dfsl: () => `dfsl - ${group.sl}` })
+            .where('ypid = :ypid', { ypid: group.xmid })
+            .andWhere('ksid = :ksid', { ksid: group.ksid })
+            .andWhere('scph = :scph', { scph: group.scph })
+            .execute();
+        }
+      }
+
+      // 5.5 删除执行记录
+      await reviewManager
+        .createQueryBuilder()
+        .delete()
+        .from(h13_yzzxcs)
+        .where('zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('yzlx = :yzlx', { yzlx: dto.yzlx })
+        .andWhere('yzzh IN (:...yzzh)', { yzzh: dto.yzzh })
+        .execute();
+
+      // 5.6 删除退费记录
+      await reviewManager
+        .createQueryBuilder()
+        .delete()
+        .from(H13YzzxcsTf)
+        .where('zyid = :zyid', { zyid: dto.zyid })
+        .andWhere('yzlx = :yzlx', { yzlx: dto.yzlx })
+        .andWhere(
+          'EXISTS (SELECT 1 FROM h12_yzxb WHERE h12_yzxb.zyid = h13_yzzxcs_tf.zyid AND h12_yzxb.yzzh = h13_yzzxcs_tf.yzzh AND h12_yzxb.yzlx = h13_yzzxcs_tf.yzlx AND h12_yzxb.yzzh IN (:...yzzh))',
+          {
+            yzzh: dto.yzzh,
+          },
+        )
+        .execute();
+
+      // 5.7 调用库存检查 (对应PB中的 sp_h13kcxx_check)
+      for (const yzxb of yzxbs) {
+        if (yzxb.xmid) {
+          try {
+            await this.check({
+              zyid: dto.zyid,
+              ksid: user?.ksid || '',
+              xmid: yzxb.xmid,
+              xmmc: yzxb.xmmc || '',
+              xmgg: yzxb.xmgg || '',
+              scph: yzxb.scph || '',
+              sl: 0,
+              mxxh: yzxb.mxxh,
+              al: 2,
+            });
+          } catch (error) {
+            this.logger.warn(`库存检查失败: ${yzxb.xmmc}`, error);
+          }
+        }
+      }
+    });
+
+    return {
+      success: true,
+      message: '医嘱退回成功',
+      data: {
+        zyid: dto.zyid,
+        yzlx: dto.yzlx,
+        yzzh: dto.yzzh,
+        count: yzxbs.length,
       },
-    );
+    };
   }
 
   /**
@@ -2975,10 +3234,90 @@ export class h12_yzxbServiceNew {
    */
   async stopBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
     // 只更新停嘱提交数据，其他数据不更新
-    await this.h12_yzxbRepo.update(
-      { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([5, 6]) },
-      { yzzt: 7, jssxhs: null, jshs: null },
-    );
+    // await this.h12_yzxbRepo.update(
+    //   { zyid: dto.zyid, yzlx: dto.yzlx, yzzh: In(dto.yzzh), yzzt: In([5, 6]) },
+    //   { yzzt: 7, jssxhs: null, jshs: null },
+    // );
+
+    // 1. 检查是否启用预扣
+    const gs_cxsz = await this.configReaderService.readGsCxsz();
+    if (gs_cxsz?.yksl === '1') {
+      throw new CustomException(ERR.ERR_10000, '该启用预扣，不能此操作!');
+    }
+
+    // 2. 获取要退回的医嘱
+    const yzxbs = await this.h12_yzxbRepo.find({
+      where: {
+        zyid: dto.zyid,
+        yzlx: dto.yzlx,
+        yzzh: In(dto.yzzh),
+        yzzt: In([5, 6]), // 停嘱状态
+      },
+    });
+
+    if (yzxbs.length === 0) {
+      throw new CustomException(ERR.ERR_10000, '未有停嘱医嘱!');
+    }
+
+    // 3. 检查是否全部为临时医嘱
+    const hasLongOrder = yzxbs.some((y) => y.yzlx !== 2);
+    if (hasLongOrder) {
+      throw new CustomException(ERR.ERR_10000, '长期医嘱停嘱退回请使用护士退回功能!');
+    }
+
+    // 4. 事务处理
+    await this.entityManager.transaction(async (reviewManager) => {
+      // 4.1 更新停嘱状态
+      await reviewManager.update(
+        h12_yzxb,
+        {
+          zyid: dto.zyid,
+          yzlx: dto.yzlx,
+          yzzh: In(dto.yzzh),
+          yzzt: In([5, 6]),
+        },
+        {
+          yzzt: 7,
+          jssxhs: null,
+          jshs: null,
+          tzbz: 0,
+        },
+      );
+
+      // 4.2 更新附加项目
+      //   await reviewManager.update(
+      //     h12_yzxb,
+      //     {
+      //       zyid: dto.zyid,
+      //       yzlx: dto.yzlx,
+      //       yzzh: In(dto.yzzh),
+      //       ysbz: 0,
+      //       tpbz: 1,
+      //     },
+      //     {
+      //       yzzt: 7,
+      //       jssxhs: null,
+      //       jshs: null,
+      //       tzbz: 0,
+      //     },
+      //   );
+
+      // 4.3 插入操作日志（可选）
+      //   for (const yzxb of yzxbs) {
+      //     await reviewManager.insert(H13YzzxcsDelete, {
+      //       zyid: dto.zyid,
+      //       yzlx: dto.yzlx,
+      //       yzxh: yzxb.yzxh,
+      //       mxxh: yzxb.mxxh,
+      //       //   czlx: 3, // 停嘱退回
+      //       //   czr: user?.name || '护士',
+      //       czrq: new Date(),
+      //       bz1: `停嘱退回: ${dto.info || ''}`,
+      //     });
+      //   }
+    });
+
+    return { success: true, message: '停嘱退回成功' };
   }
 
   /**
