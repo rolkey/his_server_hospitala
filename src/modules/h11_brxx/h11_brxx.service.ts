@@ -669,7 +669,9 @@ export class h11_brxxService {
       const entity = queryRunner.manager.create(h11_brxx, {
         ...dto,
         sflx: dto?.sflx || '01',
-        fyid: dto?.fyid || '1'
+        fyid: dto?.fyid || '1',
+        hbh: dto?.hbh?.substring(0, 20) || '',
+        lsh1: dto?.lsh1?.substring(0, 20) || ''
       });
 
       // 获取住院ID号
