@@ -2926,9 +2926,19 @@ export class h12_yzxbServiceNew {
    * 护士退回医生（完整版）
    * 对应PowerScript中的 ue_hsth 事件
    */
-  async reviewBack(dto: { zyid: string; yzlx: number; yzzh: number[]; info: string }, user: any) {
+  async reviewBack(dto: {
+    zyid: string;
+    yzlx: number;
+    yzzh: number[];
+    info: string;
+    userId: string;
+  }) {
     // 1. 检查是否启用预扣
     const gs_cxsz = await this.configReaderService.readGsCxsz();
+    const gstr_ainf = await this.configReaderService.readGstrAinf({
+      userId: dto.userId,
+      systemId: 12,
+    });
     if (gs_cxsz?.yksl === '1') {
       throw new CustomException(ERR.ERR_10000, '该启用预扣，不能此操作!');
     }
@@ -3036,6 +3046,7 @@ export class h12_yzxbServiceNew {
           // 使用 H13YzzxcsDeleteService 进行备份
           await this.h13YzzxcsService.batchInsertDeleteLog(
             yzxcsToDelete,
+            dto.userId,
             '护士退回',
             reviewManager,
           );
@@ -3056,7 +3067,9 @@ export class h12_yzxbServiceNew {
           if (tfList.length > 0) {
             await this.h13YzzxcsService.batchInsertDeleteLog(
               tfList as any,
-              '护士退回-退费记录',
+              dto.userId,
+              //   '护士退回-退费记录',
+              '护士退回',
               reviewManager,
             );
           }
@@ -3188,7 +3201,7 @@ export class h12_yzxbServiceNew {
           try {
             await this.check({
               zyid: dto.zyid,
-              ksid: user?.ksid || '',
+              ksid: gstr_ainf.u_ksid || '',
               xmid: yzxb.xmid,
               xmmc: yzxb.xmmc || '',
               xmgg: yzxb.xmgg || '',

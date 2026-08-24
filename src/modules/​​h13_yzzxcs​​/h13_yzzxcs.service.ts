@@ -942,19 +942,6 @@ export class h13_yzzxcsService {
   }
 
   /**
-   * 插入删除记录备份
-   * 对应PB中的 gf_h13_yzzxcs_delete
-   *
-   * @param al_bz 备份类型: 0-全部, 1-单条, 2-同组, 3-一条所有记录
-   * @param as_zyid 住院ID
-   * @param al_yzlx 医嘱类型
-   * @param al_yzxh 医嘱序号
-   * @param al_mxxh 明细序号
-   * @param al_maxid 最大ID
-   * @param as_bz1 备注
-   * @param manager 事务管理器(可选)
-   */
-  /**
    * 插入删除记录备份 (INSERT ... SELECT)
    * 对应PB中的 gf_h13_yzzxcs_delete
    *
@@ -1074,6 +1061,7 @@ export class h13_yzzxcsService {
    */
   async batchInsertDeleteLog(
     yzzxcsList: h13_yzzxcs[],
+    userId: string,
     bz1: string,
     manager?: EntityManager,
   ): Promise<void> {
@@ -1083,7 +1071,6 @@ export class h13_yzzxcsService {
 
     const repo = manager || this.dataSource.manager;
     const ldt_sj = new Date();
-    const userId = 'gstr_ainf.u_userid';
 
     try {
       const deleteRecords = yzzxcsList.map((item) => ({
@@ -1091,7 +1078,7 @@ export class h13_yzzxcsService {
         mxxh: item.mxxh,
         yzlx: item.yzlx,
         zyid: item.zyid,
-        zxrq: item.zxrq,
+        zxrq: item.zxrq || ldt_sj,
         ksid: item.ksid,
         fydh: item.fydh,
         zybh: item.zybh,
@@ -1103,7 +1090,7 @@ export class h13_yzzxcsService {
         jsbz: item.jsbz,
         zxcs2: item.maxid,
         zxhs: userId,
-        zxsj: ldt_sj.toISOString(),
+        zxsj: item.zxsj,
         zflx: item.zflx,
         syffid: item.syffid,
         bzxcs: item.bzxcs,
