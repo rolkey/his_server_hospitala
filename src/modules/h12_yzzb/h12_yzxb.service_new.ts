@@ -3015,7 +3015,7 @@ export class h12_yzxbServiceNew {
                 yzlx: dto.yzlx,
               },
             )
-            .andWhere('tf.fydh IS NULL')
+            .andWhere('ISNULL(tf.fydh, :empty) = :empty', { empty: '' })
             .getCount();
 
           if (lydCount > 0) {
