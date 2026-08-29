@@ -17,11 +17,25 @@ import { PatientCaseWorkflowDto, WorkflowActionCode } from './dto/workflow.dto';
 
 const HY_ALLOWED = new Set(['1', '2', '3', '4', '5', '9']);
 
-/** 费用/婴儿/诊断/手术模块：归档(2)与提交(1)均写 1 */
+/** 费用/婴儿/诊断/手术模块：归档(2)/病案室审核(3)与提交(1)均写 1；取消类写 0 */
 function resolveModuleSjbz(action: WorkflowActionCode): number {
-  if (action === 2) return 1;
-  if (action === 0 || action === 9) return 0;
+  if (action === 2 || action === 3) return 1;
+  if (action === 0 || action === 4 || action === 9) return 0;
   return action;
+}
+
+function isPlaceholderDate(value: unknown): boolean {
+  if (value == null || value === '') return true;
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return true;
+  return date.getFullYear() <= 1900;
+}
+
+function toDateOnly(value: unknown): Date | null {
+  if (value == null || value === '') return null;
+  const date = value instanceof Date ? value : new Date(String(value).replace(/-/g, '/'));
+  if (Number.isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function isBlank(value: unknown): boolean {
@@ -56,17 +70,17 @@ export class N0421WorkflowService {
   ) {}
 
   /**
-   * 病案首页工作流（对齐 PB wf_gd / wf_qxgd）
-   * 一次请求完成：业务数据保存 + 状态机 +（归档时）NQ 表同步，全部在同一事务内。
+   * 病案首页工作流（对齐 PB wf_gd / wf_qxgd / 病案室审核）
+   * 一次请求完成：业务数据保存 + 状态机 +（归档/审核时）NQ 表同步，全部在同一事务内。
    */
-  async runWorkflow(dto: PatientCaseWorkflowDto) {
+  async runWorkflow(dto: PatientCaseWorkflowDto, operatorId = '') {
     const zyid = String(dto.zyid || '').trim();
     const action = Number(dto.action) as WorkflowActionCode;
 
     if (!zyid) {
       throw new BadRequestException('住院ID不能为空');
     }
-    if (![0, 1, 2, 9].includes(action)) {
+    if (![0, 1, 2, 3, 4, 9].includes(action)) {
       throw new BadRequestException('无效的操作码');
     }
 
@@ -86,27 +100,42 @@ export class N0421WorkflowService {
       throw new ConflictException('病案室该患者已存档，不能取消，请联系病案室！');
     }
 
+    if (action === 4 && Number(existingBasic?.sjbz) !== 1) {
+      throw new BadRequestException('该病案尚未审核');
+    }
+
     // 取消提交/取消归档：已办出院超过录入时限且无解锁记录时禁止（对齐 PB uf_vidify_sj）
     if (action === 0 || action === 9) {
       await this.assertWithinEntryWindow(zyid);
     }
 
+    const basicForValidate = {
+      ...(existingBasic || {}),
+      ...(dto.basic || {}),
+    } as N0421;
+
     // 提交/归档/取消提交：基本信息校验（PB uf_gd 对 action=9 同样走 uf_vidify_gd）
-    // 优先用请求体校验；未传则回退查库
-    if (action === 1 || action === 2 || action === 9) {
-      const basicForValidate = {
-        ...(existingBasic || {}),
-        ...(dto.basic || {}),
-      } as N0421;
+    // 病案室审核走独立校验（对齐 PB 审核脚本）
+    if (action === 3) {
+      this.validateBasicForCaseAudit(basicForValidate);
+    } else if (action === 1 || action === 2 || action === 9) {
       this.validateBasicForArchive(basicForValidate);
     }
 
-    // 诊断校验仅提交/归档需要（PB zdxx.uf_gd 对 0/9 直接重置 sjbz 不校验）
-    if (action === 1 || action === 2) {
+    // 诊断校验仅提交/归档/审核需要（PB zdxx.uf_gd 对 0/9 直接重置 sjbz 不校验）
+    if (action === 1 || action === 2 || action === 3) {
       if (dto.diagnosis !== undefined) {
         this.validateDiagnosisRows(dto.diagnosis);
       } else {
         await this.validateDiagnosisForArchive(zyid);
+      }
+    }
+
+    if (action === 3) {
+      if (dto.surgery !== undefined) {
+        this.validateSurgeryForCaseAudit(dto.surgery, basicForValidate);
+      } else {
+        await this.validateSurgeryForCaseAuditFromDb(zyid, basicForValidate);
       }
     }
 
@@ -131,7 +160,13 @@ export class N0421WorkflowService {
         throw new NotFoundException(`住院ID ${zyid} 对应的病案首页不存在`);
       }
 
-      await this.applyBasicWorkflow(manager.getRepository(N0421), basic, action, now);
+      await this.applyBasicWorkflow(
+        manager.getRepository(N0421),
+        basic,
+        action,
+        now,
+        operatorId,
+      );
 
       await manager
         .getRepository(N0422)
@@ -165,7 +200,7 @@ export class N0421WorkflowService {
           .execute();
       }
 
-      if (action === 2) {
+      if (action === 2 || action === 3) {
         try {
           await this.syncArchiveTables(queryRunner, zyid);
         } catch (error) {
@@ -217,7 +252,7 @@ export class N0421WorkflowService {
 
     // 有效期内的解锁记录直接放行
     const unlockRows: { yxsj?: Date | string | null }[] = await this.dataSource.query(
-      `SELECT MAX(yxsj) AS yxsj FROM dbo.h12_bljs WHERE zyid = @0 AND bllx = N'首页'`,
+      `SELECT MAX(yxsj) AS yxsj FROM dbo.h12_bljs WHERE zyid = @0 AND bllx = N'首页' AND ISNULL(yxbz, 0) = 1`,
       [zyid],
     );
     const yxsj = unlockRows?.[0]?.yxsj ? new Date(unlockRows[0].yxsj) : null;
@@ -253,6 +288,7 @@ export class N0421WorkflowService {
       delete (normalized as any).shbz;
       delete (normalized as any).jdrq;
       delete (normalized as any).shrq;
+      delete (normalized as any).shry;
 
       const repo = manager.getRepository(N0421);
       const exists = await repo.findOne({ where: { zyid } });
@@ -327,6 +363,7 @@ export class N0421WorkflowService {
     basic: N0421,
     action: WorkflowActionCode,
     now: Date,
+    operatorId = '',
   ) {
     const zyid = basic.zyid;
     const patch: Partial<N0421> = {};
@@ -338,6 +375,16 @@ export class N0421WorkflowService {
       patch.tjbz = 0;
       patch.shbz = 0;
       patch.jdrq = now;
+    } else if (action === 4) {
+      patch.sjbz = 0;
+    } else if (action === 3) {
+      patch.sjbz = 1;
+      patch.tjbz = 1;
+      patch.shbz = 1;
+      patch.shrq = now;
+      if (operatorId) {
+        patch.shry = operatorId.slice(0, 10);
+      }
     } else if (action === 2) {
       patch.sjbz = 1;
       patch.tjbz = 1;
@@ -351,9 +398,10 @@ export class N0421WorkflowService {
 
     const oldJdrq = basic.jdrq ? new Date(basic.jdrq) : null;
     if (
-      !oldJdrq ||
-      Number.isNaN(oldJdrq.getTime()) ||
-      oldJdrq.getTime() <= new Date('1900-01-01').getTime()
+      action !== 4 &&
+      (!oldJdrq ||
+        Number.isNaN(oldJdrq.getTime()) ||
+        oldJdrq.getTime() <= new Date('1900-01-01').getTime())
     ) {
       if (!patch.jdrq) {
         patch.jdrq = now;
@@ -525,6 +573,115 @@ export class N0421WorkflowService {
     }
   }
 
+  /** 对齐 PB 病案室审核：在归档校验基础上增加医护人员、门诊诊断编码（jbbm/jbdm） */
+  private validateBasicForCaseAudit(basic: N0421) {
+    const sjzy = basic.sjzy;
+    const zycs = basic.zycs;
+    const jbbm = basic.jbbm;
+    const jbdm = basic.jbdm;
+    const lyfs = basic.lyfs;
+    const zkkb = basic.zkkb;
+    const yzzyJgmc = basic.yzzy_jgmc;
+    const xb = String(basic.xb ?? '').trim();
+    const hy = String(basic.hy ?? '').trim();
+
+    if (isBlank(sjzy) || toNumberOrNaN(sjzy) === 0) {
+      throw new BadRequestException('住院天数不能为0，请核对!');
+    }
+    if (!Number.isFinite(toNumberOrNaN(sjzy))) {
+      throw new BadRequestException('住院天数不是数字');
+    }
+    if (!Number.isFinite(toNumberOrNaN(zycs))) {
+      throw new BadRequestException('住院次数不是数字');
+    }
+    if (toNumberOrNaN(zycs) < 0) {
+      throw new BadRequestException('住院次数不是数字');
+    }
+    if (isBlank(lyfs)) {
+      throw new BadRequestException('离院方式不能为空!');
+    }
+    if (isBlank(zkkb)) {
+      throw new BadRequestException('转科科别不能为空!');
+    }
+    if (String(lyfs).trim() === '2' && isBlank(yzzyJgmc)) {
+      throw new BadRequestException('离院方式为转院，转院名称不能为空!');
+    }
+
+    const rysj = basic.rysj ? new Date(basic.rysj) : null;
+    const cysj = basic.cysj ? new Date(basic.cysj) : null;
+    if (
+      rysj &&
+      cysj &&
+      !Number.isNaN(rysj.getTime()) &&
+      !Number.isNaN(cysj.getTime()) &&
+      rysj > cysj
+    ) {
+      throw new BadRequestException('出院日期小于入院时间!');
+    }
+    if (xb !== '1' && xb !== '2') {
+      throw new BadRequestException('性别不能为空或不详!');
+    }
+    if (isBlank(jbbm) && isBlank(jbdm)) {
+      throw new BadRequestException('门诊诊断编码不能为空!');
+    }
+    if (isBlank(basic.kzr)) {
+      throw new BadRequestException('科主任不能为空!');
+    }
+    if (isBlank(basic.zyys)) {
+      throw new BadRequestException('主治医生不能为空!');
+    }
+    if (isBlank(basic.zzys)) {
+      throw new BadRequestException('住院医生不能为空!');
+    }
+    if (isBlank(basic.zrhs)) {
+      throw new BadRequestException('责任护士不能为空!');
+    }
+    if (isBlank(basic.zkys)) {
+      throw new BadRequestException('质控医师不能为空!');
+    }
+    if (isBlank(basic.zkhs)) {
+      throw new BadRequestException('质控护士不能为空!');
+    }
+    if (isPlaceholderDate(basic.zkrq)) {
+      throw new BadRequestException('质控日期不能为空!');
+    }
+    if (!HY_ALLOWED.has(hy)) {
+      throw new BadRequestException('婚姻编号不对，必须在范围1,2,3,4,5,9');
+    }
+  }
+
+  private validateSurgeryForCaseAudit(
+    list: Record<string, unknown>[],
+    basic: Pick<N0421, 'rysj' | 'cysj'>,
+  ) {
+    if (!list.length) return;
+
+    const admission = toDateOnly(basic.rysj);
+    const discharge = toDateOnly(basic.cysj);
+
+    for (const row of list) {
+      const code = String(row.ssjczbm || row.icd10 || '').trim();
+      if (!code) {
+        throw new BadRequestException('手术编码未录入，不能存档!');
+      }
+      if (isPlaceholderDate(row.ssjczrq)) {
+        throw new BadRequestException('手术日期未录入，不能存档!');
+      }
+      const surgeryDate = toDateOnly(row.ssjczrq);
+      if (
+        surgeryDate &&
+        ((admission && surgeryDate < admission) || (discharge && surgeryDate > discharge))
+      ) {
+        throw new BadRequestException('手术日期不在出入院日期范围内!');
+      }
+    }
+  }
+
+  private async validateSurgeryForCaseAuditFromDb(zyid: string, basic: N0421) {
+    const list = await this.dataSource.getRepository(N04_23).find({ where: { zyid } });
+    this.validateSurgeryForCaseAudit(list as unknown as Record<string, unknown>[], basic);
+  }
+
   private validateDiagnosisRows(list: Record<string, unknown>[]) {
     if (!list.length) {
       throw new BadRequestException('请输入诊断，再归档!');
@@ -556,6 +713,10 @@ export class N0421WorkflowService {
         return '提交成功';
       case 2:
         return '归档成功';
+      case 3:
+        return '审核成功';
+      case 4:
+        return '已取消审核';
       case 9:
         return '已取消提交';
       case 0:
