@@ -2970,7 +2970,8 @@ export class h12_yzxbServiceNew {
     // 检查是否有已执行的费用（zxcs > bzxcs）
     const fysl = yzzxcs.filter((item) => item.zxcs > item.bzxcs);
     if (fysl.length > 0) {
-      throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成领药单，请取消执行次数再退回!');
+      //   throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成领药单，请取消执行次数再退回!');
+      throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成费用，请退费再退回!');
     }
 
     // 4. 检查退药记录 (第3、4、5版校验)
@@ -3021,7 +3022,7 @@ export class h12_yzxbServiceNew {
           if (lydCount > 0) {
             throw new CustomException(
               ERR.ERR_10000,
-              `【${yzxb.xmmc}】退药记录未生成发药，不能退回医生，请关联护士生成领药单!`,
+              `【${yzxb.xmmc}】退费记录未生成发药，不能退回医生，请关联护士生成领药单!`,
             );
           }
         }
