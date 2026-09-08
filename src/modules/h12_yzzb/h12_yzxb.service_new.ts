@@ -2996,7 +2996,7 @@ export class h12_yzxbServiceNew {
         if (tfCount > 0) {
           throw new CustomException(
             ERR.ERR_10000,
-            `【${yzxb.xmmc}】退药记录未发药，不能退回医生，请关联药房先退药!`,
+            `【${yzxb.xmmc}】退费记录未发药，不能退回医生，请关联药房先退药!`,
           );
         }
 
