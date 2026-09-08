@@ -2970,7 +2970,6 @@ export class h12_yzxbServiceNew {
     // 检查是否有已执行的费用（zxcs > bzxcs）
     const fysl = yzzxcs.filter((item) => item.zxcs > item.bzxcs);
     if (fysl.length > 0) {
-      //   throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成领药单，请取消执行次数再退回!');
       throw new CustomException(ERR.ERR_40203, '已执行医嘱或生成费用，请退费再退回!');
     }
 
