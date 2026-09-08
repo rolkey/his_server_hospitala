@@ -3083,7 +3083,7 @@ export class h12_yzxbServiceNew {
           zyid: dto.zyid,
           yzlx: dto.yzlx,
           yzzh: In(dto.yzzh),
-          yzzt: In([2, 3, 5, 6]),
+          yzzt: In([1, 2, 3, 5, 6]),
         },
         {
           yzzt: 7, // 退回状态
